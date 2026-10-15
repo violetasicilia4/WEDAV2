@@ -1554,3 +1554,7 @@ a:not([href]) { cursor: default; }
 
 /* Arriba de todo, la barra respira: más foto entre la franja azul y las píldoras. Al scrollear vuelve a su posición pegada. */
 .float-bar { top: calc(12px * (1 - var(--p, 0))); }
+
+/* Celular: la página no se arrastra hacia los costados ni muestra los bordes (clip no rompe el sticky de la barra). */
+html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
+@media (max-width: 1023px) { html, body { touch-action: pan-y pinch-zoom; } }
