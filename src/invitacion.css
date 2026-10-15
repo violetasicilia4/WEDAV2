@@ -563,3 +563,4 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-rsvp .iv-rsvp-action { justify-items: center; }
 .dm-root .iv-rsvp .iv-h2 { font-size: clamp(44px, 7vw, 72px) !important; line-height: 1.05 !important; }
 .dm-root .iv-rsvp .iv-rsvp-grid { row-gap: 28px; }
+.dm-root .iv-rsvp .iv-h2 { text-transform: uppercase; font-weight: 400 !important; letter-spacing: .02em !important; }
