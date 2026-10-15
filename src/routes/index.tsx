@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, ArrowLeft, Check, Menu, X, Gift, CalendarHeart } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Menu, X, Gift, CalendarHeart, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { duo, routine, unboxing } from '@/assets/images';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
@@ -51,6 +51,7 @@ function SeedLink({ children, pill = false, href, to, disabled }: SeedLinkProps)
 }
 function FloatNav() {
   const [open, setOpen] = useState(false);
+  const [loginHint, setLoginHint] = useState(false);
   const ref = useRef<HTMLElement>(null);
   // Una sola barra, como en Seed: sube con la página hasta pegarse arriba y sus píldoras se van "rellenando" (--p de 0 a 1).
   useEffect(() => {
@@ -83,7 +84,7 @@ function FloatNav() {
     document.documentElement.style.overflow = 'hidden';
     return () => { document.documentElement.style.overflow = prev; };
   }, [open]);
-  const close = () => setOpen(false);
+  const close = () => { setOpen(false); setLoginHint(false); };
   return (
     <header className="float-nav" ref={ref}>
       <nav className="float-bar" aria-label="Principal">
@@ -99,6 +100,7 @@ function FloatNav() {
       <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
         <Link to="/encontrar" className="menu-row" onClick={close}><span className="menu-tile"><Gift size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Hacé un regalo</strong></span></Link>
         <a href="#planes" className="menu-row" onClick={close}><span className="menu-tile"><CalendarHeart size={30} strokeWidth={1.4} /></span><span><small>Para novios</small><strong>Crear mi evento</strong></span></a>
+        <button type="button" className="menu-row menu-row-btn" onClick={() => setLoginHint(true)}><span className="menu-tile"><LogIn size={30} strokeWidth={1.4} /></span><span><small aria-live="polite">{loginHint ? 'Próximamente' : 'Ya tengo cuenta'}</small><strong>Iniciar sesión</strong></span></button>
       </div>
     </header>
   );

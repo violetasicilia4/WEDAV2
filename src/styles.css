@@ -1558,3 +1558,6 @@ a:not([href]) { cursor: default; }
 /* Celular: la página no se arrastra hacia los costados ni muestra los bordes (clip no rompe el sticky de la barra). */
 html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (max-width: 1023px) { html, body { touch-action: pan-y pinch-zoom; } }
+
+/* Fila «Iniciar sesión» del menú móvil: es un botón con el mismo aspecto que las filas-enlace. */
+.float-menu .menu-row-btn { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
