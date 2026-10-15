@@ -511,3 +511,17 @@ button.fw-couple-photo:focus-visible {
     transition: none;
   }
 }
+
+/* iOS: mantener apretada una foto abría la vista previa con «Guardar en Fotos». Las fotos no reciben toques: los recibe el botón. */
+.fw-cover {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+button.fw-couple-photo {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

@@ -30,6 +30,7 @@ function Cover({ item, priority = false }: { item: DemoWedding; priority?: boole
       src={item.cover}
       alt={item.coverAlt}
       loading={priority ? "eager" : "lazy"}
+      draggable={false}
       style={item.coverPosition ? { objectPosition: item.coverPosition } : undefined}
     />
   );
