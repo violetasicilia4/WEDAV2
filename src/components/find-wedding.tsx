@@ -51,9 +51,15 @@ function CoupleCard({ item, onSelect }: { item: DemoWedding; onSelect: (i: DemoW
   const names = coupleNames(item);
   return (
     <li className="fw-couple">
-      <span className="fw-couple-photo">
+      {/* La foto lleva al mismo lugar que «Regalá». */}
+      <button
+        type="button"
+        className="fw-couple-photo"
+        onClick={() => onSelect(item)}
+        aria-label={`Ver el casamiento de ${names}`}
+      >
         <Cover item={item} />
-      </span>
+      </button>
       <span className="fw-couple-names">{names}</span>
       <button
         type="button"

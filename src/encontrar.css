@@ -487,3 +487,27 @@
   outline: 0;
   box-shadow: none;
 }
+
+/* La foto de cada pareja es tocable: mismo destino que «Regalá». */
+button.fw-couple-photo {
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+button.fw-couple-photo .fw-cover {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+button.fw-couple-photo:hover .fw-cover {
+  transform: scale(1.04);
+}
+button.fw-couple-photo:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  button.fw-couple-photo .fw-cover {
+    transition: none;
+  }
+}
