@@ -71,7 +71,7 @@ function ResultCard({ item, onSelect }: { item: DemoWedding; onSelect: (i: DemoW
   );
 }
 
-/* Casamientos de demostración a la vista, sin necesidad de buscar: miniaturas cuadradas "huecas" (solo borde). */
+/* Casamientos de demostración a la vista, sin necesidad de buscar: foto circular, nombres y un botón «Regalá». */
 function Gallery({ onSelect }: { onSelect: (i: DemoWedding) => void }) {
   return (
     <section className="fw-gallery" aria-labelledby="fw-gallery-title">
@@ -80,20 +80,19 @@ function Gallery({ onSelect }: { onSelect: (i: DemoWedding) => void }) {
       <ul className="fw-tiles">
         {demoWeddings.map((item) => {
           const names = coupleNames(item);
-          const date = formatWeddingDate(item.date);
           return (
-            <li key={item.id}>
+            <li key={item.id} className="fw-tile">
+              <span className="fw-tile-photo">
+                <Cover item={item} />
+              </span>
+              <span className="fw-tile-names">{names}</span>
               <button
                 type="button"
-                className="fw-tile"
+                className="fw-btn fw-tile-btn"
                 onClick={() => onSelect(item)}
-                aria-label={date ? `${names}, ${date}` : `${names}, fecha por confirmar`}
+                aria-label={`Regalá a ${names}`}
               >
-                <span className="fw-tile-photo">
-                  <Cover item={item} />
-                </span>
-                <span className="fw-tile-names">{names}</span>
-                <span className="fw-tile-date">{date ?? "Fecha por confirmar"}</span>
+                Regalá
               </button>
             </li>
           );
