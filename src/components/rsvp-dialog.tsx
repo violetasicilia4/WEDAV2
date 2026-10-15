@@ -83,7 +83,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
     <RsvpContext.Provider value={{ open, sentCount: sentNow }}>
       {children}
       <Dialog open={isOpen} onOpenChange={o => { setOpen(o); if (!o) resetForm(); }}>
-        <DialogContent className="dm-rsvp" onCloseAutoFocus={e => { e.preventDefault(); lastFocus.current?.focus(); }}>
+        <DialogContent className="dm-rsvp" onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }} onCloseAutoFocus={e => { e.preventDefault(); lastFocus.current?.focus(); }}>
           {view === 'sent' ? (
             <div className="dm-rsvp-done">
               <span className="dm-rsvp-mark" aria-hidden="true"><Check size={24} strokeWidth={1.6} /></span>

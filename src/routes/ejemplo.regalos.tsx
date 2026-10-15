@@ -94,7 +94,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
   const count = sent ? sent.gifts.length : items.length;
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
-      <DialogContent className="rg-dialog" onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
+      <DialogContent className="rg-dialog" onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }} onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
         {sent ? (
           <div className="rg-thanks">
             <span className="rg-check" aria-hidden="true"><Check size={22} strokeWidth={1.8} /></span>

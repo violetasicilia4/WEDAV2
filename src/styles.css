@@ -1561,3 +1561,8 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 
 /* Fila «Iniciar sesión» del menú móvil: es un botón con el mismo aspecto que las filas-enlace. */
 .float-menu .menu-row-btn { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+
+/* iOS hace zoom en cualquier campo con letra menor a 16px y después no lo suelta: en pantallas táctiles los campos usan 16px. */
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
+}
