@@ -1,22 +1,32 @@
 /* Encontrá tu casamiento: mismos tokens, tipografía y tratamiento de componentes que la landing de Weda. */
 .fw-page {
+  position: relative;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  background: var(--background);
+  background: #fff;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 .fw-page main {
   flex: 1;
 }
+
+/* Barra superior sobre la portada */
 .fw-top {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  right: 0;
   width: min(1180px, 92%);
   margin: 0 auto;
   height: 76px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  color: #fff;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.35);
 }
 .fw-back {
   display: inline-flex;
@@ -27,46 +37,101 @@
   font-size: 14px;
 }
 .fw-back:hover {
-  opacity: 0.65;
+  opacity: 0.75;
 }
 .fw-foot {
   padding: 28px 4% 36px;
   text-align: center;
   font-size: 12px;
   color: var(--muted-foreground);
+  background: #fff;
 }
 
-.fw {
-  width: min(1180px, 92%);
-  margin: 0 auto;
-  padding: clamp(24px, 5vw, 64px) 0 clamp(40px, 6vw, 88px);
-}
-.fw-head {
-  max-width: 640px;
-  margin: 0 auto;
+/* Portada: foto a pantalla completa, título y botón «Buscar» */
+.fw-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: min(78svh, 720px);
+  display: grid;
+  place-items: center;
+  padding: 96px 6% 72px;
+  overflow: hidden;
+  border-radius: 0 0 25px 25px;
+  background: #3b3c3a;
+  color: #fff;
   text-align: center;
 }
-.fw-head .eyebrow {
-  margin-bottom: 18px;
+.fw-hero-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
 }
-.fw-head h1 {
+.fw-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0.48));
+}
+.fw-hero-copy {
+  max-width: 640px;
+  display: grid;
+  justify-items: center;
+}
+.fw-hero h1 {
   margin: 0;
-  font-size: clamp(34px, 5vw, 52px);
-  line-height: 1.08;
+  font-size: clamp(38px, 6vw, 60px);
+  line-height: 1.06;
   font-weight: 400;
   letter-spacing: -0.01em;
   text-wrap: balance;
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.35);
 }
 .fw-lead {
   margin: 16px 0 0;
-  font-size: clamp(15px, 1.6vw, 17px);
+  font-size: clamp(15px, 1.7vw, 18px);
   line-height: 1.5;
-  color: var(--muted-foreground);
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.4);
+}
+.fw-hero-btn {
+  margin-top: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 36px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.fw-hero-btn:hover {
+  background: var(--paper, #f5f2eb);
+}
+.fw-hero-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
+/* Cuerpo blanco: buscador y parejas */
+.fw-body {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 72px) 0 clamp(48px, 7vw, 88px);
+  scroll-margin-top: 16px;
+}
 .fw-form {
   max-width: 640px;
-  margin: 36px auto 0;
+  margin: 0 auto;
 }
 .fw-label {
   display: block;
@@ -77,13 +142,12 @@
 .fw-field {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-height: 60px;
-  padding: 6px 6px 6px 20px;
+  padding: 6px 6px 6px 22px;
   border-radius: 999px;
-  background: #fff;
-  border: 1px solid var(--border);
-  color: var(--muted-foreground);
+  background: #fbfaf7;
+  border: 1px solid rgb(59 60 58 / 0.22);
   transition: border-color 0.2s;
 }
 .fw-field:focus-within {
@@ -108,6 +172,27 @@
 }
 .fw-form:has([aria-invalid="true"]) .fw-field {
   border-color: var(--destructive);
+}
+.fw-submit {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: #5a646c;
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.fw-submit:hover:not(:disabled) {
+  background: #4b545b;
+}
+.fw-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 .fw-error {
   margin: 10px 0 0 20px;
@@ -142,52 +227,46 @@
 .fw-btn:focus-visible,
 .fw-link:focus-visible,
 .fw-back:focus-visible,
-.fw-field input:focus-visible {
+.fw-submit:focus-visible {
   outline: 2px solid var(--foreground);
   outline-offset: 2px;
-}
-.fw-field input:focus-visible {
-  outline: 0;
-}
-.fw-submit {
-  flex: none;
-  height: 48px;
-  padding: 0 26px;
 }
 .fw-btn-inline {
   align-self: flex-start;
 }
 
 .fw-out {
-  margin-top: 40px;
+  margin-top: clamp(32px, 5vw, 56px);
 }
 .fw-status {
-  margin: 0 0 20px;
+  margin: 0 0 28px;
   text-align: center;
   font-size: 14px;
   color: var(--muted-foreground);
 }
 
-.fw-grid {
+/* Parejas: foto circular, nombres y «Regalá» */
+.fw-couples {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, 340px);
+  grid-template-columns: repeat(auto-fit, minmax(0, 220px));
   justify-content: center;
-  gap: clamp(16px, 2vw, 28px);
+  gap: clamp(36px, 4.5vw, 56px) clamp(20px, 3vw, 40px);
 }
-.fw-card {
-  height: 100%;
+.fw-couple {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border-radius: 22px;
-  background: #fff;
+  align-items: center;
+  text-align: center;
 }
-.fw-photo {
-  aspect-ratio: 4 / 5;
+.fw-couple-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
   overflow: hidden;
+  border-radius: 50%;
   background: var(--section);
 }
 .fw-cover {
@@ -197,52 +276,45 @@
   object-fit: cover;
   object-position: center 35%;
 }
-.fw-card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 18px 18px 18px;
-}
-.fw-card h3 {
-  margin: 0;
-  font-size: 24px;
-  line-height: 1.15;
-  font-weight: 400;
+.fw-couple-names {
+  margin: 18px 0 14px;
+  font-size: 17px;
+  line-height: 1.25;
   text-wrap: balance;
 }
-.fw-date {
-  margin: 0 0 12px;
-  font-size: 14px;
-  color: var(--muted-foreground);
-}
-.fw-date.is-pending {
-  font-style: italic;
-}
-.fw-card .fw-btn {
+/* Mismo botón que «Regalar» de la lista de regalos: claro, con borde fino y texto oscuro. */
+.fw-btn.fw-couple-btn {
+  width: min(100%, 180px);
+  height: 46px;
   margin-top: auto;
-  width: 100%;
+  background: #fbfaf7;
+  color: var(--foreground);
+  border: 1px solid rgb(59 60 58 / 0.22);
+}
+.fw-btn.fw-couple-btn:hover:not(:disabled) {
+  background: #fff;
+  border-color: var(--foreground);
 }
 
-.fw-skeleton .fw-photo {
+.fw-skeleton .fw-couple-photo {
   background: linear-gradient(90deg, #ebe8dd, #f3f0e8, #ebe8dd);
   background-size: 200% 100%;
 }
 .fw-skeleton i {
   display: block;
+  width: 55%;
   height: 16px;
+  margin-top: 18px;
   border-radius: 99px;
   background: #ebe8dd;
 }
-.fw-skeleton i.short {
-  width: 45%;
-}
 .fw-skeleton i.btn {
-  height: 48px;
-  margin-top: 12px;
+  width: min(100%, 180px);
+  height: 46px;
+  margin-top: 14px;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .fw-skeleton .fw-photo {
+  .fw-skeleton .fw-couple-photo {
     animation: fw-shimmer 1.4s linear infinite;
   }
 }
@@ -262,7 +334,7 @@
   gap: 12px;
   text-align: center;
   border-radius: 22px;
-  background: #fff;
+  background: var(--section);
 }
 .fw-message h2 {
   margin: 0;
@@ -284,6 +356,7 @@
   color: var(--destructive);
 }
 
+/* Casamiento elegido */
 .fw-selected {
   max-width: 880px;
   margin: 0 auto;
@@ -291,8 +364,13 @@
   grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
   overflow: hidden;
   border-radius: 26px;
-  background: #fff;
+  background: var(--section);
   outline: 0;
+}
+.fw-photo {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #ebe8dd;
 }
 .fw-selected .fw-photo {
   aspect-ratio: auto;
@@ -312,7 +390,7 @@
   margin: 0;
   padding: 6px 12px;
   border-radius: 999px;
-  background: var(--section);
+  background: #fff;
   font-size: 12px;
 }
 .fw-selected h2 {
@@ -321,8 +399,13 @@
   line-height: 1.08;
   font-weight: 400;
 }
-.fw-selected .fw-date {
+.fw-date {
   margin: 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+.fw-date.is-pending {
+  font-style: italic;
 }
 .fw-note {
   margin: 10px 0 6px;
@@ -350,34 +433,6 @@
   text-underline-offset: 4px;
   cursor: pointer;
 }
-
-@media (max-width: 900px) {
-  .fw-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 640px) {
-  .fw-grid {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 440px;
-    margin: 0 auto;
-  }
-  .fw-field {
-    padding-left: 16px;
-  }
-  .fw-submit {
-    padding: 0 20px;
-  }
-  .fw-selected {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 440px;
-  }
-  .fw-selected .fw-photo {
-    aspect-ratio: 4 / 5;
-    min-height: 0;
-  }
-}
-
 .fw-actions {
   display: flex;
   flex-wrap: wrap;
@@ -388,80 +443,35 @@
   margin-top: 0;
 }
 
-/* Galería de casamientos de demostración: banda blanca a todo el ancho, foto circular, nombres y botón «Regalá». */
-.fw-gallery {
-  margin-top: clamp(24px, 4vw, 56px);
-  padding: clamp(40px, 6vw, 72px) 0 clamp(48px, 7vw, 88px);
-  border-radius: var(--curve, 32px) var(--curve, 32px) 0 0;
-  background: #fff;
-}
-.fw-gallery > ul {
-  width: min(1180px, 92%);
-  margin-inline: auto;
-}
-.fw-page:has(.fw-gallery) .fw-foot {
-  background: #fff;
-}
-.fw-page:has(.fw-gallery) .fw {
-  padding-bottom: 0;
-}
-.fw-tiles {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: clamp(28px, 3.4vw, 44px) clamp(14px, 2vw, 28px);
-}
-.fw-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-.fw-tile-photo {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border-radius: 50%;
-  background: var(--section);
-}
-.fw-tile-photo .fw-cover {
-  object-position: center 35%;
-}
-.fw-tile-names {
-  margin: 14px 0 12px;
-  font-size: 15px;
-  line-height: 1.25;
-  text-wrap: balance;
-}
-/* Mismo botón que «Regalar» de la lista de regalos: claro, con borde fino y texto oscuro. */
-.fw-btn.fw-tile-btn {
-  width: min(100%, 150px);
-  height: 44px;
-  padding: 0 16px;
-  font-size: 14px;
-  margin-top: auto;
-  background: #fbfaf7;
-  color: var(--foreground);
-  border: 1px solid rgb(59 60 58 / 0.22);
-}
-.fw-btn.fw-tile-btn:hover:not(:disabled) {
-  background: #fff;
-  border-color: var(--foreground);
-}
-@media (max-width: 1000px) {
-  .fw-tiles {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
 @media (max-width: 640px) {
-  .fw-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px 16px;
+  .fw-hero {
+    min-height: 82svh;
+    padding-top: 88px;
   }
-  .fw-tile-names {
-    font-size: 14px;
+  .fw-field {
+    padding-left: 18px;
   }
+  /* Una pareja por fila, con foto grande como en una lista de novios. */
+  .fw-couples {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
+  }
+  .fw-couple-photo {
+    width: min(100%, 320px);
+  }
+  .fw-couple-names {
+    font-size: 18px;
+  }
+  .fw-selected {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+  }
+  .fw-selected .fw-photo {
+    aspect-ratio: 4 / 5;
+    min-height: 0;
+  }
+}
+.fw-field input:focus-visible {
+  outline: 0;
+  box-shadow: none;
 }

@@ -22,12 +22,14 @@ reconociendo la fotografía del evento.
 | `src/encontrar.css` | Estilos, con los mismos tokens que la landing. |
 | `src/test/find-wedding.test.ts` | Pruebas de la búsqueda y de los datos. |
 
-## Galería de demostración
+## Diseño
 
-Debajo del buscador, sobre una banda blanca, se muestran a la vista 24 casamientos ficticios con foto circular, nombres y un botón «Regalá». Elegir una
-lleva al mismo estado de selección que la búsqueda. Es solo para la demostración: en producción **no** debe existir un
-listado navegable de parejas sin su consentimiento. Solo hay ocho fotografías de pareja en el proyecto, así que varias
-parejas comparten archivo (con encuadres distintos) hasta que tengan su portada propia.
+Portada a pantalla completa con foto, título y un botón «Buscar» que lleva al buscador. Debajo, sobre fondo blanco,
+el buscador y la lista de parejas con foto circular, nombres y un botón «Regalá» (una por fila en móvil). Sin buscar,
+se ven las 24 parejas ficticias; al buscar, la misma lista se filtra. Elegir una lleva al estado de selección. Es solo
+para la demostración: en producción **no** debe existir un listado navegable de parejas sin su consentimiento. Solo hay
+ocho fotografías de pareja en el proyecto, así que varias parejas comparten archivo (con encuadres distintos) hasta que
+tengan su portada propia.
 
 ## Cómo busca
 

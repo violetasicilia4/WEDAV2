@@ -46,73 +46,53 @@ function DateLine({ date }: { date: string | null }) {
   );
 }
 
-function ResultCard({ item, onSelect }: { item: DemoWedding; onSelect: (i: DemoWedding) => void }) {
+/* Pareja con foto circular, nombres y «Regalá»: se usa igual para la lista completa y para los resultados de la búsqueda. */
+function CoupleCard({ item, onSelect }: { item: DemoWedding; onSelect: (i: DemoWedding) => void }) {
   const names = coupleNames(item);
   return (
-    <li>
-      <article className="fw-card">
-        <div className="fw-photo">
-          <Cover item={item} />
-        </div>
-        <div className="fw-card-body">
-          <h3>{names}</h3>
-          <DateLine date={item.date} />
-          <button
-            type="button"
-            className="fw-btn"
-            onClick={() => onSelect(item)}
-            aria-label={`Encontrar mi casamiento: ${names}`}
-          >
-            Encontrar mi casamiento
-          </button>
-        </div>
-      </article>
+    <li className="fw-couple">
+      <span className="fw-couple-photo">
+        <Cover item={item} />
+      </span>
+      <span className="fw-couple-names">{names}</span>
+      <button
+        type="button"
+        className="fw-btn fw-couple-btn"
+        onClick={() => onSelect(item)}
+        aria-label={`Regalá a ${names}`}
+      >
+        Regalá
+      </button>
     </li>
   );
 }
 
-/* Casamientos de demostración a la vista, sin necesidad de buscar: foto circular, nombres y un botón «Regalá». */
-function Gallery({ onSelect }: { onSelect: (i: DemoWedding) => void }) {
+function CoupleGrid({
+  items,
+  label,
+  onSelect,
+}: {
+  items: readonly DemoWedding[];
+  label: string;
+  onSelect: (i: DemoWedding) => void;
+}) {
   return (
-    <section className="fw-gallery" aria-label="Casamientos de demostración">
-      <ul className="fw-tiles">
-        {demoWeddings.map((item) => {
-          const names = coupleNames(item);
-          return (
-            <li key={item.id} className="fw-tile">
-              <span className="fw-tile-photo">
-                <Cover item={item} />
-              </span>
-              <span className="fw-tile-names">{names}</span>
-              <button
-                type="button"
-                className="fw-btn fw-tile-btn"
-                onClick={() => onSelect(item)}
-                aria-label={`Regalá a ${names}`}
-              >
-                Regalá
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <ul className="fw-couples" aria-label={label}>
+      {items.map((i) => (
+        <CoupleCard key={i.id} item={i} onSelect={onSelect} />
+      ))}
+    </ul>
   );
 }
 
 function Skeletons() {
   return (
-    <ul className="fw-grid" aria-hidden="true">
+    <ul className="fw-couples" aria-hidden="true">
       {[0, 1, 2].map((n) => (
-        <li key={n}>
-          <div className="fw-card fw-skeleton">
-            <div className="fw-photo" />
-            <div className="fw-card-body">
-              <i />
-              <i className="short" />
-              <i className="btn" />
-            </div>
-          </div>
+        <li key={n} className="fw-couple fw-skeleton">
+          <span className="fw-couple-photo" />
+          <i />
+          <i className="btn" />
         </li>
       ))}
     </ul>
@@ -206,10 +186,20 @@ export function FindWedding() {
     e.preventDefault();
     void run(query);
   };
+  const select = (item: DemoWedding) => setView({ name: "selected", item });
   const reset = () => {
     setQuery("");
     setView({ name: "idle" });
     requestAnimationFrame(() => inputRef.current?.focus());
+  };
+  /* El botón «Buscar» de la portada lleva al buscador. */
+  const goSearch = () => {
+    const el = document.getElementById("fw-search");
+    el?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    window.setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 350);
   };
 
   const invalid = view.name === "invalid";
@@ -218,20 +208,24 @@ export function FindWedding() {
 
   return (
     <>
-      <section className="fw" aria-labelledby="fw-title">
-        <div className="fw-head">
-          <p className="eyebrow">● Para invitados</p>
+      <section className="fw-hero" aria-labelledby="fw-title">
+        <img className="fw-hero-img" src="/pareja-portada-8.webp" alt="" aria-hidden="true" />
+        <div className="fw-hero-copy">
           <h1 id="fw-title">Encontrá tu casamiento</h1>
           <p className="fw-lead">Buscá por sus nombres y encontrá el espacio de su gran día.</p>
+          <button type="button" className="fw-hero-btn" onClick={goSearch}>
+            Buscar
+          </button>
         </div>
+      </section>
 
+      <section className="fw-body" id="fw-search" aria-label="Buscar un casamiento">
         {!selected && (
           <form className="fw-form" role="search" onSubmit={onSubmit} noValidate>
             <label className="fw-label" htmlFor="fw-query">
               Nombres de la pareja
             </label>
             <div className="fw-field">
-              <Search size={18} aria-hidden="true" />
               <input
                 id="fw-query"
                 ref={inputRef}
@@ -240,7 +234,7 @@ export function FindWedding() {
                 autoComplete="off"
                 autoCapitalize="words"
                 enterKeyHint="search"
-                placeholder="Ej.: Ignacio y Martina"
+                placeholder="Buscar"
                 aria-invalid={invalid}
                 aria-describedby={invalid ? "fw-invalid" : undefined}
                 onChange={(e) => {
@@ -248,8 +242,8 @@ export function FindWedding() {
                   if (invalid) setView({ name: "idle" });
                 }}
               />
-              <button type="submit" className="fw-btn fw-submit" disabled={busy}>
-                {busy ? "Buscando…" : "Buscar"}
+              <button type="submit" className="fw-submit" disabled={busy} aria-label="Buscar">
+                <Search size={20} aria-hidden="true" />
               </button>
             </div>
             {view.name === "invalid" && (
@@ -261,6 +255,14 @@ export function FindWedding() {
         )}
 
         <div className="fw-out" aria-live="polite" aria-busy={busy}>
+          {view.name === "idle" && (
+            <CoupleGrid
+              items={demoWeddings}
+              label="Casamientos de demostración"
+              onSelect={select}
+            />
+          )}
+
           {view.name === "loading" && (
             <>
               <p className="fw-status">Buscando casamientos…</p>
@@ -276,15 +278,7 @@ export function FindWedding() {
                   : `${view.items.length} casamientos encontrados`}{" "}
                 para “{view.query}”
               </p>
-              <ul className="fw-grid">
-                {view.items.map((i) => (
-                  <ResultCard
-                    key={i.id}
-                    item={i}
-                    onSelect={(item) => setView({ name: "selected", item })}
-                  />
-                ))}
-              </ul>
+              <CoupleGrid items={view.items} label="Resultados de la búsqueda" onSelect={select} />
             </>
           )}
 
@@ -321,7 +315,6 @@ export function FindWedding() {
           {view.name === "selected" && <Selected item={view.item} onReset={reset} />}
         </div>
       </section>
-      {!selected && <Gallery onSelect={(item) => setView({ name: "selected", item })} />}
     </>
   );
 }
