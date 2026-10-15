@@ -1535,3 +1535,4 @@ a:not([href]) { cursor: default; }
 .plan-card:nth-child(3) li svg { color: #fff; }
 .plan-card:nth-child(3) .seed-button { background: #fff; color: var(--foreground); }
 .plan-card:nth-child(3) .seed-button:disabled { opacity: .75; }
+.announcement { background: #fff; color: var(--foreground); }
