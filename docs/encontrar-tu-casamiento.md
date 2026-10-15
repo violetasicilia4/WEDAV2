@@ -22,6 +22,13 @@ reconociendo la fotografía del evento.
 | `src/encontrar.css` | Estilos, con los mismos tokens que la landing. |
 | `src/test/find-wedding.test.ts` | Pruebas de la búsqueda y de los datos. |
 
+## Galería de demostración
+
+Debajo del buscador se muestran a la vista 24 casamientos ficticios en miniaturas cuadradas con solo borde. Elegir una
+lleva al mismo estado de selección que la búsqueda. Es solo para la demostración: en producción **no** debe existir un
+listado navegable de parejas sin su consentimiento. Solo hay ocho fotografías de pareja en el proyecto, así que varias
+parejas comparten archivo (con encuadres distintos) hasta que tengan su portada propia.
+
 ## Cómo busca
 
 Cada palabra buscada debe ser el comienzo de algún nombre de la misma pareja. Se ignoran mayúsculas, tildes, signos y

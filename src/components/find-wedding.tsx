@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Check, RotateCcw, Search, TriangleAlert } from "lucide-react";
-import { coupleNames, formatWeddingDate, type DemoWedding } from "@/lib/encontrar/data";
+import {
+  coupleNames,
+  demoWeddings,
+  formatWeddingDate,
+  type DemoWedding,
+} from "@/lib/encontrar/data";
 import { checkQuery, searchWeddings } from "@/lib/encontrar/search";
 
 type View =
@@ -25,6 +30,7 @@ function Cover({ item, priority = false }: { item: DemoWedding; priority?: boole
       src={item.cover}
       alt={item.coverAlt}
       loading={priority ? "eager" : "lazy"}
+      style={item.coverPosition ? { objectPosition: item.coverPosition } : undefined}
     />
   );
 }
@@ -62,6 +68,38 @@ function ResultCard({ item, onSelect }: { item: DemoWedding; onSelect: (i: DemoW
         </div>
       </article>
     </li>
+  );
+}
+
+/* Casamientos de demostración a la vista, sin necesidad de buscar: miniaturas cuadradas "huecas" (solo borde). */
+function Gallery({ onSelect }: { onSelect: (i: DemoWedding) => void }) {
+  return (
+    <section className="fw-gallery" aria-labelledby="fw-gallery-title">
+      <h2 id="fw-gallery-title">Casamientos de demostración</h2>
+      <p className="fw-gallery-lead">Elegí uno para ver cómo funciona. Son parejas ficticias.</p>
+      <ul className="fw-tiles">
+        {demoWeddings.map((item) => {
+          const names = coupleNames(item);
+          const date = formatWeddingDate(item.date);
+          return (
+            <li key={item.id}>
+              <button
+                type="button"
+                className="fw-tile"
+                onClick={() => onSelect(item)}
+                aria-label={date ? `${names}, ${date}` : `${names}, fecha por confirmar`}
+              >
+                <span className="fw-tile-photo">
+                  <Cover item={item} />
+                </span>
+                <span className="fw-tile-names">{names}</span>
+                <span className="fw-tile-date">{date ?? "Fecha por confirmar"}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -287,6 +325,8 @@ export function FindWedding() {
           ficticios: no se consulta ningún servicio real.
         </p>
       )}
+
+      {!selected && <Gallery onSelect={(item) => setView({ name: "selected", item })} />}
     </section>
   );
 }

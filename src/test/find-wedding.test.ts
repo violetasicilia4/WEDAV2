@@ -58,9 +58,10 @@ describe("Encontrá tu casamiento: búsqueda", () => {
 });
 
 describe("Encontrá tu casamiento: datos de demostración", () => {
-  it("cada evento tiene identificador único y su propia foto", () => {
+  it("cada evento tiene identificador único y una portada propia asignada", () => {
+    expect(demoWeddings.length).toBeGreaterThanOrEqual(20);
     expect(new Set(demoWeddings.map((w) => w.id)).size).toBe(demoWeddings.length);
-    expect(new Set(demoWeddings.map((w) => w.cover)).size).toBe(demoWeddings.length);
+    expect(demoWeddings.every((w) => w.cover && w.coverAlt)).toBe(true);
   });
 
   it("da formato a la fecha y tolera su ausencia", () => {
