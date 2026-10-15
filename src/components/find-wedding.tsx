@@ -74,9 +74,7 @@ function ResultCard({ item, onSelect }: { item: DemoWedding; onSelect: (i: DemoW
 /* Casamientos de demostración a la vista, sin necesidad de buscar: foto circular, nombres y un botón «Regalá». */
 function Gallery({ onSelect }: { onSelect: (i: DemoWedding) => void }) {
   return (
-    <section className="fw-gallery" aria-labelledby="fw-gallery-title">
-      <h2 id="fw-gallery-title">Casamientos de demostración</h2>
-      <p className="fw-gallery-lead">Elegí uno para ver cómo funciona. Son parejas ficticias.</p>
+    <section className="fw-gallery" aria-label="Casamientos de demostración">
       <ul className="fw-tiles">
         {demoWeddings.map((item) => {
           const names = coupleNames(item);
@@ -219,113 +217,111 @@ export function FindWedding() {
   const selected = view.name === "selected";
 
   return (
-    <section className="fw" aria-labelledby="fw-title">
-      <div className="fw-head">
-        <p className="eyebrow">● Para invitados</p>
-        <h1 id="fw-title">Encontrá tu casamiento</h1>
-        <p className="fw-lead">Buscá por sus nombres y encontrá el espacio de su gran día.</p>
-      </div>
+    <>
+      <section className="fw" aria-labelledby="fw-title">
+        <div className="fw-head">
+          <p className="eyebrow">● Para invitados</p>
+          <h1 id="fw-title">Encontrá tu casamiento</h1>
+          <p className="fw-lead">Buscá por sus nombres y encontrá el espacio de su gran día.</p>
+        </div>
 
-      {!selected && (
-        <form className="fw-form" role="search" onSubmit={onSubmit} noValidate>
-          <label className="fw-label" htmlFor="fw-query">
-            Nombres de la pareja
-          </label>
-          <div className="fw-field">
-            <Search size={18} aria-hidden="true" />
-            <input
-              id="fw-query"
-              ref={inputRef}
-              type="search"
-              value={query}
-              autoComplete="off"
-              autoCapitalize="words"
-              enterKeyHint="search"
-              placeholder="Ej.: Ignacio y Martina"
-              aria-invalid={invalid}
-              aria-describedby={invalid ? "fw-invalid" : undefined}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                if (invalid) setView({ name: "idle" });
-              }}
-            />
-            <button type="submit" className="fw-btn fw-submit" disabled={busy}>
-              {busy ? "Buscando…" : "Buscar"}
-            </button>
-          </div>
-          {view.name === "invalid" && (
-            <p id="fw-invalid" className="fw-error" role="alert">
-              {INVALID_TEXT[view.reason]}
-            </p>
+        {!selected && (
+          <form className="fw-form" role="search" onSubmit={onSubmit} noValidate>
+            <label className="fw-label" htmlFor="fw-query">
+              Nombres de la pareja
+            </label>
+            <div className="fw-field">
+              <Search size={18} aria-hidden="true" />
+              <input
+                id="fw-query"
+                ref={inputRef}
+                type="search"
+                value={query}
+                autoComplete="off"
+                autoCapitalize="words"
+                enterKeyHint="search"
+                placeholder="Ej.: Ignacio y Martina"
+                aria-invalid={invalid}
+                aria-describedby={invalid ? "fw-invalid" : undefined}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (invalid) setView({ name: "idle" });
+                }}
+              />
+              <button type="submit" className="fw-btn fw-submit" disabled={busy}>
+                {busy ? "Buscando…" : "Buscar"}
+              </button>
+            </div>
+            {view.name === "invalid" && (
+              <p id="fw-invalid" className="fw-error" role="alert">
+                {INVALID_TEXT[view.reason]}
+              </p>
+            )}
+          </form>
+        )}
+
+        <div className="fw-out" aria-live="polite" aria-busy={busy}>
+          {view.name === "loading" && (
+            <>
+              <p className="fw-status">Buscando casamientos…</p>
+              <Skeletons />
+            </>
           )}
-        </form>
-      )}
 
-      <div className="fw-out" aria-live="polite" aria-busy={busy}>
-        {view.name === "loading" && (
-          <>
-            <p className="fw-status">Buscando casamientos…</p>
-            <Skeletons />
-          </>
-        )}
+          {view.name === "results" && (
+            <>
+              <p className="fw-status">
+                {view.items.length === 1
+                  ? "1 casamiento encontrado"
+                  : `${view.items.length} casamientos encontrados`}{" "}
+                para “{view.query}”
+              </p>
+              <ul className="fw-grid">
+                {view.items.map((i) => (
+                  <ResultCard
+                    key={i.id}
+                    item={i}
+                    onSelect={(item) => setView({ name: "selected", item })}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
 
-        {view.name === "results" && (
-          <>
-            <p className="fw-status">
-              {view.items.length === 1
-                ? "1 casamiento encontrado"
-                : `${view.items.length} casamientos encontrados`}{" "}
-              para “{view.query}”
-            </p>
-            <ul className="fw-grid">
-              {view.items.map((i) => (
-                <ResultCard
-                  key={i.id}
-                  item={i}
-                  onSelect={(item) => setView({ name: "selected", item })}
-                />
-              ))}
-            </ul>
-          </>
-        )}
+          {view.name === "empty" && (
+            <div className="fw-message" role="status">
+              <h2>No encontramos ese casamiento</h2>
+              <p>
+                No hay resultados para “{view.query}”. Revisá la ortografía o probá con el nombre de
+                la otra persona.
+              </p>
+              <button type="button" className="fw-btn fw-btn-inline" onClick={reset}>
+                <RotateCcw size={16} aria-hidden="true" />
+                Volver a buscar
+              </button>
+            </div>
+          )}
 
-        {view.name === "empty" && (
-          <div className="fw-message" role="status">
-            <h2>No encontramos ese casamiento</h2>
-            <p>
-              No hay resultados para “{view.query}”. Revisá la ortografía o probá con el nombre de
-              la otra persona.
-            </p>
-            <button type="button" className="fw-btn fw-btn-inline" onClick={reset}>
-              <RotateCcw size={16} aria-hidden="true" />
-              Volver a buscar
-            </button>
-          </div>
-        )}
+          {view.name === "error" && (
+            <div className="fw-message is-error" role="alert">
+              <TriangleAlert size={22} aria-hidden="true" />
+              <h2>No pudimos completar la búsqueda</h2>
+              <p>Algo falló de nuestro lado. Probá de nuevo en un momento.</p>
+              <button
+                type="button"
+                className="fw-btn fw-btn-inline"
+                onClick={() => void run(query)}
+              >
+                <RotateCcw size={16} aria-hidden="true" />
+                Reintentar
+              </button>
+            </div>
+          )}
 
-        {view.name === "error" && (
-          <div className="fw-message is-error" role="alert">
-            <TriangleAlert size={22} aria-hidden="true" />
-            <h2>No pudimos completar la búsqueda</h2>
-            <p>Algo falló de nuestro lado. Probá de nuevo en un momento.</p>
-            <button type="button" className="fw-btn fw-btn-inline" onClick={() => void run(query)}>
-              <RotateCcw size={16} aria-hidden="true" />
-              Reintentar
-            </button>
-          </div>
-        )}
-
-        {view.name === "selected" && <Selected item={view.item} onReset={reset} />}
-      </div>
-
-      {view.name === "idle" && (
-        <p className="fw-hint">
-          Probá con “Ignacio y Martina”, “Camila” o “Mariano”. Es una demostración con casamientos
-          ficticios: no se consulta ningún servicio real.
-        </p>
-      )}
-
+          {view.name === "selected" && <Selected item={view.item} onReset={reset} />}
+        </div>
+      </section>
       {!selected && <Gallery onSelect={(item) => setView({ name: "selected", item })} />}
-    </section>
+    </>
   );
 }

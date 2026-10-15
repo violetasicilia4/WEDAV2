@@ -167,14 +167,6 @@
   font-size: 14px;
   color: var(--muted-foreground);
 }
-.fw-hint {
-  margin: 28px auto 0;
-  max-width: 520px;
-  text-align: center;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--muted-foreground);
-}
 
 .fw-grid {
   list-style: none;
@@ -396,22 +388,22 @@
   margin-top: 0;
 }
 
-/* Galería de casamientos de demostración: foto circular, nombres y botón «Regalá», con la estética de Weda. */
+/* Galería de casamientos de demostración: banda blanca a todo el ancho, foto circular, nombres y botón «Regalá». */
 .fw-gallery {
-  margin-top: clamp(40px, 6vw, 72px);
+  margin-top: clamp(24px, 4vw, 56px);
+  padding: clamp(40px, 6vw, 72px) 0 clamp(48px, 7vw, 88px);
+  border-radius: var(--curve, 32px) var(--curve, 32px) 0 0;
+  background: #fff;
 }
-.fw-gallery h2 {
-  margin: 0;
-  text-align: center;
-  font-size: clamp(22px, 2.6vw, 28px);
-  line-height: 1.15;
-  font-weight: 400;
+.fw-gallery > ul {
+  width: min(1180px, 92%);
+  margin-inline: auto;
 }
-.fw-gallery-lead {
-  margin: 8px 0 32px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--muted-foreground);
+.fw-page:has(.fw-gallery) .fw-foot {
+  background: #fff;
+}
+.fw-page:has(.fw-gallery) .fw {
+  padding-bottom: 0;
 }
 .fw-tiles {
   list-style: none;
@@ -444,12 +436,20 @@
   line-height: 1.25;
   text-wrap: balance;
 }
+/* Mismo botón que «Regalar» de la lista de regalos: claro, con borde fino y texto oscuro. */
 .fw-btn.fw-tile-btn {
   width: min(100%, 150px);
   height: 44px;
   padding: 0 16px;
   font-size: 14px;
   margin-top: auto;
+  background: #fbfaf7;
+  color: var(--foreground);
+  border: 1px solid rgb(59 60 58 / 0.22);
+}
+.fw-btn.fw-tile-btn:hover:not(:disabled) {
+  background: #fff;
+  border-color: var(--foreground);
 }
 @media (max-width: 1000px) {
   .fw-tiles {

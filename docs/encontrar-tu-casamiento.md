@@ -24,7 +24,7 @@ reconociendo la fotografía del evento.
 
 ## Galería de demostración
 
-Debajo del buscador se muestran a la vista 24 casamientos ficticios con foto circular, nombres y un botón «Regalá». Elegir una
+Debajo del buscador, sobre una banda blanca, se muestran a la vista 24 casamientos ficticios con foto circular, nombres y un botón «Regalá». Elegir una
 lleva al mismo estado de selección que la búsqueda. Es solo para la demostración: en producción **no** debe existir un
 listado navegable de parejas sin su consentimiento. Solo hay ocho fotografías de pareja en el proyecto, así que varias
 parejas comparten archivo (con encuadres distintos) hasta que tengan su portada propia.
