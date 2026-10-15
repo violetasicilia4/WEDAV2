@@ -62,6 +62,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
   const [view, setView] = useState<DialogView>('cart');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
+  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [proof, setProof] = useState<File | null>(null);
   const [how, setHow] = useState<'alias' | 'tarjeta'>('alias');
@@ -69,11 +70,12 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
   // Lo enviado se guarda aparte: al enviar, el carrito se vacía pero el agradecimiento sigue mostrando esos regalos.
   const [sent, setSent] = useState<{ first: string; gifts: Gift[] } | null>(null);
   const total = items.reduce((n, g) => n + g.amount, 0);
-  const reset = () => { setView('cart'); setName(''); setSurname(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
+  const reset = () => { setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
   // Para poder enviar: nombre, apellido y, si transfiere por alias, el comprobante cargado.
   const missing = [
     name.trim().length < 2 && 'nombre',
     surname.trim().length < 2 && 'apellido',
+    !/^\S+@\S+\.\S+$/.test(email.trim()) && 'correo electrónico',
     how === 'alias' && !proof && 'comprobante',
   ].filter(Boolean) as string[];
   const close = () => { onClose(); window.setTimeout(reset, 200); };
@@ -106,8 +108,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
             <header className="rg-head">
               <div>
                 <p className="rg-kicker">Regalo para {wedding.couple}</p>
-                <DialogTitle>{count === 1 ? 'Tu regalo' : `Tus ${count} regalos`}</DialogTitle>
-                <DialogDescription>Podés sumar todos los que quieras antes de continuar.</DialogDescription>
+                <DialogTitle>Tu regalo</DialogTitle>
               </div>
             </header>
             <ul className="rg-cart-list">
@@ -133,8 +134,8 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
             <header className="rg-head">
               <div>
                 <p className="rg-kicker">Regalo para {wedding.couple}</p>
-                <DialogTitle>{items.length === 1 ? items[0]?.name : `${items.length} regalos`}</DialogTitle>
-                <DialogDescription>{items.length > 1 ? `Total ${formatARS(total)}` : formatARS(total)}</DialogDescription>
+                <DialogTitle>Tu regalo</DialogTitle>
+                <DialogDescription>Total {formatARS(total)}</DialogDescription>
               </div>
             </header>
 
@@ -164,6 +165,18 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
               <p className="rg-note">Con tarjeta vas a poder pagar desde el sitio, en cuotas. Para este ejemplo, usá el alias.</p>
             )}
 
+            {how === 'alias' && (
+              <div className="rg-up">
+                <p className="rg-up-label">Comprobante de transferencia</p>
+                <input id="rg-proof" className="dm-sr" type="file" accept="image/*,application/pdf" onChange={e => setProof(e.target.files?.[0] ?? null)} />
+                <label htmlFor="rg-proof" className={`rg-file${proof ? ' has' : ''}`}>
+                  {proof ? <Check size={16} aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
+                  <span>{proof ? proof.name : 'Subir captura o PDF'}</span>
+                  {proof && <em>Cambiar</em>}
+                </label>
+              </div>
+            )}
+
             <div className="rg-two">
               <div className="rg-field">
                 <label htmlFor="rg-name">Nombre</label>
@@ -176,24 +189,15 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
             </div>
 
             <div className="rg-field">
+              <label htmlFor="rg-email">Correo electrónico</label>
+              <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+
+            <div className="rg-field">
               <label htmlFor="rg-message">Mensaje (opcional)</label>
               <textarea id="rg-message" rows={2} value={message} onChange={e => setMessage(e.target.value)} />
             </div>
 
-            {how === 'alias' && (
-              <div className="rg-up">
-                <p className="rg-up-label">Comprobante de transferencia</p>
-                <input id="rg-proof" className="dm-sr" type="file" accept="image/*,application/pdf" onChange={e => setProof(e.target.files?.[0] ?? null)} />
-                <label htmlFor="rg-proof" className={`rg-file${proof ? ' has' : ''}`}>
-                  {proof ? <Check size={16} aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
-                  <span>{proof ? proof.name : 'Subir captura o PDF'}</span>
-                  {proof && <em>Cambiar</em>}
-                </label>
-                <p className="rg-sim">Simulación: el archivo no sale de tu navegador.</p>
-              </div>
-            )}
-
-            <p className="dm-demo-note">Es una demostración: no se realizará ningún cobro real.</p>
             <button type="submit" className="dm-solid rg-send" disabled={missing.length > 0}>Enviar</button>
             <button type="button" className="dm-ghost" onClick={() => setView('cart')}>Volver a mis regalos</button>
             {missing.length > 0 && <p className="rg-missing" aria-live="polite">Para enviar falta: {missing.join(', ')}.</p>}
