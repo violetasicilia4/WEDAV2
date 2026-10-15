@@ -340,8 +340,8 @@ function Invitation() {
     <Welcome />
     <TheDay />
     <RsvpBand />
-    <Practical />
     <Photos />
+    <Practical />
     <Participate />
     <Closing />
   </>;
