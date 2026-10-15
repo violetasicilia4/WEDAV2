@@ -565,3 +565,5 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-rsvp .iv-rsvp-grid { row-gap: 28px; }
 .dm-root .iv-rsvp .iv-rsvp-deadline { font-size: 18px; margin-top: 14px; }
 .dm-root .iv-rsvp .iv-h2 { text-transform: uppercase; font-weight: 400 !important; letter-spacing: .02em !important; }
+.dm-root .iv-rsvp .iv-btn { background: #5a646c; color: #fff; }
+.dm-root .iv-rsvp .iv-btn:hover { background: #4b545b; }
