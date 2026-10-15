@@ -1,0 +1,387 @@
+/* Encontrá tu casamiento: mismos tokens, tipografía y tratamiento de componentes que la landing de Weda. */
+.fw-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.fw-page main {
+  flex: 1;
+}
+.fw-top {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fw-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 6px;
+  font-size: 14px;
+}
+.fw-back:hover {
+  opacity: 0.65;
+}
+.fw-foot {
+  padding: 28px 4% 36px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.fw {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px) 0 clamp(40px, 6vw, 88px);
+}
+.fw-head {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+.fw-head .eyebrow {
+  margin-bottom: 18px;
+}
+.fw-head h1 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.08;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.fw-lead {
+  margin: 16px 0 0;
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.fw-form {
+  max-width: 640px;
+  margin: 36px auto 0;
+}
+.fw-label {
+  display: block;
+  margin: 0 0 8px 20px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.fw-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 6px 6px 6px 20px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  transition: border-color 0.2s;
+}
+.fw-field:focus-within {
+  border-color: var(--foreground);
+}
+.fw-field input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: var(--foreground);
+}
+.fw-field input::placeholder {
+  color: rgb(59 60 58 / 0.5);
+}
+.fw-field input::-webkit-search-cancel-button {
+  display: none;
+}
+.fw-form:has([aria-invalid="true"]) .fw-field {
+  border-color: var(--destructive);
+}
+.fw-error {
+  margin: 10px 0 0 20px;
+  font-size: 13px;
+  color: var(--destructive);
+}
+
+.fw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: #5a646c;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.fw-btn:hover:not(:disabled) {
+  background: #4b545b;
+}
+.fw-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.fw-btn:focus-visible,
+.fw-link:focus-visible,
+.fw-back:focus-visible,
+.fw-field input:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+.fw-field input:focus-visible {
+  outline: 0;
+}
+.fw-submit {
+  flex: none;
+  height: 48px;
+  padding: 0 26px;
+}
+.fw-btn-inline {
+  align-self: flex-start;
+}
+
+.fw-out {
+  margin-top: 40px;
+}
+.fw-status {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+.fw-hint {
+  margin: 28px auto 0;
+  max-width: 520px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.fw-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 340px);
+  justify-content: center;
+  gap: clamp(16px, 2vw, 28px);
+}
+.fw-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fff;
+}
+.fw-photo {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--section);
+}
+.fw-cover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+.fw-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 18px 18px;
+}
+.fw-card h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 400;
+  text-wrap: balance;
+}
+.fw-date {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+.fw-date.is-pending {
+  font-style: italic;
+}
+.fw-card .fw-btn {
+  margin-top: auto;
+  width: 100%;
+}
+
+.fw-skeleton .fw-photo {
+  background: linear-gradient(90deg, #ebe8dd, #f3f0e8, #ebe8dd);
+  background-size: 200% 100%;
+}
+.fw-skeleton i {
+  display: block;
+  height: 16px;
+  border-radius: 99px;
+  background: #ebe8dd;
+}
+.fw-skeleton i.short {
+  width: 45%;
+}
+.fw-skeleton i.btn {
+  height: 48px;
+  margin-top: 12px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fw-skeleton .fw-photo {
+    animation: fw-shimmer 1.4s linear infinite;
+  }
+}
+@keyframes fw-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.fw-message {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  border-radius: 22px;
+  background: #fff;
+}
+.fw-message h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.15;
+}
+.fw-message p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.fw-message .fw-btn {
+  margin-top: 8px;
+  align-self: center;
+}
+.fw-message.is-error > svg {
+  color: var(--destructive);
+}
+
+.fw-selected {
+  max-width: 880px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  overflow: hidden;
+  border-radius: 26px;
+  background: #fff;
+  outline: 0;
+}
+.fw-selected .fw-photo {
+  aspect-ratio: auto;
+  min-height: 100%;
+}
+.fw-selected-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: clamp(24px, 4vw, 44px);
+}
+.fw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--section);
+  font-size: 12px;
+}
+.fw-selected h2 {
+  margin: 6px 0 0;
+  font-size: clamp(30px, 4vw, 40px);
+  line-height: 1.08;
+  font-weight: 400;
+}
+.fw-selected .fw-date {
+  margin: 0;
+}
+.fw-note {
+  margin: 10px 0 6px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.fw-demo {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.fw-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .fw-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .fw-grid {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .fw-field {
+    padding-left: 16px;
+  }
+  .fw-submit {
+    padding: 0 20px;
+  }
+  .fw-selected {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+  }
+  .fw-selected .fw-photo {
+    aspect-ratio: 4 / 5;
+    min-height: 0;
+  }
+}

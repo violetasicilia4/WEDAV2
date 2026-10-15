@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, ArrowLeft, Check, Menu, X, Gift, CalendarHeart } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Menu, X, Gift, CalendarHeart, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { duo, routine, unboxing } from '@/assets/images';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
@@ -91,12 +91,14 @@ function FloatNav() {
           <a href="#top" className="seed-logo" aria-label="Weda, volver arriba">Weda<i aria-hidden="true" /></a>
         </div>
         <div className="float-pill float-right">
+          <Link to="/encontrar" className="float-link float-desktop">Encontrá tu casamiento</Link>
           <Link to="/ejemplo/regalos" className="float-link float-desktop">Hacé un regalo</Link>
           <a href="#planes" className="float-cta">Crear mi evento</a>
           <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </nav>
       <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
+        <Link to="/encontrar" className="menu-row" onClick={close}><span className="menu-tile"><Search size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Encontrá tu casamiento</strong></span></Link>
         <Link to="/ejemplo/regalos" className="menu-row" onClick={close}><span className="menu-tile"><Gift size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Hacé un regalo</strong></span></Link>
         <a href="#planes" className="menu-row" onClick={close}><span className="menu-tile"><CalendarHeart size={30} strokeWidth={1.4} /></span><span><small>Para novios</small><strong>Crear mi evento</strong></span></a>
       </div>
