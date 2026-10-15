@@ -54,10 +54,18 @@ function FloatNav() {
   const ref = useRef<HTMLElement>(null);
   // Una sola barra, como en Seed: sube con la página hasta pegarse arriba y sus píldoras se van "rellenando" (--p de 0 a 1).
   useEffect(() => {
-    const onScroll = () => ref.current?.style.setProperty('--p', String(Math.min(1, Math.max(0, window.scrollY / 56))));
+    const onScroll = () => {
+      const el = ref.current;
+      if (!el) return;
+      el.style.setProperty('--p', String(Math.min(1, Math.max(0, window.scrollY / 56))));
+      // Igual que en el ejemplo: pasada la portada la barra queda sobre fondo claro y las píldoras se oscurecen para que el texto no se pierda.
+      const hero = document.querySelector('.seed-hero');
+      el.classList.toggle('is-over-light', (hero ? hero.getBoundingClientRect().bottom : 0) < 64);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };
   }, []);
   useEffect(() => {
     if (!open) return;
