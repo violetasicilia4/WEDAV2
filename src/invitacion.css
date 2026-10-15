@@ -554,3 +554,8 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 @media (max-width: 370px) {
   .dm-root:has(#dia) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
 }
+
+/* Confirmar asistencia sobre fondo blanco: texto oscuro y botón pizarra */
+.dm-root .iv-band.iv-rsvp { background: #fff; color: var(--iv-ink); }
+.dm-root .iv-rsvp .iv-rsvp-deadline, .dm-root .iv-rsvp .iv-status { color: var(--iv-muted); }
+.dm-root .iv-rsvp :where(a, button):focus-visible { outline-color: var(--iv-slate); }

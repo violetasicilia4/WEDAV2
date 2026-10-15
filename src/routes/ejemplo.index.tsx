@@ -130,11 +130,11 @@ function RsvpBand() {
     <section className="iv-band iv-rsvp" id="confirmar" aria-labelledby="iv-rsvp-title">
       <div className="iv-wrap iv-rsvp-grid">
         <div>
-          <h2 id="iv-rsvp-title" className="iv-h2">Confirmá tu asistencia</h2>
-          <p className="iv-rsvp-deadline">Respondé antes del {rsvpDeadline}.</p>
+          <h2 id="iv-rsvp-title" className="iv-h2">¿Venís?</h2>
+          <p className="iv-rsvp-deadline">Confirmá tu asistencia antes del {rsvpDeadline}.</p>
         </div>
         <div className="iv-rsvp-action">
-          <button type="button" className="iv-btn is-paper" onClick={rsvp.open}>Confirmar asistencia</button>
+          <button type="button" className="iv-btn" onClick={rsvp.open}>Confirmar asistencia</button>
           {rsvp.sentCount > 0 && <p className="iv-status" role="status">Ya cargaste una confirmación en esta demostración.</p>}
         </div>
       </div>
