@@ -385,3 +385,13 @@
     min-height: 0;
   }
 }
+
+.fw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+}
+.fw-actions .fw-link {
+  margin-top: 0;
+}

@@ -102,20 +102,27 @@ function Selected({ item, onReset }: { item: DemoWedding; onReset: () => void })
         </p>
         <h2 id="fw-selected-title">{names}</h2>
         <DateLine date={item.date} />
-        {item.route ? (
+        {item.routes ? (
           <>
             <p className="fw-note">
-              Este es el casamiento de ejemplo de Weda. Podés recorrer su sitio completo.
+              Este es el casamiento de ejemplo de Weda. Podés regalarles desde su lista o recorrer
+              su sitio.
             </p>
-            <Link to={item.route} className="fw-btn fw-btn-inline">
-              Ir al sitio del casamiento
-              <ArrowRight size={16} aria-hidden="true" />
-            </Link>
+            <div className="fw-actions">
+              <Link to={item.routes.gifts} className="fw-btn fw-btn-inline">
+                Hacer un regalo
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <Link to={item.routes.site} className="fw-link">
+                Ver su sitio
+              </Link>
+            </div>
           </>
         ) : (
-          /* INTEGRACIÓN FUTURA: acá se navega al espacio real del evento (por ejemplo /evento/$id) cuando exista esa ruta. */
+          /* INTEGRACIÓN FUTURA: acá se navega a la lista de regalos y al sitio reales del evento (por ejemplo /evento/$id/regalos) cuando existan esas rutas. */
           <p className="fw-note">
-            Este es un casamiento de demostración y todavía no tiene un sitio al que continuar.
+            Este es un casamiento de demostración y todavía no tiene una lista de regalos a la que
+            continuar.
           </p>
         )}
         <p className="fw-demo">

@@ -34,9 +34,10 @@ Inicial, búsqueda en curso, resultados, ningún resultado, consulta inválida o
 
 ## Selección y puntos de integración
 
-- Si el evento tiene `route` (hoy solo el casamiento de ejemplo, `/ejemplo`), la confirmación ofrece ir a esa ruta real.
+- Esta pantalla es el punto de entrada para regalar: el invitado primero encuentra a la pareja y después va a su lista de regalos. Por eso la landing la usa para «Hacé un regalo» y para «¿Invitado? Encontrá una lista de regalos».
+- Si el evento tiene `routes` (hoy solo el casamiento de ejemplo), la confirmación ofrece «Hacer un regalo» (`/ejemplo/regalos`) y «Ver su sitio» (`/ejemplo`).
 - Los demás eventos solo muestran el estado de selección. **Integración futura:** en `Selected` (`find-wedding.tsx`),
-  navegar al espacio real del evento cuando exista esa ruta (por ejemplo `/evento/$id`).
+  navegar a la lista de regalos y al sitio reales del evento cuando existan esas rutas (por ejemplo `/evento/$id/regalos`).
 - **Integración futura de la búsqueda:** reemplazar el cuerpo de `searchWeddings` por una llamada a la API, manteniendo
   la firma `(query, { signal }) => Promise<DemoWedding[]>`.
 

@@ -18,8 +18,8 @@ export type DemoWedding = {
   date: string | null;
   /** Estado del evento de demostración. */
   status: "demo";
-  /** Ruta real del proyecto a la que se puede continuar. Solo existe para el casamiento de ejemplo. */
-  route?: "/ejemplo";
+  /** Rutas reales del proyecto a las que se puede continuar. Solo existen para el casamiento de ejemplo. */
+  routes?: { gifts: "/ejemplo/regalos"; site: "/ejemplo" };
 };
 
 export const demoWeddings: DemoWedding[] = [
@@ -31,7 +31,7 @@ export const demoWeddings: DemoWedding[] = [
     coverAlt: "Ignacio y Martina sonriendo juntos frente al mar",
     date: "2027-03-20",
     status: "demo",
-    route: "/ejemplo",
+    routes: { gifts: "/ejemplo/regalos", site: "/ejemplo" },
   },
   {
     id: "demo-camila-lucas",
