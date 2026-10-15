@@ -1,0 +1,1012 @@
+/* Micrositio de ejemplo · bloques (.ej-*) y lista de regalos (.rg-*).
+   Mismos criterios que la landing: Arial, títulos livianos y grandes, mucho aire, esquinas muy redondeadas,
+   papel #f5f2eb / blanco, pizarra de Weda #5A646C solo en acciones y en un bloque de color. */
+
+:root {
+  --ej-pad: clamp(72px, 9vw, 132px);
+  --ej-line: rgb(59 60 58 / .14);
+  --ej-ink: var(--foreground);
+  --ej-muted: var(--muted-foreground);
+  --ej-slate: #5A646C;
+  --ej-r: clamp(22px, 2.4vw, 32px);
+}
+
+/* ---------- ritmo común: cada bloque es una banda con el mismo aire ---------- */
+.ej-block { padding: var(--ej-pad) 0; }
+.ej-white { background: #fff; }
+.ej-paper { background: var(--paper); }
+.ej-slate { background: var(--ej-slate); color: #fff; border-radius: var(--curve); margin: 0 clamp(8px, 1.2vw, 16px); }
+.ej-narrow { max-width: 760px; text-align: center; }
+.ej-eyebrow { margin: 0 0 18px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ej-muted); }
+.ej-slate .ej-eyebrow { color: rgb(255 255 255 / .75); }
+.ej-block h2, .ej-block h1 { margin: 0; font-weight: 400; letter-spacing: -.015em; text-wrap: balance; }
+.ej-block h2 { font-size: clamp(30px, 3.6vw, 52px); line-height: 1.08; }
+.ej-statement { font-size: clamp(34px, 4.6vw, 68px) !important; line-height: 1.04 !important; }
+.ej-lead { margin: 28px auto 0; max-width: 34em; font-size: clamp(16px, 1.35vw, 19px); line-height: 1.6; color: var(--ej-muted); }
+.ej-text { margin: 18px 0 0; max-width: 32em; font-size: 16px; line-height: 1.6; color: var(--ej-muted); }
+.ej-slate .ej-text { color: rgb(255 255 255 / .85); }
+.ej-sign { margin: 32px 0 0; font-size: 15px; letter-spacing: .02em; }
+.ej-head { margin: 0 0 clamp(36px, 5vw, 64px); max-width: 40em; }
+.ej-head.is-center { margin-inline: auto; text-align: center; }
+.ej-sub { margin: 18px 0 0; font-size: clamp(15px, 1.2vw, 17px); line-height: 1.55; color: var(--ej-muted); max-width: 34em; }
+.ej-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 28px; }
+.ej-btns.is-center { justify-content: center; margin-top: 36px; }
+
+/* ---------- portada ---------- */
+.ej-cover-kicker { margin: 0 0 14px !important; font-size: 12px !important; letter-spacing: .16em; text-transform: uppercase; opacity: .9; }
+.ej-cover .hero-copy > p:not(.ej-cover-kicker) { letter-spacing: .02em; }
+
+/* ---------- agenda: filas separadas por líneas finas ---------- */
+.ej-days { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ej-line); }
+.ej-day {
+  display: grid; grid-template-columns: 44px minmax(150px, 1fr) minmax(0, 1.5fr) minmax(180px, 240px); gap: clamp(16px, 3vw, 48px);
+  align-items: center; padding: clamp(24px, 3vw, 40px) 0; border-bottom: 1px solid var(--ej-line);
+}
+.ej-day-n { font-size: 13px; letter-spacing: .1em; color: var(--ej-muted); align-self: start; padding-top: 8px; }
+.ej-day-when h3 { margin: 0; font-weight: 400; font-size: clamp(22px, 2.2vw, 30px); letter-spacing: -.01em; }
+.ej-day-when p { margin: 6px 0 0; font-size: clamp(18px, 1.6vw, 22px); color: var(--ej-slate); }
+.ej-venue { margin: 0; font-size: 17px; }
+.ej-addr { margin: 4px 0 0; font-size: 14px; color: var(--ej-muted); }
+.ej-note { margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: var(--ej-muted); max-width: 36em; }
+.ej-map { position: relative; display: block; aspect-ratio: 8 / 5; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .08); }
+.ej-map > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ej-pin {
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 38px; height: 38px;
+  border-radius: 50%; background: var(--ej-slate); color: #fff; box-shadow: 0 6px 16px rgb(59 60 58 / .3);
+}
+.ej-map-label {
+  position: absolute; left: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px;
+  background: #fff; font-size: 12px; box-shadow: 0 2px 8px rgb(59 60 58 / .12);
+}
+.ej-map:hover .ej-map-label { background: var(--paper); }
+@media (max-width: 900px) {
+  .ej-day { grid-template-columns: 40px minmax(0, 1fr); }
+  .ej-day-where, .ej-map { grid-column: 2; }
+  .ej-map { max-width: 320px; }
+}
+
+/* ---------- ¿Venís? / ¿Querés regalarnos? ---------- */
+.ej-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 20px); }
+.ej-card {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 40px;
+  min-height: clamp(300px, 30vw, 420px); padding: clamp(28px, 3.4vw, 48px); border-radius: var(--ej-r); isolation: isolate;
+}
+.ej-card h2 { font-size: clamp(28px, 3vw, 42px); }
+.ej-card p { margin: 14px 0 0; max-width: 24em; font-size: 16px; line-height: 1.55; }
+.ej-card .seed-button { align-self: flex-start; }
+.ej-card-slate { background: var(--ej-slate); color: #fff; }
+.ej-card-slate p { color: rgb(255 255 255 / .85); }
+.dm-root .ej-card-slate .seed-button { background: #fff; color: var(--foreground); }
+.dm-root .ej-card-slate .seed-button:hover { background: var(--paper); }
+.ej-card-photo { color: #fff; background: #3b3c3a; }
+.ej-card-photo > img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.ej-card-photo::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgb(20 24 26 / .72), rgb(20 24 26 / .12) 70%); }
+.ej-card-photo p { color: rgb(255 255 255 / .9); }
+.dm-root .ej-card-photo .seed-button { background: #fff; color: var(--foreground); }
+@media (max-width: 760px) { .ej-actions { grid-template-columns: 1fr; } .ej-card { min-height: 280px; } }
+
+/* ---------- fotos + hashtag ---------- */
+.ej-mosaic {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(8px, 1.2vw, 16px);
+  grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, clamp(180px, 22vw, 340px));
+}
+.ej-mosaic li { overflow: hidden; border-radius: clamp(16px, 1.8vw, 26px); background: var(--paper); }
+.ej-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
+.ej-mosaic li:hover img { transform: scale(1.03); }
+.ej-mosaic .m1 { grid-column: 1; grid-row: 1 / span 2; }
+.ej-mosaic .m2 { grid-column: 2 / span 2; grid-row: 1; }
+.ej-mosaic .m3 { grid-column: 4; grid-row: 1 / span 2; }
+.ej-mosaic .m4 { grid-column: 2; grid-row: 2; }
+.ej-mosaic .m5 { grid-column: 3; grid-row: 2; }
+.ej-hashtag { margin-top: clamp(40px, 5vw, 72px); text-align: center; }
+.ej-hashtag p { margin: 0; }
+.ej-tag { font-size: clamp(26px, 3.4vw, 48px); letter-spacing: -.01em; margin: 6px 0 14px !important; }
+.ej-hashtag p:last-child { color: var(--ej-muted); font-size: 16px; }
+.ej-hashtag strong { font-weight: 400; color: var(--foreground); }
+@media (max-width: 760px) {
+  .ej-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, clamp(150px, 42vw, 240px)); }
+  .ej-mosaic .m1 { grid-column: 1; grid-row: 1 / span 2; }
+  .ej-mosaic .m2 { grid-column: 2; grid-row: 1; }
+  .ej-mosaic .m3 { grid-column: 2; grid-row: 2 / span 2; }
+  .ej-mosaic .m4 { grid-column: 1; grid-row: 3; }
+  .ej-mosaic .m5 { display: none; }
+}
+
+/* ---------- dress code | save the date ---------- */
+.ej-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 20px); }
+.ej-panel { padding: clamp(28px, 3.4vw, 52px); border-radius: var(--ej-r); background: #fff; }
+.ej-palette { list-style: none; margin: 36px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 20px 28px; }
+.ej-palette li { display: grid; justify-items: center; gap: 10px; font-size: 13px; color: var(--ej-muted); }
+.ej-palette i { display: block; width: 64px; height: 64px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .1); }
+.ej-cal { margin-top: 24px; max-width: 360px; }
+.ej-cal-month { margin: 0 0 12px; font-size: 14px; color: var(--ej-muted); }
+.ej-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px 0; text-align: center; font-size: 14px; }
+.ej-cal-grid span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; }
+.ej-cal-dow { font-size: 11px; color: var(--ej-muted); aspect-ratio: auto !important; padding-bottom: 6px; }
+.ej-cal-grid .is-day { background: var(--ej-slate); color: #fff; }
+@media (max-width: 860px) { .ej-pair { grid-template-columns: 1fr; } }
+
+/* ---------- saludos (bloque pizarra) ---------- */
+.ej-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 112px); align-items: start; }
+.ej-form { display: grid; gap: 10px; margin-top: 28px; max-width: 460px; }
+.ej-form input, .ej-form textarea {
+  width: 100%; min-height: 52px; padding: 0 18px; border-radius: 16px; border: 1px solid rgb(255 255 255 / .35); background: rgb(255 255 255 / .1);
+  color: #fff; font: inherit; font-size: 16px; outline: none; transition: border-color .2s, background .2s;
+}
+.ej-form textarea { padding: 14px 18px; line-height: 1.5; resize: vertical; min-height: 110px; }
+.ej-form input::placeholder, .ej-form textarea::placeholder { color: rgb(255 255 255 / .65); }
+.ej-form input:focus-visible, .ej-form textarea:focus-visible { border-color: #fff; background: rgb(255 255 255 / .16); }
+.ej-form.is-light input { border-color: rgb(59 60 58 / .25); background: #fff; color: var(--foreground); }
+.ej-form.is-light input::placeholder { color: var(--ej-muted); }
+.ej-form.is-light input:focus-visible { border-color: var(--ej-slate); box-shadow: 0 0 0 3px rgb(90 100 108 / .25); }
+.ej-err { margin: 0; font-size: 14px; color: #fff; }
+.ej-err.is-dark { color: var(--destructive); }
+.ej-light-btn { justify-self: start; height: 48px; padding: 0 26px; border: 0; border-radius: 999px; background: #fff; color: var(--foreground); font: inherit; font-size: 15px; cursor: pointer; touch-action: manipulation; transition: background .2s; }
+.ej-light-btn:hover { background: var(--paper); }
+.ej-wall { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ej-wall li { padding: 24px 26px; border-radius: 22px; background: rgb(255 255 255 / .1); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16); }
+.ej-wall q { display: block; quotes: none; font-size: 18px; line-height: 1.45; }
+.ej-wall span { display: block; margin-top: 14px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: rgb(255 255 255 / .75); }
+
+/* ---------- playlist ---------- */
+.ej-tracks { padding: clamp(20px, 2.4vw, 32px); border-radius: var(--ej-r); background: var(--paper); }
+.ej-tracks-top { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; padding-bottom: 18px; border-bottom: 1px solid var(--ej-line); }
+.ej-tracks-top > span { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--ej-slate); color: #fff; }
+.ej-tracks-top strong { display: block; font-weight: 400; font-size: 17px; }
+.ej-tracks-top small, .ej-tracks li small { display: block; font-size: 13px; color: var(--ej-muted); }
+.ej-tracks ol { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+.ej-tracks li { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--ej-line); }
+.ej-tracks li:last-child { border-bottom: 0; }
+.ej-tracks .n { width: 22px; font-size: 13px; color: var(--ej-muted); text-align: right; }
+.ej-tracks .t { flex: 1; min-width: 0; }
+.ej-tracks .t strong { display: block; font-weight: 400; font-size: 16px; }
+.ej-tracks em { font-style: normal; font-size: 12px; color: var(--ej-slate); }
+@media (max-width: 860px) { .ej-split { grid-template-columns: 1fr; } }
+
+/* ---------- cierre ---------- */
+.ej-closing {
+  position: relative; isolation: isolate; color: #fff; border-radius: var(--curve); margin: 0 clamp(8px, 1.2vw, 16px) clamp(8px, 1.2vw, 16px);
+  background: #3b3c3a url('/pareja-portada.jpg?v=3') center 35% / cover no-repeat;
+}
+.ej-closing::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: rgb(22 26 28 / .58); }
+.ej-closing .ej-lead { color: rgb(255 255 255 / .88); }
+.dm-root .ej-closing .seed-button { background: #fff; color: var(--foreground); }
+.dm-root .ej-closing .seed-button:hover { background: var(--paper); }
+
+/* =========================================================================
+   Lista de regalos: misma tarjeta y mismo pop-up que la escena de la landing
+   ========================================================================= */
+.rg-intro { padding-bottom: clamp(48px, 6vw, 80px); }
+.rg-intro .dm-back { margin-bottom: 28px; }
+.rg-intro h1 { max-width: 14em; margin-inline: auto; }
+.rg-list { padding-top: clamp(40px, 5vw, 72px); }
+.rg-filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: clamp(28px, 4vw, 48px); }
+.rg-filters button {
+  min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--paper); color: var(--foreground);
+  font: inherit; font-size: 14px; cursor: pointer; transition: background .2s, color .2s; touch-action: manipulation;
+}
+.rg-filters button:hover { background: #ebe7dc; }
+.rg-filters button.on { background: var(--ej-slate); color: #fff; }
+
+.rg-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 20px); }
+.rg-card { display: flex; flex-direction: column; padding: 10px; border-radius: 26px; background: #f6f4ee; transition: transform .25s cubic-bezier(.2, .7, .2, 1), box-shadow .25s; }
+.rg-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgb(59 60 58 / .12); }
+.rg-photo { position: relative; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: #ebe7dc; display: grid; place-items: center; }
+.rg-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rg-icon { display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: rgb(255 255 255 / .7); color: var(--ej-slate); }
+.rg-price {
+  position: absolute; left: 10px; bottom: 10px; padding: 6px 12px; border-radius: 999px; background: rgb(255 255 255 / .95);
+  font-size: 13px; box-shadow: 0 4px 12px rgb(0 0 0 / .14);
+}
+.rg-card h3 { margin: 16px 8px 0; font-weight: 400; font-size: 18px; line-height: 1.25; text-wrap: balance; flex: 1; }
+.rg-fund { margin: 12px 8px 0; }
+.rg-bar { height: 5px; border-radius: 999px; background: rgb(59 60 58 / .14); overflow: hidden; }
+.rg-bar i { display: block; height: 100%; border-radius: inherit; background: var(--ej-slate); }
+.rg-fund p { margin: 6px 0 0; font-size: 12px; color: var(--ej-muted); }
+.rg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 46px; margin-top: 16px; border: 0; border-radius: 999px;
+  background: var(--ej-slate); color: #fff; font: inherit; font-size: 15px; cursor: pointer; touch-action: manipulation; transition: background .2s;
+}
+.rg-btn:hover:not(:disabled) { background: #4b545b; }
+.rg-btn:disabled { background: rgb(59 60 58 / .1); color: var(--ej-muted); cursor: default; }
+.rg-card.is-done .rg-photo img, .rg-card.is-done .rg-icon { opacity: .55; filter: grayscale(.6); }
+.rg-live { margin: 28px 0 0; text-align: center; font-size: 13px; color: var(--ej-muted); }
+.rg-next { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 24px; margin-top: clamp(40px, 5vw, 72px); padding-top: 32px; border-top: 1px solid var(--ej-line); }
+.rg-next p { margin: 0; font-size: 18px; }
+.dm-root .rg-next .seed-button { background: var(--ej-slate); color: #fff; }
+@media (max-width: 1000px) { .rg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .rg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rg-card h3 { font-size: 16px; margin-inline: 4px; } }
+
+/* pop-up del regalo */
+.rg-dialog {
+  width: calc(100% - 24px) !important; max-width: 420px !important; border: 0 !important; border-radius: 26px !important; background: #fff !important;
+  padding: clamp(22px, 3vw, 30px) !important; gap: 0 !important; max-height: calc(100dvh - 32px); overflow-y: auto; font-family: Arial, Helvetica, sans-serif; color: var(--foreground);
+}
+.rg-form { display: grid; gap: 18px; }
+.rg-head { display: flex; align-items: center; gap: 14px; }
+.rg-thumb { flex: none; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 16px; overflow: hidden; background: var(--paper); color: var(--ej-slate); }
+.rg-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.rg-kicker { margin: 0 0 4px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ej-muted); }
+.rg-dialog h2 { margin: 0; font-size: 20px; font-weight: 400; line-height: 1.2; letter-spacing: -.005em; }
+.rg-head p:not(.rg-kicker) { margin: 4px 0 0; font-size: 15px; color: var(--ej-muted); }
+.rg-field { border: 0; margin: 0; padding: 0; min-width: 0; }
+.rg-field label:not(.rg-chip), .rg-field legend { display: block; padding: 0; margin: 0 0 8px; font-size: 13px; color: var(--ej-muted); }
+.rg-field input[type="text"] {
+  width: 100%; min-height: 50px; padding: 0 16px; border-radius: 14px; border: 1px solid rgb(59 60 58 / .25); background: #fff; color: var(--foreground);
+  font: inherit; font-size: 16px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.rg-field input[type="text"]:focus-visible { border-color: var(--ej-slate); box-shadow: 0 0 0 3px rgb(90 100 108 / .25); }
+.rg-field.has-error input[type="text"] { border-color: var(--destructive); }
+.rg-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rg-chip { position: relative; display: block; cursor: pointer; }
+.rg-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.rg-chip span { display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 14px; border: 1px solid rgb(59 60 58 / .25); font-size: 15px; transition: background .2s, color .2s, border-color .2s; }
+.rg-chip.on span { background: var(--ej-slate); border-color: var(--ej-slate); color: #fff; }
+.rg-chip:focus-within span { box-shadow: 0 0 0 3px rgb(90 100 108 / .3); }
+.rg-alias { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 6px 6px 18px; border-radius: 14px; background: var(--paper); }
+.rg-alias code { font: inherit; font-size: 16px; }
+.rg-alias button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; height: 40px; padding: 0 14px; border: 0; border-radius: 999px;
+  background: #fff; color: var(--ej-slate); font: inherit; font-size: 14px; cursor: pointer; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .14); touch-action: manipulation;
+}
+.rg-note { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--paper); font-size: 14px; line-height: 1.5; color: var(--ej-muted); }
+.rg-help { margin: -6px 0 0; font-size: 13px; color: var(--ej-muted); }
+.rg-send { width: 100%; height: 50px; }
+.rg-dialog .dm-solid { background: var(--ej-slate); color: #fff; }
+.rg-thanks { display: grid; justify-items: center; gap: 0; padding: 18px 0 6px; text-align: center; }
+.rg-check { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 20px; border-radius: 50%; background: #fff; color: var(--ej-slate); box-shadow: 0 0 0 1px rgb(59 60 58 / .08), 0 8px 22px rgb(59 60 58 / .1); }
+.rg-thanks h2 { font-size: 26px; font-weight: 700; }
+.rg-thanks p { margin: 10px 0 24px; font-size: 15px; color: var(--ej-muted); }
+.ej-panel { display: flex; flex-direction: column; }
+.ej-panel .ej-palette { margin-top: auto; padding-top: 36px; }
+
+/* "Nos casamos" sobre blanco; "El día" como una tarjeta de color papel */
+.ej-welcome { padding-bottom: clamp(48px, 6vw, 88px); }
+.ej-tight { padding-top: 0; }
+.ej-sheet { padding: clamp(28px, 4.5vw, 72px); border-radius: var(--ej-r); background: var(--paper); }
+.ej-sheet .ej-head { margin-bottom: clamp(24px, 3.5vw, 48px); }
+.ej-sheet .ej-day:last-child { border-bottom: 0; }
+.ej-sheet .ej-map { box-shadow: none; }
+@media (max-width: 640px) { .ej-sheet { padding: 24px 20px; } }
+#mensaje, .ej-welcome { background: #fff !important; }
+
+/* =========================================================================
+   Sistema tipográfico: el mismo de la landing de Weda (Arial / Helvetica, peso 400) en todo el micrositio.
+   · Titulares:  peso 400, interlineado 1,2 (mismo tamaño × 1,2), color #2b2b2b.
+   · Textos:     peso 400, interlineado 1,2.  Descripciones 15 px, subtítulos 14 px,
+                 etiquetas 12 px en mayúsculas, aclaraciones 10 px.
+   · Sin negritas. El gris de los textos es #575757 (el que usan ellos en enlaces y pie).
+   Escala de Guestlist → 55 · 50 · 35 · 28 · 22 / 15 · 14 · 12 · 10.
+   ========================================================================= */
+:root {
+  --gl-ink: #2b2b2b;
+  --gl-gray: #575757;
+  --gl-soft: #757575;
+}
+.dm-root, .dm-root button, .dm-root input, .dm-root textarea, .dm-rsvp, .dm-rsvp *, .rg-dialog, .rg-dialog * { line-height: 1.2; }
+.dm-root { color: var(--gl-ink); }
+
+/* titulares */
+.dm-root h1, .dm-root h2, .dm-root h3, .dm-hero .hero-copy h1, .ej-statement, .ej-tag, .ej-cal-month,
+.rg-dialog h2, .dm-rsvp h2, .dm-rsvp-done h2, .rg-thanks h2, .ej-tracks-top strong, .ej-venue, .ej-day-when p, .ej-wall q, .ej-sign,
+.rg-dialog h2 *, .dm-rsvp h2 * {
+  font-family: var(--ej-sans) !important; font-weight: 400 !important; line-height: 1.2 !important; letter-spacing: 0 !important; font-style: normal;
+}
+.dm-root em, .rg-dialog em { font-style: italic; }
+.dm-hero .hero-copy h1 { font-size: clamp(34px, 3.5vw, 50px) !important; color: #fff; }
+.ej-statement, .ej-block h2, .rg-intro h1 { font-size: clamp(26px, 2.45vw, 35px) !important; color: var(--gl-ink); }
+.ej-card h2 { font-size: clamp(24px, 1.95vw, 28px) !important; }
+.ej-card-slate h2, .ej-card-photo h2, .ej-slate h2, .ej-closing h2 { color: #fff; }
+.ej-day-when h3, .rg-card h3, .ej-venue, .ej-wall q, .rg-dialog h2 { font-size: 22px; }
+.ej-day-when p { font-size: 22px; color: var(--gl-gray); }
+.ej-tag { font-size: clamp(28px, 2.45vw, 35px); }
+.rg-thanks h2, .dm-rsvp h2 { font-size: 28px; }
+
+/* textos */
+.ej-lead, .ej-text, .ej-sub, .ej-card p, .rg-help, .ej-hashtag p:last-child { font-size: 15px; line-height: 1.2; color: var(--gl-gray); }
+.ej-lead { max-width: 30em; }
+.ej-slate .ej-text, .ej-card-slate p, .ej-card-photo p { color: rgb(255 255 255 / .9); }
+.ej-closing .ej-lead { color: rgb(255 255 255 / .9); font-family: var(--ej-sans); font-size: 22px; font-style: italic; line-height: 1.2; }
+.ej-addr, .ej-note, .rg-note, .rg-head p:not(.rg-kicker), .rg-fund p, .rg-live, .ej-tracks small, .ej-tracks-top small { font-size: 14px; line-height: 1.2; color: var(--gl-gray); }
+.ej-eyebrow, .rg-kicker, .ej-cover-kicker, .rg-field label, .rg-field legend, .ej-cal-month, .ej-wall span {
+  font-family: var(--ej-sans) !important; font-size: 12px; line-height: 1.2; letter-spacing: 0; text-transform: uppercase; color: var(--gl-ink);
+}
+.ej-cal-month { font-style: normal; }
+.ej-slate .ej-eyebrow, .ej-closing .ej-eyebrow, .ej-wall span { color: rgb(255 255 255 / .85); }
+.ej-cover .ej-cover-kicker { color: #fff; }
+.dm-hero .hero-copy > p:not(.ej-cover-kicker) { font-size: 14px; line-height: 1.2; color: #f5f5f5; }
+.ej-cal-grid, .ej-palette li, .ej-map-label, .rg-price, .ej-tracks .n, .ej-tracks em, .dm-rsvp-opt, .dm-rsvp small { font-size: 12px; line-height: 1.2; }
+.ej-tracks .t strong, .rg-btn, .rg-filters button, .dm-solid, .dm-ghost, .ej-light-btn, .dm-root .seed-button, .dm-root .seed-link, .rg-alias code, .rg-chip span { font-size: 14px; line-height: 1.2; }
+.rg-field input[type="text"], .ej-form input, .ej-form textarea, .dm-rsvp-field input[type="text"], .dm-rsvp-field textarea { font-size: 15px; font-family: var(--ej-sans); }
+.rg-intro .dm-back, .rg-next p { font-size: 14px; }
+.rg-next p { font-family: var(--ej-sans); font-size: 22px; }
+.dm-root .dm-hero .hero-copy > p:not(.ej-cover-kicker) { line-height: 1.2 !important; }
+/* una oración, una sola tipografía: nada de mezclar normal y cursiva ni serif y sans dentro de la misma frase */
+.ej-hashtag strong { font: inherit; color: inherit; }
+.ej-tracks em { font-style: normal; }
+
+/* portada: solo kicker, nombres y fecha, centrados sobre la foto */
+.seed-hero.dm-hero.ej-cover { align-items: center; justify-content: center; }
+.dm-root .ej-cover .hero-inner { padding: 0 !important; display: grid; place-items: center; width: 100%; }
+.dm-root .ej-cover .hero-copy { display: grid; justify-items: center; text-align: center; margin: 0 auto; }
+.dm-root .ej-cover .hero-copy > p { margin: 0; }
+.dm-root .ej-cover .hero-copy h1 { margin: 14px 0 16px; }
+.ej-cover .hero-image { object-position: center 28%; }
+.seed-hero.dm-hero.ej-cover::after { background: rgb(14 16 18 / .34); }
+
+/* portada más baja: se asoma el bloque "Nos casamos" sin tener que scrollear */
+.seed-hero.dm-hero.ej-cover { height: clamp(380px, 58svh, 600px) !important; min-height: 0 !important; }
+.ej-cover .hero-image { object-position: center 14%; }
+
+/* portada + bloque "Nos casamos" completos en la primera pantalla; lo demás, al scrollear */
+.seed-hero.dm-hero.ej-cover { height: clamp(300px, calc(100svh - 395px), 620px) !important; }
+@media (max-width: 700px) { .seed-hero.dm-hero.ej-cover { height: clamp(260px, calc(100svh - 470px), 480px) !important; } }
+.ej-cover .hero-image { object-position: center 26%; }
+
+/* portada alta (≈ tres cuartos de pantalla); debajo asoma "Nos casamos / Queremos compartir este día con vos" */
+.seed-hero.dm-hero.ej-cover { height: clamp(380px, 74svh, 780px) !important; }
+@media (max-width: 700px) { .seed-hero.dm-hero.ej-cover { height: clamp(340px, 66svh, 560px) !important; } }
+.ej-cover .hero-image { object-position: center 24%; }
+
+/* portada: nombre y fecha un poco más abajo del centro y más juntos; bloque de bienvenida más arriba */
+.dm-root .ej-cover .hero-inner { padding-top: clamp(48px, 13svh, 120px) !important; }
+.dm-root .ej-cover .hero-copy h1 { margin: 0 0 6px; }
+.ej-welcome { padding-top: clamp(36px, 4.4vw, 56px); }
+.dm-root .ej-cover .hero-copy h1 { margin: 0 0 -10px; }
+
+.dm-root .dm-hero .hero-copy h1 { font-size: clamp(40px, 4.2vw, 60px) !important; }
+
+/* "El día": una carta cuadrada, con marco fino; íconos de un mismo trazo en lugar de números */
+.ej-sheet {
+  position: relative; border-radius: 0; background: var(--paper);
+  box-shadow: 0 1px 2px rgb(59 60 58 / .06), 0 18px 40px rgb(59 60 58 / .08);
+}
+.ej-sheet::before { content: ''; position: absolute; inset: clamp(10px, 1.2vw, 16px); border: 1px solid rgb(59 60 58 / .22); pointer-events: none; }
+.ej-sheet .ej-map { border-radius: 0; }
+.ej-day-icon { display: grid; place-items: center; width: 44px; height: 44px; color: var(--gl-ink); align-self: start; }
+.ej-day { align-items: center; }
+.ej-day .ej-day-icon { align-self: center; }
+.ej-day-where .ej-addr { margin-top: 6px; }
+@media (max-width: 900px) { .ej-day { grid-template-columns: 44px minmax(0, 1fr); } }
+/* carta de "El día": crema marfil, a tono con el blanco */
+.ej-sheet { background: #f8f3e8; }
+.ej-sheet::before { border-color: rgb(59 60 58 / .2); }
+.ej-sheet .ej-days, .ej-sheet .ej-day { border-color: rgb(59 60 58 / .14); }
+
+/* =========================================================================
+   "El día": carta compacta en azul Weda, estilo editorial.
+   Cuatro columnas separadas por filetes finos; sin mapas, la dirección lleva a Google Maps.
+   ========================================================================= */
+.ej-letter {
+  max-width: 1080px; margin: 0 auto; padding: clamp(24px, 3vw, 40px) clamp(24px, 3.4vw, 48px) clamp(28px, 3.4vw, 44px);
+  background: #707d87; color: #fff; border-radius: 0; position: relative;
+  box-shadow: 0 1px 2px rgb(59 60 58 / .12), 0 16px 36px rgb(59 60 58 / .14);
+}
+.ej-letter::before { content: ''; position: absolute; inset: clamp(8px, 1vw, 12px); border: 1px solid rgb(255 255 255 / .32); pointer-events: none; }
+.ej-letter-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; padding-bottom: clamp(16px, 2vw, 24px); margin-bottom: clamp(16px, 2vw, 28px); border-bottom: 1px solid rgb(255 255 255 / .32); }
+.ej-letter-head .ej-eyebrow { margin: 0; color: rgb(255 255 255 / .85); }
+.ej-letter-head h2 { color: #fff; font-size: clamp(22px, 2vw, 28px) !important; }
+.ej-letter-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ej-letter-grid li { padding: 0 clamp(12px, 1.6vw, 24px); border-left: 1px solid rgb(255 255 255 / .28); display: grid; align-content: start; gap: 0; }
+.ej-letter-grid li:first-child { border-left: 0; padding-left: 0; }
+.ej-letter-grid li:last-child { padding-right: 0; }
+.ej-letter-icon { display: block; width: 24px; height: 24px; margin-bottom: 14px; color: #fff; }
+.ej-letter-grid h3 { margin: 0; font-size: 22px; color: #fff; }
+.ej-letter-time { margin: 6px 0 0; font-family: var(--ej-sans); font-size: 22px; line-height: 1.2; color: rgb(255 255 255 / .92); }
+.ej-letter-venue { margin: 14px 0 0; font-size: 14px; line-height: 1.25; color: #fff; }
+.ej-letter-addr { margin-top: 6px; font-size: 12px; line-height: 1.3; color: rgb(255 255 255 / .82); text-decoration: none; }
+.ej-letter-addr:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 860px) {
+  .ej-letter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24px; }
+  .ej-letter-grid li:nth-child(odd) { border-left: 0; padding-left: 0; }
+  .ej-letter-grid li:nth-child(even) { padding-right: 0; }
+}
+
+/* "El día" como lista cronológica: un momento debajo del otro, también en celular */
+.ej-letter { max-width: 860px; }
+.ej-letter-grid { grid-template-columns: 1fr !important; row-gap: 0 !important; }
+.ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child, .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) {
+  display: grid; grid-template-columns: 24px minmax(120px, 190px) minmax(0, 1fr) auto; align-items: center; column-gap: clamp(14px, 2.4vw, 32px);
+  padding: clamp(14px, 1.6vw, 20px) 0; border-left: 0; border-top: 1px solid rgb(255 255 255 / .28);
+}
+.ej-letter-grid li:first-child { border-top: 0; padding-top: 4px; }
+.ej-letter-grid li:last-child { padding-bottom: 4px; }
+.ej-letter-icon { margin-bottom: 0; }
+.ej-letter-when h3 { font-size: 22px; }
+.ej-letter-when .ej-letter-time { margin: 4px 0 0; }
+.ej-letter-venue { margin: 0; }
+.ej-letter-addr { margin: 4px 0 0; font-size: 12px; color: rgb(255 255 255 / .82); }
+.ej-letter-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 999px; white-space: nowrap;
+  font-size: 13px; color: #fff; text-decoration: none; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .7); transition: background .2s, color .2s;
+}
+.ej-letter-btn:hover { background: #fff; color: #5A646C; }
+@media (max-width: 640px) {
+  .ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child, .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) {
+    grid-template-columns: 24px minmax(0, 1fr); row-gap: 10px; align-items: start; padding: 18px 0;
+  }
+  .ej-letter-where, .ej-letter-btn { grid-column: 2; }
+  .ej-letter-btn { justify-self: start; }
+}
+
+/* horarios como dato: números alineados, de igual altura (cifras tabulares) */
+.ej-letter-when .ej-letter-time, .ej-letter-time {
+  font-family: var(--ej-sans) !important; font-size: 15px; letter-spacing: .02em;
+  font-variant-numeric: lining-nums tabular-nums; font-feature-settings: 'lnum' 1, 'tnum' 1; color: rgb(255 255 255 / .92);
+}
+/* "Ver mapa" como enlace subrayado, no como botón */
+.ej-letter-btn {
+  height: auto; padding: 0; border-radius: 0; box-shadow: none; background: none; gap: 5px; font-size: 13px; color: #fff;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px;
+}
+.ej-letter-btn:hover { background: none; color: #fff; text-decoration-thickness: 2px; }
+.ej-letter-btn:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+/* carta más ancha (menos borde blanco) y filas del mismo tamaño */
+.ej-letter { max-width: none; }
+.ej-letter-grid { grid-auto-rows: 1fr; }
+.ej-letter-grid li { min-height: 76px; }
+@media (max-width: 640px) { .ej-letter-grid li { min-height: 0; } }
+
+/* bloque "Nos casamos": sin firma, título un poco más grande y más aire antes de la carta */
+.ej-welcome .ej-statement { font-size: clamp(30px, 3.1vw, 44px) !important; }
+.ej-welcome .ej-lead { margin-top: 24px; }
+.ej-welcome { padding-bottom: clamp(56px, 7vw, 104px); }
+
+/* carta de "El día" con las mismas esquinas redondeadas que la foto de portada */
+.ej-letter { border-radius: var(--curve); }
+.ej-letter::before { border-radius: max(10px, calc(var(--curve) - 12px)); }
+/* mismo radio que la foto de portada (25 px) */
+.ej-letter { border-radius: 25px; }
+.ej-letter::before { border-radius: 14px; }
+
+/* carta de "El día": sin marco blanco interior, filas idénticas y con más aire */
+.ej-letter::before { display: none !important; }
+.ej-letter { padding: clamp(32px, 4vw, 56px) clamp(28px, 4vw, 64px) clamp(32px, 4vw, 56px); }
+.ej-letter-head { padding-bottom: clamp(24px, 3vw, 36px); margin-bottom: 0; }
+.ej-letter-grid { grid-auto-rows: 1fr; }
+.ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child,
+.ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) {
+  min-height: clamp(104px, 9vw, 128px); padding: clamp(24px, 2.6vw, 36px) 0 !important; align-items: center; border-top: 1px solid rgb(255 255 255 / .28);
+}
+.ej-letter-grid li:first-child { border-top: 0; }
+.ej-letter-grid li:last-child { padding-bottom: 0 !important; }
+.ej-letter-grid li:first-child { padding-top: clamp(24px, 2.6vw, 36px) !important; }
+@media (max-width: 640px) {
+  .ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child,
+  .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) { min-height: 0; padding: 26px 0 !important; row-gap: 12px; }
+  .ej-letter-grid li:last-child { padding-bottom: 0 !important; }
+}
+.ej-letter-grid li:last-child { padding-bottom: clamp(24px, 2.6vw, 36px) !important; }
+.ej-letter { padding-bottom: clamp(6px, 1vw, 12px); }
+@media (max-width: 640px) { .ej-letter-grid li:last-child { padding-bottom: 26px !important; } }
+/* un poco más de largo */
+.ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child,
+.ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) { min-height: clamp(120px, 10vw, 148px); }
+@media (max-width: 640px) { .ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child, .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) { min-height: 0; } }
+/* fecha de la carta en la misma cursiva que el nombre de la portada */
+.dm-root .ej-letter-head h2 {
+  font-style: italic !important; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: .35px rgb(30 30 30 / .45);
+}
+
+/* fecha de la carta con la misma tipografía y tamaño que el título de "Nos casamos" */
+.ej-letter-head { display: block; text-align: center; }
+.ej-letter-head .ej-eyebrow { margin: 0 0 18px; }
+.dm-root .ej-letter-head h2 {
+  font-style: normal !important; -webkit-text-stroke: 0; color: #fff;
+  font-size: clamp(30px, 3.1vw, 44px) !important; line-height: 1.2 !important;
+}
+
+/* encabezado de la carta: "El día" a la izquierda, la fecha a la derecha */
+.ej-letter-head { display: flex !important; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; text-align: left; }
+.ej-letter-head .ej-eyebrow { margin: 0; }
+.dm-root .ej-letter-head h2 { font-size: clamp(24px, 2.6vw, 36px) !important; text-align: right; }
+@media (max-width: 640px) { .ej-letter-head { display: block !important; } .dm-root .ej-letter-head h2 { text-align: left; margin-top: 10px; } }
+
+/* =========================================================================
+   Escala única del ejemplo (invitación y regalos):
+   Título de bloque 26 → 35 px · Título secundario 22 px · Cuerpo 15 px · Secundario 14 px · Etiqueta 12 px
+   ========================================================================= */
+.dm-root .ej-letter-head h2 { font-size: clamp(26px, 2.6vw, 36px) !important; }
+.ej-tag { font-size: 22px !important; }
+.ej-tracks-top strong { font-size: 22px !important; }
+.ej-tracks li small, .ej-tracks .t small { font-size: 14px; }
+.ej-letter-venue { font-size: 15px; }
+.ej-letter-addr { font-size: 14px; }
+.dm-root .seed-link, .dm-root .seed-button { line-height: 1.2; }
+.dm-root .dm-footer .footer-mission { font-family: var(--ej-sans); font-size: 22px; line-height: 1.2; font-weight: 400; }
+.dm-root .dm-footer-side p { font-size: 15px; line-height: 1.2; }
+.dm-root .dm-footer-links a, .dm-root .dm-footer-btn { font-size: 14px; line-height: 1.2; }
+.dm-root .footer-bottom span { font-size: 12px; }
+.dm-root .seed-link span, .dm-root .seed-button span { line-height: 1.2; }
+@media (max-width: 700px) { .rg-card h3 { font-size: 18px; } }
+
+/* ---------- ajustes de celular ---------- */
+@media (max-width: 700px) {
+  .dm-root .dm-hero .hero-copy h1 { font-size: 36px !important; }
+  .ej-palette { flex-wrap: nowrap; justify-content: space-between; gap: 8px; }
+  .ej-palette i { width: 52px; height: 52px; }
+  .ej-card { min-height: 0; gap: 28px; padding: 28px 24px; }
+  .ej-tracks-top strong { font-size: 18px !important; }
+  .ej-closing .ej-lead { font-size: 18px; text-wrap: balance; }
+  .ej-closing h2 { text-wrap: balance; }
+  .ej-panel { padding: 28px 24px; }
+}
+/* las opciones Alias / Tarjeta son botones, no etiquetas */
+.rg-field label.rg-chip, .rg-field label.rg-chip span { text-transform: none; font-size: 14px; color: inherit; letter-spacing: 0; }
+.rg-chip.on span { color: #fff; }
+.rg-field label.rg-chip.on span { color: #fff; }
+
+/* confirmación de asistencia: mismo sistema que el pop-up de regalos */
+.dm-rsvp-field label:not(.dm-rsvp-opt):not(.dm-rsvp-menu), .dm-rsvp-field legend {
+  font-family: var(--ej-sans); font-size: 12px; line-height: 1.2; text-transform: uppercase; color: var(--gl-ink); margin: 0 0 8px;
+}
+.dm-rsvp-field label span { text-transform: none; }
+.dm-rsvp-pair { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px; }
+.dm-rsvp-opt span { font-size: 14px; min-height: 48px; }
+.dm-rsvp-menu strong { font-size: 15px; font-family: var(--ej-sans); }
+.dm-rsvp-menu small { font-size: 14px; line-height: 1.2; }
+.dm-rsvp h2 { font-size: 22px; }
+.dm-rsvp-done h2 { font-size: 28px; }
+.dm-rsvp header p, .dm-rsvp-done p { font-size: 15px; line-height: 1.2; color: var(--gl-gray); }
+.dm-rsvp .dm-solid, .dm-rsvp .dm-ghost { font-size: 14px; }
+.dm-rsvp-menu strong { font-family: var(--ej-sans); font-size: 18px; font-weight: 400; line-height: 1.2; }
+.dm-rsvp-menu small { color: var(--gl-gray); }
+
+/* restricción alimenticia: opciones simples, mismas que "¿Vas a venir?" */
+.dm-rsvp-menus { grid-template-columns: 1fr 1fr; gap: 10px; }
+.dm-rsvp-menu span { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 12px; text-align: center; }
+.dm-rsvp-menu strong { font-family: var(--ej-sans); font-size: 14px; font-weight: 400; }
+.dm-rsvp-menu.on span { background: #5A646C; border-color: #5A646C; box-shadow: none; color: #fff; }
+.dm-rsvp-menu.on strong { color: #fff; }
+
+/* =========================================================================
+   PRUEBA · el ejemplo con el sistema tipográfico de la landing (inspirado en Seed)
+   Arial en todo, peso 400, escala y jerarquía de la landing:
+     Título grande  clamp(30 → 56 px) · 1,08 · -0,01em     (h2 de la landing, "Todo para su gran día")
+     Título medio   clamp(26 → 40 px) · 1,1  · -0,01em     (h2 de bloques)
+     Título tarjeta clamp(24 → 32 px) · 1,1                 (h3 de planes)
+     Subtítulo      clamp(20 → 24 px) · 1,2                 (h3 de funcionalidades)
+     Bajada 18 · Cuerpo 15 · Secundario 14 · Etiqueta 12 en mayúsculas, interletrado .1em
+     Botones 14 px, peso 400; enlaces 14 px, peso 500
+   Sin excepciones: la invitación usa la misma tipografía que la landing.
+   ========================================================================= */
+:root {
+  --ej-sans: Arial, Helvetica, sans-serif;
+}
+.dm-root, .dm-root button, .dm-root input, .dm-root textarea, .dm-rsvp, .dm-rsvp *, .rg-dialog, .rg-dialog * { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; }
+.dm-root { color: var(--foreground); }
+
+/* títulos */
+.dm-root h1, .dm-root h2, .dm-root h3, .ej-statement, .rg-dialog h2, .dm-rsvp h2 { font-weight: 400 !important; font-style: normal !important; -webkit-text-stroke: 0 !important; letter-spacing: -.01em; }
+.dm-root .ej-statement, .dm-root .rg-intro h1 { font-size: clamp(30px, 3.9vw, 56px) !important; line-height: 1.08 !important; }
+.dm-root .ej-block h2:not(.ej-statement), .dm-root .ej-letter-head h2 { font-size: clamp(26px, 2.8vw, 40px) !important; line-height: 1.1 !important; }
+.dm-root .ej-card h2 { font-size: clamp(24px, 2.2vw, 32px) !important; line-height: 1.1 !important; }
+.dm-root .ej-letter-grid h3, .dm-root .ej-day-when h3 { font-size: clamp(20px, 1.75vw, 24px); line-height: 1.2; letter-spacing: 0; }
+.dm-root .rg-card h3 { font-size: clamp(17px, 1.6vw, 22px); line-height: 1.2; letter-spacing: 0; }
+.dm-root .ej-tag { font-size: clamp(22px, 2vw, 28px) !important; line-height: 1.2 !important; letter-spacing: -.01em; }
+.dm-root .ej-letter-time, .dm-root .ej-letter-venue { font-size: 15px; line-height: 1.4; }
+.dm-root .ej-wall q { font-size: 18px; line-height: 1.4; }
+.dm-root .ej-tracks-top strong { font-size: 18px !important; line-height: 1.3 !important; }
+.dm-root .ej-cal-month { font-size: 14px; line-height: 1.5; }
+.rg-dialog h2, .dm-rsvp h2 { font-size: 24px !important; line-height: 1.15 !important; }
+.rg-thanks h2, .dm-rsvp-done h2 { font-size: clamp(26px, 6vw, 32px) !important; }
+.dm-rsvp-menu strong { font-size: 14px; }
+
+/* textos */
+.dm-root .ej-lead { font-size: clamp(16px, 1.25vw, 18px); line-height: 1.5; font-style: normal; font-family: Arial, Helvetica, sans-serif; }
+.dm-root .ej-text, .dm-root .ej-sub, .dm-root .ej-card p, .dm-root .rg-help, .dm-root .ej-hashtag p:last-child { font-size: 15px; line-height: 1.5; }
+.dm-root .ej-addr, .dm-root .ej-letter-addr, .dm-root .rg-note, .dm-root .rg-fund p, .dm-root .rg-live, .dm-root .ej-tracks small, .dm-root .ej-tracks .t small,
+.dm-root .rg-head p:not(.rg-kicker), .dm-root .rg-intro .dm-back { font-size: 14px; line-height: 1.5; }
+.dm-root .dm-hero .hero-copy > p { font-size: 14px; line-height: 1.4 !important; }
+.dm-rsvp header p, .dm-rsvp-done p { font-size: 15px; line-height: 1.5; }
+
+/* etiquetas */
+.dm-root .ej-eyebrow, .dm-root .rg-kicker, .rg-dialog .rg-kicker, .dm-root .ej-wall span, .rg-field label:not(.rg-chip), .rg-field legend,
+.dm-rsvp-field label:not(.dm-rsvp-opt):not(.dm-rsvp-menu), .dm-rsvp-field legend {
+  font-size: 12px; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; color: inherit;
+}
+.dm-root .ej-eyebrow { color: var(--muted-foreground); }
+.dm-root .ej-slate .ej-eyebrow, .dm-root .ej-letter-head .ej-eyebrow, .dm-root .ej-wall span { color: rgb(255 255 255 / .8); }
+
+/* botones y enlaces */
+.dm-solid, .dm-ghost, .rg-btn, .rg-filters button, .ej-light-btn, .dm-root .seed-button, .rg-chip span, .rg-alias button { font-size: 14px; font-weight: 400; line-height: 1.2; }
+.dm-root .seed-link, .dm-root .seed-link span, .ej-letter-btn, .dm-back { font-size: 14px; font-weight: 500; }
+
+/* cierre y pie: igual que la landing */
+.dm-root .ej-closing .ej-lead { font-size: clamp(16px, 1.25vw, 18px); font-style: normal; font-family: Arial, Helvetica, sans-serif; }
+.dm-root .dm-footer .footer-mission { font-size: 25px; line-height: 1.2; }
+.dm-root .dm-footer-side p { font-size: 15px; line-height: 1.5; }
+.dm-root .footer-bottom span { font-size: 10px; }
+
+.dm-root .ej-block .ej-card h2 { font-size: clamp(24px, 2.2vw, 32px) !important; line-height: 1.1 !important; }
+.dm-root .ej-statement, .dm-root .rg-intro h1, .dm-root .ej-block h2, .dm-root .ej-letter-head h2, .dm-root .ej-tag { letter-spacing: -.01em !important; }
+.dm-root .ej-letter-grid h3, .dm-root .rg-card h3, .dm-root .ej-day-when h3 { letter-spacing: 0 !important; }
+.ej-panel .ej-palette { margin-top: 36px; padding-top: 0; }
+
+/* el título "Queremos compartir…" un poco más chico */
+.dm-root .ej-welcome .ej-statement { font-size: clamp(26px, 3vw, 44px) !important; }
+
+/* lista de regalos: del título directo a la lista */
+.dm-root .rg-intro { padding-bottom: clamp(24px, 3vw, 40px); }
+.dm-root .rg-list { padding-top: 0; }
+.dm-root .rg-intro h1 { max-width: 20em; }
+
+/* =========================================================================
+   Navegación como la de la landing: texto sobre la foto; al scrollear se rellena
+   de cristal (variable --p de 0 a 1) y queda pegada arriba como una burbuja.
+   ========================================================================= */
+.ej-bar {
+  --p: 0; position: sticky; top: calc(8px + env(safe-area-inset-top)); z-index: 60; height: 57px; margin-bottom: -57px; padding-top: 5px; box-sizing: border-box; pointer-events: none;
+}
+.ej-bar-inner { display: flex; justify-content: flex-end; width: calc(min(92%, 1800px) + 20px); margin: 0 auto; }
+.ej-bar-pill {
+  pointer-events: auto; display: flex; align-items: center; gap: 2px; height: 48px; padding: 0 8px; border-radius: 999px; color: #fff; isolation: isolate;
+  background: linear-gradient(rgb(255 255 255 / calc(.10 * var(--p))), rgb(255 255 255 / calc(.10 * var(--p)))), rgb(70 82 80 / calc(.24 * var(--p)));
+  -webkit-backdrop-filter: blur(calc(20px * var(--p))) saturate(1.5); backdrop-filter: blur(calc(20px * var(--p))) saturate(1.5);
+  box-shadow: 0 6px 24px rgb(0 0 0 / calc(.10 * var(--p)));
+  text-shadow: 0 1px 10px rgb(0 0 0 / calc(.12 + .23 * var(--p)));
+}
+.ej-bar-link {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: #fff; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 400; line-height: 1.2; text-decoration: none; white-space: nowrap; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  text-underline-offset: 6px; text-decoration-thickness: 1px; transition: background .2s;
+}
+.ej-bar-link:hover { background: rgb(255 255 255 / .14); }
+.ej-bar-link[aria-current="page"] { text-decoration-line: underline; }
+.ej-bar-link:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+@media (max-width: 640px) { .ej-bar-inner { width: calc(100% - 12px); } .ej-bar-pill { height: 44px; padding: 0 4px; } .ej-bar-link { height: 34px; padding: 0 9px; font-size: 13px; } }
+@media (max-width: 380px) { .ej-bar-link { padding: 0 7px; font-size: 12px; } }
+/* sobre secciones claras la burbuja necesita más cuerpo para que el texto blanco se lea */
+.ej-bar-pill {
+  background: rgb(52 60 66 / calc(.66 * var(--p)));
+  box-shadow: 0 6px 24px rgb(0 0 0 / calc(.14 * var(--p)));
+  text-shadow: none;
+}
+
+/* filtros alineados a la izquierda + selector de monto */
+.rg-filters { justify-content: flex-start; align-items: center; }
+.rg-range { margin-left: auto; position: relative; display: inline-flex; }
+.rg-range select {
+  appearance: none; -webkit-appearance: none; min-height: 44px; padding: 0 44px 0 20px; border: 0; border-radius: 999px; background: #fff; cursor: pointer;
+  color: var(--foreground); font: inherit; font-size: 14px; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .25);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 22px) 52%, calc(100% - 17px) 52%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.rg-range select:focus-visible { outline: 2px solid var(--ej-slate); outline-offset: 2px; }
+@media (max-width: 700px) { .rg-range { margin-left: 0; width: 100%; } .rg-range select { width: 100%; } }
+.dm-root .rg-intro { text-align: left; }
+.dm-root .rg-intro .ej-narrow { text-align: left; margin-left: 0; }
+.dm-root .rg-intro h1 { margin: 0; }
+.dm-root .rg-intro .ej-narrow { max-width: none; margin-left: auto; margin-right: auto; text-align: left; }
+.dm-root .rg-intro { padding-top: clamp(40px, 5vw, 72px); }
+
+/* eje común: "¡Nos casamos!" y "Lista de regalos" con la misma tipografía y en el mismo lugar, centrados */
+.dm-root .rg-intro { padding-top: clamp(36px, 4.4vw, 56px); padding-bottom: 0; text-align: center; }
+.dm-root .rg-intro .ej-narrow { max-width: 760px; margin-left: auto; margin-right: auto; text-align: center; }
+.dm-root .rg-intro h1.ej-eyebrow { margin: 0 0 18px; font-size: 12px !important; line-height: 1.5 !important; letter-spacing: .1em !important; text-transform: uppercase; color: var(--muted-foreground); font-weight: 400 !important; }
+.dm-root .rg-list { padding-top: 0; }
+/* fecha de la carta un poco más chica */
+.dm-root .ej-letter-head h2 { font-size: clamp(20px, 2.1vw, 28px) !important; }
+.dm-root .rg-intro h1.ej-eyebrow { max-width: none; width: 100%; margin: 0 0 18px; text-align: center; }
+
+/* "¡Nos casamos!" y "Lista de regalos": un poco más grandes, idénticos y en la misma posición */
+.dm-root .ej-welcome .ej-eyebrow,
+.dm-root .rg-intro h1.ej-eyebrow {
+  font-size: clamp(15px, 1.35vw, 18px) !important; line-height: 1.3 !important; letter-spacing: .12em !important; margin: 0 0 18px !important;
+  color: var(--foreground); text-transform: uppercase; font-weight: 400 !important;
+}
+
+/* foto completa (sin recortar), con su propio fondo difuminado a los costados */
+.rg-photo.is-contain::before { content: ''; position: absolute; inset: -12%; background: var(--bg) center / cover no-repeat; filter: blur(16px) brightness(.92); }
+.rg-photo.is-white::before { background: #fff; filter: none; }
+.rg-photo.is-contain img { object-fit: contain; z-index: 1; }
+.rg-photo.is-contain .rg-price { z-index: 2; }
+
+/* Tarjetas de regalo: marco crema más fino alrededor de la foto y del botón. */
+.rg-card { padding: 5px; border-radius: 22px; }
+.rg-photo { border-radius: 17px; }
+.rg-price { left: 8px; bottom: 8px; }
+.rg-card h3 { margin-inline: 10px; }
+.rg-btn { margin-top: 14px; }
+@media (max-width: 700px) { .rg-card h3 { margin-inline: 8px; } }
+
+/* Lista de regalos: tres por fila, con más aire entre tarjetas. */
+.rg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 2.6vw, 40px); }
+@media (max-width: 700px) { .rg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } }
+
+/* PRUEBA · fondo blanco en las tarjetas de regalo */
+.rg-card { background: #fff; }
+
+/* PRUEBA · blanco con sombra pequeña, siempre visible */
+.rg-card { background: #fff; box-shadow: 0 2px 12px rgb(59 60 58 / .09), 0 0 0 1px rgb(59 60 58 / .05); }
+.rg-card:hover { box-shadow: 0 14px 34px rgb(59 60 58 / .13), 0 0 0 1px rgb(59 60 58 / .05); }
+
+/* PRUEBA · solo sombra, sin delineado */
+.rg-card { box-shadow: 0 3px 16px rgb(59 60 58 / .10); }
+.rg-card:hover { box-shadow: 0 14px 34px rgb(59 60 58 / .14); }
+
+/* Luna de miel: segunda fila de chips con el destino. */
+.rg-filters:has(+ .rg-dest) { margin-bottom: 12px; }
+.rg-dest { margin-bottom: clamp(28px, 4vw, 48px); }
+.rg-dest button { background: transparent; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .16); }
+.rg-dest button:hover { background: #f6f4ee; }
+.rg-dest button.on { background: var(--ej-slate); color: #fff; box-shadow: none; }
+
+/* Pop-up de regalo: nombre + apellido, comprobante y envío bloqueado hasta completar. */
+.rg-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rg-up-label { display: block; margin: 0 0 8px; font-size: 13px; color: var(--ej-muted); }
+.rg-file {
+  display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 14px; cursor: pointer;
+  border: 1.5px dashed rgb(59 60 58 / .28); color: var(--ej-slate); font-size: 15px; transition: border-color .2s, background .2s;
+}
+.rg-file:hover { background: #f6f4ee; }
+.rg-file span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rg-file em { font-style: normal; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.rg-file.has { border-style: solid; border-color: var(--ej-slate); background: #f6f4ee; }
+#rg-proof:focus-visible + .rg-file { box-shadow: 0 0 0 3px rgb(90 100 108 / .25); }
+.rg-dialog .rg-send:disabled { background: rgb(59 60 58 / .12); color: var(--ej-muted); cursor: not-allowed; }
+.rg-missing { margin: -6px 0 0; font-size: 13px; color: var(--ej-muted); text-align: center; }
+.rg-up-label { font-size: 12px; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; color: var(--ej-muted); }
+
+/* Un nombre de archivo largo no debe ensanchar el pop-up: todo en una sola columna que puede encogerse. */
+.rg-form { grid-template-columns: minmax(0, 1fr); }
+.rg-form > * { min-width: 0; }
+.rg-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rg-file { width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; }
+.rg-file em { flex: none; }
+.rg-alias code { min-width: 0; overflow-wrap: anywhere; }
+
+/* Botón para cerrar el ejemplo y volver a la página de Weda (a la izquierda de la barra). */
+.ej-bar-inner { justify-content: space-between; }
+.ej-bar-close .ej-bar-link { gap: 8px; padding: 0 14px 0 12px; }
+@media (max-width: 640px) {
+  .ej-bar-close .ej-bar-link { padding: 0 10px; }
+  .ej-bar-close .ej-bar-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+/* Confirmación: nombre y apellido en dos campos y más opciones de restricción alimenticia. */
+.dm-rsvp-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.dm-rsvp-menus { gap: 8px; }
+.dm-rsvp-menu span { min-height: 44px; padding: 0 10px; }
+.dm-rsvp-menu strong { font-size: 13.5px; line-height: 1.2; }
+
+/* La fecha de la tarjeta "El día" más contenida respecto de la info de abajo. */
+.dm-root .ej-letter-head h2 { font-size: clamp(17px, 1.6vw, 22px) !important; }
+.dm-root .ej-block .ej-letter-head h2:not(.ej-statement) { font-size: clamp(17px, 1.6vw, 22px) !important; line-height: 1.15 !important; }
+
+/* "El día" en web: la tarjeta busca ocupar una pantalla y las columnas respiran. */
+@media (min-width: 900px) {
+  .ej-letter { display: flex; flex-direction: column; min-height: clamp(560px, calc(100svh - 96px), 860px); }
+  .ej-letter-grid { flex: 1; }
+  .ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child,
+  .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) {
+    min-height: 0; align-items: center; column-gap: clamp(40px, 5vw, 96px);
+    grid-template-columns: 28px minmax(170px, 0.8fr) minmax(0, 1.6fr) auto;
+  }
+  .ej-letter { padding-left: clamp(40px, 5vw, 88px); padding-right: clamp(40px, 5vw, 88px); }
+}
+@media (min-width: 900px) {
+  .ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child,
+  .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) { align-content: center; padding-top: 0 !important; padding-bottom: 0 !important; }
+}
+
+/* Íconos de Ceremonia / Recepción / Fiesta un poco más grandes. */
+.ej-letter-icon { width: 32px; height: 32px; }
+.ej-letter-icon svg { width: 100%; height: 100%; }
+@media (min-width: 900px) {
+  .ej-letter-icon { width: 36px; height: 36px; }
+  .ej-letter-grid li, .ej-letter-grid li:first-child, .ej-letter-grid li:last-child,
+  .ej-letter-grid li:nth-child(odd), .ej-letter-grid li:nth-child(even) { grid-template-columns: 36px minmax(170px, 0.8fr) minmax(0, 1.6fr) auto; }
+}
+
+
+/* Dress code: una sola línea compacta (etiqueta · valor · colores). */
+.ej-dress { display: flex; align-items: center; gap: clamp(16px, 3vw, 40px); padding: clamp(18px, 2vw, 26px) 0; border-top: 1px solid rgb(59 60 58 / .16); border-bottom: 1px solid rgb(59 60 58 / .16); }
+.ej-dress .ej-eyebrow { margin: 0; }
+.ej-dress-value { margin: 0; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.2; color: var(--foreground); }
+.ej-dress-palette { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; gap: 8px; }
+.ej-dress-palette li { display: block; }
+.ej-dress-palette i { display: block; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .14); }
+@media (max-width: 560px) { .ej-dress { flex-wrap: wrap; gap: 8px 16px; } .ej-dress-palette { margin-left: 0; } }
+
+/* Invitación: la foto de portada más alta; en la primera pantalla se llega a ver "¡Nos casamos! / Queremos
+   compartir este día con vos" y el párrafo queda para cuando se scrollea. */
+.seed-hero.dm-hero.ej-cover.is-tall { height: clamp(380px, calc(100svh - 132px), 900px) !important; }
+@media (max-width: 700px) { .seed-hero.dm-hero.ej-cover.is-tall { height: clamp(340px, calc(100svh - 152px), 760px) !important; } }
+
+/* Lista de regalos · web: más aire entre el título y los filtros. */
+@media (min-width: 701px) { .dm-root .rg-intro { padding-bottom: clamp(44px, 5vw, 76px); } }
+
+/* Lista de regalos · mobile: categorías y monto en UNA sola fila que se desliza, para llegar rápido a los regalos. */
+@media (max-width: 700px) {
+  .rg-filters { flex-wrap: nowrap; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .rg-filters::-webkit-scrollbar { display: none; }
+  .rg-filters button { flex: none; }
+  .rg-range { flex: none; width: auto; margin-left: 0; }
+  .rg-range select { width: auto; min-width: 170px; }
+}
+
+/* Flecha centrada abajo de la foto: indica que hay que seguir bajando. */
+.ej-scroll {
+  position: absolute; left: 50%; bottom: 20px; z-index: 3; width: 44px; height: 44px; margin-left: -22px; display: grid; place-items: center;
+  border-radius: 50%; color: #fff; text-decoration: none; background: rgb(255 255 255 / .14); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .55);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s; touch-action: manipulation;
+}
+.ej-scroll:hover { background: rgb(255 255 255 / .26); }
+.ej-scroll:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.ej-scroll svg { animation: ej-bob 1.8s ease-in-out infinite; }
+@keyframes ej-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+@media (prefers-reduced-motion: reduce) { .ej-scroll svg { animation: none; } }
+
+/* El mensaje de bienvenida aparece al empezar a scrollear. */
+.ej-reveal { opacity: 0; transform: translateY(12px); transition: opacity .5s ease, transform .5s ease; }
+.ej-reveal.is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .ej-reveal { transition: none; } }
+
+/* =========================================================================
+   Primera pantalla de Invitación y de Lista de regalos: foto + una sola línea
+   ("¡Nos casamos!" / "Lista de regalos") centrada en lo que queda de la pantalla.
+   Lo demás aparece al scrollear.
+   ========================================================================= */
+.dm-root { --ej-cover-h: clamp(380px, calc(100svh - 132px), 900px); }
+@media (max-width: 700px) { .dm-root { --ej-cover-h: clamp(340px, calc(100svh - 152px), 760px); } }
+.seed-hero.dm-hero.ej-cover.is-tall { height: var(--ej-cover-h) !important; }
+.dm-root .ej-welcome, .dm-root .rg-intro { padding-top: 0; }
+.dm-root .ej-first { display: flex; align-items: center; justify-content: center; width: 100%; min-height: calc(100svh - var(--ej-cover-h)); margin: 0 !important; text-align: center; }
+.dm-root .rg-intro .ej-narrow { text-align: center; margin-inline: auto; }
+.dm-root .rg-intro { padding-bottom: 0; }
+.dm-root .rg-list { padding-top: clamp(28px, 4vw, 56px); }
+.dm-root .ej-statement { margin-top: clamp(20px, 3vw, 40px); }
+
+/* Flecha sola, sin círculo. */
+.ej-scroll { width: 48px; height: 48px; margin-left: -24px; bottom: 14px; background: none !important; box-shadow: none !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.ej-scroll svg { width: 30px; height: 30px; filter: drop-shadow(0 1px 6px rgb(0 0 0 / .4)); }
+
+/* Mobile: buscar + categoría + monto, sin filas que se deslizan. */
+.rg-mfilters { display: none; }
+@media (max-width: 700px) {
+  .rg-filters { display: none; }
+  .rg-mfilters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .rg-search { grid-column: 1 / -1; }
+  .rg-search input, .rg-sel select {
+    width: 100%; min-height: 46px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: var(--foreground);
+    font: inherit; font-size: 14px; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .25); box-sizing: border-box;
+  }
+  .rg-search input:focus-visible, .rg-sel select:focus-visible { outline: 2px solid var(--ej-slate); outline-offset: 2px; }
+  .rg-sel { position: relative; display: block; min-width: 0; }
+  .rg-sel select {
+    appearance: none; -webkit-appearance: none; padding-right: 38px; text-overflow: ellipsis;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 20px) 52%, calc(100% - 15px) 52%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+  }
+}
+@media (max-width: 700px) { .dm-root .rg-list { padding-top: 0; } .dm-root .rg-list .rg-mfilters { margin-top: -16px; } }
+
+/* =========================================================================
+   Objetivos táctiles de al menos 44 px (sin cambiar cómo se ven: el área de toque se
+   extiende con un pseudo-elemento invisible o con alto mínimo).
+   ========================================================================= */
+.ej-bar-link, .ej-scroll, .dm-footer-links a, .dm-footer-btn { position: relative; }
+.ej-bar-link::after { content: ''; position: absolute; inset: -5px -3px; }
+.ej-bar-close .ej-bar-link::after { inset: -5px -4px; }
+.dm-root .seed-button, .dm-root .seed-link-button, .dm-root .dm-footer-links a, .dm-root .dm-footer-btn { min-height: 44px; }
+.dm-root .dm-footer-links a, .dm-root .dm-footer-btn { display: inline-flex; align-items: center; }
+.rg-btn, .rg-filters button, .rg-search input, .rg-range select { min-height: 44px; }
+.ej-letter-btn { position: relative; }
+.ej-letter-btn::after { content: ''; position: absolute; inset: -14px -8px; }
+
+/* Contraste del texto chico sobre la tarjeta "El día": el blanco llegaba a 4,2:1 sobre el azul base;
+   un tono apenas más profundo y texto 100 % blanco llegan a 4,8:1. */
+.ej-letter { background: #66747f; }
+.ej-letter-addr, .ej-letter-head .ej-eyebrow, .ej-letter-time, .ej-letter-venue, .ej-letter-btn { color: #fff !important; }
+.dm-root .ej-letter .ej-eyebrow { opacity: 1; }
+
+/* Buscador en la versión web: mismo aspecto que el selector de monto. */
+@media (min-width: 701px) {
+  .rg-search-d { position: relative; display: inline-flex; min-width: 210px; flex: 0 1 260px; }
+  .rg-search-d input {
+    width: 100%; padding: 0 20px; border: 0; border-radius: 999px; background: #fff; color: var(--foreground); font: inherit; font-size: 14px;
+    box-shadow: inset 0 0 0 1px rgb(59 60 58 / .25); box-sizing: border-box;
+  }
+  .rg-search-d input:focus-visible { outline: 2px solid var(--ej-slate); outline-offset: 2px; }
+  .rg-range { margin-left: 0; }
+  .rg-search-d { margin-left: auto; }
+}
+@media (max-width: 700px) { .rg-search-d { display: none; } }
+.dm-fab { min-width: 44px; min-height: 44px; }
+.skip-link { min-height: 44px; }
+
+/* Nombre del regalo siempre en un renglón (las tarjetas no crecen en alto). */
+.dm-root .rg-card h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-wrap: nowrap; flex: 0 0 auto; }
+@media (max-width: 700px) { .dm-root .rg-card h3 { font-size: 14px; margin-inline: 8px; } }
+
+/* Portada igual en todos los dispositivos: la foto ocupa casi toda la pantalla y abajo queda una franja
+   baja para "¡Nos casamos!" / "Lista de regalos". */
+.dm-root { --ej-cover-h: max(380px, calc(100svh - 88px)); }
+@media (max-width: 700px) { .dm-root { --ej-cover-h: max(380px, calc(100svh - 88px)); } }
+@media (max-width: 700px) { .dm-root .rg-card h3 { font-size: clamp(12.5px, 3.45vw, 14px); margin-inline: 6px; } }
+
+/* La flecha vuelve a quedar sobre la foto: la regla de áreas de toque la había pasado a "relative". */
+.ej-cover .ej-scroll { position: absolute; left: 50%; bottom: 20px; margin-left: -24px; }
+
+/* =========================================================================
+   Safari en iPhone: la barra inferior flotante tapaba el texto que asoma debajo de la foto.
+   La primera pantalla pasa a medirse con la altura grande (lvh): la foto sigue ocupando lo visible
+   arriba de la barra y todo lo que viene después queda recién pasada esa altura.
+   ========================================================================= */
+.dm-root { --ej-strip: 104px; --ej-cover-h: max(380px, calc(100svh - var(--ej-strip))); }
+@media (max-width: 700px) { .dm-root { --ej-strip: 104px; --ej-cover-h: max(380px, calc(100svh - var(--ej-strip))); } }
+.dm-root .ej-first {
+  align-items: flex-start; padding-top: calc(var(--ej-strip) / 2 - 9px);
+  min-height: calc(100svh - var(--ej-cover-h));
+  min-height: calc(100lvh - var(--ej-cover-h));
+}
+
+/* Lista de regalos en celular: tarjetas más anchas (menos margen a los costados y entre ellas). */
+@media (max-width: 700px) {
+  .dm-root .rg-list > .section-inner { width: calc(100% - 20px); }
+  .rg-grid { gap: 10px; }
+  .rg-card { padding: 4px; }
+}
+
+/* Con un pop-up abierto (regalar / confirmar), la barra de navegación y el botón de música quedan
+   detrás del fondo oscuro: no se ven activos ni se pueden tocar. */
+.ej-bar { z-index: 40; }
+.dm-fab { z-index: 40; }
+
+/* Filtros en web: categorías, buscador y monto siempre en UN renglón, con la misma altura.
+   El buscador es el único que se achica; los chips y el monto mantienen su tamaño. */
+@media (min-width: 701px) {
+  .rg-filters { flex-wrap: nowrap; gap: 8px; align-items: center; }
+  .rg-filters button { flex: none; white-space: nowrap; }
+  .rg-filters .rg-search-d { flex: 1 1 140px; min-width: 120px; max-width: 280px; margin-left: auto; }
+  .rg-filters .rg-range { flex: none; margin-left: 0; }
+  .rg-filters .rg-range select { min-width: 0; width: 100%; text-overflow: ellipsis; }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .rg-filters { gap: 6px; }
+  .rg-filters button { padding: 0 14px; }
+  .rg-filters .rg-range select { padding-inline: 14px 34px; }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+  .rg-filters { gap: 4px; }
+  .rg-filters button { padding: 0 10px; font-size: 13px; }
+  .rg-filters .rg-search-d { flex-basis: 100px; min-width: 90px; }
+  .rg-filters .rg-search-d input { padding: 0 14px; font-size: 13px; }
+  .rg-filters .rg-range select { width: 150px; padding-inline: 12px 30px; font-size: 13px; }
+}
+@media (min-width: 701px) and (max-width: 780px) {
+  .rg-filters button { padding: 0 8px; }
+  .rg-filters .rg-search-d { flex-basis: 80px; min-width: 70px; }
+  .rg-filters .rg-range select { width: 128px; }
+}
+
+
+/* =========================================================================
+   Barra, foco, movimiento y diálogos (la composición de las páginas vive en invitacion.css)
+   ========================================================================= */
+
+/* Navegación sobre fotos: la burbuja lleva su propio fondo translúcido y oscuro, para sostener el contraste del texto blanco. */
+.ej-bar .ej-bar-pill {
+  background: rgb(59 60 58 / .62);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 6px 24px rgb(0 0 0 / .12); text-shadow: none;
+}
+
+/* Foco visible en todo lo interactivo (baja especificidad: no pisa los estados existentes) */
+.dm-root :where(a, button, input, select, textarea, [tabindex]):focus-visible,
+.dm-rsvp :where(a, button, input, select, textarea):focus-visible,
+.rg-dialog :where(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--ink, #3b3c3a); outline-offset: 2px; }
+.dm-root .ej-bar :where(a, button):focus-visible, .dm-root .iv-cover :where(a, button):focus-visible,
+.dm-root .iv-band :where(a, button):focus-visible, .dm-root .iv-closing :where(a, button):focus-visible,
+.dm-root .iv-footer :where(a, button):focus-visible { outline-color: #fff; }
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  .dm-root *, .dm-root *::before, .dm-root *::after, .dm-rsvp *, .rg-dialog * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* Diálogos dentro del viewport, respetando las áreas seguras del dispositivo */
+.dm-rsvp, .rg-dialog { max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important; }

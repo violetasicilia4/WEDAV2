@@ -1,0 +1,541 @@
+/* =========================================================================
+   Invitación Weda (micrositio de ejemplo)
+   -------------------------------------------------------------------------
+   Misma lógica visual que la landing comercial:
+   · Tipografía: Arial / Helvetica, peso 400 (enlaces 500). Sin segunda familia.
+   · Escala de la landing: h1 hasta 56 px, h2 40 / 30 px, h3 24 / 20 px, texto 15 px, etiqueta 12 px en mayúsculas.
+   · Color: tinta #3b3c3a, gris de texto #575757, pizarra, papel #f5f2eb, sección #f3f0e8, superficie tonal #f4f4f2.
+   · Formas: botones en píldora, esquinas de 8 px en fotos, 25 px en la portada y curva superior en las bandas pizarra.
+   · Sin tarjetas decorativas: el carácter lo dan la fotografía, el espacio y la jerarquía.
+   ========================================================================= */
+.dm-root {
+  --iv-ink: #3b3c3a;
+  --iv-muted: #575757;
+  --iv-slate: #66747f; /* pizarra de Weda, un punto más profundo para que el texto blanco llegue a 4,5:1 */
+  --iv-paper: #f5f2eb;
+  --iv-section: #f3f0e8;
+  --iv-tonal: #f4f4f2;
+  --iv-hair: rgb(59 60 58 / .22);
+  --iv-curve: clamp(24px, 3.5vw, 48px);
+  --iv-pad: clamp(48px, 7vw, 96px);
+  --iv-font: Arial, Helvetica, sans-serif;
+}
+
+/* ---------- base ---------- */
+.dm-root .iv-wrap { width: 92%; max-width: 1040px; margin: 0 auto; }
+.dm-root .iv-section { padding: var(--iv-pad) 0; background: #fff; color: var(--iv-ink); font-family: var(--iv-font); }
+.dm-root .iv-eyebrow { margin: 0 0 14px; font: 400 12px/1.5 var(--iv-font) !important; letter-spacing: .1em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-h2 { margin: 0; font: 400 clamp(30px, 3vw, 40px)/1.08 var(--iv-font) !important; letter-spacing: -.01em !important; color: inherit; }
+.dm-root .iv-h3 { margin: 0; font: 400 clamp(20px, 1.8vw, 24px)/1.2 var(--iv-font) !important; letter-spacing: 0 !important; color: var(--iv-ink); }
+.dm-root .iv-strong { margin: 14px 0 0; font: 400 17px/1.35 var(--iv-font); color: var(--iv-ink); }
+.dm-root .iv-text { margin: 8px 0 0; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-link {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; border: 0; background: none;
+  font: 500 14px/1.2 var(--iv-font); color: inherit; cursor: pointer;
+}
+.dm-root .iv-link > span:first-child { border-bottom: 1px solid currentColor; padding-bottom: 3px; }
+.dm-root .iv-link:hover > span:first-child { border-bottom-width: 2px; }
+.dm-root .iv-inline { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.dm-root .iv-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 24px; border: 0; border-radius: 999px;
+  background: var(--iv-slate); color: #fff; font: 400 14px/1.2 var(--iv-font); cursor: pointer; touch-action: manipulation; transition: background .2s;
+}
+.dm-root .iv-btn:hover { background: color-mix(in srgb, var(--iv-slate) 85%, #000); }
+.dm-root .iv-btn.is-paper { background: var(--iv-paper); color: var(--iv-ink); }
+.dm-root .iv-btn.is-paper:hover { background: #fff; }
+.dm-root .iv-error { margin: 0; font: 400 14px/1.4 var(--iv-font); color: #a1281c; }
+.dm-root .iv-demo-note, .dm-demo-note { margin: 0; font: 400 13px/1.45 var(--iv-font); color: var(--iv-muted); }
+
+/* ---------- portada: el hero de la landing, con los datos del casamiento ---------- */
+.dm-root .iv-cover {
+  position: relative; display: flex; align-items: flex-end; justify-content: center; height: clamp(560px, calc(100svh - 24px), 900px);
+  color: #fff; overflow: hidden; background: #3b3c3a; isolation: isolate; border-radius: 0 0 25px 25px;
+}
+.dm-root .iv-cover-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 60% 40%; }
+.dm-root .iv-cover::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / .32), rgb(0 0 0 / 0) 26%),
+    radial-gradient(ellipse 74% 34% at 50% 78%, rgb(0 0 0 / .5), rgb(0 0 0 / 0) 100%),
+    linear-gradient(0deg, rgb(0 0 0 / .5), rgb(0 0 0 / 0) 60%);
+}
+.dm-root .iv-cover-copy { display: grid; justify-items: center; text-align: center; width: 92%; max-width: 760px; padding: 48px 0 clamp(72px, 11svh, 120px); }
+.dm-root .iv-cover-title {
+  margin: 0; font: 400 clamp(34px, 4.2vw, 56px)/1.1 var(--iv-font) !important; letter-spacing: -.01em !important; color: #fff !important; text-wrap: balance;
+  text-shadow: 0 1px 18px rgb(0 0 0 / .25);
+}
+.dm-root .iv-cover-date { margin: 14px 0 0; font: 400 15px/1.4 var(--iv-font) !important; color: #fff; text-shadow: 0 1px 12px rgb(0 0 0 / .3); }
+.dm-root .iv-cover-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 20px; margin-top: 24px; }
+.dm-root .iv-cover-cta {
+  height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: #fff; color: var(--iv-ink);
+  font: 400 14px/1.2 var(--iv-font); cursor: pointer; transition: background .2s; touch-action: manipulation;
+}
+.dm-root .iv-cover-cta:hover { background: var(--iv-paper); }
+.dm-root .iv-cover-link, .dm-root .iv-cover-back {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: #fff; font: 500 14px/1.2 var(--iv-font);
+}
+.dm-root .iv-cover-link > span { border-bottom: 1px solid currentColor; padding-bottom: 3px; }
+.dm-root .iv-cover-back { margin-top: 8px; text-decoration: underline; text-underline-offset: 4px; }
+.dm-root .iv-cover-down { position: absolute; left: 50%; bottom: 14px; z-index: 2; display: grid; place-items: center; width: 48px; height: 48px; margin-left: -24px; color: #fff; }
+.dm-root .iv-cover.is-gifts { height: clamp(360px, 52svh, 520px); }
+.dm-root .iv-cover-names { margin: 0 0 10px; font: 400 12px/1.4 var(--iv-font) !important; letter-spacing: .1em; text-transform: uppercase; color: #fff; }
+.dm-root .iv-cover.is-gifts .iv-cover-date { margin-top: 12px; }
+
+/* ---------- el día ---------- */
+.dm-root .iv-section.iv-day { padding-bottom: calc(var(--iv-pad) + var(--iv-curve)); }
+.dm-root .iv-day-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px 48px; margin-bottom: clamp(28px, 4vw, 48px); }
+.dm-root .iv-count { display: flex; gap: clamp(20px, 3vw, 36px); }
+.dm-root .iv-count p { margin: 0; display: grid; gap: 4px; }
+.dm-root .iv-count-n { font: 400 clamp(30px, 3vw, 40px)/1 var(--iv-font); color: var(--iv-ink); font-variant-numeric: tabular-nums; }
+.dm-root .iv-count-l { font: 400 12px/1.2 var(--iv-font); letter-spacing: .1em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-events { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--iv-hair); }
+.dm-root .iv-events li {
+  display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr) auto; align-items: start; gap: 8px clamp(20px, 4vw, 48px);
+  padding: clamp(20px, 2.4vw, 28px) 0; border-top: 1px solid var(--iv-hair);
+}
+.dm-root .iv-ev-time { margin: 0; font: 400 clamp(22px, 2.2vw, 28px)/1.15 var(--iv-font); color: var(--iv-ink); font-variant-numeric: tabular-nums; }
+.dm-root .iv-ev-body h3 { margin: 0 0 6px; font: 400 12px/1.4 var(--iv-font) !important; letter-spacing: .1em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-ev-place { margin: 0; font: 400 17px/1.35 var(--iv-font); color: var(--iv-ink); }
+.dm-root .iv-ev-addr { margin: 4px 0 0; font: 400 15px/1.45 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-ev-note { margin: 10px 0 0; max-width: 52ch; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-calendar { margin-top: 20px; }
+
+/* ---------- banda pizarra: confirmar asistencia (como el bloque de regalos de la landing) ---------- */
+.dm-root .iv-band {
+  position: relative; margin-top: calc(var(--iv-curve) * -1); padding: clamp(40px, 5.5vw, 72px) 0; border-radius: var(--iv-curve) var(--iv-curve) 0 0;
+  background: var(--iv-slate); color: #fff; font-family: var(--iv-font);
+}
+.dm-root .iv-rsvp-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px 48px; }
+.dm-root .iv-rsvp-deadline { margin: 12px 0 0; font: 400 15px/1.5 var(--iv-font); color: #fff; }
+.dm-root .iv-rsvp-action { display: grid; justify-items: start; gap: 12px; }
+.dm-root .iv-status { margin: 0; font: 400 14px/1.4 var(--iv-font); color: #fff; }
+
+/* ---------- información práctica ---------- */
+.dm-root .iv-info-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px clamp(32px, 5vw, 64px); }
+.dm-root .iv-routes { list-style: none; margin: 0; padding: 0; }
+.dm-root .iv-routes li { margin-top: 18px; }
+.dm-root .iv-routes li:first-child { margin-top: 0; }
+.dm-root .iv-routes .iv-link, .dm-root .iv-info-grid > div > .iv-link { margin-top: 4px; }
+.dm-root .iv-swatches { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 16px; }
+.dm-root .iv-swatches li { display: grid; justify-items: center; gap: 8px; }
+.dm-root .iv-swatches i { display: block; width: 40px; height: 40px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .16); }
+.dm-root .iv-swatches span { font: 400 13px/1.2 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-faq-wrap { margin-top: clamp(40px, 5vw, 64px); padding-top: clamp(32px, 4vw, 48px); border-top: 1px solid var(--iv-hair); max-width: 760px; }
+.dm-root .iv-faq { margin-top: 16px; border-bottom: 1px solid var(--iv-hair); }
+.dm-root .iv-faq details { border-top: 1px solid var(--iv-hair); }
+.dm-root .iv-faq summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 6px 0; cursor: pointer; list-style: none;
+  font: 400 16px/1.35 var(--iv-font); color: var(--iv-ink);
+}
+.dm-root .iv-faq summary::-webkit-details-marker { display: none; }
+.dm-root .iv-faq summary::after { content: '+'; flex: none; font-size: 22px; line-height: 1; color: var(--iv-muted); }
+.dm-root .iv-faq details[open] summary::after { content: '–'; }
+.dm-root .iv-faq details p { margin: 0 0 18px; max-width: 56ch; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
+
+/* ---------- fotos (tratamiento de las historias de la landing) ---------- */
+.dm-root .iv-section.iv-photos { background: var(--iv-section); }
+.dm-root .iv-mosaic { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.dm-root .iv-shot { margin: 0; overflow: hidden; border-radius: 8px; background: var(--iv-tonal); }
+.dm-root .iv-shot img { display: block; width: 100%; aspect-ratio: .85; object-fit: cover; }
+.dm-root .iv-hashtag { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin: 28px 0 0; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-hashtag strong { font: 400 clamp(20px, 1.8vw, 24px)/1.2 var(--iv-font); color: var(--iv-ink); }
+
+/* ---------- participá: mensajes y playlist ---------- */
+.dm-root .iv-part-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px clamp(32px, 6vw, 80px); align-items: start; }
+.dm-root .iv-form { display: grid; gap: 6px; margin-top: 20px; }
+.dm-root .iv-form label { margin-top: 8px; font: 400 13px/1.2 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-form input, .dm-root .iv-form textarea {
+  width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid var(--iv-hair); border-radius: 12px; background: #fff;
+  font: 400 16px/1.4 var(--iv-font); color: var(--iv-ink);
+}
+.dm-root .iv-form textarea { resize: vertical; min-height: 96px; }
+.dm-root .iv-form .iv-btn { justify-self: start; margin-top: 10px; }
+.dm-root .iv-form.is-inline { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.dm-root .iv-form.is-inline .iv-btn { grid-column: 1 / -1; margin-top: 2px; }
+.dm-root .iv-form.is-inline .iv-error { grid-column: 1 / -1; }
+.dm-root .iv-msg-list { list-style: none; margin: 28px 0 0; padding: 0; max-height: 420px; overflow: auto; border-top: 1px solid var(--iv-hair); }
+.dm-root .iv-msg-list li { padding: 18px 0; border-bottom: 1px solid var(--iv-hair); }
+.dm-root .iv-msg-list blockquote { margin: 0; font: 400 16px/1.45 var(--iv-font); color: var(--iv-ink); }
+.dm-root .iv-msg-list p { margin: 6px 0 0; font: 400 13px/1.2 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-tracks { list-style: none; margin: 24px 0 8px; padding: 0; border-top: 1px solid var(--iv-hair); }
+.dm-root .iv-tracks li { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 52px; padding: 6px 0; border-bottom: 1px solid var(--iv-hair); }
+.dm-root .iv-track-n { font: 400 13px/1 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-tracks strong { display: block; font: 400 15px/1.3 var(--iv-font); color: var(--iv-ink); }
+.dm-root .iv-tracks small { display: block; font: 400 13px/1.3 var(--iv-font); color: var(--iv-muted); }
+
+/* ---------- cierre (como las "bookends" de la landing) ---------- */
+.dm-root .iv-closing {
+  position: relative; display: grid; place-items: center; min-height: clamp(420px, 64svh, 620px); margin: 0 clamp(8px, 1.2vw, 16px) clamp(8px, 1.2vw, 16px);
+  padding: 72px clamp(20px, 5vw, 56px); border-radius: 25px; overflow: hidden; background: #3b3c3a center 35% / cover no-repeat; color: #fff;
+  isolation: isolate; text-align: center; font-family: var(--iv-font);
+}
+.dm-root .iv-closing::before { content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(0 0 0 / .45); }
+.dm-root .iv-closing-copy { display: grid; justify-items: center; max-width: 640px; }
+.dm-root .iv-closing h2 { color: #fff !important; font-size: clamp(30px, 3.4vw, 44px) !important; }
+.dm-root .iv-closing p { margin: 14px 0 0; font: 400 18px/1.4 var(--iv-font) !important; color: #fff; }
+.dm-root .iv-closing-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 24px; margin-top: 28px; }
+.dm-root .iv-closing-link { display: inline-flex; align-items: center; min-height: 44px; color: #fff; font: 500 14px/1.2 var(--iv-font); }
+.dm-root .iv-closing-link > span { border-bottom: 1px solid currentColor; padding-bottom: 3px; }
+
+/* ---------- pie (el de la landing, en una sola línea) ---------- */
+.dm-root .iv-footer { background: var(--iv-slate); color: #fff; padding: 28px 0; font-family: var(--iv-font); }
+.dm-root .iv-footer .iv-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 32px; }
+.dm-root .iv-footer-brand { font-size: 21px; min-height: 44px; color: #fff; }
+.dm-root .iv-footer p { flex: 1 1 320px; margin: 0; max-width: 56ch; font: 400 13px/1.5 var(--iv-font); color: #fff; }
+.dm-root .iv-footer span { font: 400 12px/1.2 var(--iv-font); color: #fff; }
+
+/* ---------- lista de regalos: mismo sistema ---------- */
+.dm-root .rg-list { background: #fff; padding-top: clamp(32px, 4vw, 56px) !important; padding-bottom: var(--iv-pad); }
+.dm-root .rg-list > .section-inner { width: 92%; max-width: 1040px; margin: 0 auto; }
+.dm-root .rg-list .rg-mfilters { margin-top: 0 !important; }
+.dm-root .rg-filters button { background: var(--iv-section); color: var(--iv-ink); font-family: var(--iv-font); }
+.dm-root .rg-filters button:hover { background: #ebe7dc; }
+.dm-root .rg-filters button.on { background: var(--iv-slate); color: #fff; }
+.dm-root .rg-search input, .dm-root .rg-sel select, .dm-root .rg-search-d input, .dm-root .rg-range select { border-radius: 999px; border: 1px solid var(--iv-hair); box-shadow: none; font-family: var(--iv-font); }
+.dm-root .rg-card { background: transparent !important; box-shadow: none !important; padding: 0 !important; border-radius: 0 !important; }
+.dm-root .rg-card:hover { transform: none; }
+.dm-root .rg-photo { border-radius: 8px; }
+.dm-root .rg-price { font-family: var(--iv-font); font-size: 13px; }
+.dm-root .rg-card h3 {
+  margin: 12px 0 10px !important; font: 400 clamp(12.5px, 3.4vw, 15px)/1.3 var(--iv-font) !important; color: var(--iv-ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dm-root .rg-btn { background: #fbfaf7 !important; color: var(--iv-ink) !important; border: 1px solid var(--iv-hair) !important; height: 44px; min-height: 44px; font-family: var(--iv-font); }
+.dm-root .rg-btn:hover:not(:disabled) { background: #fff !important; border-color: var(--iv-ink) !important; }
+.dm-root .rg-btn:disabled { background: var(--iv-tonal) !important; color: var(--iv-muted) !important; }
+.dm-root .rg-next { border-top: 1px solid var(--iv-hair); }
+.dm-root .rg-empty { margin: 24px 0 0; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
+
+/* ---------- diálogos: aviso de demostración y área de mensaje ---------- */
+.dm-rsvp .dm-demo-note, .rg-dialog .dm-demo-note { margin: 14px 0 0; font-size: 13px; line-height: 1.45; color: #575757; }
+.rg-dialog .rg-sim { margin: 8px 0 0; font-size: 13px; line-height: 1.4; color: #575757; }
+.rg-dialog .rg-field textarea, .dm-rsvp .dm-rsvp-field textarea {
+  width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid rgb(59 60 58 / .3); border-radius: 12px; background: #fff;
+  font: 400 15px/1.4 Arial, Helvetica, sans-serif; color: #3b3c3a; resize: vertical;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .dm-root .iv-info-grid { grid-template-columns: minmax(0, 1fr); }
+  .dm-root .iv-part-grid { grid-template-columns: minmax(0, 1fr); }
+  .dm-root .iv-rsvp-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .dm-root .iv-events li { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .dm-root .iv-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .dm-root .iv-shot:first-child { grid-column: 1 / 3; }
+  .dm-root .iv-shot:first-child img { aspect-ratio: 4 / 3; }
+  .dm-root .iv-form.is-inline { grid-template-columns: minmax(0, 1fr); }
+  .dm-root .iv-count { gap: 24px; }
+  .dm-root .iv-cover-actions { gap: 0 20px; }
+  .dm-root .iv-rsvp .iv-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dm-root .iv-btn, .dm-root .iv-cover-cta { transition: none; }
+}
+
+/* Portada de regalos: el texto va abajo para no tapar las caras */
+.dm-root .iv-cover.is-gifts { align-items: flex-end; }
+.dm-root .iv-cover.is-gifts .iv-cover-copy { padding-bottom: clamp(40px, 6svh, 64px); }
+.dm-root .iv-cover.is-gifts .iv-cover-title { font-size: clamp(30px, 3.4vw, 44px) !important; }
+.rg-dialog .dm-demo-note { text-align: left; }
+
+/* Portada: nombres arriba y fecha abajo, con la misma letra que "¡Nos casamos!" y "Ceremonia"
+   (Arial 400, mayúsculas, interletrado .1em). */
+.dm-root .iv-cover:not(.is-gifts) { flex-direction: column; justify-content: space-between; align-items: center; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-copy {
+  display: flex; flex: 1; flex-direction: column; justify-content: space-between; align-items: center; width: 92%; max-width: 760px;
+  padding: clamp(88px, 14svh, 132px) 0 clamp(64px, 9svh, 96px);
+}
+.dm-root .iv-cover-title.iv-cover-top, .dm-root .iv-cover:not(.is-gifts) .iv-cover-date {
+  font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--iv-font) !important; letter-spacing: .1em !important; text-transform: uppercase; color: #fff !important;
+  text-shadow: 0 1px 12px rgb(0 0 0 / .35);
+}
+.dm-root .iv-cover-bottom { display: grid; justify-items: center; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-date { margin: 0; }
+.dm-root .iv-cover:not(.is-gifts)::after {
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / .42), rgb(0 0 0 / 0) 34%),
+    linear-gradient(0deg, rgb(0 0 0 / .55), rgb(0 0 0 / 0) 52%);
+}
+
+/* Portada: nombres grandes en el centro (escala de títulos de la landing); la fecha y las acciones quedan abajo. */
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: flex-end; }
+.dm-root .iv-cover-title.iv-cover-top {
+  margin: auto 0 clamp(40px, 11svh, 120px) !important; font: 400 clamp(30px, 5.2vw, 72px)/1.12 var(--iv-font) !important; letter-spacing: .1em !important;
+  text-transform: uppercase !important; overflow-wrap: anywhere; text-wrap: balance; text-shadow: 0 2px 22px rgb(0 0 0 / .4);
+}
+.dm-root .iv-cover:not(.is-gifts)::after {
+  background:
+    linear-gradient(180deg, rgb(0 0 0 / .36), rgb(0 0 0 / 0) 28%),
+    radial-gradient(ellipse 72% 32% at 50% 64%, rgb(0 0 0 / .58), rgb(0 0 0 / 0) 100%),
+    linear-gradient(0deg, rgb(0 0 0 / .55), rgb(0 0 0 / 0) 50%);
+}
+
+/* iconos de los eventos: identifican ceremonia, recepción y fiesta sin leer */
+.dm-root .iv-ev-lead { display: grid; gap: 12px; justify-items: start; }
+.dm-root .iv-ev-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: var(--iv-paper); color: var(--iv-slate); border: 1px solid var(--iv-hair); }
+@media (max-width: 720px) {
+  .dm-root .iv-ev-lead { grid-auto-flow: column; align-items: center; justify-content: start; gap: 14px; }
+}
+
+/* fondo blanco en toda la invitación (la sección de fotos y el fondo del documento eran crema) */
+.dm-root .iv-section.iv-photos { background: #fff; }
+html:has(.dm-root), body:has(.dm-root) { background: #fff; }
+.dm-root .iv-ev-icon { background: #fff; }
+.dm-root .iv-shot { background: #fff; }
+
+/* fecha pegada debajo de los nombres, centrada */
+.dm-root .iv-cover-group { display: grid; justify-items: center; text-align: center; margin: auto 0 clamp(56px, 12svh, 130px); }
+.dm-root .iv-cover-group .iv-cover-title.iv-cover-top { margin: 0 !important; }
+.dm-root .iv-cover-group .iv-cover-date { margin: clamp(6px, 1svh, 10px) 0 0 !important; text-align: center; }
+
+/* tipografía de Weda (Arial, como la landing): nombres en mayúscula con interletrado, fecha igual */
+.dm-root .iv-cover-title.iv-cover-top { font: 400 clamp(24px, 4.2vw, 64px)/1.12 var(--iv-font) !important; letter-spacing: .1em !important; text-transform: uppercase !important; white-space: nowrap; text-shadow: 0 2px 22px rgb(0 0 0 / .4); }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-date { font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--iv-font) !important; letter-spacing: .1em !important; }
+
+/* ---------- horarios y lugares: un solo bloque, tarjetita ---------- */
+.dm-root .iv-card {
+  max-width: 760px; margin: 0 auto; padding: clamp(20px, 4vw, 48px); background: #fff; border-radius: 12px;
+  border: 1px solid var(--iv-hair); box-shadow: 0 10px 40px rgb(59 60 58 / .08); font-family: var(--iv-font);
+}
+.dm-root .iv-card-tabs { list-style: none; margin: 0 0 clamp(20px, 3vw, 36px); padding: 0; display: flex; justify-content: space-around; border: 1px solid var(--iv-hair); border-radius: 8px; }
+.dm-root .iv-card-tabs a { display: grid; place-items: center; min-width: 48px; min-height: 64px; padding: 0 18px; color: var(--iv-ink); }
+.dm-root .iv-card-events { list-style: none; margin: 0; padding: 0; }
+.dm-root .iv-card-events li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 0 clamp(16px, 3vw, 32px); padding: clamp(20px, 3vw, 32px) 0; border-top: 1px solid var(--iv-hair); scroll-margin-top: 88px; }
+.dm-root .iv-card-events li:first-child { border-top: 0; padding-top: 0; }
+.dm-root .iv-card-icon { display: grid; justify-items: start; color: var(--iv-ink); padding-top: 2px; }
+.dm-root .iv-card-body h3 { margin: 0 0 8px; font: 400 clamp(16px, 1.6vw, 18px)/1.3 var(--iv-font) !important; letter-spacing: .08em; text-transform: uppercase; color: var(--iv-ink); }
+.dm-root .iv-card-time { margin: 0 0 6px; font: 400 clamp(26px, 3vw, 34px)/1.15 var(--iv-font); color: var(--iv-ink); font-variant-numeric: tabular-nums; }
+.dm-root .iv-card-date { margin: 0 0 14px; font: 400 16px/1.4 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-card-place { margin: 0; font: 400 17px/1.5 var(--iv-font); color: var(--iv-ink); }
+.dm-root .iv-card-addr { margin: 2px 0 0; font: 400 16px/1.5 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-card-note { margin: 10px 0 0; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-card-map { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding-bottom: 4px; min-height: 28px; font: 400 14px/1.2 var(--iv-font); letter-spacing: .1em; text-transform: uppercase; color: var(--iv-ink); border-bottom: 1px solid currentColor; }
+.dm-root .iv-card > .iv-calendar { margin-top: clamp(16px, 2.4vw, 24px); }
+.dm-root .iv-card :where(a, button):focus-visible { outline: 2px solid var(--iv-ink); outline-offset: 3px; border-radius: 4px; }
+@media (max-width: 480px) { .dm-root .iv-card-events li { grid-template-columns: 1fr; gap: 12px; } }
+
+/* "¡Nos casamos!" como título de la sección, sin cuenta regresiva */
+.dm-root .iv-day-head { justify-content: center; text-align: center; }
+.dm-root .iv-day-title { margin: 0 !important; font: 400 clamp(40px, 6vw, 72px)/1.05 var(--iv-font) !important; letter-spacing: -.01em; color: var(--iv-ink); text-transform: none; }
+
+/* "¡Nos casamos!" a la izquierda y la tarjeta de horarios, más compacta, a la derecha */
+.dm-root .iv-day-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: clamp(32px, 6vw, 96px); align-items: start; }
+.dm-root .iv-day-grid .iv-day-head { justify-content: flex-start; text-align: left; margin: 0; display: block; position: sticky; top: 96px; }
+.dm-root .iv-day-lead { margin: 16px 0 0; max-width: 28ch; font: 400 clamp(17px, 1.6vw, 20px)/1.5 var(--iv-font); color: var(--iv-muted); }
+.dm-root .iv-day-grid .iv-card { margin: 0; max-width: none; padding: clamp(16px, 2.4vw, 24px); }
+.dm-root .iv-day-grid .iv-card-tabs { margin-bottom: 16px; }
+.dm-root .iv-day-grid .iv-card-tabs a { min-height: 48px; }
+.dm-root .iv-day-grid .iv-card-events li { grid-template-columns: 36px minmax(0, 1fr); gap: 0 14px; padding: 16px 0; }
+.dm-root .iv-day-grid .iv-card-icon svg { width: 26px; height: 26px; }
+.dm-root .iv-day-grid .iv-card-body h3 { font-size: 14px !important; margin-bottom: 4px; }
+.dm-root .iv-day-grid .iv-card-time { font-size: 22px; margin-bottom: 2px; }
+.dm-root .iv-day-grid .iv-card-date { font-size: 14px; margin-bottom: 8px; }
+.dm-root .iv-day-grid .iv-card-place { font-size: 15px; }
+.dm-root .iv-day-grid .iv-card-addr { font-size: 14px; }
+.dm-root .iv-day-grid .iv-card-note { font-size: 14px; margin-top: 6px; }
+.dm-root .iv-day-grid .iv-card-map { margin-top: 10px; font-size: 12px; }
+@media (max-width: 860px) {
+  .dm-root .iv-day-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .dm-root .iv-day-grid .iv-day-head { position: static; text-align: center; }
+  .dm-root .iv-day-lead { margin-inline: auto; }
+  .dm-root .iv-day-grid .iv-card { max-width: 480px; margin-inline: auto; }
+}
+
+/* portada como la referencia: ¡Nos casamos! arriba, nombres grandes y fecha con puntos, en el centro */
+.dm-root .iv-cover-eyebrow { margin: 0 0 clamp(20px, 4svh, 44px); font: 400 clamp(16px, 1.5vw, 20px)/1.3 var(--iv-font); color: #fff; text-shadow: 0 1px 14px rgb(0 0 0 / .45); }
+.dm-root .iv-cover-group { margin: auto 0 !important; padding: clamp(40px, 8svh, 96px) 0 clamp(40px, 6svh, 72px); }
+.dm-root .iv-cover-title.iv-cover-top { font: 400 clamp(36px, 6.2vw, 88px)/1.08 var(--iv-font) !important; letter-spacing: -.01em !important; text-transform: none !important; white-space: normal; text-wrap: balance; }
+.dm-root .iv-cover-group .iv-cover-date { margin: clamp(20px, 4svh, 44px) 0 0 !important; font: 700 clamp(14px, 1.3vw, 17px)/1.4 var(--iv-font) !important; letter-spacing: .12em !important; text-transform: none !important; }
+.dm-root .iv-cover:not(.is-gifts)::after { background: linear-gradient(180deg, rgb(0 0 0 / .3), rgb(0 0 0 / 0) 26%), radial-gradient(ellipse 70% 40% at 50% 50%, rgb(0 0 0 / .38), rgb(0 0 0 / 0) 100%), linear-gradient(0deg, rgb(0 0 0 / .3), rgb(0 0 0 / 0) 45%); }
+/* barra: cristal translúcido claro, no gris */
+.dm-root .ej-bar .ej-bar-pill { background: rgb(255 255 255 / .16) !important; border: 1px solid rgb(255 255 255 / .38); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); box-shadow: none; }
+.dm-root .ej-bar .ej-bar-link { color: #fff; text-shadow: 0 1px 8px rgb(0 0 0 / .45); }
+
+/* alineación como la referencia: el bloque va en el tercio superior, centrado (eyebrow ~20 %, nombres ~32 %, fecha ~43 % del alto) */
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: flex-start; }
+.dm-root .iv-cover-group { margin: 0 !important; padding: clamp(104px, 17svh, 200px) 0 0; }
+.dm-root .iv-cover-eyebrow { margin-bottom: clamp(22px, 6svh, 64px); }
+.dm-root .iv-cover-title.iv-cover-top { font-size: clamp(40px, 5.2vw, 84px) !important; }
+.dm-root .iv-cover-group .iv-cover-date { margin-top: clamp(22px, 5svh, 56px) !important; }
+.dm-root .iv-cover:not(.is-gifts)::after {
+  background: linear-gradient(180deg, rgb(0 0 0 / .28), rgb(0 0 0 / 0) 24%), radial-gradient(ellipse 70% 30% at 50% 32%, rgb(0 0 0 / .34), rgb(0 0 0 / 0) 100%);
+}
+/* esta foto tiene las caras altas: el bloque sube para que no tape a la pareja */
+.dm-root .iv-cover-group { padding-top: clamp(84px, 11svh, 130px); }
+.dm-root .iv-cover-eyebrow { margin-bottom: clamp(10px, 2.2svh, 24px); }
+.dm-root .iv-cover-group .iv-cover-date { margin-top: clamp(10px, 2.2svh, 24px) !important; }
+
+/* Solo la portada usa la tipografía de la referencia (Cormorant Garamond); el resto de la invitación sigue en Arial, como Weda. */
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-eyebrow { font: 500 clamp(18px, 1.7vw, 24px)/1.3 'Cormorant Garamond', Garamond, Georgia, serif; letter-spacing: 0; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-title.iv-cover-top { font: 400 clamp(40px, 5.2vw, 84px)/1.02 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: 0 !important; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-group .iv-cover-date { font: 600 clamp(16px, 1.5vw, 20px)/1.4 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: .14em !important; }
+
+/* bloque (¡Nos casamos! + nombres + fecha) centrado en el medio de la foto */
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: center; padding-top: 0; padding-bottom: 0; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-group { padding: 0; margin: auto 0 !important; }
+.dm-root .iv-cover-eyebrow { margin-bottom: clamp(14px, 3svh, 32px); }
+.dm-root .iv-cover-group .iv-cover-date { margin-top: clamp(14px, 3svh, 32px) !important; }
+.dm-root .iv-cover:not(.is-gifts)::after { background: linear-gradient(180deg, rgb(0 0 0 / .28), rgb(0 0 0 / 0) 24%), radial-gradient(ellipse 70% 34% at 50% 50%, rgb(0 0 0 / .45), rgb(0 0 0 / 0) 100%); }
+
+/* foto con mucho cielo arriba: se muestra desde arriba para que el bloque central quede sobre el cielo y no tape las caras */
+.dm-root .iv-cover-img { object-position: 50% 0%; }
+/* cielo claro: oscurecido más leve para no ensuciar el azul */
+.dm-root .iv-cover:not(.is-gifts)::after { background: linear-gradient(180deg, rgb(0 0 0 / .22), rgb(0 0 0 / 0) 22%), radial-gradient(ellipse 64% 30% at 50% 50%, rgb(0 0 0 / .26), rgb(0 0 0 / 0) 100%); }
+
+/* portada de regalos: misma tipografía de la portada de la invitación (Cormorant Garamond) */
+.dm-root .iv-cover.is-gifts .iv-cover-names { font: 500 clamp(18px, 1.7vw, 24px)/1.3 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: 0; text-transform: none; }
+.dm-root .iv-cover.is-gifts .iv-cover-title { font: 400 clamp(40px, 5.2vw, 84px)/1.02 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: 0 !important; text-transform: none !important; }
+.dm-root .iv-cover.is-gifts .iv-cover-date { font: 600 clamp(16px, 1.5vw, 20px)/1.4 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: .14em !important; text-transform: none !important; }
+.dm-root .iv-cover.is-gifts .iv-cover-back { font: 500 clamp(16px, 1.4vw, 18px)/1.3 'Cormorant Garamond', Garamond, Georgia, serif; letter-spacing: 0; }
+.dm-root .iv-cover.is-gifts .iv-cover-img { object-position: 50% 62%; }
+
+/* barra: sin borde; cristal claro sobre la foto, gris translúcido cuando pasa a fondo blanco */
+.dm-root .ej-bar .ej-bar-pill { border: 0 !important; transition: background-color .25s ease; }
+.dm-root .ej-bar.is-over-light .ej-bar-pill { background: rgb(59 60 58 / .72) !important; -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); box-shadow: 0 6px 24px rgb(0 0 0 / .12); }
+@media (prefers-reduced-motion: reduce) { .dm-root .ej-bar .ej-bar-pill { transition: none; } }
+/* regalos: texto centrado sobre el cielo y la pareja asomando abajo */
+.dm-root .iv-cover.is-gifts { align-items: center; }
+.dm-root .iv-cover.is-gifts .iv-cover-copy { padding-top: 40px; padding-bottom: 40px; }
+.dm-root .iv-cover.is-gifts .iv-cover-img { object-position: 50% 28%; }
+
+/* foto en la playa: cielo arriba y pareja abajo; el bloque va en el cielo y las caras quedan despejadas */
+.dm-root .iv-cover-img, .dm-root .iv-cover.is-gifts .iv-cover-img { object-position: 50% 0%; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: flex-start; padding-top: clamp(72px, 8svh, 104px); }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-group { margin: 0 !important; }
+.dm-root .iv-cover-eyebrow { margin-bottom: clamp(8px, 1.6svh, 16px); }
+.dm-root .iv-cover-group .iv-cover-date { margin-top: clamp(8px, 1.6svh, 16px) !important; }
+
+/* POSICIÓN FIJA: el bloque (¡Nos casamos! / nombres / fecha) va siempre centrado en la portada, sin depender de la foto */
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: center; padding-top: 0; padding-bottom: 0; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-group { margin: auto 0 !important; padding: 0; }
+.dm-root .iv-cover-eyebrow { margin-bottom: clamp(14px, 3svh, 32px); }
+.dm-root .iv-cover-group .iv-cover-date { margin-top: clamp(14px, 3svh, 32px) !important; }
+.dm-root .iv-cover-img { object-position: 50% 40%; }
+.dm-root .iv-cover.is-gifts .iv-cover-img { object-position: 50% 40%; }
+.dm-root .iv-cover.is-gifts { align-items: center; }
+/* foto de alto contraste: velo parejo + oscurecido central para que el texto se lea con cualquier imagen */
+.dm-root .iv-cover:not(.is-gifts)::after { background: linear-gradient(180deg, rgb(0 0 0 / .36), rgb(0 0 0 / .18) 30%, rgb(0 0 0 / .18) 70%, rgb(0 0 0 / .3)), radial-gradient(ellipse 60% 26% at 50% 50%, rgb(0 0 0 / .4), rgb(0 0 0 / 0) 100%); }
+/* versión web: nombres un poco más grandes */
+@media (min-width: 1024px) {
+  .dm-root .iv-cover:not(.is-gifts) .iv-cover-title.iv-cover-top { font-size: clamp(64px, 6.4vw, 108px) !important; }
+  .dm-root .iv-cover.is-gifts .iv-cover-title { font-size: clamp(64px, 6.4vw, 108px) !important; }
+}
+
+/* regalos: 4 por fila en web, 3 en tablet, 2 en celular */
+.dm-root .rg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 24px); }
+@media (min-width: 1100px) { .dm-root .rg-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .dm-root .rg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+/* regalos: la lista aprovecha el ancho de la pantalla (92 %, hasta 1400 px) para que entren 4 por fila con tarjetas cómodas */
+.dm-root .rg-list .section-inner { max-width: min(92%, 1400px); width: 100%; }
+
+/* barra de arriba: tipografía original (Arial, como Weda) y cristal con más intensidad */
+.dm-root .ej-bar, .dm-root .ej-bar :where(a, button, span) { font-family: Arial, Helvetica, sans-serif !important; }
+.dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-family: Arial, Helvetica, sans-serif !important; font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; font-size-adjust: none; color: #fff; text-shadow: 0 1px 10px rgb(0 0 0 / .6); }
+@media (max-width: 640px) { .dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-size: 13px; } }
+.dm-root .ej-bar .ej-bar-pill { background: rgb(255 255 255 / .28) !important; -webkit-backdrop-filter: blur(20px) saturate(1.3); backdrop-filter: blur(20px) saturate(1.3); box-shadow: 0 6px 24px rgb(0 0 0 / .16); }
+.dm-root .ej-bar.is-over-light .ej-bar-pill { background: rgb(59 60 58 / .82) !important; }
+
+/* bloque de bienvenida después de la foto */
+.dm-root .iv-welcome { background: #fff; text-align: center; padding: clamp(72px, 12vw, 148px) 0 clamp(40px, 6vw, 72px); scroll-margin-top: 0; }
+.dm-root .iv-welcome-title { margin: 0 !important; font: 400 clamp(40px, 5.6vw, 80px)/1.1 var(--iv-font) !important; letter-spacing: -.01em !important; color: var(--iv-ink); text-transform: none; }
+.dm-root .iv-welcome-text { margin: clamp(16px, 2vw, 28px) auto 0; max-width: 36ch; font: 400 clamp(17px, 1.5vw, 20px)/1.5 var(--iv-font); color: var(--iv-muted); }
+/* tarjeta de horarios centrada, ya sin el título a la izquierda */
+.dm-root .iv-day-grid { grid-template-columns: minmax(0, 560px); justify-content: center; }
+.dm-root .iv-section.iv-day { padding-top: clamp(16px, 3vw, 40px); }
+.dm-root .iv-welcome-text { max-width: 52ch; text-wrap: balance; }
+/* fondo de la invitación: blanco puro en todo el documento (incluye overscroll y secciones) */
+html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-section, .dm-root .iv-welcome, .dm-root .iv-practical, .dm-root .iv-photos, .dm-root .iv-participate { background-color: #fff !important; }
+
+/* bienvenida: misma letra que "CEREMONIA" (mayúscula, interletrado, sin negrita), más arriba y más delicada */
+.dm-root .iv-welcome { padding: clamp(44px, 7vw, 96px) 0 clamp(32px, 5vw, 56px); }
+.dm-root .iv-welcome-title {
+  font: 400 clamp(22px, 2.6vw, 34px)/1.2 var(--iv-font) !important; font-weight: 400 !important; letter-spacing: .1em !important; text-transform: uppercase !important; color: var(--iv-ink);
+}
+.dm-root .iv-welcome-text { margin-top: clamp(12px, 1.6vw, 20px); font: 400 clamp(15px, 1.25vw, 17px)/1.6 var(--iv-font); font-weight: 400 !important; letter-spacing: .02em; color: var(--iv-muted); }
+
+/* ---------- horarios sin tarjeta: los momentos del día, uno al lado del otro ---------- */
+.dm-root .iv-day-grid { grid-template-columns: minmax(0, 1fr); justify-content: stretch; }
+.dm-root .iv-day-grid .iv-card { max-width: none; width: 100%; padding: 0; background: transparent; border: 0; box-shadow: none; border-radius: 0; }
+.dm-root .iv-day-grid .iv-card-tabs { display: none; }
+.dm-root .iv-day-grid .iv-card-events { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--iv-hair); border-bottom: 1px solid var(--iv-hair); }
+.dm-root .iv-day-grid .iv-card-events li { grid-template-columns: minmax(0, 1fr); gap: 14px; justify-items: center; text-align: center; padding: clamp(28px, 4vw, 48px) clamp(16px, 2.4vw, 40px); border-top: 0; border-left: 1px solid var(--iv-hair); }
+.dm-root .iv-day-grid .iv-card-events li:first-child { border-left: 0; padding-top: clamp(28px, 4vw, 48px); }
+.dm-root .iv-day-grid .iv-card-icon { justify-items: center; }
+.dm-root .iv-day-grid .iv-card-icon svg { width: 34px; height: 34px; }
+.dm-root .iv-day-grid .iv-card-body { display: grid; justify-items: center; }
+.dm-root .iv-day-grid .iv-card-body h3 { font-size: 15px !important; margin-bottom: 10px; letter-spacing: .1em; }
+.dm-root .iv-day-grid .iv-card-time { font-size: clamp(26px, 2.6vw, 34px); margin-bottom: 4px; }
+.dm-root .iv-day-grid .iv-card-date { font-size: 14px; margin-bottom: 14px; }
+.dm-root .iv-day-grid .iv-card-place { font-size: 16px; }
+.dm-root .iv-day-grid .iv-card-addr { font-size: 14px; max-width: 28ch; }
+.dm-root .iv-day-grid .iv-card-note { font-size: 14px; max-width: 30ch; }
+.dm-root .iv-day-grid .iv-card-map { margin-top: 16px; font-size: 12px; }
+.dm-root .iv-day-grid .iv-card > .iv-calendar { display: flex; margin: clamp(20px, 3vw, 32px) auto 0; }
+@media (max-width: 860px) {
+  .dm-root .iv-day-grid .iv-card-events { grid-template-columns: minmax(0, 1fr); }
+  .dm-root .iv-day-grid .iv-card-events li { border-left: 0; border-top: 1px solid var(--iv-hair); }
+  .dm-root .iv-day-grid .iv-card-events li:first-child { border-top: 0; }
+}
+/* íconos dibujados a mano: más grandes para que se aprecie el trazo */
+.dm-root .iv-day-grid .iv-card-icon svg { width: 56px; height: 56px; }
+@media (max-width: 860px) { .dm-root .iv-day-grid .iv-card-icon svg { width: 48px; height: 48px; } }
+
+/* fecha bajo la frase de bienvenida: misma letra que "CEREMONIA" */
+.dm-root .iv-welcome-date { margin: clamp(14px, 1.8vw, 22px) 0 0; font: 400 clamp(14px, 1.2vw, 16px)/1.4 var(--iv-font); letter-spacing: .1em; text-transform: uppercase; color: var(--iv-ink); }
+
+/* bienvenida: "Save the date" chico, la fecha grande y el botón para guardarla */
+.dm-root .iv-welcome-title { font: 400 clamp(12px, 1vw, 14px)/1.3 var(--iv-font) !important; letter-spacing: .14em !important; color: var(--iv-muted); }
+.dm-root .iv-welcome-date { margin: clamp(10px, 1.4vw, 18px) 0 0; font: 400 clamp(28px, 4vw, 52px)/1.12 var(--iv-font); letter-spacing: .06em; text-transform: uppercase; color: var(--iv-ink); text-wrap: balance; }
+.dm-root .iv-welcome-btn { margin-top: clamp(20px, 2.6vw, 32px); }
+
+/* bienvenida como la referencia: save the date chico en color, fecha en tamaño medio (sin negrita), cuenta regresiva y enlace para agendar */
+.dm-root .iv-welcome-title { color: var(--iv-slate); font-size: clamp(12px, 1vw, 14px) !important; letter-spacing: .16em !important; }
+.dm-root .iv-welcome-date { font: 400 clamp(26px, 3.2vw, 42px)/1.15 var(--iv-font); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--iv-ink); margin-top: clamp(8px, 1.2vw, 14px); }
+.dm-root .iv-welcome .iv-count { justify-content: center; gap: clamp(22px, 4vw, 52px); margin-top: clamp(20px, 2.6vw, 32px); }
+.dm-root .iv-welcome .iv-count p { gap: 6px; justify-items: center; }
+.dm-root .iv-welcome .iv-count-n { font: 400 clamp(28px, 3vw, 40px)/1 var(--iv-font); color: var(--iv-slate); font-variant-numeric: tabular-nums; }
+.dm-root .iv-welcome .iv-count-l { font: 400 11px/1.2 var(--iv-font); letter-spacing: .14em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-welcome .iv-welcome-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: clamp(20px, 2.6vw, 30px); font: 400 12px/1.2 var(--iv-font); letter-spacing: .14em; text-transform: uppercase; color: var(--iv-ink); background: none; border: 0; padding: 8px 4px; min-height: 44px; cursor: pointer; }
+.dm-root .iv-welcome .iv-welcome-btn span { border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+
+/* bloque de ceremonia, recepción y fiesta: fondo celestito */
+.dm-root .iv-section.iv-day { background-color: #e9f1f6 !important; }
+.dm-root .iv-day .iv-card-events, .dm-root .iv-day .iv-card-events li { border-color: rgb(59 60 58 / .16); }
+
+/* bloque de ceremonia, recepción y fiesta: azul de Weda (pizarra de la landing), con texto blanco */
+.dm-root .iv-section.iv-day { background-color: var(--iv-slate) !important; color: #fff; }
+.dm-root .iv-day .iv-card-events, .dm-root .iv-day .iv-card-events li { border-color: rgb(255 255 255 / .32); }
+.dm-root .iv-day .iv-card-icon, .dm-root .iv-day .iv-card-body h3, .dm-root .iv-day .iv-card-time, .dm-root .iv-day .iv-card-place, .dm-root .iv-day .iv-card-map { color: #fff; }
+.dm-root .iv-day .iv-card-date, .dm-root .iv-day .iv-card-addr, .dm-root .iv-day .iv-card-note { color: rgb(255 255 255 / .92); }
+.dm-root .iv-day .iv-card :where(a, button):focus-visible { outline-color: #fff; }
+/* la banda de confirmar asistencia pasa al tono oscuro de la paleta para separarse del bloque de arriba */
+.dm-root .iv-band { background: #5a646c; }
+
+/* cada momento con la estructura de la referencia: ícono, nombre, día/mes | hora, línea, lugar y dirección, botón "Cómo llegar" */
+.dm-root .iv-day .iv-card-events li { gap: 0; }
+.dm-root .iv-day .iv-card-body h3 { font-size: 16px !important; letter-spacing: .14em; margin: 12px 0 20px; }
+.dm-root .iv-day .iv-when { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; width: 100%; max-width: 300px; padding-bottom: 22px; margin-bottom: 20px; border-bottom: 1px solid rgb(255 255 255 / .32); }
+.dm-root .iv-day .iv-when-cell { margin: 0; display: grid; gap: 6px; justify-items: center; padding: 0 12px; }
+.dm-root .iv-day .iv-when-cell + .iv-when-cell { border-left: 1px solid rgb(255 255 255 / .32); }
+.dm-root .iv-day .iv-when-n { font: 400 clamp(28px, 2.8vw, 38px)/1 var(--iv-font); color: #fff; font-variant-numeric: tabular-nums; }
+.dm-root .iv-day .iv-when-l { font: 400 12px/1.2 var(--iv-font); letter-spacing: .14em; text-transform: uppercase; color: rgb(255 255 255 / .92); }
+.dm-root .iv-day .iv-card-place { font-size: 18px; margin-top: 0; }
+.dm-root .iv-day .iv-card-addr { font-size: 15px; margin-top: 4px; color: rgb(255 255 255 / .92); }
+.dm-root .iv-day .iv-card-map {
+  margin-top: 22px; padding: 0 24px; min-height: 44px; border: 0; border-radius: 999px; background: #fff; color: var(--iv-ink);
+  font: 400 13px/1 var(--iv-font); letter-spacing: .12em; text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center;
+}
+.dm-root .iv-day .iv-card-map:hover { background: var(--iv-paper); }
+.dm-root .iv-day .iv-card-map span { border: 0; padding: 0; }
+/* alineación entre columnas: todo arriba parejo y el botón siempre al pie */
+.dm-root .iv-day .iv-card-events li { align-content: start; grid-template-rows: auto 1fr; }
+.dm-root .iv-day .iv-card-body { display: flex; flex-direction: column; align-items: center; height: 100%; }
+.dm-root .iv-day .iv-card-map { margin-top: auto; }
+.dm-root .iv-day .iv-card-addr { margin-bottom: 22px; }
+
+/* sin rayas exteriores: ni arriba/abajo ni entre columnas (quedan solo las de la fila día/hora) */
+.dm-root .iv-day .iv-card-events { border-top: 0 !important; border-bottom: 0 !important; }
+.dm-root .iv-day .iv-card-events li, .dm-root .iv-day .iv-card-events li:first-child { border: 0 !important; }
+@media (max-width: 860px) { .dm-root .iv-day .iv-card-events li { border: 0 !important; } }
