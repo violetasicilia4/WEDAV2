@@ -135,7 +135,6 @@ function RsvpBand() {
         </div>
         <div className="iv-rsvp-action">
           <button type="button" className="iv-btn" onClick={rsvp.open}>Confirmar asistencia</button>
-          {rsvp.sentCount > 0 && <p className="iv-status" role="status">Ya cargaste una confirmación en esta demostración.</p>}
         </div>
       </div>
     </section>

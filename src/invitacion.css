@@ -559,3 +559,5 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-band.iv-rsvp { background: #fff; color: var(--iv-ink); }
 .dm-root .iv-rsvp .iv-rsvp-deadline, .dm-root .iv-rsvp .iv-status { color: var(--iv-muted); }
 .dm-root .iv-rsvp :where(a, button):focus-visible { outline-color: var(--iv-slate); }
+.dm-root .iv-rsvp .iv-rsvp-grid { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
+.dm-root .iv-rsvp .iv-rsvp-action { justify-items: center; }
