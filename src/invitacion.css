@@ -539,3 +539,18 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-day .iv-card-events { border-top: 0 !important; border-bottom: 0 !important; }
 .dm-root .iv-day .iv-card-events li, .dm-root .iv-day .iv-card-events li:first-child { border: 0 !important; }
 @media (max-width: 860px) { .dm-root .iv-day .iv-card-events li { border: 0 !important; } }
+
+/* Navegación en celular: objetivos táctiles de al menos 44px y texto de 15px, sin que la barra desborde el ancho */
+@media (max-width: 640px) {
+  .dm-root .ej-bar { height: 60px; margin-bottom: -60px; }
+  .dm-root .ej-bar .ej-bar-inner { width: calc(100% - 16px); gap: 6px; }
+  .dm-root .ej-bar .ej-bar-pill { height: 52px; padding: 0 4px; gap: 0; }
+  .dm-root .ej-bar .ej-bar-close { width: 48px; justify-content: center; padding: 0; flex: none; }
+  .dm-root .ej-bar .ej-bar-close .ej-bar-link { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .dm-root .ej-bar .ej-bar-close .ej-bar-link svg { width: 20px; height: 20px; }
+  .dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { height: 44px; padding: 0 8px; font-size: 15px; }
+  .dm-root .ej-bar .ej-bar-links { min-width: 0; }
+}
+@media (max-width: 370px) {
+  .dm-root:has(#dia) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
+}
