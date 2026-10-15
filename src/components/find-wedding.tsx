@@ -212,7 +212,6 @@ export function FindWedding() {
         <img className="fw-hero-img" src="/pareja-portada-8.webp" alt="" aria-hidden="true" />
         <div className="fw-hero-copy">
           <h1 id="fw-title">Encontrá tu casamiento</h1>
-          <p className="fw-lead">Buscá por sus nombres y encontrá el espacio de su gran día.</p>
           <button type="button" className="fw-hero-btn" onClick={goSearch}>
             Buscar
           </button>

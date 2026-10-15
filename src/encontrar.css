@@ -91,12 +91,6 @@
   text-wrap: balance;
   text-shadow: 0 2px 18px rgb(0 0 0 / 0.35);
 }
-.fw-lead {
-  margin: 16px 0 0;
-  font-size: clamp(15px, 1.7vw, 18px);
-  line-height: 1.5;
-  text-shadow: 0 1px 10px rgb(0 0 0 / 0.4);
-}
 .fw-hero-btn {
   margin-top: 32px;
   display: inline-flex;
@@ -247,15 +241,18 @@
 
 /* Parejas: foto circular, nombres y «Regalá» */
 .fw-couples {
+  --cols: 5;
+  --gap: clamp(24px, 3vw, 44px);
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 220px));
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: clamp(36px, 4.5vw, 56px) clamp(20px, 3vw, 40px);
+  gap: 56px var(--gap);
 }
 .fw-couple {
+  width: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -443,6 +440,21 @@
   margin-top: 0;
 }
 
+@media (min-width: 1400px) {
+  .fw-couples {
+    --cols: 6;
+  }
+}
+@media (max-width: 1180px) {
+  .fw-couples {
+    --cols: 4;
+  }
+}
+@media (max-width: 860px) {
+  .fw-couples {
+    --cols: 3;
+  }
+}
 @media (max-width: 640px) {
   .fw-hero {
     min-height: 82svh;
@@ -453,7 +465,7 @@
   }
   /* Una pareja por fila, con foto grande como en una lista de novios. */
   .fw-couples {
-    grid-template-columns: minmax(0, 1fr);
+    --cols: 1;
     gap: 48px;
   }
   .fw-couple-photo {
