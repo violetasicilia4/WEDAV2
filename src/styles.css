@@ -1535,7 +1535,6 @@ a:not([href]) { cursor: default; }
 .plan-card:nth-child(3) li svg { color: #fff; }
 .plan-card:nth-child(3) .seed-button { background: #fff; color: var(--foreground); }
 .plan-card:nth-child(3) .seed-button:disabled { opacity: .75; }
-.announcement { background: #fff; color: var(--foreground); }
 
 /* Barra superior de la landing igual a la del ejemplo: píldoras de vidrio translúcido, mismo alto y mismos márgenes. */
 .float-bar { width: calc(100% - 16px); gap: 6px; }
