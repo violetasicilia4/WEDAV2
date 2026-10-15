@@ -131,6 +131,7 @@ function RsvpBand() {
       <div className="iv-wrap iv-rsvp-grid">
         <div>
           <h2 id="iv-rsvp-title" className="iv-h2">¿Venís?</h2>
+          <p className="iv-rsvp-deadline">Confirmá tu asistencia</p>
         </div>
         <div className="iv-rsvp-action">
           <button type="button" className="iv-btn" onClick={rsvp.open}>Confirmar asistencia</button>
