@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Menu, X, Gift, CalendarHeart, LogIn } from 'lucide-react';
+import { ArrowLeft, Menu, X, Gift, CalendarHeart, LogIn } from 'lucide-react';
 
 /** Barra flotante de la landing. Se reutiliza tal cual en las demás pantallas para que el logo quede siempre en el mismo lugar. */
-export function FloatNav({ onLanding = false }: { onLanding?: boolean }) {
+export function FloatNav({ onLanding = false, back = false }: { onLanding?: boolean; back?: boolean }) {
   const [open, setOpen] = useState(false);
   const [loginHint, setLoginHint] = useState(false);
   const ref = useRef<HTMLElement>(null);
@@ -47,11 +47,17 @@ export function FloatNav({ onLanding = false }: { onLanding?: boolean }) {
             ? <a href="#top" className="seed-logo" aria-label="Weda, volver arriba">Weda<i aria-hidden="true" /></a>
             : <Link to="/" className="seed-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>}
         </div>
-        <div className="float-pill float-right">
-          <Link to="/encontrar" className="float-link float-desktop">Hacé un regalo</Link>
-          <a href={onLanding ? '#planes' : '/#planes'} className="float-cta">Crear mi evento</a>
-          <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
-        </div>
+        {back ? (
+          <div className="float-pill float-right">
+            <Link to="/" className="float-link"><ArrowLeft size={15} aria-hidden="true" /><span>Volver</span></Link>
+          </div>
+        ) : (
+          <div className="float-pill float-right">
+            <Link to="/encontrar" className="float-link float-desktop">Hacé un regalo</Link>
+            <a href={onLanding ? '#planes' : '/#planes'} className="float-cta">Crear mi evento</a>
+            <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
+          </div>
+        )}
       </nav>
       <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
         <Link to="/encontrar" className="menu-row" onClick={close}><span className="menu-tile"><Gift size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Hacé un regalo</strong></span></Link>

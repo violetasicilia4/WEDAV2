@@ -6,7 +6,7 @@ import { useRsvp } from '@/components/rsvp-dialog';
 import { EjemploCover } from '@/components/ejemplo-cover';
 import {
   calendar, dressCode, eventDate, eventOffset, events, gallery, playlist,
-  social, wedding, weddingStart,
+  rsvpDeadline, social, wedding, weddingStart,
 } from '@/lib/demo-wedding';
 import { buildIcs, downloadIcs } from '@/lib/ics';
 import { getCountdown, type Countdown } from '@/lib/countdown';
@@ -130,11 +130,12 @@ function RsvpBand() {
     <section className="iv-band iv-rsvp" id="confirmar" aria-labelledby="iv-rsvp-title">
       <div className="iv-wrap iv-rsvp-grid">
         <div>
-          <h2 id="iv-rsvp-title" className="iv-h2">¿Venís?</h2>
-          <p className="iv-rsvp-deadline">Confirmá tu asistencia</p>
+          <h2 id="iv-rsvp-title" className="iv-h2">Confirmá tu asistencia</h2>
+          <p className="iv-rsvp-deadline">Respondé antes del {rsvpDeadline}.</p>
         </div>
         <div className="iv-rsvp-action">
           <button type="button" className="iv-btn" onClick={rsvp.open}>Confirmar asistencia</button>
+          {rsvp.sentCount > 0 && <p className="iv-status" role="status">Ya cargaste una confirmación en esta demostración.</p>}
         </div>
       </div>
     </section>
@@ -253,8 +254,8 @@ function Invitation() {
     <Welcome />
     <TheDay />
     <RsvpBand />
-    <Photos />
     <Practical />
+    <Photos />
     <Participate />
     <Closing />
   </>;

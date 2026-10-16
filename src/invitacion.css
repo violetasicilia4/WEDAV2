@@ -638,17 +638,3 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 @media (max-width: 370px) {
   .dm-root:has(#dia) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
 }
-
-/* Confirmar asistencia sobre fondo blanco: texto oscuro y botón pizarra */
-.dm-root .iv-band.iv-rsvp { background: #fff; color: var(--iv-ink); }
-.dm-root .iv-rsvp .iv-rsvp-deadline, .dm-root .iv-rsvp .iv-status { color: var(--iv-muted); }
-.dm-root .iv-rsvp :where(a, button):focus-visible { outline-color: var(--iv-slate); }
-.dm-root .iv-rsvp .iv-rsvp-grid { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
-.dm-root .iv-rsvp .iv-rsvp-action { justify-items: center; }
-.dm-root .iv-rsvp .iv-h2 { font-size: clamp(44px, 7vw, 72px) !important; line-height: 1.05 !important; }
-.dm-root .iv-rsvp .iv-rsvp-grid { row-gap: 28px; }
-.dm-root .iv-rsvp .iv-rsvp-deadline { font-size: 18px; margin-top: 14px; }
-.dm-root .iv-rsvp .iv-h2 { text-transform: uppercase; font-weight: 400 !important; letter-spacing: .02em !important; }
-.dm-root .iv-rsvp .iv-btn { background: #5a646c; color: #fff; }
-.dm-root .iv-rsvp .iv-btn:hover { background: #4b545b; }
-.dm-root .rg-btn { margin-top: 0 !important; }
