@@ -41,9 +41,9 @@ const plans = [
   { name: 'Premium', sub: 'La experiencia completa de tu casamiento.', items: ['Todo lo del plan Completo', 'Sitio de casamiento premium'] },
 ];
 const features = [
-  { title: 'Lista de regalos', note: 'Regalos simbólicos y fondos para los sueños que quieren compartir.', icon: <GiftDemo /> },
-  { title: 'Sitio del casamiento', note: 'Su historia, los detalles del gran día y toda la información para compartir con sus invitados.', icon: <SiteDemo /> },
-  { title: 'Confirmación de asistencia', note: 'Invitaciones y confirmaciones para saber quiénes van a compartir ese día con ustedes.', icon: <RsvpDemo /> },
+  { title: 'Lista de regalos', note: 'Creen su lista y reciban regalos o aportes para los proyectos que quieran compartir.', icon: <GiftDemo /> },
+  { title: 'Sitio del casamiento', note: 'Compartan la fecha, los lugares, las fotos y todos los detalles de su gran día.', icon: <SiteDemo /> },
+  { title: 'Confirmación de asistencia', note: 'Reciban las respuestas de sus invitados y organicen quiénes los acompañarán.', icon: <RsvpDemo /> },
 ];
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
 // CTA de la landing. Cada uno tiene un destino real (una sección de esta página o una ruta existente);
@@ -110,10 +110,10 @@ function Index() {
     <FloatNav onLanding />
     <section className="seed-hero" id="top">
       <video className="hero-image" src="/hero.mp4" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
-      <main id="main" className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, gestioná invitados y compartí toda la información de tu evento.</p><div className="hero-actions"><SeedLink pill href="#planes">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></main>
+      <main id="main" className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá el sitio de tu casamiento, compartí todos los detalles con tus invitados y armá tu lista de regalos en un solo lugar.</p><div className="hero-actions"><SeedLink pill href="#planes">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></main>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
-      <div className="feat-head"><h2>Todo para su gran día.</h2><div className="feat-head-side"><p>Una lista de regalos para sus próximos sueños, un sitio para compartir su historia y una forma simple de organizar a quienes los acompañan.</p><div className="feat-cta"><SeedLink href="#planes">Crear mi evento</SeedLink></div></div></div>
+      <div className="feat-head"><h2>Todo lo que necesitan, en un solo lugar.</h2><div className="feat-head-side"><p>Una forma simple de compartir su historia, organizar a sus invitados y recibir regalos.</p><div className="feat-cta"><SeedLink href="#planes">Crear mi evento</SeedLink></div></div></div>
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
     <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Creá una lista de regalos simbólica que se adapte a ustedes</h2><p>Tus invitados eligen qué regalar y vos recibís el dinero directamente.</p><SeedLink pill href="#planes">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>

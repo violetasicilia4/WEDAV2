@@ -1774,3 +1774,69 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .find-couple:hover .find-photo { transform: scale(1.03); box-shadow: 0 10px 28px rgb(0 0 0 / .14); }
 .find-couple:focus-visible { outline: 2px solid var(--foreground); outline-offset: 8px; border-radius: 24px; }
 @media (prefers-reduced-motion: reduce) { .find-couple .find-photo { transition: none; } .find-couple:hover .find-photo { transform: none; } }
+
+/* el subtítulo del hero ahora es más largo: en pantallas medianas pasa a dos renglones en vez de salirse del ancho */
+@media (min-width: 960px) and (max-width: 1199px) { .seed-hero .hero-copy p { white-space: normal; max-width: 620px; margin-inline: auto; } }
+
+/* Jerarquía tipográfica: hero (66) > título de sección (~36) > subtítulo (~16) > cards. En web, título y subtítulo de funcionalidades van en un renglón. */
+@media (min-width: 901px) {
+  .feat-head h2 { font-size: clamp(28px, 2.7vw, 38px); line-height: 1.12; letter-spacing: -.005em; }
+  .feat-head-side p { font-size: clamp(15px, 1.1vw, 16px); line-height: 1.5; }
+}
+@media (min-width: 1100px) {
+  .feat-head h2, .feat-head-side p { white-space: nowrap; max-width: none; }
+}
+@media (max-width: 900px) {
+  .feat-head h2 { font-size: clamp(24px, 6.4vw, 30px); line-height: 1.15; }
+  .feat-head-side p { font-size: 15px; line-height: 1.5; }
+}
+.seed-hero .hero-copy p { font-size: clamp(16px, 1.35vw, 18px); line-height: 1.45; }
+@media (min-width: 901px) { .feat-head-side p { font-size: clamp(15px, 1.15vw, 16px); } }
+@media (max-width: 767px) { .seed-hero .hero-copy p { font-size: 16px; max-width: 340px; } }
+
+/* Web: el subtítulo va pegado al título (se centra con el botón en vez de apoyarse abajo) */
+@media (min-width: 901px) {
+  .products-section .feat-head { gap: 10px; }
+  .feat-head-side { align-items: center; }
+}
+
+/* Web: título y descripción de cada card quedan estructurados y separados de las vecinas:
+   más aire entre columnas, una línea fina sobre el título y un ancho de texto acotado (la descripción no llega al borde de la card de al lado). */
+@media (min-width: 901px) {
+  .feat-grid { column-gap: clamp(28px, 3.2vw, 48px); }
+  .feat-card h3 { margin-top: 26px; padding-top: 18px; border-top: 1px solid rgb(59 60 58 / .14); font-weight: 500; }
+  .feat-card p { width: 100%; max-width: 27ch; justify-self: start; margin-top: 10px; line-height: 1.55; color: var(--muted-foreground); }
+}
+
+/* Prueba: cards de funcionalidades solo con título (sin descripción). Para volver, borrar esta regla. */
+.feat-card p { display: none !important; }
+
+/* Cards de funcionalidades: título centrado y sin línea separadora */
+.feat-card h3 { text-align: center; border-top: 0 !important; padding-top: 0 !important; justify-self: center; }
+@media (min-width: 901px) { .feat-card h3 { margin-top: 22px; } }
+@media (min-width: 901px) { .feat-card > h3 { text-align: left !important; justify-self: start !important; width: 100%; max-width: none; } }
+
+/* Web: subtítulo casi pegado al título + línea fina sobre el título de cada card */
+@media (min-width: 901px) {
+  .products-section .feat-head { gap: 0; }
+  .feat-head-side p { margin-top: -2px; }
+  .feat-card > h3 { margin-top: 26px; padding-top: 18px !important; border-top: 1px solid rgb(59 60 58 / .14) !important; }
+}
+
+/* Web: menos aire entre la card y la línea del título */
+@media (min-width: 901px) {
+  .feat-card > .feat-stage { margin-bottom: 0; }
+  .feat-card > h3 { margin-top: 14px; }
+}
+
+/* Testimonios: mismo fondo que el cierre de /ejemplo (flores), apenas desenfocado */
+.viacap-section::before { inset: -28px; background: url("/fondo-ramo.jpg") center / cover no-repeat; filter: blur(6px); }
+
+/* Mobile: cada título va ARRIBA de su card, con una línea fina, y las tres tarjetas quedan bien separadas entre sí
+   (antes el título quedaba debajo y parecía pertenecer a la card siguiente). */
+@media (max-width: 900px) {
+  .feat-grid { grid-template-rows: none; row-gap: 44px; }
+  .feat-card { display: flex; flex-direction: column; grid-row: auto; padding: 0; }
+  .feat-card > h3 { order: 1; width: 100%; max-width: none; margin: 0 0 14px; padding-top: 16px !important; border-top: 1px solid rgb(59 60 58 / .14) !important; text-align: left !important; justify-self: auto !important; font-size: 20px; font-weight: 500; }
+  .feat-card > .feat-stage { order: 2; width: 100%; margin: 0; }
+}
