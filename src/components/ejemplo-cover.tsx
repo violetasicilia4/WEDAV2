@@ -17,7 +17,7 @@ export function EjemploCover({ variant = 'home', next }: Props) {
   const gifts = variant === 'gifts';
   return (
     <section className={`iv-cover${gifts ? ' is-gifts' : ''}`} id="top">
-      <img className="iv-cover-img" src={wedding.photo} alt="Ignacio y Martina riéndose juntos en la playa, en blanco y negro" />
+      <img className="iv-cover-img" src={wedding.photo} alt="Ignacio y Martina sonriendo juntos frente al mar" />
       <div className="iv-cover-copy">
         {gifts ? (
           <>

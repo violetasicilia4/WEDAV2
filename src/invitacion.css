@@ -623,3 +623,32 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-hashtag strong { font-size: clamp(34px, 4.2vw, 56px); }
 .dm-root .iv-hashtag span { font-size: clamp(18px, 1.8vw, 24px); }
 @media (max-width: 860px) { .dm-root .iv-day .iv-card-events li { padding: 76px 20px 36px; } .dm-root .iv-day .iv-card-events li:first-child { padding-top: 36px; } }
+
+/* Navegación en celular: objetivos táctiles de al menos 44px y texto de 15px, sin que la barra desborde el ancho */
+@media (max-width: 640px) {
+  .dm-root .ej-bar { height: 60px; margin-bottom: -60px; }
+  .dm-root .ej-bar .ej-bar-inner { width: calc(100% - 16px); gap: 6px; }
+  .dm-root .ej-bar .ej-bar-pill { height: 52px; padding: 0 4px; gap: 0; }
+  .dm-root .ej-bar .ej-bar-close { width: 48px; justify-content: center; padding: 0; flex: none; }
+  .dm-root .ej-bar .ej-bar-close .ej-bar-link { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .dm-root .ej-bar .ej-bar-close .ej-bar-link svg { width: 20px; height: 20px; }
+  .dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { height: 44px; padding: 0 8px; font-size: 15px; }
+  .dm-root .ej-bar .ej-bar-links { min-width: 0; }
+}
+@media (max-width: 370px) {
+  .dm-root:has(#dia) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
+}
+
+/* Confirmar asistencia sobre fondo blanco: texto oscuro y botón pizarra */
+.dm-root .iv-band.iv-rsvp { background: #fff; color: var(--iv-ink); }
+.dm-root .iv-rsvp .iv-rsvp-deadline, .dm-root .iv-rsvp .iv-status { color: var(--iv-muted); }
+.dm-root .iv-rsvp :where(a, button):focus-visible { outline-color: var(--iv-slate); }
+.dm-root .iv-rsvp .iv-rsvp-grid { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
+.dm-root .iv-rsvp .iv-rsvp-action { justify-items: center; }
+.dm-root .iv-rsvp .iv-h2 { font-size: clamp(44px, 7vw, 72px) !important; line-height: 1.05 !important; }
+.dm-root .iv-rsvp .iv-rsvp-grid { row-gap: 28px; }
+.dm-root .iv-rsvp .iv-rsvp-deadline { font-size: 18px; margin-top: 14px; }
+.dm-root .iv-rsvp .iv-h2 { text-transform: uppercase; font-weight: 400 !important; letter-spacing: .02em !important; }
+.dm-root .iv-rsvp .iv-btn { background: #5a646c; color: #fff; }
+.dm-root .iv-rsvp .iv-btn:hover { background: #4b545b; }
+.dm-root .rg-btn { margin-top: 0 !important; }

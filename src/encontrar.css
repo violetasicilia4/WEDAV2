@@ -1,0 +1,527 @@
+/* Encontrá tu casamiento: mismos tokens, tipografía y tratamiento de componentes que la landing de Weda. */
+.fw-page {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.fw-page main {
+  flex: 1;
+}
+
+/* Barra superior sobre la portada */
+.fw-top {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.35);
+}
+.fw-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 6px;
+  font-size: 14px;
+}
+.fw-back:hover {
+  opacity: 0.75;
+}
+.fw-foot {
+  padding: 28px 4% 36px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  background: #fff;
+}
+
+/* Portada: foto a pantalla completa, título y botón «Buscar» */
+.fw-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: min(78svh, 720px);
+  display: grid;
+  place-items: center;
+  padding: 96px 6% 72px;
+  overflow: hidden;
+  border-radius: 0 0 25px 25px;
+  background: #3b3c3a;
+  color: #fff;
+  text-align: center;
+}
+.fw-hero-img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+.fw-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(rgb(0 0 0 / 0.22), rgb(0 0 0 / 0.48));
+}
+.fw-hero-copy {
+  max-width: 640px;
+  display: grid;
+  justify-items: center;
+}
+.fw-hero h1 {
+  margin: 0;
+  font-size: clamp(38px, 6vw, 60px);
+  line-height: 1.06;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.35);
+}
+.fw-hero-btn {
+  margin-top: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 36px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.fw-hero-btn:hover {
+  background: var(--paper, #f5f2eb);
+}
+.fw-hero-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Cuerpo blanco: buscador y parejas */
+.fw-body {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 72px) 0 clamp(48px, 7vw, 88px);
+  scroll-margin-top: 16px;
+}
+.fw-form {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.fw-label {
+  display: block;
+  margin: 0 0 8px 20px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.fw-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 60px;
+  padding: 6px 6px 6px 22px;
+  border-radius: 999px;
+  background: #fbfaf7;
+  border: 1px solid rgb(59 60 58 / 0.22);
+  transition: border-color 0.2s;
+}
+.fw-field:focus-within {
+  border-color: var(--foreground);
+}
+.fw-field input {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: var(--foreground);
+}
+.fw-field input::placeholder {
+  color: rgb(59 60 58 / 0.5);
+}
+.fw-field input::-webkit-search-cancel-button {
+  display: none;
+}
+.fw-form:has([aria-invalid="true"]) .fw-field {
+  border-color: var(--destructive);
+}
+.fw-submit {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: #5a646c;
+  color: #fff;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.fw-submit:hover:not(:disabled) {
+  background: #4b545b;
+}
+.fw-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.fw-error {
+  margin: 10px 0 0 20px;
+  font-size: 13px;
+  color: var(--destructive);
+}
+
+.fw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: #5a646c;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.2s;
+}
+.fw-btn:hover:not(:disabled) {
+  background: #4b545b;
+}
+.fw-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.fw-btn:focus-visible,
+.fw-link:focus-visible,
+.fw-back:focus-visible,
+.fw-submit:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+.fw-btn-inline {
+  align-self: flex-start;
+}
+
+.fw-out {
+  margin-top: clamp(32px, 5vw, 56px);
+}
+.fw-status {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+
+/* Parejas: foto circular, nombres y «Regalá» */
+.fw-couples {
+  --cols: 5;
+  --gap: clamp(24px, 3vw, 44px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 56px var(--gap);
+}
+.fw-couple {
+  width: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.fw-couple-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--section);
+}
+.fw-cover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+.fw-couple-names {
+  margin: 18px 0 14px;
+  font-size: 17px;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+/* Mismo botón que «Regalar» de la lista de regalos: claro, con borde fino y texto oscuro. */
+.fw-btn.fw-couple-btn {
+  width: min(100%, 180px);
+  height: 46px;
+  margin-top: auto;
+  background: #fbfaf7;
+  color: var(--foreground);
+  border: 1px solid rgb(59 60 58 / 0.22);
+}
+.fw-btn.fw-couple-btn:hover:not(:disabled) {
+  background: #fff;
+  border-color: var(--foreground);
+}
+
+.fw-skeleton .fw-couple-photo {
+  background: linear-gradient(90deg, #ebe8dd, #f3f0e8, #ebe8dd);
+  background-size: 200% 100%;
+}
+.fw-skeleton i {
+  display: block;
+  width: 55%;
+  height: 16px;
+  margin-top: 18px;
+  border-radius: 99px;
+  background: #ebe8dd;
+}
+.fw-skeleton i.btn {
+  width: min(100%, 180px);
+  height: 46px;
+  margin-top: 14px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fw-skeleton .fw-couple-photo {
+    animation: fw-shimmer 1.4s linear infinite;
+  }
+}
+@keyframes fw-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.fw-message {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  border-radius: 22px;
+  background: var(--section);
+}
+.fw-message h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.15;
+}
+.fw-message p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.fw-message .fw-btn {
+  margin-top: 8px;
+  align-self: center;
+}
+.fw-message.is-error > svg {
+  color: var(--destructive);
+}
+
+/* Casamiento elegido */
+.fw-selected {
+  max-width: 880px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  overflow: hidden;
+  border-radius: 26px;
+  background: var(--section);
+  outline: 0;
+}
+.fw-photo {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #ebe8dd;
+}
+.fw-selected .fw-photo {
+  aspect-ratio: auto;
+  min-height: 100%;
+}
+.fw-selected-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: clamp(24px, 4vw, 44px);
+}
+.fw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+}
+.fw-selected h2 {
+  margin: 6px 0 0;
+  font-size: clamp(30px, 4vw, 40px);
+  line-height: 1.08;
+  font-weight: 400;
+}
+.fw-date {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted-foreground);
+}
+.fw-date.is-pending {
+  font-style: italic;
+}
+.fw-note {
+  margin: 10px 0 6px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.fw-demo {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.fw-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.fw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+}
+.fw-actions .fw-link {
+  margin-top: 0;
+}
+
+@media (min-width: 1760px) {
+  .fw-couples {
+    --cols: 6;
+  }
+}
+@media (max-width: 1180px) {
+  .fw-couples {
+    --cols: 4;
+  }
+}
+@media (max-width: 860px) {
+  .fw-couples {
+    --cols: 3;
+  }
+}
+@media (max-width: 640px) {
+  .fw-hero {
+    min-height: 82svh;
+    padding-top: 88px;
+  }
+  .fw-field {
+    padding-left: 18px;
+  }
+  /* Una pareja por fila, con foto grande como en una lista de novios. */
+  .fw-couples {
+    --cols: 1;
+    gap: 48px;
+  }
+  .fw-couple-photo {
+    width: min(100%, 320px);
+  }
+  .fw-couple-names {
+    font-size: 18px;
+  }
+  .fw-selected {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 440px;
+  }
+  .fw-selected .fw-photo {
+    aspect-ratio: 4 / 5;
+    min-height: 0;
+  }
+}
+.fw-field input:focus-visible {
+  outline: 0;
+  box-shadow: none;
+}
+
+/* La foto de cada pareja es tocable: mismo destino que «Regalá». */
+button.fw-couple-photo {
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+button.fw-couple-photo .fw-cover {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+button.fw-couple-photo:hover .fw-cover {
+  transform: scale(1.04);
+}
+button.fw-couple-photo:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  button.fw-couple-photo .fw-cover {
+    transition: none;
+  }
+}
+
+/* iOS: mantener apretada una foto abría la vista previa con «Guardar en Fotos». Las fotos no reciben toques: los recibe el botón. */
+.fw-cover {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+button.fw-couple-photo {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

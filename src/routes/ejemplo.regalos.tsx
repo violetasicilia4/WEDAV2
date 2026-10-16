@@ -3,7 +3,7 @@ import { useSessionState } from '@/lib/demo-session';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   ArrowRight, BedDouble, BedSingle, Check, ChefHat, Coffee, Compass, Copy, Dog, House, Lamp,
-  Palette, Plane, Sofa, Sprout, Ticket, Trees, Upload, Utensils, Wine, type LucideIcon,
+  Palette, Plane, Sofa, Sprout, Ticket, Trees, Upload, Utensils, Wine, X, type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRsvp } from '@/components/rsvp-dialog';
@@ -31,11 +31,11 @@ const icons: Record<IconKey, LucideIcon> = {
 
 /* Misma tarjeta que la escena "Lista de regalos" de la landing: foto cuadrada, monto sobre la foto,
    nombre y un botón. */
-function GiftCard({ gift, chosen, onPick }: { gift: Gift; chosen: boolean; onPick: (g: Gift) => void }) {
+function GiftCard({ gift, chosen, inCart, onPick }: { gift: Gift; chosen: boolean; inCart: boolean; onPick: (g: Gift) => void }) {
   const Icon = icons[gift.icon];
   const done = gift.taken || chosen;
   return (
-    <article className={`rg-card${done ? ' is-done' : ''}`}>
+    <article className={`rg-card${done ? ' is-done' : ''}${inCart ? ' in-cart' : ''}`}>
       <div className={`rg-photo${gift.fit ? ' is-contain' : ''}${gift.fit === 'white' ? ' is-white' : ''}`} style={gift.fit && gift.image ? ({ '--bg': `url(${gift.image})` } as React.CSSProperties) : undefined}>
         {gift.image
           ? <img src={gift.image} alt="" loading="lazy" style={gift.pos || gift.zoom ? { objectPosition: gift.pos, ...(gift.zoom ? { transform: `scale(${gift.zoom.scale})`, transformOrigin: gift.zoom.origin } : {}) } : undefined} />
@@ -44,57 +44,98 @@ function GiftCard({ gift, chosen, onPick }: { gift: Gift; chosen: boolean; onPic
       </div>
       <h3 title={gift.name}>{gift.name}</h3>
       <button type="button" className="rg-btn" disabled={done} onClick={() => onPick(gift)}>
-        {done ? <><Check size={14} aria-hidden="true" />{chosen ? 'Elegido por vos' : 'Ya elegido'}</> : 'Regalar'}
+        {done ? <><Check size={14} aria-hidden="true" />{chosen ? 'Elegido por vos' : 'Ya elegido'}</> : inCart ? <><Check size={14} aria-hidden="true" />En tu regalo</> : 'Regalar'}
       </button>
     </article>
   );
 }
 
-/* Pop-up: regalo elegido → cómo pagar → alias → nombre, apellido y comprobante → Enviar (bloqueado hasta completar) → agradecimiento. */
-function GiftDialog({ gift, onClose, onSent, returnFocus }: { gift: Gift | null; onClose: () => void; onSent: (g: Gift, giver: { name: string; message: string }) => void; returnFocus: { current: HTMLElement | null } }) {
+function Thumb({ gift }: { gift: Gift }) {
+  const Icon = icons[gift.icon];
+  return <span className="rg-thumb" aria-hidden="true">{gift.image ? <img src={gift.image} alt="" style={gift.pos ? { objectPosition: gift.pos } : undefined} /> : <Icon size={22} strokeWidth={1.3} />}</span>;
+}
+
+/* Pop-up de varios regalos: tu regalo (lista, quitar, total) → cómo pagar → alias → nombre, apellido y comprobante → Enviar → agradecimiento.
+   «Agregar otro regalo» vuelve a la lista sin perder lo elegido. */
+type DialogView = 'cart' | 'pay';
+function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onSent: (gs: Gift[], giver: { name: string; message: string }) => void; returnFocus: { current: HTMLElement | null } }) {
+  const [view, setView] = useState<DialogView>('cart');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
+  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [proof, setProof] = useState<File | null>(null);
   const [how, setHow] = useState<'alias' | 'tarjeta'>('alias');
   const [copied, setCopied] = useState(false);
-  const [sent, setSent] = useState<string | null>(null);
-  const reset = () => { setName(''); setSurname(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
+  // Lo enviado se guarda aparte: al enviar, el carrito se vacía pero el agradecimiento sigue mostrando esos regalos.
+  const [sent, setSent] = useState<{ first: string; gifts: Gift[] } | null>(null);
+  const total = items.reduce((n, g) => n + g.amount, 0);
+  const reset = () => { setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
   // Para poder enviar: nombre, apellido y, si transfiere por alias, el comprobante cargado.
   const missing = [
     name.trim().length < 2 && 'nombre',
     surname.trim().length < 2 && 'apellido',
+    !/^\S+@\S+\.\S+$/.test(email.trim()) && 'correo electrónico',
     how === 'alias' && !proof && 'comprobante',
   ].filter(Boolean) as string[];
   const close = () => { onClose(); window.setTimeout(reset, 200); };
+  const keepShopping = () => { onClose(); window.setTimeout(() => setView('cart'), 200); };
   const copy = async () => {
     try { await navigator.clipboard.writeText(alias); } catch { /* sin portapapeles: el alias igual queda a la vista */ }
     setCopied(true); window.setTimeout(() => setCopied(false), 2200);
   };
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (missing.length) return;
-    if (gift) onSent(gift, { name: `${name.trim()} ${surname.trim()}`, message: message.trim() });
-    setSent(name.trim().split(/\s+/)[0] ?? name.trim());
+    if (missing.length || items.length === 0) return;
+    setSent({ first: name.trim().split(/\s+/)[0] ?? name.trim(), gifts: items });
+    onSent(items, { name: `${name.trim()} ${surname.trim()}`, message: message.trim() });
   };
+  const remove = (g: Gift) => { onRemove(g); if (items.length <= 1) { onClose(); window.setTimeout(() => setView('cart'), 200); } };
+  const count = sent ? sent.gifts.length : items.length;
   return (
-    <Dialog open={!!gift} onOpenChange={o => { if (!o) close(); }}>
-      <DialogContent className="rg-dialog" onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
-        {gift && (sent ? (
+    <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
+      <DialogContent className="rg-dialog" onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }} onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
+        {sent ? (
           <div className="rg-thanks">
             <span className="rg-check" aria-hidden="true"><Check size={22} strokeWidth={1.8} /></span>
-            <DialogTitle>¡Gracias, {sent}!</DialogTitle>
-            <DialogDescription>Así se vería la confirmación de tu regalo. Es una demostración: no se realizó ningún cobro ni se envió nada.</DialogDescription>
+            <DialogTitle>¡Gracias, {sent.first}!</DialogTitle>
+            <DialogDescription>Así se vería la confirmación de {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Es una demostración: no se realizó ningún cobro ni se envió nada.</DialogDescription>
+            <ul className="rg-sent">{sent.gifts.map(g => <li key={g.id}>{g.name}<span>{formatARS(g.amount)}</span></li>)}</ul>
             <button type="button" className="dm-solid" onClick={close}>Volver a la lista</button>
+          </div>
+        ) : view === 'cart' ? (
+          <div className="rg-form rg-cart">
+            <header className="rg-head">
+              <div>
+                <p className="rg-kicker">Regalo para {wedding.couple}</p>
+                <DialogTitle>Tu regalo</DialogTitle>
+              </div>
+            </header>
+            <ul className="rg-cart-list">
+              {items.map(g => (
+                <li key={g.id} className="rg-cart-item">
+                  <Thumb gift={g} />
+                  <div className="rg-cart-info">
+                    <strong>{g.name}</strong>
+                    <span>{formatARS(g.amount)}</span>
+                  </div>
+                  <button type="button" className="rg-remove" onClick={() => remove(g)} aria-label={`Quitar ${g.name}`}><X size={14} aria-hidden="true" />Quitar</button>
+                </li>
+              ))}
+            </ul>
+            <p className="rg-total"><span>Total</span><strong>{formatARS(total)}</strong></p>
+            <div className="rg-actions">
+              <button type="button" className="dm-solid" onClick={() => setView('pay')} disabled={items.length === 0}>Continuar</button>
+              <button type="button" className="dm-ghost" onClick={keepShopping}>Agregar otro regalo</button>
+            </div>
           </div>
         ) : (
           <form onSubmit={submit} noValidate className="rg-form">
             <header className="rg-head">
-              <span className="rg-thumb" aria-hidden="true">{gift.image ? <img src={gift.image} alt="" style={gift.pos ? { objectPosition: gift.pos } : undefined} /> : (() => { const Icon = icons[gift.icon]; return <Icon size={22} strokeWidth={1.3} />; })()}</span>
               <div>
-                <p className="rg-kicker">Regalo elegido</p>
-                <DialogTitle>{gift.name}</DialogTitle>
-                <DialogDescription>{formatARS(gift.amount)}</DialogDescription>
+                <p className="rg-kicker">Regalo para {wedding.couple}</p>
+                <DialogTitle>Tu regalo</DialogTitle>
+                <DialogDescription>Total {formatARS(total)}</DialogDescription>
               </div>
             </header>
 
@@ -118,10 +159,22 @@ function GiftDialog({ gift, onClose, onSent, returnFocus }: { gift: Gift | null;
                     {copied ? <><Check size={14} aria-hidden="true" />Copiado</> : <Copy size={15} aria-hidden="true" />}
                   </button>
                 </div>
-                <p className="rg-help">Transferí {formatARS(gift.amount)} a este alias y después cargá el comprobante.</p>
+                <p className="rg-help">Transferí {formatARS(total)} a este alias y después cargá el comprobante.</p>
               </>
             ) : (
               <p className="rg-note">Con tarjeta vas a poder pagar desde el sitio, en cuotas. Para este ejemplo, usá el alias.</p>
+            )}
+
+            {how === 'alias' && (
+              <div className="rg-up">
+                <p className="rg-up-label">Comprobante de transferencia</p>
+                <input id="rg-proof" className="dm-sr" type="file" accept="image/*,application/pdf" onChange={e => setProof(e.target.files?.[0] ?? null)} />
+                <label htmlFor="rg-proof" className={`rg-file${proof ? ' has' : ''}`}>
+                  {proof ? <Check size={16} aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
+                  <span>{proof ? proof.name : 'Subir captura o PDF'}</span>
+                  {proof && <em>Cambiar</em>}
+                </label>
+              </div>
             )}
 
             <div className="rg-two">
@@ -136,28 +189,20 @@ function GiftDialog({ gift, onClose, onSent, returnFocus }: { gift: Gift | null;
             </div>
 
             <div className="rg-field">
+              <label htmlFor="rg-email">Correo electrónico</label>
+              <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+
+            <div className="rg-field">
               <label htmlFor="rg-message">Mensaje (opcional)</label>
               <textarea id="rg-message" rows={2} value={message} onChange={e => setMessage(e.target.value)} />
             </div>
 
-            {how === 'alias' && (
-              <div className="rg-up">
-                <p className="rg-up-label">Comprobante de transferencia</p>
-                <input id="rg-proof" className="dm-sr" type="file" accept="image/*,application/pdf" onChange={e => setProof(e.target.files?.[0] ?? null)} />
-                <label htmlFor="rg-proof" className={`rg-file${proof ? ' has' : ''}`}>
-                  {proof ? <Check size={16} aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
-                  <span>{proof ? proof.name : 'Subir captura o PDF'}</span>
-                  {proof && <em>Cambiar</em>}
-                </label>
-                <p className="rg-sim">Simulación: el archivo no sale de tu navegador.</p>
-              </div>
-            )}
-
-            <p className="dm-demo-note">Es una demostración: no se realizará ningún cobro real.</p>
             <button type="submit" className="dm-solid rg-send" disabled={missing.length > 0}>Enviar</button>
+            <button type="button" className="dm-ghost" onClick={() => setView('cart')}>Volver a mis regalos</button>
             {missing.length > 0 && <p className="rg-missing" aria-live="polite">Para enviar falta: {missing.join(', ')}.</p>}
           </form>
-        ))}
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -166,7 +211,8 @@ function GiftDialog({ gift, onClose, onSent, returnFocus }: { gift: Gift | null;
 function Gifts() {
   const rsvp = useRsvp();
   const [filter, setFilter] = useState<Category | 'Todos'>('Todos');
-  const [picked, setPicked] = useState<Gift | null>(null);
+  const [cart, setCart] = useState<Gift[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(null);
   const [given, setGiven] = useSessionState<{ id: string; name: string; message: string }[]>('gifts-given', []);
   const chosen = given.map(x => x.id);
@@ -228,7 +274,7 @@ function Gifts() {
       </div>
       {visible.length === 0 && <p className="rg-empty">No encontramos regalos con esos filtros. Probá con otra búsqueda o limpiá los filtros.</p>}
       <div className="rg-grid">
-        {visible.map(g => <GiftCard key={g.id} gift={g} chosen={chosen.includes(g.id)} onPick={g => { returnFocus.current = document.activeElement as HTMLElement | null; setPicked(g); }} />)}
+        {visible.map(g => <GiftCard key={g.id} gift={g} chosen={chosen.includes(g.id)} inCart={cart.some(c => c.id === g.id)} onPick={g => { returnFocus.current = document.activeElement as HTMLElement | null; setCart(c => c.some(x => x.id === g.id) ? c : [...c, g]); setCartOpen(true); }} />)}
       </div>
       <p className="rg-live" aria-live="polite">{visible.length} {visible.length === 1 ? 'regalo' : 'regalos'}{filter === 'Todos' ? '' : ` en ${filter}`}{range === 'all' || range === 'asc' || range === 'desc' ? '' : ' en ese rango de monto'}</p>
       <div className="rg-next">
@@ -238,6 +284,20 @@ function Gifts() {
       </div>
     </div></section>
 
-    <GiftDialog gift={picked} onClose={() => setPicked(null)} onSent={(g, who) => setGiven(c => [...c.filter(x => x.id !== g.id), { id: g.id, ...who }])} returnFocus={returnFocus} />
+    {cart.length > 0 && !cartOpen && (
+      <div className="rg-cart-bar" role="region" aria-label="Tu regalo">
+        <p><strong>{cart.length === 1 ? '1 regalo' : `${cart.length} regalos`}</strong><span>{formatARS(cart.reduce((n, g) => n + g.amount, 0))}</span></p>
+        <button type="button" className="dm-solid" onClick={e => { returnFocus.current = e.currentTarget; setCartOpen(true); }}>Ver mi regalo</button>
+      </div>
+    )}
+
+    <GiftDialog
+      open={cartOpen}
+      gifts={cart}
+      onClose={() => setCartOpen(false)}
+      onRemove={g => setCart(c => c.filter(x => x.id !== g.id))}
+      onSent={(gs, who) => { setGiven(c => [...c.filter(x => !gs.some(g => g.id === x.id)), ...gs.map(g => ({ id: g.id, ...who }))]); setCart([]); }}
+      returnFocus={returnFocus}
+    />
   </>;
 }
