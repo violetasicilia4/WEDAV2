@@ -653,3 +653,5 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
   .dm-root .ej-bar .ej-bar-menu [aria-current="page"] { background: rgb(102 116 127 / .14); font-weight: 500; }
   .dm-root .ej-bar .ej-bar-menu :where(a, button):focus-visible { outline: 2px solid #66747f; outline-offset: -2px; }
 }
+/* La barra deja pasar los toques a la foto; el menú desplegable sí tiene que recibirlos */
+.dm-root .ej-bar .ej-bar-menu { pointer-events: auto; }
