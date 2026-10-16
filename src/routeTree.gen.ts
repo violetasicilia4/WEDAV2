@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EjemploRouteImport } from './routes/ejemplo'
+import { Route as EncontrarRouteImport } from './routes/encontrar'
 import { Route as EjemploIndexRouteImport } from './routes/ejemplo.index'
 import { Route as EjemploRegalosRouteImport } from './routes/ejemplo.regalos'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const EjemploRoute = EjemploRouteImport.update({
   id: '/ejemplo',
   path: '/ejemplo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EncontrarRoute = EncontrarRouteImport.update({
+  id: '/encontrar',
+  path: '/encontrar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EjemploIndexRoute = EjemploIndexRouteImport.update({
@@ -38,11 +44,13 @@ const EjemploRegalosRoute = EjemploRegalosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ejemplo': typeof EjemploRouteWithChildren
+  '/encontrar': typeof EncontrarRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/ejemplo/': typeof EjemploIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/encontrar': typeof EncontrarRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/ejemplo': typeof EjemploIndexRoute
 }
@@ -50,20 +58,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ejemplo': typeof EjemploRouteWithChildren
+  '/encontrar': typeof EncontrarRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/ejemplo/': typeof EjemploIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ejemplo' | '/ejemplo/regalos' | '/ejemplo/'
+  fullPaths: '/' | '/ejemplo' | '/encontrar' | '/ejemplo/regalos' | '/ejemplo/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ejemplo/regalos' | '/ejemplo'
-  id: '__root__' | '/' | '/ejemplo' | '/ejemplo/regalos' | '/ejemplo/'
+  to: '/' | '/encontrar' | '/ejemplo/regalos' | '/ejemplo'
+  id:
+    | '__root__'
+    | '/'
+    | '/ejemplo'
+    | '/encontrar'
+    | '/ejemplo/regalos'
+    | '/ejemplo/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EjemploRoute: typeof EjemploRouteWithChildren
+  EncontrarRoute: typeof EncontrarRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -80,6 +96,13 @@ declare module '@tanstack/react-router' {
       path: '/ejemplo'
       fullPath: '/ejemplo'
       preLoaderRoute: typeof EjemploRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/encontrar': {
+      id: '/encontrar'
+      path: '/encontrar'
+      fullPath: '/encontrar'
+      preLoaderRoute: typeof EncontrarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ejemplo/': {
@@ -115,6 +138,7 @@ const EjemploRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EjemploRoute: EjemploRouteWithChildren,
+  EncontrarRoute: EncontrarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

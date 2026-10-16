@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowUpRight, CalendarPlus, Plus } from 'lucide-react';
-import { CakeIcon, RingsIcon, ToastIcon } from '@/components/hand-icons';
+import { CalendarPlus, Plus } from 'lucide-react';
+import { ClinkIcon, HallIcon, RingsIcon } from '@/components/hand-icons';
 import { useRsvp } from '@/components/rsvp-dialog';
 import { EjemploCover } from '@/components/ejemplo-cover';
 import {
-  alias, calendar, directionsUrl, dressCode, eventDate, eventOffset, events, gallery, greetings, lodgingUrl, playlist,
+  calendar, dressCode, eventDate, eventOffset, events, gallery, playlist,
   rsvpDeadline, social, wedding, weddingStart,
 } from '@/lib/demo-wedding';
 import { buildIcs, downloadIcs } from '@/lib/ics';
@@ -75,7 +75,7 @@ const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 
 const eventDay = String(Number(eventDate.slice(8, 10)));
 const eventMonth = MONTHS[Number(eventDate.slice(5, 7)) - 1] ?? '';
 
-const eventIcons: Record<string, typeof RingsIcon> = { ceremonia: RingsIcon, recepcion: ToastIcon, fiesta: CakeIcon };
+const eventIcons: Record<string, typeof RingsIcon> = { ceremonia: RingsIcon, recepcion: ClinkIcon, fiesta: HallIcon };
 
 function TheDay() {
   return (
@@ -134,7 +134,7 @@ function RsvpBand() {
           <p className="iv-rsvp-deadline">Respondé antes del {rsvpDeadline}.</p>
         </div>
         <div className="iv-rsvp-action">
-          <button type="button" className="iv-btn is-paper" onClick={rsvp.open}>Confirmar asistencia</button>
+          <button type="button" className="iv-btn" onClick={rsvp.open}>Confirmar asistencia</button>
           {rsvp.sentCount > 0 && <p className="iv-status" role="status">Ya cargaste una confirmación en esta demostración.</p>}
         </div>
       </div>
@@ -161,110 +161,24 @@ function Photos() {
   );
 }
 
-/* Información práctica: dress code, cómo llegar y alojamiento en una fila; preguntas frecuentes debajo. Solo usa datos existentes. */
+/* Dress code: una sola sección, centrada y con su paleta. */
 function Practical() {
-  // Lugares únicos (la recepción y la fiesta comparten dirección).
-  const places = events.filter((ev, i) => events.findIndex(e => e.address === ev.address) === i);
-  const last = events[events.length - 1]!;
   const note = dressCode.text.replace(`${dressCode.title}. `, '');
-  const faq: { q: string; a: React.ReactNode }[] = [
-    { q: '¿Cuándo y dónde es?', a: `${wedding.dateLabel}. ${events.map(e => `${e.label}: ${e.time}, ${e.name}.`).join(' ')}` },
-    { q: '¿Qué me pongo?', a: dressCode.text },
-    { q: '¿Hasta cuándo puedo confirmar?', a: `Hasta el ${rsvpDeadline}.` },
-    { q: '¿Cómo hago un regalo?', a: <>Elegí uno en la <Link to="/ejemplo/regalos" className="iv-inline">lista de regalos</Link> y transferí al alias {alias}.</> },
-    { q: '¿Cómo comparto mis fotos?', a: `Con el hashtag ${social.hashtag}, etiquetando a ${social.handle}.` },
-    { q: '¿Puedo sumar canciones?', a: 'Sí, en la playlist de esta página.' },
-  ];
   return (
-    <section className="iv-section iv-practical" id="info" aria-label="Información práctica">
-      <div className="iv-wrap">
-        <div className="iv-info-grid">
-          <div id="dresscode">
-            <h2 className="iv-h3">Dress code</h2>
-            <p className="iv-strong">{dressCode.title}</p>
-            <p className="iv-text">{note}</p>
-            <ul className="iv-swatches" aria-label="Colores sugeridos">
-              {dressCode.palette.map(c => <li key={c.name}><i style={{ background: c.color }} aria-hidden="true" /><span>{c.name}</span></li>)}
-            </ul>
-          </div>
-          <div>
-            <h2 className="iv-h3">Cómo llegar</h2>
-            <ul className="iv-routes">
-              {places.map(p => (
-                <li key={p.address}>
-                  <p className="iv-strong">{p.name}</p>
-                  <p className="iv-text">{p.address}</p>
-                  <a className="iv-link" href={directionsUrl(p.address)} target="_blank" rel="noopener noreferrer">
-                    <span>Ver cómo llegar</span><ArrowUpRight size={14} aria-hidden="true" /><span className="dm-sr"> a {p.name} (se abre en una pestaña nueva)</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h2 className="iv-h3">Alojamiento</h2>
-            <p className="iv-text">Buscá alojamiento cerca de {last.address}.</p>
-            <a className="iv-link" href={lodgingUrl(last.address)} target="_blank" rel="noopener noreferrer">
-              <span>Ver alojamientos cerca</span><ArrowUpRight size={14} aria-hidden="true" /><span className="dm-sr"> (se abre en una pestaña nueva)</span>
-            </a>
-          </div>
-        </div>
-        <div className="iv-faq-wrap">
-          <h2 className="iv-h3">Preguntas frecuentes</h2>
-          <div className="iv-faq">
-            {faq.map(f => (
-              <details key={f.q}>
-                <summary>{f.q}</summary>
-                <p>{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+    <section className="iv-section iv-practical" id="dresscode" aria-labelledby="iv-dress-title">
+      <div className="iv-wrap iv-dress">
+        <p className="iv-eyebrow">Dress code</p>
+        <h2 id="iv-dress-title" className="iv-dress-title">{dressCode.title}</h2>
+        <p className="iv-dress-text">{note}</p>
+        <ul className="iv-swatches" aria-label="Colores sugeridos">
+          {dressCode.palette.map(c => <li key={c.name}><i style={{ background: c.color }} aria-hidden="true" /><span>{c.name}</span></li>)}
+        </ul>
       </div>
     </section>
   );
 }
 
-/* Mensajes para la pareja: se guardan solo en la sesión del navegador. */
-type Msg = { who: string; text: string; mine?: boolean };
-function Messages() {
-  const [mine, setMine] = useSessionState<Msg[]>('messages', []);
-  const [who, setWho] = useState('');
-  const [text, setText] = useState('');
-  const [err, setErr] = useState('');
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (who.trim().length < 2 || text.trim().length < 2) { setErr('Completá tu nombre y tu mensaje.'); return; }
-    setErr('');
-    setMine(m => [{ who: who.trim(), text: text.trim(), mine: true }, ...m]);
-    setWho(''); setText('');
-  };
-  const all: Msg[] = [...mine, ...greetings];
-  return (
-        <div id="mensajes" className="iv-part">
-          <h2 className="iv-h3">Mensajes para Ignacio y Martina</h2>
-          <form onSubmit={submit} noValidate className="iv-form">
-            <label htmlFor="iv-msg-who">Tu nombre</label>
-            <input id="iv-msg-who" type="text" value={who} onChange={e => { setWho(e.target.value); if (err) setErr(''); }} autoComplete="name" />
-            <label htmlFor="iv-msg-text">Tu mensaje</label>
-            <textarea id="iv-msg-text" rows={3} value={text} onChange={e => { setText(e.target.value); if (err) setErr(''); }} />
-            {err && <p className="iv-error" role="alert">{err}</p>}
-            <button type="submit" className="iv-btn">Enviar mensaje</button>
-            <p className="iv-demo-note">Es una demostración: los mensajes quedan solo en tu navegador.</p>
-          </form>
-          <ul className="iv-msg-list" aria-label="Mensajes">
-            {all.map((m, n) => (
-              <li key={`${m.who}-${n}`}>
-                <blockquote>{m.text}</blockquote>
-                <p>{m.who}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-  );
-}
-
-/* Playlist: secundaria y compacta (cinco temas visibles; el resto, plegado). */
+/* Playlist: un bloque propio a ancho completo (cinco temas visibles; el resto, plegado). */
 function PlaylistBlock() {
   const [added, setAdded] = useSessionState<{ title: string; artist: string }[]>('playlist', []);
   const [song, setSong] = useState('');
@@ -281,9 +195,9 @@ function PlaylistBlock() {
   const all = [...added.map(t => ({ ...t, mine: true })), ...playlist.tracks.map(t => ({ ...t, mine: false }))];
   const shown = more ? all : all.slice(0, 5);
   return (
-        <div id="musica" className="iv-part">
-          <h2 className="iv-h3">Tu música, nuestra playlist.</h2>
-          <p className="iv-text">Sumá los temas que no pueden faltar en la pista.</p>
+        <div id="musica" className="iv-playlist">
+          <h2 className="iv-playlist-title">Tu música, nuestra playlist.</h2>
+          <p className="iv-playlist-text">Sumá los temas que no pueden faltar en la pista.</p>
           <form onSubmit={add} noValidate className="iv-form is-inline">
             <label htmlFor="iv-song" className="dm-sr">Canción</label>
             <input id="iv-song" type="text" value={song} onChange={e => { setSong(e.target.value); if (err) setErr(''); }} placeholder="Canción" aria-invalid={!!err} autoComplete="off" />
@@ -306,12 +220,11 @@ function PlaylistBlock() {
   );
 }
 
-/* Participá: mensajes y playlist comparten una sola sección, en dos columnas. */
+/* Playlist: bloque propio a ancho completo. */
 function Participate() {
   return (
-    <section className="iv-section iv-participate" aria-label="Mensajes y playlist">
-      <div className="iv-wrap iv-part-grid">
-        <Messages />
+    <section className="iv-section iv-participate" aria-label="Playlist">
+      <div className="iv-wrap">
         <PlaylistBlock />
       </div>
     </section>
@@ -322,7 +235,7 @@ function Participate() {
 function Closing() {
   const rsvp = useRsvp();
   return (
-    <section className="iv-closing" style={{ backgroundImage: `url(${gallery[4]?.src ?? wedding.photo})` }} aria-labelledby="iv-close-title">
+    <section className="iv-closing" style={{ backgroundImage: 'url(/fondo-ramo.jpg)' }} aria-labelledby="iv-close-title">
       <div className="iv-closing-copy">
         <h2 id="iv-close-title" className="iv-h2">Que vengas ya es un regalo.</h2>
         <p>Con todo cariño, Ignacio &amp; Martina.</p>

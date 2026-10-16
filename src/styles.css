@@ -756,18 +756,6 @@ a:not([href]) { cursor: default; }
 .fd-chrome i { width: calc(5 * var(--px)); height: calc(5 * var(--px)); border-radius: 50%; background: rgb(59 60 58 / .25); }
 .fd-viewport { position: relative; overflow: hidden; }
 .fd-page { display: grid; gap: calc(12 * var(--px)); padding-bottom: calc(20 * var(--px)); }
-.fd-hero { height: calc(108 * var(--px)); display: grid; place-content: center; gap: calc(3 * var(--px)); text-align: center; color: #fff; background: linear-gradient(rgb(0 0 0 / .15), rgb(0 0 0 / .5)), linear-gradient(135deg, #8A959E, #5A646C); }
-.fd-hero b { font-size: calc(15 * var(--px)); }
-.fd-hero i { font-size: calc(9 * var(--px)); letter-spacing: .1em; opacity: .9; }
-.fd-times { display: grid; gap: calc(7 * var(--px)); padding: 0 calc(12 * var(--px)); }
-.fd-times > div { margin: 0; display: flex; align-items: baseline; justify-content: space-between; padding-bottom: calc(7 * var(--px)); border-bottom: 1px solid rgb(59 60 58 / .12); }
-.fd-times b { font-size: calc(14 * var(--px)); }
-.fd-times span { font-size: calc(10 * var(--px)); letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); }
-.fd-pill { justify-self: start; margin: 0 calc(12 * var(--px)); padding: calc(6 * var(--px)) calc(12 * var(--px)); border-radius: calc(999 * var(--px)); background: var(--fd-blue); color: #fff; font-size: calc(10 * var(--px)); }
-.fd-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(5 * var(--px)); padding: 0 calc(12 * var(--px)); }
-.fd-tiles i { aspect-ratio: 1; border-radius: calc(7 * var(--px)); background: linear-gradient(180deg, #f3f0e8, #e2dfd2); }
-.fd-line { height: calc(6 * var(--px)); margin: 0 calc(12 * var(--px)); border-radius: calc(99 * var(--px)); background: rgb(59 60 58 / .1); }
-.fd-line.short { width: 55%; }
 
 /* 3 · confirmación */
 .fd-rsvp { padding: 0 11%; }
@@ -826,8 +814,6 @@ a:not([href]) { cursor: default; }
 /* ajuste: el marco del sitio ocupa un ancho fijo del recuadro */
 .fd-site { grid-template-columns: minmax(0, 72%); grid-template-rows: 1fr; }
 .fd-frame { width: 100%; }
-.fd-hero b { font-size: calc(14 * var(--px)); }
-.fd-times span { font-size: calc(9 * var(--px)); letter-spacing: .06em; }
 .fd-rsvp { grid-template-columns: minmax(0, 100%); }
 .fd-gift { grid-template-columns: minmax(0, 100%); }
 
@@ -1535,3 +1521,223 @@ a:not([href]) { cursor: default; }
 .plan-card:nth-child(3) li svg { color: #fff; }
 .plan-card:nth-child(3) .seed-button { background: #fff; color: var(--foreground); }
 .plan-card:nth-child(3) .seed-button:disabled { opacity: .75; }
+
+/* ---------- Encontrá tu casamiento: portada con foto, buscador debajo ---------- */
+.find { min-height: 100svh; background: #fff; color: var(--foreground); }
+.find-hero { position: relative; display: grid; place-items: center; height: clamp(520px, calc(100svh - 24px), 900px); color: #fff; overflow: hidden; background: #3b3c3a; isolation: isolate; border-radius: 0 0 25px 25px; }
+.find-hero-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
+.find-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / .4), rgb(0 0 0 / .12) 30%, rgb(0 0 0 / .12) 62%, rgb(0 0 0 / .34)), radial-gradient(ellipse 60% 30% at 50% 52%, rgb(0 0 0 / .32), rgb(0 0 0 / 0) 100%); }
+.find-hero .float-nav { position: absolute; top: calc(8px + env(safe-area-inset-top)); left: 0; right: 0; height: auto; margin: 0; }
+.find-hero-copy { display: grid; justify-items: center; gap: clamp(22px, 3.4vh, 32px); width: 92%; text-align: center; padding-top: 24px; }
+.find-hero-copy h1 { margin: 0; font-size: clamp(34px, 4.6vw, 68px); line-height: 1.05; font-weight: 400; letter-spacing: -.01em; text-shadow: 0 2px 22px rgb(0 0 0 / .4); text-wrap: balance; }
+.find-hero-btn { min-height: 44px; padding: 0 30px; border: 0; border-radius: 999px; background: #fff; color: var(--foreground); font: inherit; font-size: 15px; cursor: pointer; transition: background .2s; }
+.find-hero-btn:hover { background: #f4f4f2; }
+.find-hero-btn:focus-visible, .find-submit:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.find-main { width: min(92%, 620px); margin: 0 auto; padding: clamp(56px, 9vh, 96px) 0 clamp(72px, 12vh, 140px); scroll-margin-top: 24px; }
+.find-form label { display: block; margin: 0 0 12px 4px; font-size: 15px; color: var(--foreground); }
+.find-field { position: relative; display: flex; align-items: center; }
+.find-field input { width: 100%; height: 56px; padding: 0 76px 0 26px; border: 1px solid rgb(59 60 58 / .2); border-radius: 999px; background: #fbfaf7; color: var(--foreground); font: inherit; font-size: 17px; }
+.find-field input::placeholder { color: var(--muted-foreground); }
+.find-field input:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.find-submit { position: absolute; right: 7px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #4f5b66; color: #fff; cursor: pointer; transition: background .2s; }
+.find-submit:hover { background: #3f4a54; }
+.find-results { margin-top: 28px; }
+.find-results ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.find-card { display: grid; gap: 4px; padding: 20px 22px; border-radius: 18px; background: #f4f4f2; color: inherit; text-decoration: none; transition: background .2s; }
+.find-card:hover { background: #ecece9; }
+.find-card:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.find-names { font-size: 21px; line-height: 1.2; }
+.find-meta { font-size: 14px; color: var(--muted-foreground); }
+.find-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 14px; text-decoration: underline; text-underline-offset: 5px; }
+.find-empty { margin: 0; font-size: 15px; line-height: 1.5; color: var(--muted-foreground); }
+.find .float-link { display: inline-flex; align-items: center; gap: 8px; }
+/* portada recortada: tres cuartos de la pantalla, para que el buscador se vea en la primera pantalla */
+.find-hero { height: clamp(380px, 72svh, 720px); }
+.find-main { padding-top: clamp(28px, 5svh, 52px); padding-bottom: clamp(56px, 10vh, 120px); }
+
+/* resultados: parejas en círculos, con su nombre y el botón "Regalá" */
+.find-main { width: min(92%, 1100px); }
+.find-form { width: min(100%, 620px); margin: 0 auto; }
+.find-results { margin-top: clamp(36px, 6svh, 64px); }
+.find-circles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px clamp(16px, 2.4vw, 40px); }
+.find-circles li { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.find-photo { display: block; width: 100%; max-width: 190px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #f4f4f2; }
+.find-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); }
+.find-names { margin: 20px 0 0; font-size: clamp(16px, 1.5vw, 20px); font-weight: 400; line-height: 1.2; }
+.find-btn { display: inline-flex; align-items: center; justify-content: center; width: min(100%, 172px); min-height: 44px; margin-top: 16px; border: 1px solid rgb(59 60 58 / .2); border-radius: 999px; background: #fbfaf7; color: var(--foreground); font-size: 15px; text-decoration: none; transition: background .2s, border-color .2s; }
+.find-btn:hover { background: #fff; border-color: var(--foreground); }
+.find-btn:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.find-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.find-note { margin: 32px 0 0; text-align: center; font-size: 12px; color: var(--muted-foreground); }
+.find-empty { text-align: center; }
+@media (max-width: 900px) { .find-circles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* buscador: sin el contorno negro al enfocar; el foco se nota con el borde y un halo suave */
+.find-field input:focus, .find-field input:focus-visible { outline: none; border-color: rgb(59 60 58 / .45); box-shadow: 0 0 0 4px rgb(59 60 58 / .08); }
+.find-field input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
+
+/* cada pareja es un único bloque clickeable: la foto y el nombre (sin botón "Regalá") */
+.find-couple { display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: center; cursor: pointer; }
+.find-couple .find-names { display: block; margin: 20px 0 0; }
+.find-couple .find-photo { transition: transform .25s ease, box-shadow .25s ease; }
+.find-couple:hover .find-photo { transform: scale(1.03); box-shadow: 0 10px 28px rgb(0 0 0 / .14); }
+.find-couple:focus-visible { outline: 2px solid var(--foreground); outline-offset: 8px; border-radius: 24px; }
+@media (prefers-reduced-motion: reduce) { .find-couple .find-photo { transition: none; } .find-couple:hover .find-photo { transform: none; } }
+
+/* título de la landing un poco más grande */
+.seed-hero .hero-copy h1 { font-size: clamp(44px, 4.6vw, 66px); line-height: 1.08; }
+@media (max-width: 767px) { .seed-hero .hero-copy h1 { font-size: min(9.6vw, 40px); } }
+
+/* 2 · sitio del casamiento: maqueta fiel al micrositio actual (portada con foto, save the date, momentos y confirmación) */
+.fd-page { gap: 0; padding-bottom: 0; }
+.fd-hero { position: relative; height: calc(98 * var(--px)); display: grid; place-content: center; justify-items: center; gap: calc(4 * var(--px)); text-align: center; color: #fff; background: linear-gradient(rgb(0 0 0 / .3), rgb(0 0 0 / .3)), url('/pareja-portada-8.webp') 50% 40% / cover; font-family: 'Cormorant Garamond', Georgia, serif; }
+.fd-hero small { font-size: calc(8 * var(--px)); }
+.fd-hero b { font-size: calc(17 * var(--px)); font-weight: 400; line-height: 1.05; }
+.fd-hero i { font-style: normal; font-size: calc(7 * var(--px)); font-weight: 600; letter-spacing: .14em; }
+.fd-std { display: grid; justify-items: center; gap: calc(3 * var(--px)); padding: calc(14 * var(--px)) 0 calc(14 * var(--px)); background: #fff; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; }
+.fd-std small { font-size: calc(6 * var(--px)); letter-spacing: .16em; text-transform: uppercase; color: #66747f; }
+.fd-std b { font-size: calc(12 * var(--px)); font-weight: 500; color: #3b3c3a; }
+.fd-count { display: flex; gap: calc(9 * var(--px)); margin-top: calc(3 * var(--px)); }
+.fd-count span { display: grid; justify-items: center; gap: calc(1 * var(--px)); font-size: calc(5 * var(--px)); letter-spacing: .12em; text-transform: uppercase; color: #575757; }
+.fd-count u { text-decoration: none; font-size: calc(11 * var(--px)); letter-spacing: 0; color: #66747f; }
+.fd-events { display: grid; grid-template-columns: repeat(3, 1fr); background: #66747f; color: #fff; padding: calc(14 * var(--px)) calc(6 * var(--px)); font-family: 'Cormorant Garamond', Georgia, serif; text-align: center; }
+.fd-events div { display: grid; justify-items: center; gap: calc(3 * var(--px)); }
+.fd-events div + div { border-left: 1px solid rgb(255 255 255 / .4); }
+.fd-events em { display: block; width: calc(11 * var(--px)); height: calc(11 * var(--px)); border: 1px solid rgb(255 255 255 / .85); border-radius: 50%; }
+.fd-events span { font-size: calc(5.5 * var(--px)); letter-spacing: .14em; text-transform: uppercase; }
+.fd-events b { font-size: calc(11 * var(--px)); font-weight: 500; }
+
+/* escena de lista de regalos: botones "Regalar" blanquecinos y con borde fino, como en el ejemplo */
+.fd-gift-flow .fd-sq .fd-btn { background: #fbfaf7; color: var(--foreground); border: 1px solid rgb(59 60 58 / .2); }
+/* las animaciones del botón cambiaban su fondo: este tiene prioridad sobre ellas */
+.fd-gift-flow .fd-sq .fd-btn { background: #fbfaf7 !important; color: var(--foreground) !important; }
+
+/* ---------- coherencia entre las tres escenas: la misma caja de contenido, centrada y con los mismos márgenes ---------- */
+.fd-stage { --box-y: 7cqw; --box-x: 13cqw; }
+.fd-gift-flow .fd-list-viewport { inset: var(--box-y) var(--box-x); border-radius: 3cqw; }
+.fd-site { display: block; padding: 0; }
+.fd-site .fd-frame { position: absolute; inset: var(--box-y) var(--box-x); width: auto; height: auto; border-radius: 3cqw; box-shadow: 0 1cqw 5cqw rgb(59 60 58 / .14); }
+.fd-rsvp { display: block; padding: 0; }
+.fd-rsvp .fd-form { position: absolute; inset: var(--box-y) var(--box-x); align-content: center; border-radius: 3cqw; }
+.fd-rsvp .fd-ok { inset: var(--box-y) var(--box-x); border-radius: 3cqw; }
+/* el sitio llena su caja hasta abajo: el bloque de los tres momentos se estira */
+.fd-site .fd-page { height: 100%; grid-template-rows: auto auto 1fr; }
+.fd-site .fd-events { align-content: center; }
+/* nombres de los regalos completos: pasan a dos renglones si hace falta, siempre con el mismo alto para que los botones queden alineados */
+.fd-gift-flow .fd-sq b { white-space: normal; overflow: visible; text-overflow: clip; font-size: 3cqw; line-height: 1.18; min-height: 2.36em; display: block; text-wrap: balance; }
+/* menos aire entre el nombre del regalo y el botón: ya no se reserva lugar para un segundo renglón */
+.fd-gift-flow .fd-sq b { min-height: 0; }
+.fd-gift-flow .fd-sq .fd-btn { margin-top: 1.8cqw; }
+
+/* ---------- 1 · lista de regalos: muchos regalos que van pasando (dos columnas en sentidos contrarios) ---------- */
+.fd-gm { display: block; padding: 0; }
+.fd-gm-view { position: absolute; inset: var(--box-y) var(--box-x); border-radius: 3cqw; overflow: hidden; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3cqw; -webkit-mask-image: linear-gradient(transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(transparent, #000 9%, #000 91%, transparent); }
+.fd-gm-col { display: grid; align-content: start; gap: 3cqw; }
+.fd-gm-card { display: grid; padding: .9cqw; border-radius: 3.4cqw; background: #fff; box-shadow: 0 1cqw 4cqw rgb(59 60 58 / .12); }
+.fd-gm-photo { position: relative; display: block; aspect-ratio: 1; border-radius: 2.6cqw; overflow: hidden; background: #ebe7dc; }
+.fd-gm-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fd-gm-price { position: absolute; left: 1.6cqw; bottom: 1.6cqw; padding: .8cqw 2cqw; border-radius: 99cqw; background: rgb(255 255 255 / .95); color: var(--foreground); font-size: 2.8cqw; line-height: 1.2; }
+.fd-gm-card b { margin: 2cqw 1.8cqw 0; font-size: 3cqw; font-weight: 400; line-height: 1.18; color: var(--foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-gm-btn { display: grid; place-items: center; height: 6.8cqw; margin: 1.8cqw .8cqw .8cqw; border: 1px solid rgb(59 60 58 / .2); border-radius: 99cqw; background: #fbfaf7; color: var(--foreground); font-size: 3cqw; }
+@keyframes fdgm-up { from { transform: translateY(0); } to { transform: translateY(calc(-50% - 1.5cqw)); } }
+@keyframes fdgm-down { from { transform: translateY(calc(-50% - 1.5cqw)); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: no-preference) {
+  .fd-gm-col { animation: fdgm-up 34s linear infinite; }
+  .fd-gm-col.is-down { animation-name: fdgm-down; }
+}
+
+/* en la escena de regalos los nombres largos pasan a dos renglones en lugar de cortarse */
+.fd-gm-card b { white-space: normal; overflow: visible; text-overflow: clip; text-wrap: balance; }
+
+/* iconos dibujados a mano en la maqueta del sitio (en lugar de los círculos vacíos) */
+.fd-events svg { width: calc(17 * var(--px)); height: calc(17 * var(--px)); }
+.fd-events svg { width: calc(27 * var(--px)); height: calc(27 * var(--px)); }
+
+/* íconos de la maqueta: bastante más chicos */
+.fd-events svg { width: calc(16 * var(--px)); height: calc(16 * var(--px)); }
+
+/* la maqueta del sitio llega hasta el "save the date": la portada ocupa el resto de la caja */
+.fd-site .fd-page { grid-template-rows: 1fr auto; }
+.fd-site .fd-hero { height: auto; min-height: 0; }
+.fd-site .fd-std { padding: calc(18 * var(--px)) 0 calc(20 * var(--px)); gap: calc(5 * var(--px)); }
+.fd-site .fd-std small { font-size: calc(7 * var(--px)); }
+.fd-site .fd-std b { font-size: calc(14 * var(--px)); }
+.fd-site .fd-count { gap: calc(12 * var(--px)); margin-top: calc(5 * var(--px)); }
+.fd-site .fd-count span { font-size: calc(5.5 * var(--px)); }
+.fd-site .fd-count u { font-size: calc(13 * var(--px)); }
+
+/* fondo de las tres escenas: degradé del azul de Weda (en lugar de la foto oscura), para que combine con la web */
+.fd-stage { background: linear-gradient(155deg, #8a959e 0%, #707d87 52%, #5a646c 100%); box-shadow: none; }
+.fd-stage::before, .fd-stage::after { content: none; }
+/* más clarito: tintes pálidos del mismo azul de Weda */
+.fd-stage { background: linear-gradient(155deg, #eef2f4 0%, #dde4e8 55%, #cdd6dc 100%); }
+/* color papel: crema cálido, el de las secciones claras de la web */
+.fd-stage { background: linear-gradient(155deg, #f8f5ee 0%, #f0ece1 55%, #e7e2d4 100%); }
+
+/* ---------- fondo de las escenas: liso, el color papel de arriba, más clarito ---------- */
+.fd-stage { background: #f9f7f1; }
+
+/* ---------- confirmación de asistencia: más minimalista, sin azul y con la tarjeta ajustada a su contenido ---------- */
+.fd-rsvp { display: grid; place-content: center; padding: 0; }
+.fd-rsvp .fd-form, .fd-rsvp .fd-ok { grid-area: 1 / 1; }
+.fd-rsvp .fd-form { position: relative; inset: auto; width: calc(100cqw - 2 * var(--box-x)); align-content: start; gap: calc(6 * var(--px)); padding: calc(14 * var(--px)); border-radius: 3cqw; }
+.fd-rsvp .fd-ok { position: static; inset: auto; width: auto; border-radius: 3cqw; background: #fff; box-shadow: 0 1cqw 5cqw rgb(59 60 58 / .12); }
+.fd-rsvp .fd-chip { background: #fff; border-color: rgb(59 60 58 / .2); color: var(--foreground); }
+.fd-rsvp .fd-chip-yes { background: #f4f1ea; border-color: var(--foreground); color: var(--foreground); animation: fdm-sel var(--fd-t) ease-in-out infinite; }
+.fd-rsvp .fd-submit { background: #fbfaf7; color: var(--foreground); border: 1px solid rgb(59 60 58 / .2); }
+@keyframes fdm-sel { 0%, 33% { background: #fff; border-color: rgb(59 60 58 / .2); } 36%, 100% { background: #f4f1ea; border-color: #3b3c3a; } }
+@media (prefers-reduced-motion: reduce) { .fd-rsvp .fd-chip-yes { animation: none; } }
+.fd-rsvp .fd-form, .fd-rsvp .fd-ok { justify-self: center; align-self: center; }
+.fd-rsvp .fd-ok { width: calc(100cqw - 2 * var(--box-x)); height: 100%; }
+
+/* menú de la confirmación: cuatro opciones en dos filas, con el mismo estilo neutro */
+.fd-rsvp .fd-menu { display: grid; grid-template-columns: 1fr 1fr; gap: calc(5 * var(--px)); }
+.fd-rsvp .fd-menu span { display: grid; place-items: center; height: calc(25 * var(--px)); border-radius: calc(9 * var(--px)); border: 1px solid rgb(59 60 58 / .2); background: #fff; color: var(--foreground); font-size: calc(10 * var(--px)); }
+.fd-rsvp .fd-menu .fd-menu-sel { background: #f4f1ea; border-color: var(--foreground); animation: fdm-sel2 var(--fd-t) ease-in-out infinite; }
+@keyframes fdm-sel2 { 0%, 52% { background: #fff; border-color: rgb(59 60 58 / .2); } 55%, 100% { background: #f4f1ea; border-color: #3b3c3a; } }
+@media (prefers-reduced-motion: reduce) { .fd-rsvp .fd-menu .fd-menu-sel { animation: none; } }
+
+/* el menú aparece recién cuando se elige "Sí, ahí estoy" (como en la confirmación real) */
+.fd-rsvp .fd-menu-wrap { display: grid; grid-template-rows: 1fr; }
+.fd-rsvp .fd-menu-inner { display: grid; gap: calc(5 * var(--px)); min-height: 0; overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .fd-rsvp .fd-menu-wrap { animation: fdm-open var(--fd-t) ease-in-out infinite; }
+}
+@keyframes fdm-open { 0%, 35% { grid-template-rows: 0fr; opacity: 0; } 42%, 100% { grid-template-rows: 1fr; opacity: 1; } }
+
+/* agradecimiento: centrado y prolijo, mismo tamaño que el formulario */
+.fd-rsvp .fd-ok { display: grid; align-content: center; justify-items: center; gap: calc(7 * var(--px)); padding: 0 8%; text-align: center; }
+.fd-rsvp .fd-ok .fd-mcheck { display: grid; place-items: center; width: calc(30 * var(--px)); height: calc(30 * var(--px)); margin: 0 0 calc(3 * var(--px)); border-radius: 50%; background: #f4f1ea; color: var(--foreground); box-shadow: none; border: 1px solid rgb(59 60 58 / .18); }
+.fd-rsvp .fd-ok .fd-mcheck svg { display: block; }
+.fd-rsvp .fd-ok .fd-ok-title { display: block; font-size: calc(14 * var(--px)); font-weight: 400; line-height: 1.2; letter-spacing: 0; color: var(--foreground); }
+.fd-rsvp .fd-ok .fd-ok-text { display: block; width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; font-size: calc(10.5 * var(--px)); line-height: 1.4; color: var(--muted-foreground); white-space: normal; }
+
+/* fondo de las escenas: vidrio translúcido, como las píldoras de la barra (deja ver el blanco de atrás) */
+.fd-stage { background: rgb(70 82 80 / .09); -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .7), inset 0 1px 0 rgb(255 255 255 / .9); }
+
+/* ---------- vidrio de verdad: brillo, borde luminoso y sombra con volumen; y manchas suaves detrás para que el desenfoque se note ---------- */
+.fd-stage {
+  background: linear-gradient(145deg, rgb(255 255 255 / .62) 0%, rgb(255 255 255 / .28) 48%, rgb(255 255 255 / .46) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(1.7); backdrop-filter: blur(26px) saturate(1.7);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / .8),
+    inset 0 2px 1px rgb(255 255 255 / 1),
+    inset 0 -2px 6px rgb(59 60 58 / .05),
+    0 18px 40px rgb(59 60 58 / .12),
+    0 2px 6px rgb(59 60 58 / .06);
+}
+.fd-stage { box-shadow: inset 0 0 0 1px rgb(255 255 255 / .85), inset 0 2px 1px #fff, inset 0 -2px 6px rgb(59 60 58 / .06), 0 0 0 1px rgb(59 60 58 / .07), 0 18px 40px rgb(59 60 58 / .14), 0 2px 6px rgb(59 60 58 / .07); }
+
+/* el fondo de la página queda blanco; el cuadrado de vidrio toma el azul de Weda, algo más saturado */
+.fd-stage {
+  background: linear-gradient(145deg, rgb(255 255 255 / .55) 0%, rgb(171 184 194 / .42) 52%, rgb(112 125 135 / .34) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(1.8); backdrop-filter: blur(26px) saturate(1.8);
+}
+
+/* cuadrado lo más blanco posible, sin degradé: un gris casi blanco con borde fino y sombra suave para que se note frente al blanco de la página y de las tarjetas de adentro */
+.fd-stage {
+  background: #f6f7f8; -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: inset 0 0 0 1px rgb(59 60 58 / .07), 0 8px 24px rgb(59 60 58 / .07);
+}
+/* tilde del agradecimiento: gris neutro, sin tono amarillento */
+.fd-rsvp .fd-ok .fd-mcheck { background: #f4f5f6; border-color: rgb(59 60 58 / .14); }

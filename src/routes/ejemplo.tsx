@@ -51,7 +51,7 @@ function DemoNav() {
           <Link to="/" className="ej-bar-link" aria-label="Cerrar el ejemplo y volver a Weda"><X size={16} aria-hidden="true" /><span>Volver a Weda</span></Link>
         </div>
         <div className="ej-bar-pill ej-bar-links">
-          <Link to="/ejemplo" hash="dia" className="ej-bar-link" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }}>Invitación</Link>
+          <Link to="/ejemplo" hash="nos-casamos" className="ej-bar-link" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }}>Invitación</Link>
           <Link to="/ejemplo/regalos" hash="regalos" className="ej-bar-link" activeProps={{ 'aria-current': 'page' }}>Regalá</Link>
           <button type="button" className="ej-bar-link" onClick={rsvp.open}>Confirmá asistencia</button>
         </div>

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, ArrowLeft, Check, Menu, X, Gift, CalendarHeart } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { duo, routine, unboxing } from '@/assets/images';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
+import { FloatNav } from '@/components/float-nav';
 
 // URL pública del sitio. Los metadatos sociales y el canonical necesitan una URL absoluta: se toma de VITE_SITE_URL
 // (por ejemplo "https://weda.example"). Si no está definida quedan rutas relativas, que es lo único honesto sin dominio.
@@ -24,7 +25,13 @@ export const Route = createFileRoute('/')({
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:image', content: absolute('/pareja-portada.jpg') },
     ],
-    links: SITE_URL ? [{ rel: 'canonical', href: `${SITE_URL}/` }] : [],
+    links: [
+      ...(SITE_URL ? [{ rel: 'canonical', href: `${SITE_URL}/` }] : []),
+      // Tipografía del micrositio, solo para la maqueta del bloque "Sitio del casamiento".
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' as const },
+      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
+    ],
   }),
   component: Index,
 });
@@ -48,52 +55,6 @@ function SeedLink({ children, pill = false, href, to, disabled }: SeedLinkProps)
   if (disabled) return <Button variant={variant} type="button" disabled>{content}</Button>;
   if (to) return <Button variant={variant} asChild><Link to={to}>{content}</Link></Button>;
   return <Button variant={variant} asChild><a href={href}>{content}</a></Button>;
-}
-function FloatNav() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLElement>(null);
-  // Una sola barra, como en Seed: sube con la página hasta pegarse arriba y sus píldoras se van "rellenando" (--p de 0 a 1).
-  useEffect(() => {
-    const onScroll = () => ref.current?.style.setProperty('--p', String(Math.min(1, Math.max(0, window.scrollY / 56))));
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
-  const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    // El panel arranca justo debajo de la barra y ocupa el resto de la pantalla.
-    const bar = ref.current?.querySelector('.float-bar');
-    if (bar && panelRef.current) panelRef.current.style.top = `${Math.round(bar.getBoundingClientRect().bottom + 8)}px`;
-    const prev = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
-    return () => { document.documentElement.style.overflow = prev; };
-  }, [open]);
-  const close = () => setOpen(false);
-  return (
-    <header className="float-nav" ref={ref}>
-      <nav className="float-bar" aria-label="Principal">
-        <div className="float-pill float-left">
-          <a href="#top" className="seed-logo" aria-label="Weda, volver arriba">Weda<i aria-hidden="true" /></a>
-        </div>
-        <div className="float-pill float-right">
-          <Link to="/ejemplo/regalos" className="float-link float-desktop">Hacé un regalo</Link>
-          <a href="#planes" className="float-cta">Crear mi evento</a>
-          <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
-        </div>
-      </nav>
-      <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
-        <Link to="/ejemplo/regalos" className="menu-row" onClick={close}><span className="menu-tile"><Gift size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Hacé un regalo</strong></span></Link>
-        <a href="#planes" className="menu-row" onClick={close}><span className="menu-tile"><CalendarHeart size={30} strokeWidth={1.4} /></span><span><small>Para novios</small><strong>Crear mi evento</strong></span></a>
-      </div>
-    </header>
-  );
 }
 // TESTIMONIOS DE EJEMPLO: textos y nombres provisorios para maquetar el carrusel. Reemplazarlos por testimonios reales antes de publicar.
 const testimonials = [
@@ -145,11 +106,11 @@ function Index() {
   }, []);
   return <>
     <a className="skip-link" href="#main">Ir al contenido</a>
-    <Link to="/ejemplo/regalos" className="announcement">¿Invitado? Encontrá una lista de regalos <ArrowRight size={11} className="ml-1"/></Link>
-    <FloatNav/>
+    <Link to="/encontrar" className="announcement">¿Invitado? Encontrá una lista de regalos <ArrowRight size={11} className="ml-1"/></Link>
+    <FloatNav onLanding />
     <section className="seed-hero" id="top">
       <video className="hero-image" src="/hero.mp4" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
-      <main id="main" className="hero-inner"><div className="hero-copy"><h1>Organizá tu casamiento en un solo lugar.</h1><p>Creá tu lista de regalos, gestioná invitados y compartí toda la información de tu evento.</p><div className="hero-actions"><SeedLink pill href="#planes">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></main>
+      <main id="main" className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, gestioná invitados y compartí toda la información de tu evento.</p><div className="hero-actions"><SeedLink pill href="#planes">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></main>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
       <div className="feat-head"><h2>Todo para su gran día.</h2><div className="feat-head-side"><p>Una lista de regalos para sus próximos sueños, un sitio para compartir su historia y una forma simple de organizar a quienes los acompañan.</p><div className="feat-cta"><SeedLink href="#planes">Crear mi evento</SeedLink></div></div></div>

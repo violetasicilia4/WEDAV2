@@ -39,14 +39,31 @@ export function ToastIcon(props: Props) {
   );
 }
 
-/** Fiesta: torta de dos pisos con una vela. */
-export function CakeIcon(props: Props) {
+/** Recepción (invitación): dos copas chocando, con rayitas de brindis. */
+export function ClinkIcon(props: Props) {
   return (
     <Base {...props}>
-      <path d="M8.4 35.8C8.3 32.4 8.6 30.2 8.7 28.8C15.6 29.6 32 29.2 39.3 28.6C39.4 30.4 39.5 33.4 39.3 36C31.4 36.8 16 36.6 8.4 35.8Z" />
-      <path d="M14.2 28.8C14.1 25.8 14.4 24 14.5 22.6C19.8 23.4 28.4 23.1 33.6 22.5C33.7 24.2 33.8 26.6 33.6 28.7" />
-      <path d="M24 22.5L24.1 16.4" />
-      <path d="M24.1 14.6C22.8 13.2 23.6 11.6 24.2 10.4C25.1 11.8 25.7 13.1 24.1 14.6Z" />
+      <path d="M15.4 11.2L25.4 15.8" />
+      <path d="M15.6 11.6C14.6 18.6 15.8 23.4 19.8 25.6C23 22.8 24.6 19.8 25.2 16.2" />
+      <path d="M19.8 25.8L15.4 38.2M11.6 38.8C13.2 38 17 38.4 18.8 39.6" />
+      <path d="M32.6 11.2L22.6 15.8" />
+      <path d="M32.4 11.6C33.4 18.6 32.2 23.4 28.2 25.6C25 22.8 23.4 19.8 22.8 16.2" />
+      <path d="M28.2 25.8L32.6 38.2M36.4 38.8C34.8 38 31 38.4 29.2 39.6" />
+      <path d="M24 5.8V9M19.4 7.6L21 10.2M28.6 7.6L27 10.2" />
+    </Base>
+  );
+}
+
+/** Fiesta: un salón con techo a dos aguas, puerta y ventanas en arco. */
+export function HallIcon(props: Props) {
+  return (
+    <Base {...props}>
+      <path d="M6.6 20.6C12.8 15.8 18.4 11.6 24.2 7.8C29.8 11.6 35.6 15.8 41.4 20.4" />
+      <path d="M9.4 21L9.2 38.6M38.8 21.2L39 38.4" />
+      <path d="M6.6 38.8C16 38.4 32 38.6 41.4 38.9" />
+      <path d="M20.4 38.6L20.2 29.4C20.2 26.4 22 24.6 24.2 24.6C26.4 24.6 28.2 26.4 28.1 29.4L28 38.6" />
+      <path d="M12.8 33.4V29.6C12.8 28 13.9 27.2 15 27.2C16.1 27.2 17.2 28 17.2 29.6V33.4" />
+      <path d="M31.4 33.4V29.6C31.4 28 32.5 27.2 33.6 27.2C34.7 27.2 35.8 28 35.8 29.6V33.4" />
     </Base>
   );
 }
