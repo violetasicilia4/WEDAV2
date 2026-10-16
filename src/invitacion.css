@@ -638,3 +638,18 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 @media (max-width: 370px) {
   .dm-root:has(#dia) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
 }
+
+/* Mobile: Invitación / Regalá / Confirmá asistencia se juntan detrás de un botón de tres líneas (arriba a la derecha).
+   En web no cambia nada: el botón y el menú desplegable no se muestran. */
+.dm-root .ej-bar .ej-bar-burger, .dm-root .ej-bar .ej-bar-menu { display: none; }
+@media (max-width: 640px) {
+  .dm-root .ej-bar .ej-bar-links > .ej-bar-link:not(.ej-bar-burger) { display: none; }
+  .dm-root .ej-bar .ej-bar-links { padding: 0 4px; min-width: 0; width: 48px; justify-content: center; flex: none; }
+  .dm-root .ej-bar .ej-bar-burger { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; }
+  .dm-root .ej-bar .ej-bar-inner { position: relative; }
+  .dm-root .ej-bar .ej-bar-menu:not([hidden]) { display: flex; flex-direction: column; position: absolute; right: 8px; top: calc(100% + 8px); min-width: 230px; padding: 8px; border-radius: 22px; background: #fff; box-shadow: 0 14px 40px rgb(0 0 0 / .22), inset 0 0 0 1px rgb(59 60 58 / .08); z-index: 3; }
+  .dm-root .ej-bar .ej-bar-menu a, .dm-root .ej-bar .ej-bar-menu button { display: flex; align-items: center; min-height: 48px; padding: 0 16px; border: 0; border-radius: 14px; background: transparent; color: #3b3c3a; font: 400 16px/1 Arial, Helvetica, sans-serif; text-align: left; text-decoration: none; text-shadow: none; cursor: pointer; }
+  .dm-root .ej-bar .ej-bar-menu a:hover, .dm-root .ej-bar .ej-bar-menu button:hover { background: rgb(59 60 58 / .06); }
+  .dm-root .ej-bar .ej-bar-menu [aria-current="page"] { background: rgb(102 116 127 / .14); font-weight: 500; }
+  .dm-root .ej-bar .ej-bar-menu :where(a, button):focus-visible { outline: 2px solid #66747f; outline-offset: -2px; }
+}

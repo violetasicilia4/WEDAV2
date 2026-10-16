@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Menu, X } from 'lucide-react';
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 import { wedding } from '@/lib/demo-wedding';
 import { RsvpProvider, useRsvp } from '@/components/rsvp-dialog';
@@ -29,6 +29,16 @@ export const Route = createFileRoute('/ejemplo')({
 function DemoNav() {
   const rsvp = useRsvp();
   const ref = useRef<HTMLElement>(null);
+  // Mobile: las tres secciones viven detrás de un botón de tres líneas (arriba a la derecha) y se despliegan al tocarlo.
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onDown = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onDown);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onDown); };
+  }, [open]);
   useEffect(() => {
     const onScroll = () => {
       const el = ref.current;
@@ -54,8 +64,14 @@ function DemoNav() {
           <Link to="/ejemplo" hash="nos-casamos" className="ej-bar-link" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }}>Invitación</Link>
           <Link to="/ejemplo/regalos" hash="regalos" className="ej-bar-link" activeProps={{ 'aria-current': 'page' }}>Regalá</Link>
           <button type="button" className="ej-bar-link" onClick={rsvp.open}>Confirmá asistencia</button>
+          <button type="button" className="ej-bar-link ej-bar-burger" aria-label={open ? 'Cerrar el menú' : 'Abrir el menú'} aria-expanded={open} aria-controls="ej-bar-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}</button>
         </div>
       </nav>
+      <div id="ej-bar-menu" className="ej-bar-menu" hidden={!open}>
+        <Link to="/ejemplo" hash="nos-casamos" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }} onClick={() => setOpen(false)}>Invitación</Link>
+        <Link to="/ejemplo/regalos" hash="regalos" activeProps={{ 'aria-current': 'page' }} onClick={() => setOpen(false)}>Regalá</Link>
+        <button type="button" onClick={() => { setOpen(false); rsvp.open(); }}>Confirmá asistencia</button>
+      </div>
     </header>
   );
 }
