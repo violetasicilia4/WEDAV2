@@ -14,10 +14,10 @@ const absolute = (path: string) => `${SITE_URL}${path}`;
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: [
-      { title: 'Weda • Organizá tu casamiento en un solo lugar' },
-      { name: 'description', content: 'Creá tu lista de regalos, gestioná invitados y compartí toda la información de tu evento. Weda, la plataforma para organizar casamientos.' },
-      { property: 'og:title', content: 'Weda • Organizá tu casamiento en un solo lugar' },
-      { property: 'og:description', content: 'Creá tu lista de regalos, gestioná invitados y compartí toda la información de tu evento.' },
+      { title: 'Weda • Lista de regalos y sitio para tu casamiento' },
+      { name: 'description', content: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar. Weda, la plataforma para casamientos.' },
+      { property: 'og:title', content: 'Weda • Lista de regalos y sitio para tu casamiento' },
+      { property: 'og:description', content: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.' },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: 'es_AR' },
       { property: 'og:image', content: absolute('/pareja-portada.jpg') },
@@ -41,8 +41,8 @@ const plans = [
   { name: 'Premium', sub: 'La experiencia completa de tu casamiento.', items: ['Todo lo del plan Completo', 'Sitio de casamiento premium'] },
 ];
 const features = [
-  { title: 'Lista de regalos', note: 'Creen su lista y reciban regalos o aportes para los proyectos que quieran compartir.', icon: <GiftDemo /> },
-  { title: 'Sitio del casamiento', note: 'Compartan la fecha, los lugares, las fotos y todos los detalles de su gran día.', icon: <SiteDemo /> },
+  { title: 'Lista de regalos', note: 'Creen su lista con regalos y proyectos que quieran compartir con sus invitados.', icon: <GiftDemo /> },
+  { title: 'Sitio del casamiento', note: 'Compartan la fecha, los lugares, las fotos y todos los detalles del evento.', icon: <SiteDemo /> },
   { title: 'Confirmación de asistencia', note: 'Reciban las respuestas de sus invitados y organicen quiénes los acompañarán.', icon: <RsvpDemo /> },
 ];
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
@@ -56,41 +56,68 @@ function SeedLink({ children, pill = false, href, to, disabled }: SeedLinkProps)
   if (to) return <Button variant={variant} asChild><Link to={to}>{content}</Link></Button>;
   return <Button variant={variant} asChild><a href={href}>{content}</a></Button>;
 }
-// TESTIMONIOS DE EJEMPLO: textos y nombres provisorios para maquetar el carrusel. Reemplazarlos por testimonios reales antes de publicar.
+// Parejas ficticias de la demo (nombres y fotos inventados); los textos son los testimonios aportados.
 const testimonials = [
-  { quote: 'Armamos la lista de regalos en una tarde y nuestros invitados pudieron aportar a la luna de miel sin complicaciones.', who: 'Camila y Lucas' },
-  { quote: 'Dejamos de perseguir confirmaciones por mensaje: todas las respuestas llegaban en un solo lugar.', who: 'Valentina y Mariano' },
-  { quote: 'El sitio con nuestra historia hizo que todos llegaran sabiendo exactamente dónde y cuándo.', who: 'Julieta y Franco' },
-  { quote: 'Recibir el dinero directamente nos permitió empezar la casa que soñábamos.', who: 'Sofía y Tomás' },
+  { quote: 'Weda nos ayudó a tener todo mucho más ordenado. Pudimos ver quiénes nos habían hecho un regalo y llevar un registro para no olvidarnos de agradecerle a nadie.', who: 'Camila & Lucas', photo: '/parejas/camila-lucas.jpg' },
+  { quote: 'Nos re sirvió tener todo en la página. Más de uno nos preguntó cómo llegar o a qué hora era cada cosa, y les pasábamos el link directamente. Tenían el mapa, los horarios y toda la info ahí, así que no tuvimos que estar respondiendo mil mensajes el día del casamiento.', who: 'Valentina & Mariano', photo: '/parejas/valentina-mariano.jpg' },
+  { quote: 'Nos divertimos un montón armando la lista porque pudimos elegir regalos que tenían que ver con nosotros y con esta nueva etapa. Más allá del regalo en sí, nos gustaba pensar que cada persona estaba aportando a algo que queríamos hacer juntos.', who: 'Julieta & Franco', photo: '/parejas/julieta-franco.jpg' },
+  { quote: 'Nos sirvió para organizarnos con los invitados. Cada uno podía confirmar desde la página y nosotros ir viendo las respuestas sin tener que revisar todos los chats.', who: 'Mica & Agus', photo: '/parejas/mica-agus.jpg' },
 ];
 function Testimonials() {
   const track = useRef<HTMLDivElement>(null);
+  const paused = useRef(false);
   const [i, setI] = useState(0);
-  const go = (n: number) => {
-    const el = track.current; if (!el) return;
-    const t = (n + testimonials.length) % testimonials.length;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el.scrollTo({ left: t * el.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+  const n = testimonials.length;
+  // Tres copias de la lista: al llegar a una punta se salta (sin que se note) a la copia del medio, así el carrusel no tiene fin.
+  const slides = [...testimonials, ...testimonials, ...testimonials];
+  const left = (c: HTMLElement, el: HTMLElement) => c.offsetLeft - (el.clientWidth - c.offsetWidth) / 2;
+  const nearest = (el: HTMLElement) => {
+    const mid = el.scrollLeft + el.clientWidth / 2;
+    let best = 0, dist = Infinity;
+    Array.from(el.children).forEach((c, k) => { const d = Math.abs((c as HTMLElement).offsetLeft + (c as HTMLElement).offsetWidth / 2 - mid); if (d < dist) { dist = d; best = k; } });
+    return best;
   };
+  const scrollToAbs = (k: number, smooth: boolean) => {
+    const el = track.current; const card = el?.children[k] as HTMLElement | undefined; if (!el || !card) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollTo({ left: left(card, el), behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  };
+  const step = (d: number) => { const el = track.current; if (el) scrollToAbs(nearest(el) + d, true); };
+  useEffect(() => { scrollToAbs(n, false); }, []);
+  // Al terminar de desplazarse: actualizar el punto activo y volver a la copia del medio si hace falta.
+  const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onScroll = (el: HTMLDivElement) => {
+    setI(nearest(el) % n);
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => { const k = nearest(el); if (k < n || k >= 2 * n) scrollToAbs((k % n) + n, false); }, 140);
+  };
+  // Avanza solo cada 7 s; se detiene al pasar el mouse, al tocar, con el foco adentro, con la pestaña oculta o con movimiento reducido.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => { if (!paused.current && !document.hidden) step(1); }, 7000);
+    return () => clearInterval(t);
+  }, []);
+  const hold = (v: boolean) => () => { paused.current = v; };
   return (
-    <div className="tm" role="region" aria-roledescription="carrusel" aria-label="Testimonios">
-      <p className="eyebrow">● Testimonios</p>
-      <div className="tm-track" ref={track} onScroll={e => { const el = e.currentTarget; setI(Math.round(el.scrollLeft / el.clientWidth)); }} tabIndex={0} aria-live="off">
-        {testimonials.map((t, n) => (
-          <figure className="tm-slide" key={t.who} role="group" aria-roledescription="diapositiva" aria-label={`${n + 1} de ${testimonials.length}`}>
-            <blockquote>“{t.quote}”</blockquote>
-            <figcaption>{t.who}</figcaption>
+    <div className="tm" role="region" aria-roledescription="carrusel" aria-label="Testimonios" onMouseEnter={hold(true)} onMouseLeave={hold(false)} onTouchStart={hold(true)} onFocus={hold(true)} onBlur={hold(false)}>
+      <div className="tm-head">
+        <p className="eyebrow">● Testimonios</p>
+        <h2>Lo que dicen las parejas</h2>
+      </div>
+      <div className="tm-track" ref={track} onScroll={e => onScroll(e.currentTarget)} tabIndex={0} aria-live="off" aria-label="Testimonios, usá las flechas para cambiar" onKeyDown={e => { if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } }}>
+        {slides.map((t, k) => (
+          <figure className="tm-slide" key={k} role="group" aria-roledescription="diapositiva" aria-label={`${(k % n) + 1} de ${n}`} aria-hidden={k < n || k >= 2 * n ? true : undefined}>
+            <div className="tm-top">
+              <img src={t.photo} alt={k >= n && k < 2 * n ? `${t.who}, pareja` : ''} width={48} height={48} loading="lazy" />
+              <figcaption><strong>{t.who}</strong></figcaption>
+              <span className="tm-mark" aria-hidden="true">“</span>
+            </div>
+            <blockquote>{t.quote}</blockquote>
           </figure>
         ))}
       </div>
-      <div className="tm-controls">
-        <div className="tm-dots" role="group" aria-label="Elegir testimonio">
-          {testimonials.map((t, n) => <button type="button" key={t.who} className={n === i ? 'on' : ''} aria-label={`Ir al testimonio ${n + 1}`} aria-current={n === i} onClick={() => go(n)} />)}
-        </div>
-        <div className="tm-arrows">
-          <button type="button" aria-label="Testimonio anterior" onClick={() => go(i - 1)}><ArrowLeft size={20} /></button>
-          <button type="button" aria-label="Testimonio siguiente" onClick={() => go(i + 1)}><ArrowRight size={20} /></button>
-        </div>
+      <div className="tm-dots" role="group" aria-label="Elegir testimonio">
+        {testimonials.map((t, k) => <button type="button" key={k} className={k === i ? 'on' : ''} aria-label={`Ir al testimonio ${k + 1}`} aria-current={k === i} onClick={() => scrollToAbs(n + k, true)} />)}
       </div>
     </div>
   );
@@ -100,7 +127,9 @@ function Index() {
   // Respeta prefers-reduced-motion: el video de fondo queda en pausa.
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => { const v = heroVideo.current; if (!v) return; if (mq.matches) v.pause(); else v.play().catch(() => {}); };
+    // Movimiento reducido o ahorro de datos: el video queda en pausa y se ve el poster.
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+    const sync = () => { const v = heroVideo.current; if (!v) return; if (mq.matches || saveData) v.pause(); else v.play().catch(() => {}); };
     sync(); mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
@@ -108,23 +137,25 @@ function Index() {
     <a className="skip-link" href="#main">Ir al contenido</a>
     <Link to="/encontrar" className="announcement">¿Invitado? Encontrá una lista de regalos <ArrowRight size={11} className="ml-1"/></Link>
     <FloatNav onLanding />
+    <main id="main">
     <section className="seed-hero" id="top">
-      <video className="hero-image" src="/hero.mp4" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
-      <main id="main" className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá el sitio de tu casamiento, compartí todos los detalles con tus invitados y armá tu lista de regalos en un solo lugar.</p><div className="hero-actions"><SeedLink pill href="#planes">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></main>
+      <video className="hero-image" src="/hero.mp4" poster="/hero-poster.jpg" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
+      <div className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.</p><div className="hero-actions"><SeedLink pill href="#planes">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
-      <div className="feat-head"><h2>Todo lo que necesitan, en un solo lugar.</h2><div className="feat-head-side"><p>Una forma simple de compartir su historia, organizar a sus invitados y recibir regalos.</p><div className="feat-cta"><SeedLink href="#planes">Crear mi evento</SeedLink></div></div></div>
+      <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink href="#planes">Crear mi evento</SeedLink></div></div></div>
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
-    <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Creá una lista de regalos simbólica que se adapte a ustedes</h2><p>Tus invitados eligen qué regalar y vos recibís el dinero directamente.</p><SeedLink pill href="#planes">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
+    <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Regalos para lo que viene después.</h2><p>Creen una lista con cosas que les gustan, viajes que sueñan hacer y proyectos que quieren compartir. Sus invitados eligen cómo acompañarlos y ustedes reciben los aportes directamente.</p><SeedLink pill href="#planes">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
     <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
     <section className="plans-section" id="planes"><div className="section-inner">
       <div className="plans-head"><h2>Elegí el plan para tu casamiento.</h2><p>Pago único, pagás solo al publicar.</p></div>
-      <div className="plans-grid">{plans.map(pl=><article className="plan-card" key={pl.name}><h3>{pl.name}</h3><p className="plan-sub">{pl.sub}</p><ul>{pl.items.map(it=><li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true"/><span>{it}</span></li>)}</ul><SeedLink pill disabled>Elegir experiencia</SeedLink></article>)}</div>
+      <div className="plans-grid">{plans.map(pl=><article className="plan-card" key={pl.name}><h3>{pl.name}</h3><p className="plan-sub">{pl.sub}</p><ul>{pl.items.map(it=><li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true"/><span>{it}</span></li>)}</ul><SeedLink pill disabled>Elegir plan</SeedLink></article>)}</div>
     </div></section>
+    </main>
     <footer className="seed-footer"><div className="section-inner">
       <div className="footer-top">
-        <div><SeedLogo/><p className="footer-mission">Tu historia, a tu manera.</p></div>
+        <div><SeedLogo/><p className="footer-mission">Tu gran día empieza acá.</p></div>
         <nav className="footer-nav" aria-label="Secciones de Weda">
           <a href="#regalos">Lista de regalos</a>
           <Link to="/ejemplo">Sitio del casamiento</Link>

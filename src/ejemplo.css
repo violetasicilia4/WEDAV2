@@ -1035,3 +1035,10 @@
 .rg-cart-bar strong { font-weight: 400; }
 .rg-cart-bar span { font-size: 13px; color: var(--ej-muted); }
 .rg-cart-bar .dm-solid { background: var(--ej-slate); color: #fff; }
+
+/* Globo del regalo: cantidad y monto uno al lado del otro, separados por una línea fina */
+.rg-cart-bar p { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 15px; white-space: nowrap; min-width: 0; }
+.rg-cart-bar strong { font-weight: 400; color: var(--ej-ink, #3b3c3a); }
+.rg-cart-bar span { font-size: 15px; color: var(--ej-muted); display: inline-flex; align-items: center; gap: 12px; }
+.rg-cart-bar span::before { content: ""; width: 1px; height: 16px; background: rgb(59 60 58 / .22); }
+@media (max-width: 380px) { .rg-cart-bar p { font-size: 14px; gap: 8px; } .rg-cart-bar span { font-size: 14px; gap: 8px; } }

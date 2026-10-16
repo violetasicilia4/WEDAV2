@@ -7,7 +7,7 @@ import { formatARS, gifts, type Gift } from '@/lib/demo-wedding';
 export function GiftDemo() {
   // Muchos regalos que pasan sin parar: dos columnas que suben y bajan en sentido contrario, en bucle.
   // Mezcla de hogar, experiencias y luna de miel, con montos de todo tipo (de $ 55.000 a $ 1.500.000).
-  const ids = ['ollas', 'cafetera', 'globo', 'vuelo-interno', 'sabanas', 'lampara', 'boutique', 'vinos', 'toallas', 'vajilla', 'cena-mar', 'patagonia'];
+  const ids = ['ollas', 'cafetera', 'globo', 'vuelo-interno', 'sabanas', 'lampara', 'boutique', 'vinos', 'horno', 'vajilla', 'cena-mar', 'patagonia'];
   const pool = ids.map(id => gifts.find(g => g.id === id)).filter((g): g is Gift => Boolean(g?.image));
   const colA = pool.filter((_, i) => i % 2 === 0);
   const colB = pool.filter((_, i) => i % 2 === 1);

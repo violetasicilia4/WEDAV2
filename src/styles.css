@@ -1840,3 +1840,89 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .feat-card > h3 { order: 1; width: 100%; max-width: none; margin: 0 0 14px; padding-top: 16px !important; border-top: 1px solid rgb(59 60 58 / .14) !important; text-align: left !important; justify-self: auto !important; font-size: 20px; font-weight: 500; }
   .feat-card > .feat-stage { order: 2; width: 100%; margin: 0; }
 }
+
+/* Auditoría landing: bajada del hero con medida de lectura cómoda (2 renglones balanceados en web) */
+@media (min-width: 768px) {
+  .seed-hero .hero-copy p { white-space: normal !important; max-width: 700px !important; margin-inline: auto; text-wrap: balance; }
+}
+/* Planes: aclaración de que la contratación aún no existe */
+.plans-note { margin: 28px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted-foreground); }
+.plans-note a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.plans-note a:focus-visible { outline: 2px solid var(--slate); outline-offset: 3px; border-radius: 4px; }
+/* Poster mientras carga el video: el hero nunca queda vacío */
+.seed-hero { background: #2b2d2b; }
+
+/* Escala de títulos de sección unificada: funcionalidades, regalos y planes comparten tamaño (hero 66 > sección 38). */
+@media (min-width: 901px) {
+  .duo-copy h2, .plans-head h2 { font-size: clamp(28px, 2.7vw, 38px); line-height: 1.12; letter-spacing: -.005em; }
+}
+/* Bloque de regalos: descripción más larga que antes, con tamaño y medida de lectura cómodos */
+.duo-copy > p:not(.eyebrow) { font-size: clamp(15px, 1.15vw, 17px); line-height: 1.5; max-width: 44ch; }
+@media (max-width: 900px) { .duo-copy h2 { font-size: clamp(25px, 6.4vw, 30px); } }
+
+/* Demo de regalos: el nombre del regalo va siempre en un solo renglón ("Noche en hotel boutique" ya no se parte en dos) */
+.fd-gm-card b { white-space: nowrap; overflow: visible; text-wrap: nowrap; margin-inline: 1.2cqw; font-size: 2.6cqw; }
+
+/* Testimonios más largos: tamaño de lectura (no de titular) y medida cómoda */
+.tm-slide blockquote { max-width: 56ch; font-size: clamp(18px, 1.9vw, 27px); line-height: 1.38; letter-spacing: 0; text-wrap: pretty; }
+.tm-slide { min-height: clamp(240px, 22vw, 300px); }
+@media (max-width: 640px) { .tm-slide blockquote { font-size: 17px; line-height: 1.45; } .tm-slide { min-height: 340px; } }
+
+/* Testimonios en bloques: título centrado, tarjetas blancas con foto de la pareja, citas y lugar; la vecina asoma a los costados */
+.viacap-section .section-inner { overflow: hidden; }
+.tm { align-items: stretch; gap: clamp(24px, 3vw, 40px); }
+.tm-head { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.tm-head h2 { margin: 0; font-size: clamp(26px, 2.7vw, 38px); line-height: 1.12; font-weight: 400; text-wrap: balance; }
+.tm-track { position: relative; gap: 18px; padding-block: 6px; scroll-snap-type: x mandatory; margin-inline: calc(-1 * clamp(28px, 4.2vw, 64px)); padding-inline: calc(50% - min(300px, 41%)); }
+.tm-slide { flex: 0 0 min(600px, 82%); scroll-snap-align: center; min-height: 0; justify-content: flex-start; gap: 18px; padding: clamp(22px, 2.4vw, 32px); border-radius: 22px; background: #fff; box-shadow: 0 1px 0 rgb(59 60 58 / .04), 0 10px 30px rgb(59 60 58 / .08); }
+.tm-top { display: flex; align-items: center; gap: 14px; }
+.tm-top img { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; }
+.tm-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--slate); color: #fff; font-size: 26px; line-height: 1; padding-top: 9px; }
+.tm-slide blockquote { max-width: none; font-size: clamp(16px, 1.25vw, 18px); line-height: 1.55; color: var(--foreground); text-wrap: pretty; flex: 1; }
+.tm-slide figcaption { display: flex; flex-direction: column; gap: 2px; font-size: 14px; letter-spacing: 0; color: var(--muted-foreground); }
+.tm-slide figcaption strong { font-weight: 500; font-size: 15px; color: var(--foreground); }
+.tm-dots { align-self: center; }
+@media (max-width: 640px) {
+  .tm-track { margin-inline: -20px; padding-inline: 20px; gap: 12px; }
+  .tm-slide { flex-basis: 86%; min-height: 0; padding: 20px; }
+  .tm-slide blockquote { font-size: 15.5px; line-height: 1.5; }
+}
+.tm-mark { font-size: 34px; padding-top: 14px; font-family: Georgia, 'Times New Roman', serif; }
+
+/* Testimonios: el panel pasa a vidrio neutro y translúcido (sin el tono crema/amarillento) y el carrusel no usa snap forzado mientras se reubica */
+.viacap-section .section-inner { background: rgb(255 255 255 / .30); -webkit-backdrop-filter: blur(28px) saturate(.85); backdrop-filter: blur(28px) saturate(.85); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .45), 0 12px 40px rgb(0 0 0 / .10); }
+.tm-head h2, .tm-head .eyebrow { color: #2f302e; }
+.tm-dots { align-self: stretch; justify-content: center; }
+
+/* Testimonios: sin caja translúcida. Título y tarjetas van directo sobre la foto de fondo, todo en una sola sección. */
+.viacap-section .section-inner { background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; border-radius: 0; overflow: visible; width: min(100%, 1400px); padding-inline: 0; }
+.viacap-section::after { content: ""; position: absolute; inset: 0; z-index: -1; background: rgb(255 255 255 / .22); }
+.viacap-section .tm-track { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - min(300px, 41vw)); }
+@media (max-width: 640px) {
+  .viacap-section .section-inner { width: 100%; padding: 0; }
+  .viacap-section .tm-head { padding-inline: 20px; }
+  .viacap-section .tm-track { padding-inline: 7vw; }
+}
+
+/* Testimonios compactos: lo mínimo indispensable de alto; título y etiqueta en blanco sobre un velo oscuro suave */
+.viacap-section { padding: clamp(28px, 3.4vw, 48px) 0; }
+.viacap-section::after { background: rgb(24 26 24 / .42); }
+.tm { gap: clamp(16px, 2vw, 22px); }
+.tm-head { gap: 6px; }
+.tm-head h2, .tm-head .eyebrow { color: #fff; }
+.tm-head h2 { font-size: clamp(22px, 2vw, 28px); }
+.tm-slide { gap: 12px; padding: 18px 20px; border-radius: 18px; }
+.tm-top { gap: 12px; }
+.tm-top img { width: 48px; height: 48px; border-radius: 50%; flex: none; }
+.tm-top figcaption { flex: 1; min-width: 0; }
+.tm-mark { margin-left: auto; width: 30px; height: 30px; font-size: 30px; padding-top: 12px; }
+.tm-slide blockquote { font-size: clamp(14.5px, 1.1vw, 16px); line-height: 1.5; flex: 0 1 auto; }
+@media (max-width: 640px) {
+  .viacap-section { padding: 28px 0; }
+  .tm-slide { padding: 16px; }
+  .tm-slide blockquote { font-size: 14.5px; line-height: 1.45; }
+}
+.viacap-section .section-inner { padding-block: 0; }
+.tm-dots button::after { background: rgb(255 255 255 / .5); }
+.tm-dots button.on::after { background: #fff; }
+.viacap-section { padding-block: clamp(24px, 2.8vw, 40px); }
