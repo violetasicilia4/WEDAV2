@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field } from '@/components/panel/ui';
 import { isPlanId } from '@/lib/weda/plans';
@@ -63,7 +63,7 @@ function Account() {
         <Field label="Correo electrónico" error={errors.email}>
           {a => <input id="ac-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(x => ({ ...x, email: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
         </Field>
-        <Field label="Clave" error={errors.password} hint={signup ? 'Usá 8 o más caracteres, con mayúsculas, minúsculas y un número.' : undefined}>
+        <Field label="Clave" error={errors.password} hint={signup ? 'Mínimo 8 caracteres, con mayúscula, minúscula y número.' : undefined}>
           {a => (
             <div className="pn-pass">
               <input id="ac-pass" type={show ? 'text' : 'password'} autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={e => { setPassword(e.target.value); setErrors(x => ({ ...x, password: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />
@@ -88,7 +88,6 @@ function Account() {
         {signup ? '¿Ya sos miembro? ' : '¿Todavía no tenés cuenta? '}
         <button type="button" className="pn-link" onClick={() => { setMode(signup ? 'login' : 'signup'); setErrors({}); }}>{signup ? 'Ingresá' : 'Registrate'}</button>
       </p>
-      <p className="pn-alt"><Link to="/" className="pn-link is-muted">Volver a Weda</Link></p>
     </div>
   );
 }

@@ -70,9 +70,10 @@
 .pn-cover-pick.on span { font-weight: 700; }
 
 /* ---------- flujo de creación (/crear) ---------- */
-.pn-flow-head { display: flex; align-items: center; justify-content: space-between; width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 16px 0; }
+.pn-flow-head { display: flex; align-items: center; justify-content: space-between; width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 12px 0; }
 .pn-flow-step { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--pn-muted); white-space: nowrap; flex: none; }
-.pn-flow-main { width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 8px 0 64px; }
+.pn-flow-main { width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 4px 0 max(32px, env(safe-area-inset-bottom)); }
+@media (min-width: 768px) { .pn-flow-main { padding-bottom: 64px; } }
 .pn-flow h1, .pn-page h1 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; letter-spacing: -.01em; }
 .pn-lead { color: var(--pn-muted); font-size: 16px; margin-top: 8px; }
 .pn-intro { display: grid; gap: 8px; }
@@ -103,12 +104,18 @@
 .pn-live-copy span { font-size: 13px; letter-spacing: .06em; opacity: .9; }
 
 /* ---------- cuenta (/crear/cuenta) ---------- */
-.pn-account { display: grid; gap: 20px; width: 100%; max-width: 440px; margin: 0 auto; padding-top: 8px; }
-.pn-account-head { display: grid; gap: 6px; text-align: center; padding: 8px 0 12px; }
-.pn-account-head h1 { font-size: clamp(32px, 8vw, 40px); }
-.pn-account-head p { font-size: 18px; color: var(--pn-ink); }
-.pn-terms { font-size: 14px; color: var(--pn-muted); text-align: center; }
+.pn-account { display: grid; gap: 12px; width: 100%; max-width: 440px; margin: 0 auto; }
+.pn-account .pn-form { gap: 12px; }
+.pn-account .pn-field { gap: 4px; }
+.pn-account-head { display: grid; gap: 2px; text-align: center; padding: 0 0 8px; }
+.pn-account-head h1 { font-size: clamp(28px, 7.4vw, 36px); line-height: 1.1; }
+.pn-account-head p { font-size: 16px; color: var(--pn-muted); }
+.pn-terms { font-size: 13px; line-height: 1.45; color: var(--pn-muted); text-align: center; }
 .pn-terms strong { font-weight: 400; color: var(--pn-ink); text-decoration: underline; text-underline-offset: 3px; }
+.pn-account .pn-btn.pn-block { background: var(--pn-slate-d); }
+.pn-account .pn-btn.is-ghost { background: #fff; color: var(--pn-ink); border-color: var(--pn-slate); }
+@media (hover: hover) { .pn-account .pn-btn.is-ghost:hover { background: rgb(59 60 58 / .06); } }
+@media (hover: none) { .pn-account .pn-btn.is-ghost:hover { background: #fff; } }
 .pn-block { width: 100%; }
 .pn-pass { position: relative; }
 .pn-pass input { padding-right: 52px; }
@@ -116,9 +123,8 @@
 .pn-pass-toggle:hover { color: var(--pn-ink); }
 .pn-or { display: flex; align-items: center; gap: 16px; color: var(--pn-muted); font-size: 14px; }
 .pn-or::before, .pn-or::after { content: ''; flex: 1; height: 1px; background: var(--pn-line-s); }
-.pn-social { display: grid; gap: 12px; }
+.pn-social { display: grid; gap: 10px; }
 .pn-account-switch { text-align: center; }
-.pn-account > .pn-alt:last-child { text-align: center; margin-top: -8px; }
 
 /* ---------- planes ---------- */
 .pn-plans { display: grid; gap: 20px; }
