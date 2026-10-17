@@ -1,11 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Menu, X } from 'lucide-react';
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
-import { wedding } from '@/lib/demo-wedding';
-import { RsvpProvider, useRsvp } from '@/components/rsvp-dialog';
-import '@/demo.css';
-import '@/ejemplo.css';
-import '@/invitacion.css';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { DemoSite } from '@/components/site/site-providers';
 
 export const Route = createFileRoute('/ejemplo')({
   head: () => ({
@@ -22,69 +16,5 @@ export const Route = createFileRoute('/ejemplo')({
       { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
     ],
   }),
-  component: DemoLayout,
+  component: () => <DemoSite><Outlet /></DemoSite>,
 });
-
-// Navegación de arriba, como en la landing: texto sobre la foto y, al scrollear, una burbuja de cristal que queda pegada arriba.
-function DemoNav() {
-  const rsvp = useRsvp();
-  const ref = useRef<HTMLElement>(null);
-  // Mobile: las tres secciones viven detrás de un botón de tres líneas (arriba a la derecha) y se despliegan al tocarlo.
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    const onDown = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('pointerdown', onDown);
-    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onDown); };
-  }, [open]);
-  useEffect(() => {
-    const onScroll = () => {
-      const el = ref.current;
-      if (!el) return;
-      el.style.setProperty('--p', String(Math.min(1, Math.max(0, window.scrollY / 56))));
-      // Pasada la portada, la barra queda sobre fondo claro: se vuelve gris translúcida para que los botones no se pierdan.
-      const cover = document.querySelector('.iv-cover');
-      const edge = cover ? cover.getBoundingClientRect().bottom : 0;
-      el.classList.toggle('is-over-light', edge < 64);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };
-  }, []);
-  return (
-    <header className="ej-bar" ref={ref}>
-      <nav className="ej-bar-inner" aria-label="Secciones del sitio">
-        <div className="ej-bar-pill ej-bar-close">
-          <Link to="/" className="ej-bar-link" aria-label="Cerrar el ejemplo y volver a Weda"><X size={16} aria-hidden="true" /><span>Volver a Weda</span></Link>
-        </div>
-        <div className="ej-bar-pill ej-bar-links">
-          <Link to="/ejemplo" hash="nos-casamos" className="ej-bar-link" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }}>Invitación</Link>
-          <Link to="/ejemplo/regalos" hash="regalos" className="ej-bar-link" activeProps={{ 'aria-current': 'page' }}>Regalá</Link>
-          <button type="button" className="ej-bar-link" onClick={rsvp.open}>Confirmá asistencia</button>
-          <button type="button" className="ej-bar-link ej-bar-burger" aria-label={open ? 'Cerrar el menú' : 'Abrir el menú'} aria-expanded={open} aria-controls="ej-bar-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}</button>
-        </div>
-      </nav>
-      <div id="ej-bar-menu" className="ej-bar-menu" hidden={!open}>
-        <Link to="/ejemplo" hash="nos-casamos" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }} onClick={() => setOpen(false)}>Invitación</Link>
-        <Link to="/ejemplo/regalos" hash="regalos" activeProps={{ 'aria-current': 'page' }} onClick={() => setOpen(false)}>Regalá</Link>
-        <button type="button" onClick={() => { setOpen(false); rsvp.open(); }}>Confirmá asistencia</button>
-      </div>
-    </header>
-  );
-}
-
-function DemoLayout() {
-  return <RsvpProvider><div className="dm-root">
-    <a className="skip-link" href="#main">Ir al contenido</a>
-    <DemoNav />
-    <main id="main"><Outlet /></main>
-    <footer className="iv-footer"><div className="iv-wrap">
-      <Link to="/" className="iv-footer-brand seed-logo" aria-label="Weda, volver a la página principal">Weda<i aria-hidden="true" /></Link>
-      <p>Este sitio fue creado con Weda: lista de regalos, sitio del casamiento y confirmación de asistencia en un solo lugar.</p>
-      <span>© 2026 Weda</span>
-    </div></footer>
-  </div></RsvpProvider>;
-}

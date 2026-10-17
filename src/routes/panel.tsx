@@ -1,0 +1,99 @@
+import { useEffect, useState } from 'react';
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
+import { Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
+import { ConfirmDialog, SaveStatus, ToastProvider } from '@/components/panel/ui';
+import { coupleLabel } from '@/lib/weda/logic';
+import { can, planById, type Feature } from '@/lib/weda/plans';
+import { reset, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
+import '@/panel.css';
+
+export const Route = createFileRoute('/panel')({
+  head: () => ({
+    meta: [
+      { title: 'Mi evento • Weda' },
+      // Panel de una demo con datos locales: no debe indexarse.
+      { name: 'robots', content: 'noindex, nofollow' },
+    ],
+  }),
+  component: PanelLayout,
+});
+
+const NAV: { to: string; label: string; icon: typeof House; feature?: Feature; end?: boolean }[] = [
+  { to: '/panel', label: 'Inicio', icon: House, end: true },
+  { to: '/panel/regalos', label: 'Regalos', icon: Gift, feature: 'gifts' },
+  { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
+  { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
+];
+
+function PanelLayout() {
+  const navigate = useNavigate();
+  const state = useAppState();
+  const hydrated = useHydrated();
+  const full = useStorageFull();
+  const [confirmReset, setConfirmReset] = useState(false);
+  const onPreview = useRouterState({ select: s => s.location.pathname }) === '/panel/vista-previa';
+
+  // Sin evento no hay panel: se vuelve a crearlo. Con evento pero sin plan, se elige el plan.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!state.onboarded) void navigate({ to: '/crear', replace: true });
+    else if (!state.planId) void navigate({ to: '/crear/plan', replace: true });
+  }, [hydrated, state.onboarded, state.planId, navigate]);
+
+  if (!hydrated || !state.onboarded || !state.planId) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
+
+  const plan = planById(state.planId);
+  const names = coupleLabel(state.couple);
+  const doReset = () => { setConfirmReset(false); reset(); void navigate({ to: '/crear', replace: true }); };
+
+  return (
+    <ToastProvider>
+      <div className="pn-root pn-app">
+        <a className="skip-link" href="#main">Ir al contenido</a>
+        <header className="pn-top">
+          <Link to="/panel" className="seed-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
+          <SaveStatus />
+          {!onPreview && <Link to="/panel/vista-previa" className="pn-btn pn-preview-btn"><Eye size={16} aria-hidden="true" /><span>Ver como invitado</span></Link>}
+        </header>
+
+        <aside className="pn-side">
+          <div className="pn-side-head">
+            <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
+            <p className="pn-side-names">{names}</p>
+            <p className="pn-side-plan">Plan {plan?.name} · <Link to="/crear/plan">Cambiar</Link></p>
+          </div>
+          <nav aria-label="Secciones del panel" className="pn-nav">
+            {NAV.map(n => {
+              const locked = !!n.feature && !can(state.planId, n.feature);
+              return (
+                <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
+                  <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
+                  <span>{n.label}</span>
+                  {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="pn-side-foot">
+            <p>Demostración: tus datos se guardan solo en este navegador.</p>
+            <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button>
+          </div>
+        </aside>
+
+        <main id="main" className="pn-main">
+          {full && <p className="pn-banner" role="alert">No hay más lugar para guardar fotos en este navegador. Quitá alguna foto: los últimos cambios no se guardaron.</p>}
+          <Outlet />
+        </main>
+
+        <ConfirmDialog
+          open={confirmReset}
+          title="¿Reiniciar la demo?"
+          text="Se borran tu evento, la lista de regalos, los invitados y todo lo que cargaste en este navegador. No se puede deshacer."
+          confirmLabel="Sí, reiniciar"
+          onConfirm={doReset}
+          onCancel={() => setConfirmReset(false)}
+        />
+      </div>
+    </ToastProvider>
+  );
+}

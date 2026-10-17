@@ -117,17 +117,17 @@ export type Gift = {
   amount: number;
   category: Category;
   /** Solo luna de miel: lugar al que corresponde. 'Cualquiera' = sirve para cualquier destino. */
-  destination?: Destination | 'Cualquiera';
-  image?: string;
+  destination?: Destination | 'Cualquiera' | undefined;
+  image?: string | undefined;
   /** Encuadre de la foto dentro del cuadrado (object-position). */
-  pos?: string;
+  pos?: string | undefined;
   /** Acercamiento leve de la foto: escala y punto fijo (transform-origin), para centrarla con precisión. */
-  zoom?: { scale: number; origin: string };
+  zoom?: { scale: number; origin: string } | undefined;
   /** 'contain': se ve la foto entera, con su propio fondo difuminado a los costados. */
-  fit?: 'contain' | 'white';
+  fit?: 'contain' | 'white' | undefined;
   icon: IconKey;
   /** Regalo simbólico ya elegido por otro invitado (ficticio). */
-  taken?: boolean;
+  taken?: boolean | undefined;
 };
 
 /** Catálogo curado de la demo: 26 regalos repartidos entre cuatro categorías (8 · 6 · 8 · 4). */

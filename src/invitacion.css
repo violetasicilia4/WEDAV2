@@ -432,8 +432,8 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 
 /* barra de arriba: tipografía original (Arial, como Weda) y cristal con más intensidad */
 .dm-root .ej-bar, .dm-root .ej-bar :where(a, button, span) { font-family: Arial, Helvetica, sans-serif !important; }
-.dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-family: Arial, Helvetica, sans-serif !important; font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; font-size-adjust: none; color: #fff; text-shadow: 0 1px 10px rgb(0 0 0 / .6); }
-@media (max-width: 640px) { .dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-size: 13px; } }
+.dm-root:has(#nos-casamos) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-family: Arial, Helvetica, sans-serif !important; font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; font-size-adjust: none; color: #fff; text-shadow: 0 1px 10px rgb(0 0 0 / .6); }
+@media (max-width: 640px) { .dm-root:has(#nos-casamos) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-size: 13px; } }
 .dm-root .ej-bar .ej-bar-pill { background: rgb(255 255 255 / .28) !important; -webkit-backdrop-filter: blur(20px) saturate(1.3); backdrop-filter: blur(20px) saturate(1.3); box-shadow: 0 6px 24px rgb(0 0 0 / .16); }
 .dm-root .ej-bar.is-over-light .ej-bar-pill { background: rgb(59 60 58 / .82) !important; }
 
@@ -542,10 +542,10 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 
 /* ---------- tipografía de la invitación (Cormorant Garamond) en todas las secciones de /ejemplo, después de la portada ----------
    No incluye la barra de arriba, el pie, los pop-ups ni la lista de regalos: esos siguen en Arial. */
-.dm-root:has(#dia) main > section:not(.iv-cover) { --iv-font: 'Cormorant Garamond', Garamond, Georgia, serif; font-family: var(--iv-font); font-weight: 500; font-size-adjust: 0.46; }
-.dm-root:has(#dia) main > section:not(.iv-cover) :where(h1, h2, h3, h4, p, a, button, li, span, summary, label, input, textarea, select, small, strong, code, dt, dd, time) { font-family: var(--iv-font); }
-.dm-root:has(#dia) main > section:not(.iv-cover) :where(h2, h3, .iv-card-time, .iv-when-n, .iv-count-n, .iv-welcome-date) { font-weight: 500; }
-.dm-root:has(#dia) main > section:not(.iv-cover) :where(.iv-link, .iv-btn, .iv-card-map, .iv-welcome-btn, button) { font-weight: 600; }
+.dm-root:has(#nos-casamos) main > section:not(.iv-cover) { --iv-font: 'Cormorant Garamond', Garamond, Georgia, serif; font-family: var(--iv-font); font-weight: 500; font-size-adjust: 0.46; }
+.dm-root:has(#nos-casamos) main > section:not(.iv-cover) :where(h1, h2, h3, h4, p, a, button, li, span, summary, label, input, textarea, select, small, strong, code, dt, dd, time) { font-family: var(--iv-font); }
+.dm-root:has(#nos-casamos) main > section:not(.iv-cover) :where(h2, h3, .iv-card-time, .iv-when-n, .iv-count-n, .iv-welcome-date) { font-weight: 500; }
+.dm-root:has(#nos-casamos) main > section:not(.iv-cover) :where(.iv-link, .iv-btn, .iv-card-map, .iv-welcome-btn, button) { font-weight: 600; }
 
 /* más aire entre ceremonia, recepción y fiesta, con una rayita corta que las separa (en orden cronológico, de izquierda a derecha) */
 .dm-root .iv-day .iv-card-events li { padding-left: clamp(24px, 4vw, 64px); padding-right: clamp(24px, 4vw, 64px); position: relative; }
@@ -632,11 +632,11 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
   .dm-root .ej-bar .ej-bar-close { width: 48px; justify-content: center; padding: 0; flex: none; }
   .dm-root .ej-bar .ej-bar-close .ej-bar-link { width: 44px; height: 44px; padding: 0; justify-content: center; }
   .dm-root .ej-bar .ej-bar-close .ej-bar-link svg { width: 20px; height: 20px; }
-  .dm-root:has(#dia) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { height: 44px; padding: 0 8px; font-size: 15px; }
+  .dm-root:has(#nos-casamos) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { height: 44px; padding: 0 8px; font-size: 15px; }
   .dm-root .ej-bar .ej-bar-links { min-width: 0; }
 }
 @media (max-width: 370px) {
-  .dm-root:has(#dia) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
+  .dm-root:has(#nos-casamos) .ej-bar .ej-bar-links .ej-bar-link, .dm-root .ej-bar .ej-bar-links .ej-bar-link { padding: 0 6px; font-size: 14px; }
 }
 
 /* Mobile: Invitación / Regalá / Confirmá asistencia se juntan detrás de un botón de tres líneas (arriba a la derecha).
@@ -647,11 +647,43 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
   .dm-root .ej-bar .ej-bar-links { padding: 0 4px; min-width: 0; width: 48px; justify-content: center; flex: none; }
   .dm-root .ej-bar .ej-bar-burger { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; }
   .dm-root .ej-bar .ej-bar-inner { position: relative; }
-  .dm-root .ej-bar .ej-bar-menu:not([hidden]) { display: flex; flex-direction: column; position: absolute; right: 8px; top: calc(100% + 8px); min-width: 230px; padding: 8px; border-radius: 22px; background: #fff; box-shadow: 0 14px 40px rgb(0 0 0 / .22), inset 0 0 0 1px rgb(59 60 58 / .08); z-index: 3; }
-  .dm-root .ej-bar .ej-bar-menu a, .dm-root .ej-bar .ej-bar-menu button { display: flex; align-items: center; min-height: 48px; padding: 0 16px; border: 0; border-radius: 14px; background: transparent; color: #3b3c3a; font: 400 16px/1 Arial, Helvetica, sans-serif; text-align: left; text-decoration: none; text-shadow: none; cursor: pointer; }
-  .dm-root .ej-bar .ej-bar-menu a:hover, .dm-root .ej-bar .ej-bar-menu button:hover { background: rgb(59 60 58 / .06); }
-  .dm-root .ej-bar .ej-bar-menu [aria-current="page"] { background: rgb(102 116 127 / .14); font-weight: 500; }
-  .dm-root .ej-bar .ej-bar-menu :where(a, button):focus-visible { outline: 2px solid #66747f; outline-offset: -2px; }
+  .dm-root .ej-bar .ej-bar-menu:not([hidden]) { display: flex; flex-direction: column; gap: 14px; position: absolute; left: 0; right: 0; top: calc(100% + 8px); padding: 22px; border-radius: 28px; color: #fff; background: rgb(43 64 69 / .88); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 14px 40px rgb(0 0 0 / .28), inset 0 0 0 1px rgb(255 255 255 / .16); z-index: 3; }
+  .dm-root .ej-bar .ej-bar-menu .menu-row { display: flex; align-items: center; gap: 20px; width: 100%; min-height: 76px; padding: 0; border: 0; border-radius: 20px; background: transparent; color: #fff; font: 400 16px/1.2 Arial, Helvetica, sans-serif; text-align: left; text-decoration: none; text-shadow: none; cursor: pointer; }
+  .dm-root .ej-bar .ej-bar-menu .menu-tile { flex: none; width: 76px; height: 76px; display: grid; place-items: center; border-radius: 18px; background: rgb(255 255 255 / .14); }
+  .dm-root .ej-bar .ej-bar-menu .menu-row small { display: block; font-size: 14px; opacity: .72; margin-bottom: 4px; }
+  .dm-root .ej-bar .ej-bar-menu .menu-row strong { font-weight: 500; font-size: 20px; line-height: 1.2; }
+  .dm-root .ej-bar .ej-bar-menu .menu-row[aria-current="page"] .menu-tile { background: rgb(255 255 255 / .3); }
+  .dm-root .ej-bar .ej-bar-menu .menu-row:hover .menu-tile { background: rgb(255 255 255 / .24); }
+  .dm-root .ej-bar .ej-bar-menu :where(a, button):focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 }
 /* La barra deja pasar los toques a la foto; el menú desplegable sí tiene que recibirlos */
 .dm-root .ej-bar .ej-bar-menu { pointer-events: auto; }
+
+/* Desplegable en vidrio translúcido (sin el azul): se ve la foto a través, desenfocada. Sobre fondos claros se vuelve gris translúcido para que el texto no se pierda. */
+@media (max-width: 640px) {
+  .dm-root .ej-bar .ej-bar-menu:not([hidden]) { background: rgb(255 255 255 / .16); -webkit-backdrop-filter: blur(28px) saturate(1.5); backdrop-filter: blur(28px) saturate(1.5); box-shadow: 0 14px 40px rgb(0 0 0 / .18), inset 0 0 0 1px rgb(255 255 255 / .38); }
+  .dm-root .ej-bar .ej-bar-menu .menu-row { text-shadow: 0 1px 10px rgb(0 0 0 / .45); }
+  .dm-root .ej-bar .ej-bar-menu .menu-tile { background: rgb(255 255 255 / .22); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .3); }
+  .dm-root .ej-bar .ej-bar-menu .menu-row[aria-current="page"] .menu-tile { background: rgb(255 255 255 / .38); }
+  .dm-root .ej-bar.is-over-light .ej-bar-menu:not([hidden]) { background: rgb(59 60 58 / .62); }
+}
+
+/* Páginas públicas de una pareja (/sitio/…): portada sin foto, avisos y vista previa dentro del panel */
+.dm-root .iv-cover.is-plain { background: linear-gradient(160deg, #707d87, #5a646c); }
+.dm-root .iv-cover-mono { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 18%; font: 400 clamp(72px, 16vw, 160px)/1 'Cormorant Garamond', Georgia, serif; letter-spacing: .04em; color: rgb(255 255 255 / .16); pointer-events: none; }
+.dm-root .site-notice { min-height: 100svh; display: grid; align-content: center; justify-items: start; gap: 16px; width: min(92%, 560px); margin: 0 auto; font-family: Arial, Helvetica, sans-serif; color: #3b3c3a; }
+.dm-root .site-notice h1 { margin: 0; font: 400 clamp(26px, 4vw, 34px)/1.15 Arial, Helvetica, sans-serif; }
+.dm-root .site-notice p { margin: 0; line-height: 1.5; color: #575757; }
+.dm-root .site-notice a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; border-radius: 999px; background: #707d87; color: #fff; text-decoration: none; }
+.dm-root .site-loading { min-height: 100svh; display: grid; place-items: center; margin: 0; font-family: Arial, Helvetica, sans-serif; color: #575757; }
+.dm-root .ej-bar.is-embedded .ej-bar-close { display: none; }
+.dm-root .ej-bar.is-embedded .ej-bar-inner { justify-content: flex-end; }
+
+/* Lista de regalos todavía vacía (sitio de una pareja que aún no cargó regalos) */
+.dm-root .rg-blank { display: grid; justify-items: center; gap: 14px; max-width: 46ch; margin: 0 auto; padding: clamp(24px, 5vw, 56px) 0; text-align: center; }
+.dm-root .rg-blank h2 { margin: 0; font: 400 clamp(24px, 3vw, 34px)/1.2 var(--iv-font, Arial, sans-serif); }
+.dm-root .rg-blank p { margin: 0; color: var(--iv-muted, #575757); }
+.dm-root .rg-blank .rg-next { margin-top: 8px; justify-content: center; }
+
+/* Imagen de muestra de Weda como portada: se oscurece un poco para que nombres y fecha se lean sobre las flores claras. */
+.dm-root .iv-cover.is-sample .iv-cover-img { filter: brightness(.68) saturate(.95); }

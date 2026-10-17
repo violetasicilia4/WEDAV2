@@ -1,10 +1,10 @@
 import { createContext, useContext, useRef, useState, type ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { menus, rsvpDeadline } from '@/lib/demo-wedding';
 import { useSessionState } from '@/lib/demo-session';
+import { useSite, useSiteActions } from '@/lib/weda/site-model';
 
-type Person = { name: string; attending: boolean; menu: string };
+type Person = { name: string; first: string; last: string; attending: boolean; menu: string };
 type Errors = {
   name?: string | undefined; surname?: string | undefined; contact?: string | undefined;
   attending?: string | undefined; menu?: string | undefined;
@@ -30,6 +30,10 @@ function isValidContact(value: string): boolean {
  * Es una SIMULACIÓN: nada sale del navegador. Las personas cargadas y las "enviadas" se guardan en sessionStorage.
  */
 export function RsvpProvider({ children }: { children: ReactNode }) {
+  const site = useSite();
+  const { recordRsvp } = useSiteActions();
+  const menus = site.rsvp.menus ?? [];
+  const hasMenus = site.rsvp.menus !== null;
   const [isOpen, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
@@ -43,14 +47,25 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<'form' | 'review' | 'sent'>('form');
   const form = useRef<HTMLFormElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
+  // Evita que un doble clic en «Enviar» cargue dos veces la misma respuesta (el segundo clic todavía ve la lista anterior).
+  const sending = useRef(false);
 
   const resetForm = () => { setName(''); setSurname(''); setAttending(''); setMenu(''); setErrors({}); };
   const open = () => {
     lastFocus.current = document.activeElement as HTMLElement | null;
+    sending.current = false;
     setView(people.length > 0 ? 'review' : sentList.length > 0 ? 'sent' : 'form');
     setOpen(true);
   };
-  const send = () => { setSentList(prev => [...prev, ...people]); setPeople([]); setView('sent'); };
+  const send = () => {
+    // Un doble clic no debe duplicar la respuesta: la segunda vez ya no quedan personas por enviar.
+    if (people.length === 0 || sending.current) return;
+    sending.current = true;
+    recordRsvp(people.map(p => ({ first: p.first || p.name.split(' ')[0] || p.name, last: p.last || p.name.split(' ').slice(1).join(' '), attending: p.attending, menu: p.menu })));
+    setSentList(prev => [...prev, ...people]);
+    setPeople([]);
+    setView('sent');
+  };
 
   const validate = (): Errors => {
     const e: Errors = {};
@@ -58,7 +73,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
     if (surname.trim().length < 2) e.surname = 'Escribí tu apellido.';
     if (!isValidContact(contact)) e.contact = 'Escribí un email o un teléfono válido.';
     if (!attending) e.attending = 'Contanos si vas a venir.';
-    if (attending === 'yes' && !menu) e.menu = 'Elegí una opción para esta persona.';
+    if (attending === 'yes' && hasMenus && !menu) e.menu = 'Elegí una opción para esta persona.';
     return e;
   };
 
@@ -71,7 +86,8 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
       form.current?.querySelector<HTMLElement>(`#${id}`)?.focus();
       return;
     }
-    setPeople(p => [...p, { name: `${name.trim()} ${surname.trim()}`, attending: attending === 'yes', menu: attending === 'yes' ? menu : '' }]);
+    sending.current = false;
+    setPeople(p => [...p, { name: `${name.trim()} ${surname.trim()}`, first: name.trim(), last: surname.trim(), attending: attending === 'yes', menu: attending === 'yes' && hasMenus ? menu : '' }]);
     resetForm();
     setView('review');
   };
@@ -89,11 +105,11 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
               <span className="dm-rsvp-mark" aria-hidden="true"><Check size={24} strokeWidth={1.6} /></span>
               <DialogTitle>{sentList.length === 1 ? `¡Gracias, ${sentList[0]!.name.split(/\s+/)[0]}!` : `¡Gracias! Cargaste ${sentList.length} confirmaciones.`}</DialogTitle>
               <DialogDescription>
-                Así se vería la confirmación. Es una demostración: tu respuesta no se envió a nadie.
+                Así se vería la confirmación. Es una demostración: no se envió ningún mensaje ni correo.
               </DialogDescription>
               <ul className="dm-rsvp-people" aria-label="Confirmaciones de esta sesión">
                 {sentList.map((p, n) => (
-                  <li key={`${p.name}-${n}`}><strong>{p.name}</strong><span>{p.attending ? menuName(p.menu) : 'No asiste'}</span></li>
+                  <li key={`${p.name}-${n}`}><strong>{p.name}</strong><span>{p.attending ? (menuName(p.menu) || 'Asiste') : 'No asiste'}</span></li>
                 ))}
               </ul>
               <div className="dm-rsvp-actions">
@@ -109,7 +125,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
               </DialogDescription>
               <ul className="dm-rsvp-people" aria-label="Personas cargadas">
                 {people.map((p, n) => (
-                  <li key={`${p.name}-${n}`}><strong>{p.name}</strong><span>{p.attending ? menuName(p.menu) : 'No asiste'}</span></li>
+                  <li key={`${p.name}-${n}`}><strong>{p.name}</strong><span>{p.attending ? (menuName(p.menu) || 'Asiste') : 'No asiste'}</span></li>
                 ))}
               </ul>
               <p className="dm-demo-note">Es una demostración: al enviar no se manda nada a nadie.</p>
@@ -122,7 +138,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
             <form ref={form} onSubmit={onSubmit} noValidate className="dm-rsvp-form">
               <header>
                 <DialogTitle>Confirmá tu asistencia</DialogTitle>
-                <DialogDescription>Cargá a cada persona y enviá todo junto. Respondé antes del {rsvpDeadline}.</DialogDescription>
+                <DialogDescription>Cargá a cada persona y enviá todo junto. {site.rsvp.deadline ? `Respondé antes del ${site.rsvp.deadline}.` : ''}</DialogDescription>
               </header>
 
               <div className="dm-rsvp-two">
@@ -164,7 +180,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
                 {errors.attending && <p className="dm-error" role="alert">{errors.attending}</p>}
               </fieldset>
 
-              {attending === 'yes' && (
+              {attending === 'yes' && hasMenus && (
                 <fieldset className={`dm-rsvp-field${errors.menu ? ' has-error' : ''}`}>
                   <legend>Restricción alimenticia</legend>
                   <div className="dm-rsvp-menus">

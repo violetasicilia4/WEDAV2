@@ -10,14 +10,32 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CrearRouteImport } from './routes/crear'
 import { Route as EjemploRouteImport } from './routes/ejemplo'
 import { Route as EncontrarRouteImport } from './routes/encontrar'
+import { Route as PanelRouteImport } from './routes/panel'
+import { Route as CrearIndexRouteImport } from './routes/crear.index'
+import { Route as CrearPlanRouteImport } from './routes/crear.plan'
 import { Route as EjemploIndexRouteImport } from './routes/ejemplo.index'
 import { Route as EjemploRegalosRouteImport } from './routes/ejemplo.regalos'
+import { Route as PanelIndexRouteImport } from './routes/panel.index'
+import { Route as PanelInvitadosRouteImport } from './routes/panel.invitados'
+import { Route as PanelMesasRouteImport } from './routes/panel.mesas'
+import { Route as PanelRegalosRouteImport } from './routes/panel.regalos'
+import { Route as PanelSitioRouteImport } from './routes/panel.sitio'
+import { Route as PanelVistaPreviaRouteImport } from './routes/panel.vista-previa'
+import { Route as SitioSlugRouteImport } from './routes/sitio.$slug'
+import { Route as SitioSlugIndexRouteImport } from './routes/sitio.$slug.index'
+import { Route as SitioSlugRegalosRouteImport } from './routes/sitio.$slug.regalos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrearRoute = CrearRouteImport.update({
+  id: '/crear',
+  path: '/crear',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EjemploRoute = EjemploRouteImport.update({
@@ -30,6 +48,21 @@ const EncontrarRoute = EncontrarRouteImport.update({
   path: '/encontrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PanelRoute = PanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrearIndexRoute = CrearIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CrearRoute,
+} as any)
+const CrearPlanRoute = CrearPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => CrearRoute,
+} as any)
 const EjemploIndexRoute = EjemploIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -40,46 +73,175 @@ const EjemploRegalosRoute = EjemploRegalosRouteImport.update({
   path: '/regalos',
   getParentRoute: () => EjemploRoute,
 } as any)
+const PanelIndexRoute = PanelIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelInvitadosRoute = PanelInvitadosRouteImport.update({
+  id: '/invitados',
+  path: '/invitados',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelMesasRoute = PanelMesasRouteImport.update({
+  id: '/mesas',
+  path: '/mesas',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelRegalosRoute = PanelRegalosRouteImport.update({
+  id: '/regalos',
+  path: '/regalos',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelSitioRoute = PanelSitioRouteImport.update({
+  id: '/sitio',
+  path: '/sitio',
+  getParentRoute: () => PanelRoute,
+} as any)
+const PanelVistaPreviaRoute = PanelVistaPreviaRouteImport.update({
+  id: '/vista-previa',
+  path: '/vista-previa',
+  getParentRoute: () => PanelRoute,
+} as any)
+const SitioSlugRoute = SitioSlugRouteImport.update({
+  id: '/sitio/$slug',
+  path: '/sitio/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitioSlugIndexRoute = SitioSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SitioSlugRoute,
+} as any)
+const SitioSlugRegalosRoute = SitioSlugRegalosRouteImport.update({
+  id: '/regalos',
+  path: '/regalos',
+  getParentRoute: () => SitioSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
+  '/panel': typeof PanelRouteWithChildren
+  '/crear/plan': typeof CrearPlanRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
+  '/panel/invitados': typeof PanelInvitadosRoute
+  '/panel/mesas': typeof PanelMesasRoute
+  '/panel/regalos': typeof PanelRegalosRoute
+  '/panel/sitio': typeof PanelSitioRoute
+  '/panel/vista-previa': typeof PanelVistaPreviaRoute
+  '/sitio/$slug': typeof SitioSlugRouteWithChildren
+  '/crear/': typeof CrearIndexRoute
   '/ejemplo/': typeof EjemploIndexRoute
+  '/panel/': typeof PanelIndexRoute
+  '/sitio/$slug/regalos': typeof SitioSlugRegalosRoute
+  '/sitio/$slug/': typeof SitioSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/encontrar': typeof EncontrarRoute
+  '/crear/plan': typeof CrearPlanRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
+  '/panel/invitados': typeof PanelInvitadosRoute
+  '/panel/mesas': typeof PanelMesasRoute
+  '/panel/regalos': typeof PanelRegalosRoute
+  '/panel/sitio': typeof PanelSitioRoute
+  '/panel/vista-previa': typeof PanelVistaPreviaRoute
+  '/crear': typeof CrearIndexRoute
   '/ejemplo': typeof EjemploIndexRoute
+  '/panel': typeof PanelIndexRoute
+  '/sitio/$slug/regalos': typeof SitioSlugRegalosRoute
+  '/sitio/$slug': typeof SitioSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
+  '/panel': typeof PanelRouteWithChildren
+  '/crear/plan': typeof CrearPlanRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
+  '/panel/invitados': typeof PanelInvitadosRoute
+  '/panel/mesas': typeof PanelMesasRoute
+  '/panel/regalos': typeof PanelRegalosRoute
+  '/panel/sitio': typeof PanelSitioRoute
+  '/panel/vista-previa': typeof PanelVistaPreviaRoute
+  '/sitio/$slug': typeof SitioSlugRouteWithChildren
+  '/crear/': typeof CrearIndexRoute
   '/ejemplo/': typeof EjemploIndexRoute
+  '/panel/': typeof PanelIndexRoute
+  '/sitio/$slug/regalos': typeof SitioSlugRegalosRoute
+  '/sitio/$slug/': typeof SitioSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ejemplo' | '/encontrar' | '/ejemplo/regalos' | '/ejemplo/'
+  fullPaths:
+    | '/'
+    | '/crear'
+    | '/ejemplo'
+    | '/encontrar'
+    | '/panel'
+    | '/crear/plan'
+    | '/ejemplo/regalos'
+    | '/panel/invitados'
+    | '/panel/mesas'
+    | '/panel/regalos'
+    | '/panel/sitio'
+    | '/panel/vista-previa'
+    | '/sitio/$slug'
+    | '/crear/'
+    | '/ejemplo/'
+    | '/panel/'
+    | '/sitio/$slug/regalos'
+    | '/sitio/$slug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/encontrar' | '/ejemplo/regalos' | '/ejemplo'
+  to:
+    | '/'
+    | '/encontrar'
+    | '/crear/plan'
+    | '/ejemplo/regalos'
+    | '/panel/invitados'
+    | '/panel/mesas'
+    | '/panel/regalos'
+    | '/panel/sitio'
+    | '/panel/vista-previa'
+    | '/crear'
+    | '/ejemplo'
+    | '/panel'
+    | '/sitio/$slug/regalos'
+    | '/sitio/$slug'
   id:
     | '__root__'
     | '/'
+    | '/crear'
     | '/ejemplo'
     | '/encontrar'
+    | '/panel'
+    | '/crear/plan'
     | '/ejemplo/regalos'
+    | '/panel/invitados'
+    | '/panel/mesas'
+    | '/panel/regalos'
+    | '/panel/sitio'
+    | '/panel/vista-previa'
+    | '/sitio/$slug'
+    | '/crear/'
     | '/ejemplo/'
+    | '/panel/'
+    | '/sitio/$slug/regalos'
+    | '/sitio/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CrearRoute: typeof CrearRouteWithChildren
   EjemploRoute: typeof EjemploRouteWithChildren
   EncontrarRoute: typeof EncontrarRoute
+  PanelRoute: typeof PanelRouteWithChildren
+  SitioSlugRoute: typeof SitioSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -89,6 +251,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crear': {
+      id: '/crear'
+      path: '/crear'
+      fullPath: '/crear'
+      preLoaderRoute: typeof CrearRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ejemplo': {
@@ -105,6 +274,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EncontrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/panel': {
+      id: '/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crear/': {
+      id: '/crear/'
+      path: '/'
+      fullPath: '/crear/'
+      preLoaderRoute: typeof CrearIndexRouteImport
+      parentRoute: typeof CrearRoute
+    }
+    '/crear/plan': {
+      id: '/crear/plan'
+      path: '/plan'
+      fullPath: '/crear/plan'
+      preLoaderRoute: typeof CrearPlanRouteImport
+      parentRoute: typeof CrearRoute
+    }
     '/ejemplo/': {
       id: '/ejemplo/'
       path: '/'
@@ -119,8 +309,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EjemploRegalosRouteImport
       parentRoute: typeof EjemploRoute
     }
+    '/panel/': {
+      id: '/panel/'
+      path: '/'
+      fullPath: '/panel/'
+      preLoaderRoute: typeof PanelIndexRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/invitados': {
+      id: '/panel/invitados'
+      path: '/invitados'
+      fullPath: '/panel/invitados'
+      preLoaderRoute: typeof PanelInvitadosRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/mesas': {
+      id: '/panel/mesas'
+      path: '/mesas'
+      fullPath: '/panel/mesas'
+      preLoaderRoute: typeof PanelMesasRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/regalos': {
+      id: '/panel/regalos'
+      path: '/regalos'
+      fullPath: '/panel/regalos'
+      preLoaderRoute: typeof PanelRegalosRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/sitio': {
+      id: '/panel/sitio'
+      path: '/sitio'
+      fullPath: '/panel/sitio'
+      preLoaderRoute: typeof PanelSitioRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/vista-previa': {
+      id: '/panel/vista-previa'
+      path: '/vista-previa'
+      fullPath: '/panel/vista-previa'
+      preLoaderRoute: typeof PanelVistaPreviaRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/sitio/$slug': {
+      id: '/sitio/$slug'
+      path: '/sitio/$slug'
+      fullPath: '/sitio/$slug'
+      preLoaderRoute: typeof SitioSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitio/$slug/': {
+      id: '/sitio/$slug/'
+      path: '/'
+      fullPath: '/sitio/$slug/'
+      preLoaderRoute: typeof SitioSlugIndexRouteImport
+      parentRoute: typeof SitioSlugRoute
+    }
+    '/sitio/$slug/regalos': {
+      id: '/sitio/$slug/regalos'
+      path: '/regalos'
+      fullPath: '/sitio/$slug/regalos'
+      preLoaderRoute: typeof SitioSlugRegalosRouteImport
+      parentRoute: typeof SitioSlugRoute
+    }
   }
 }
+
+interface CrearRouteChildren {
+  CrearPlanRoute: typeof CrearPlanRoute
+  CrearIndexRoute: typeof CrearIndexRoute
+}
+
+const CrearRouteChildren: CrearRouteChildren = {
+  CrearPlanRoute: CrearPlanRoute,
+  CrearIndexRoute: CrearIndexRoute,
+}
+
+const CrearRouteWithChildren = CrearRoute._addFileChildren(CrearRouteChildren)
 
 interface EjemploRouteChildren {
   EjemploRegalosRoute: typeof EjemploRegalosRoute
@@ -135,10 +400,47 @@ const EjemploRouteChildren: EjemploRouteChildren = {
 const EjemploRouteWithChildren =
   EjemploRoute._addFileChildren(EjemploRouteChildren)
 
+interface PanelRouteChildren {
+  PanelInvitadosRoute: typeof PanelInvitadosRoute
+  PanelMesasRoute: typeof PanelMesasRoute
+  PanelRegalosRoute: typeof PanelRegalosRoute
+  PanelSitioRoute: typeof PanelSitioRoute
+  PanelVistaPreviaRoute: typeof PanelVistaPreviaRoute
+  PanelIndexRoute: typeof PanelIndexRoute
+}
+
+const PanelRouteChildren: PanelRouteChildren = {
+  PanelInvitadosRoute: PanelInvitadosRoute,
+  PanelMesasRoute: PanelMesasRoute,
+  PanelRegalosRoute: PanelRegalosRoute,
+  PanelSitioRoute: PanelSitioRoute,
+  PanelVistaPreviaRoute: PanelVistaPreviaRoute,
+  PanelIndexRoute: PanelIndexRoute,
+}
+
+const PanelRouteWithChildren = PanelRoute._addFileChildren(PanelRouteChildren)
+
+interface SitioSlugRouteChildren {
+  SitioSlugRegalosRoute: typeof SitioSlugRegalosRoute
+  SitioSlugIndexRoute: typeof SitioSlugIndexRoute
+}
+
+const SitioSlugRouteChildren: SitioSlugRouteChildren = {
+  SitioSlugRegalosRoute: SitioSlugRegalosRoute,
+  SitioSlugIndexRoute: SitioSlugIndexRoute,
+}
+
+const SitioSlugRouteWithChildren = SitioSlugRoute._addFileChildren(
+  SitioSlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CrearRoute: CrearRouteWithChildren,
   EjemploRoute: EjemploRouteWithChildren,
   EncontrarRoute: EncontrarRoute,
+  PanelRoute: PanelRouteWithChildren,
+  SitioSlugRoute: SitioSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

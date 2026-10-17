@@ -44,11 +44,12 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
-// La demo (/ejemplo y /ejemplo/regalos) no debe aparecer en buscadores. Además de <meta name="robots">, se envía la
+// La demo (/ejemplo, /crear, /panel y /sitio) no debe aparecer en buscadores. Además de <meta name="robots">, se envía la
 // directiva por cabecera HTTP. robots.txt NO bloquea estas rutas: si las bloqueara, los buscadores no verían el noindex.
 function withRobotsHeader(request: Request, response: Response): Response {
   const { pathname } = new URL(request.url);
-  if (pathname !== "/ejemplo" && !pathname.startsWith("/ejemplo/")) return response;
+  const isPrivateDemo = ["/ejemplo", "/crear", "/panel", "/sitio"].some(p => pathname === p || pathname.startsWith(`${p}/`));
+  if (!isPrivateDemo) return response;
   const headers = new Headers(response.headers);
   headers.set("X-Robots-Tag", "noindex, nofollow");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

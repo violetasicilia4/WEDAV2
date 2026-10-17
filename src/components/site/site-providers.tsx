@@ -1,0 +1,51 @@
+// Quién provee los datos de la página pública:
+//  - DemoSite: /ejemplo (Ignacio & Martina). Los regalos elegidos duran lo que dure la sesión del navegador.
+//  - AppSite: /sitio/$slug y la vista previa. Lee y escribe el estado local de la pareja (lista, invitados, respuestas).
+import { useMemo, type ReactNode } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useSessionState } from '@/lib/demo-session';
+import { applyRsvp, slugify } from '@/lib/weda/logic';
+import { demoSiteData, siteFromState, SiteProvider, type SiteActions } from '@/lib/weda/site-model';
+import { update, useAppState, useHydrated } from '@/lib/weda/store';
+import type { GivenGift } from '@/lib/weda/types';
+import { SiteShell } from './site-shell';
+import '@/demo.css';
+import '@/ejemplo.css';
+import '@/invitacion.css';
+
+export function DemoSite({ children }: { children: ReactNode }) {
+  const [given, setGiven] = useSessionState<GivenGift[]>('gifts-given', []);
+  const actions = useMemo<SiteActions>(() => ({
+    given,
+    recordGift: (gs, who) => setGiven(c => [...c.filter(x => !gs.some(g => g.id === x.id)), ...gs.map(g => ({ id: g.id, name: who.name, message: who.message }))]),
+    recordRsvp: () => {},
+  }), [given, setGiven]);
+  return <SiteProvider data={demoSiteData} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
+}
+
+function Notice({ title, text, to, cta }: { title: string; text: string; to: string; cta: string }) {
+  return (
+    <div className="dm-root"><main id="main" className="site-notice">
+      <h1>{title}</h1>
+      <p>{text}</p>
+      <Link to={to as never} className="dm-solid">{cta}</Link>
+    </main></div>
+  );
+}
+
+export function AppSite({ slug, children }: { slug: string; children: ReactNode }) {
+  const state = useAppState();
+  const hydrated = useHydrated();
+  const mine = state.onboarded && slugify(state.couple.first, state.couple.second) === slug;
+  const data = useMemo(() => (mine ? siteFromState(state) : null), [mine, state]);
+  const actions = useMemo<SiteActions>(() => ({
+    given: state.gifts.given,
+    recordGift: (gs, who) => update(s => ({
+      ...s, gifts: { ...s.gifts, given: [...s.gifts.given.filter(x => !gs.some(g => g.id === x.id)), ...gs.map(g => ({ id: g.id, name: who.name, message: who.message, how: who.how, giftName: g.name, amount: g.amount, at: Date.now() }))] },
+    })),
+    recordRsvp: people => update(s => applyRsvp(s, people)),
+  }), [state.gifts.given]);
+  if (!hydrated) return <div className="dm-root"><p className="site-loading" role="status">Cargando…</p></div>;
+  if (!data) return <Notice title="Este sitio no está disponible" text="Esta es una demostración: los sitios se guardan solo en el navegador de quien los creó. Podés crear el tuyo o recorrer el ejemplo." to="/crear" cta="Crear mi evento" />;
+  return <SiteProvider data={data} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
+}
