@@ -1,4 +1,5 @@
 // Lista de regalos pública. Es la MISMA página para /ejemplo/regalos y para la lista de cada pareja: todo viene de useSite().
+import { isValidOptionalEmail } from '@/lib/weda/logic';
 import { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
@@ -61,14 +62,14 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
   const [sent, setSent] = useState<{ first: string; gifts: Gift[] } | null>(null);
   const total = items.reduce((n, g) => n + g.amount, 0);
   const reset = () => { setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
-  // Para poder enviar: nombre, apellido y, si transfiere por alias, el comprobante cargado.
+  // Para poder enviar: nombre, apellido y, si transfiere por alias, el comprobante cargado. El correo es opcional (si se completa, se valida).
   const cardSelected = site.acceptCard && how === 'tarjeta';
   const noAlias = !cardSelected && !alias;
   const blocked = cardSelected || noAlias;
   const missing = blocked ? [] : [
     name.trim().length < 2 && 'nombre',
     surname.trim().length < 2 && 'apellido',
-    !/^\S+@\S+\.\S+$/.test(email.trim()) && 'correo electrónico',
+    !isValidOptionalEmail(email) && 'un correo válido (o dejalo vacío)',
     how === 'alias' && !proof && 'comprobante',
   ].filter(Boolean) as string[];
   const close = () => { onClose(); window.setTimeout(reset, 200); };
@@ -184,7 +185,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
             </div>
 
             <div className="rg-field">
-              <label htmlFor="rg-email">Correo electrónico</label>
+              <label htmlFor="rg-email">Correo electrónico (opcional)</label>
               <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
 

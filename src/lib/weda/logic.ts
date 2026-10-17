@@ -115,6 +115,9 @@ export function validateGift(i: { name: string; amount: string; text: string }):
   return e;
 }
 
+/** Correo opcional: vacío es válido; si se completa, tiene que tener formato de correo. */
+export const isValidOptionalEmail = (v: string) => v.trim() === '' || /^\S+@\S+\.\S+$/.test(v.trim());
+
 export function validateGuest(i: { first: string; last: string }): FieldErrors<'first' | 'last'> {
   const e: FieldErrors<'first' | 'last'> = {};
   const f = validName(i.first, 'el nombre'); if (f) e.first = f;

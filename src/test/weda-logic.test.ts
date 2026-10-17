@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addCatalogGift, addCustomGift, addGroup, addGuest, addSet, applyRsvp, assignGuest, emptyState, guestStats, isSafeMapsUrl, mapsLink,
-  isSamplePhoto, moveGift, moveGiftTo, resolvePhoto, parseAmount, receivedGifts, receivedTotal, removeSetGifts, readiness, tasks, removeGift, removeGroup, removeSet, setPlan, slugify, updateGuest, validateAlias, validateGift,
+  isSamplePhoto, isValidOptionalEmail, moveGift, moveGiftTo, resolvePhoto, parseAmount, receivedGifts, receivedTotal, removeSetGifts, readiness, tasks, removeGift, removeGroup, removeSet, setPlan, slugify, updateGuest, validateAlias, validateGift,
   validateGroupName, validateOnboarding,
 } from '@/lib/weda/logic';
 import { SETS } from '@/lib/weda/catalog';
@@ -319,5 +319,16 @@ describe('portada sin foto propia', () => {
     const s = seedState();
     expect(siteFromState({ ...s, photo: { kind: 'none' } }).photoAlt).toBe('');
     expect(siteFromState({ ...s, photo: { kind: 'upload', src: 'data:x', name: 'a.jpg' } }).photoAlt).toContain('Tomás');
+  });
+});
+
+describe('correo opcional al regalar', () => {
+  it('vacío o con espacios es válido; si se completa, exige formato', () => {
+    expect(isValidOptionalEmail('')).toBe(true);
+    expect(isValidOptionalEmail('   ')).toBe(true);
+    expect(isValidOptionalEmail('ana@correo.com')).toBe(true);
+    expect(isValidOptionalEmail(' ana@correo.com ')).toBe(true);
+    expect(isValidOptionalEmail('ana@correo')).toBe(false);
+    expect(isValidOptionalEmail('ana correo.com')).toBe(false);
   });
 });
