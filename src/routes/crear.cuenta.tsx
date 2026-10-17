@@ -29,7 +29,7 @@ const AppleMark = () => (
 );
 
 /* Paso 1 de 3: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda el mail o la clave; la pantalla
-   solo da paso al armado del evento y la interfaz lo dice así. */
+   solo da paso al armado del evento. */
 function Account() {
   const navigate = useNavigate();
   const search = Route.useSearch();
@@ -54,9 +54,10 @@ function Account() {
 
   return (
     <div className="pn-account">
-      <h1>{signup ? 'Creá tu cuenta' : 'Ingresá a Weda'}</h1>
-      <p className="pn-lead">{signup ? 'Primero tu cuenta; después, los datos de tu casamiento.' : 'Volvé a tu evento.'}</p>
-      <p className="pn-demo-note">Es una demostración: todavía no se crean cuentas ni se guarda tu correo o tu clave. Al continuar, pasás directo a armar tu evento.</p>
+      <header className="pn-account-head">
+        <h1>¡Bienvenidos!</h1>
+        <p>{signup ? 'Registrate en Weda' : 'Ingresá a Weda'}</p>
+      </header>
 
       <form onSubmit={submit} noValidate className="pn-form">
         <Field label="Correo electrónico" error={errors.email}>
@@ -72,6 +73,7 @@ function Account() {
             </div>
           )}
         </Field>
+        {signup && <p className="pn-terms">Al registrarte, aceptás los <strong>Términos de uso</strong> y la <strong>Política de privacidad</strong> de Weda.</p>}
         <button type="submit" className="pn-btn pn-block">{signup ? 'Registrarme' : 'Ingresar'}</button>
       </form>
 
@@ -83,7 +85,7 @@ function Account() {
       </div>
 
       <p className="pn-alt pn-account-switch">
-        {signup ? '¿Ya tenés cuenta? ' : '¿Todavía no tenés cuenta? '}
+        {signup ? '¿Ya sos miembro? ' : '¿Todavía no tenés cuenta? '}
         <button type="button" className="pn-link" onClick={() => { setMode(signup ? 'login' : 'signup'); setErrors({}); }}>{signup ? 'Ingresá' : 'Registrate'}</button>
       </p>
       <p className="pn-alt"><Link to="/" className="pn-link is-muted">Volver a Weda</Link></p>

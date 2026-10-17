@@ -104,7 +104,11 @@
 
 /* ---------- cuenta (/crear/cuenta) ---------- */
 .pn-account { display: grid; gap: 20px; width: 100%; max-width: 440px; margin: 0 auto; padding-top: 8px; }
-.pn-account .pn-lead { margin-top: -12px; }
+.pn-account-head { display: grid; gap: 6px; text-align: center; padding: 8px 0 12px; }
+.pn-account-head h1 { font-size: clamp(32px, 8vw, 40px); }
+.pn-account-head p { font-size: 18px; color: var(--pn-ink); }
+.pn-terms { font-size: 14px; color: var(--pn-muted); text-align: center; }
+.pn-terms strong { font-weight: 400; color: var(--pn-ink); text-decoration: underline; text-underline-offset: 3px; }
 .pn-block { width: 100%; }
 .pn-pass { position: relative; }
 .pn-pass input { padding-right: 52px; }
