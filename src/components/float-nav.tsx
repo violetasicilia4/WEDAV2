@@ -54,14 +54,14 @@ export function FloatNav({ onLanding = false, back = false }: { onLanding?: bool
         ) : (
           <div className="float-pill float-right">
             <Link to="/encontrar" className="float-link float-desktop">Hacé un regalo</Link>
-            <Link to="/crear" className="float-cta">Crear mi evento</Link>
+            <Link to="/crear/cuenta" className="float-cta">Crear mi evento</Link>
             <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
           </div>
         )}
       </nav>
       <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
         <Link to="/encontrar" className="menu-row" onClick={close}><span className="menu-tile"><Gift size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Hacé un regalo</strong></span></Link>
-        <Link to="/crear" className="menu-row" onClick={close}><span className="menu-tile"><CalendarHeart size={30} strokeWidth={1.4} /></span><span><small>Para novios</small><strong>Crear mi evento</strong></span></Link>
+        <Link to="/crear/cuenta" className="menu-row" onClick={close}><span className="menu-tile"><CalendarHeart size={30} strokeWidth={1.4} /></span><span><small>Para novios</small><strong>Crear mi evento</strong></span></Link>
         <button type="button" className="menu-row menu-row-btn" onClick={() => setLoginHint(true)}><span className="menu-tile"><LogIn size={30} strokeWidth={1.4} /></span><span><small aria-live="polite">{loginHint ? 'Próximamente' : 'Ya tengo cuenta'}</small><strong>Iniciar sesión</strong></span></button>
       </div>
     </header>

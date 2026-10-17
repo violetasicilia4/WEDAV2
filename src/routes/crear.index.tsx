@@ -13,7 +13,7 @@ export const Route = createFileRoute('/crear/')({
   component: Onboarding,
 });
 
-/* Paso 1: datos del casamiento. La fecha y la foto son opcionales: nadie queda bloqueado por no tenerlas todavía. */
+/* Paso 2 de 3: datos del casamiento. La fecha y la foto son opcionales: nadie queda bloqueado por no tenerlas todavía. */
 function Onboarding() {
   const navigate = useNavigate();
   const search = Route.useSearch();

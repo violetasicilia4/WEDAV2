@@ -8,7 +8,7 @@ import type { PlanId } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/crear/plan')({ component: ChoosePlan });
 
-/* Paso 2: elegir plan. No hay checkout ni cobro: elegir un plan solo lo guarda y entra a la aplicación. */
+/* Paso 3 de 3: elegir plan. No hay checkout ni cobro: elegir un plan solo lo guarda y entra a la aplicación. */
 function ChoosePlan() {
   const navigate = useNavigate();
   const state = useAppState();

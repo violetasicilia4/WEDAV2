@@ -42,7 +42,7 @@
 .pn-field { display: grid; gap: 6px; }
 .pn-field > label, .pn-photo legend, .pn-label { font-size: 14px; color: var(--pn-ink); }
 .pn-opt { color: var(--pn-muted); }
-.pn-root input[type='text'], .pn-root input[type='search'], .pn-root input[type='date'], .pn-root input[type='time'], .pn-root input[type='number'], .pn-root input[type='url'], .pn-root select, .pn-root textarea,
+.pn-root input[type='text'], .pn-root input[type='search'], .pn-root input[type='date'], .pn-root input[type='time'], .pn-root input[type='number'], .pn-root input[type='url'], .pn-root input[type='email'], .pn-root input[type='password'], .pn-root select, .pn-root textarea,
 .pn-dialog input[type='text'], .pn-dialog input[type='date'], .pn-dialog input[type='time'], .pn-dialog input[type='url'], .pn-dialog input[type='search'], .pn-dialog select, .pn-dialog textarea {
   width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--pn-line-s); border-radius: 12px; background: #fff; color: var(--pn-ink); font-size: 16px;
 }
@@ -84,14 +84,13 @@
 .pn-alt { font-size: 14px; color: var(--pn-muted); }
 .pn-onboard-form { gap: 24px; }
 .pn-live-label { font-size: 13px; color: var(--pn-muted); margin-bottom: 8px; }
-.pn-live-cover { position: relative; height: clamp(150px, 44vw, 180px); width: 100%; border-radius: 16px; overflow: hidden; background: #2b2d2b; color: #fff; display: grid; place-items: center; text-align: center; }
-@media (min-width: 600px) and (max-width: 899px) { .pn-live { max-width: 480px; } }
+.pn-live-cover { position: relative; aspect-ratio: 4 / 5; width: 100%; border-radius: 16px; overflow: hidden; background: #2b2d2b; color: #fff; display: grid; place-items: center; text-align: center; }
+@media (max-width: 899px) { .pn-live { display: none; } }
 @media (max-width: 767px) { .pn-submit .pn-btn { width: 100%; } .pn-submit .pn-actions { gap: 4px 16px; } }
 @media (min-width: 900px) {
   .pn-onboard-form { grid-template-columns: minmax(0, 520px) minmax(0, 1fr); grid-template-rows: repeat(4, auto); column-gap: 72px; row-gap: 28px; align-items: start; }
   .pn-onboard-form > * { grid-column: 1; }
   .pn-onboard-form > .pn-live { grid-column: 2; grid-row: 1 / span 4; position: sticky; top: 24px; }
-  .pn-live-cover { height: auto; aspect-ratio: 4 / 5; }
 }
 .pn-live-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .pn-live-cover::after { content: ''; position: absolute; inset: 0; background: rgb(0 0 0 / .36); }
@@ -102,6 +101,20 @@
 .pn-live-copy p { font-size: 12px; letter-spacing: .04em; }
 .pn-live-copy strong { overflow-wrap: anywhere; font: 400 clamp(22px, 6vw, 36px)/1.1 Georgia, 'Times New Roman', serif; }
 .pn-live-copy span { font-size: 13px; letter-spacing: .06em; opacity: .9; }
+
+/* ---------- cuenta (/crear/cuenta) ---------- */
+.pn-account { display: grid; gap: 20px; width: 100%; max-width: 440px; margin: 0 auto; padding-top: 8px; }
+.pn-account .pn-lead { margin-top: -12px; }
+.pn-block { width: 100%; }
+.pn-pass { position: relative; }
+.pn-pass input { padding-right: 52px; }
+.pn-pass-toggle { position: absolute; top: 0; right: 0; width: 48px; height: 48px; display: grid; place-items: center; border: 0; background: none; color: var(--pn-muted); cursor: pointer; border-radius: 12px; }
+.pn-pass-toggle:hover { color: var(--pn-ink); }
+.pn-or { display: flex; align-items: center; gap: 16px; color: var(--pn-muted); font-size: 14px; }
+.pn-or::before, .pn-or::after { content: ''; flex: 1; height: 1px; background: var(--pn-line-s); }
+.pn-social { display: grid; gap: 12px; }
+.pn-account-switch { text-align: center; }
+.pn-account > .pn-alt:last-child { text-align: center; margin-top: -8px; }
 
 /* ---------- planes ---------- */
 .pn-plans { display: grid; gap: 20px; }

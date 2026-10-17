@@ -50,12 +50,12 @@ const features = [
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
 // CTA de la landing. Cada uno tiene un destino real (una sección de esta página o una ruta existente);
 // si todavía no hay una pantalla a la que llevar (registro, pago), se muestra como botón inactivo.
-type SeedLinkProps = { children: React.ReactNode; pill?: boolean; href?: string; to?: '/ejemplo' | '/ejemplo/regalos' | '/crear'; plan?: PlanId; disabled?: boolean };
+type SeedLinkProps = { children: React.ReactNode; pill?: boolean; href?: string; to?: '/ejemplo' | '/ejemplo/regalos' | '/crear/cuenta'; plan?: PlanId; disabled?: boolean };
 function SeedLink({ children, pill = false, href, to, plan, disabled }: SeedLinkProps) {
   const content = pill ? children : <><span>{children}</span><ArrowRight size={15} /></>;
   const variant = pill ? 'seed' : 'seedLink';
   if (disabled) return <Button variant={variant} type="button" disabled>{content}</Button>;
-  if (to === '/crear') return <Button variant={variant} asChild><Link to="/crear" search={plan ? { plan } : {}}>{content}</Link></Button>;
+  if (to === '/crear/cuenta') return <Button variant={variant} asChild><Link to="/crear/cuenta" search={plan ? { plan } : {}}>{content}</Link></Button>;
   if (to) return <Button variant={variant} asChild><Link to={to}>{content}</Link></Button>;
   return <Button variant={variant} asChild><a href={href}>{content}</a></Button>;
 }
@@ -143,17 +143,17 @@ function Index() {
     <main id="main">
     <section className="seed-hero" id="top">
       <video className="hero-image" src="/hero.mp4" poster="/hero-poster.jpg" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
-      <div className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.</p><div className="hero-actions"><SeedLink pill to="/crear">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
+      <div className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
-      <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear">Crear mi evento</SeedLink></div></div></div>
+      <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear/cuenta">Crear mi evento</SeedLink></div></div></div>
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
-    <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Regalos para lo que viene después.</h2><p>Creen una lista con cosas que les gustan, viajes que sueñan hacer y proyectos que quieren compartir. Sus invitados eligen cómo acompañarlos y ustedes reciben los aportes directamente.</p><SeedLink pill to="/crear">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
+    <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Regalos para lo que viene después.</h2><p>Creen una lista con cosas que les gustan, viajes que sueñan hacer y proyectos que quieren compartir. Sus invitados eligen cómo acompañarlos y ustedes reciben los aportes directamente.</p><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
     <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
     <section className="plans-section" id="planes"><div className="section-inner">
       <div className="plans-head"><h2>Elegí el plan para tu casamiento.</h2><p>Pago único, pagás solo al publicar.</p></div>
-      <div className="plans-grid">{plans.map(pl=><article className="plan-card" key={pl.name}><h3>{pl.name}</h3><p className="plan-sub">{pl.sub}</p><ul>{pl.items.map(it=><li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true"/><span>{it}</span></li>)}</ul><SeedLink pill to="/crear" plan={planIds[pl.name] ?? 'completo'}>Elegir plan</SeedLink></article>)}</div>
+      <div className="plans-grid">{plans.map(pl=><article className="plan-card" key={pl.name}><h3>{pl.name}</h3><p className="plan-sub">{pl.sub}</p><ul>{pl.items.map(it=><li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true"/><span>{it}</span></li>)}</ul><SeedLink pill to="/crear/cuenta" plan={planIds[pl.name] ?? 'completo'}>Elegir plan</SeedLink></article>)}</div>
     </div></section>
     </main>
     <footer className="seed-footer"><div className="section-inner">

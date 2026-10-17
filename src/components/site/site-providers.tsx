@@ -46,6 +46,6 @@ export function AppSite({ slug, children }: { slug: string; children: ReactNode 
     recordRsvp: people => update(s => applyRsvp(s, people)),
   }), [state.gifts.given]);
   if (!hydrated) return <div className="dm-root"><p className="site-loading" role="status">Cargando…</p></div>;
-  if (!data) return <Notice title="Este sitio no está disponible" text="Esta es una demostración: los sitios se guardan solo en el navegador de quien los creó. Podés crear el tuyo o recorrer el ejemplo." to="/crear" cta="Crear mi evento" />;
+  if (!data) return <Notice title="Este sitio no está disponible" text="Esta es una demostración: los sitios se guardan solo en el navegador de quien los creó. Podés crear el tuyo o recorrer el ejemplo." to="/crear/cuenta" cta="Crear mi evento" />;
   return <SiteProvider data={data} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
 }

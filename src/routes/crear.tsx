@@ -14,13 +14,13 @@ export const Route = createFileRoute('/crear')({
 
 function CreateLayout() {
   const path = useRouterState({ select: s => s.location.pathname });
-  const step = path.startsWith('/crear/plan') ? 2 : 1;
+  const step = path.startsWith('/crear/cuenta') ? 1 : path.startsWith('/crear/plan') ? 3 : 2;
   return (
     <div className="pn-root pn-flow">
       <a className="skip-link" href="#main">Ir al contenido</a>
       <header className="pn-flow-head">
         <Link to="/" className="seed-logo" aria-label="Weda, volver al inicio">Weda<i aria-hidden="true" /></Link>
-        <p className="pn-flow-step" aria-label={`Paso ${step} de 2`}>Paso {step} de 2</p>
+        <p className="pn-flow-step" aria-label={`Paso ${step} de 3`}>Paso {step} de 3</p>
       </header>
       <main id="main" className="pn-flow-main"><Outlet /></main>
     </div>

@@ -9,8 +9,9 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 | `/` | Landing. Los botones «Crear mi evento», «Crear mi lista de regalos» y «Elegir plan» llevan a `/crear` (el último con el plan sugerido). |
 | `/ejemplo`, `/ejemplo/regalos` | Casamiento de demostración (invitación y lista de regalos). |
 | `/encontrar` | Buscador de invitados ([encontrar-tu-casamiento.md](encontrar-tu-casamiento.md)). |
-| `/crear` | Paso 1: nombres, fecha (opcional), foto (opcional). |
-| `/crear/plan` | Paso 2: elegir plan. Sin pago. |
+| `/crear/cuenta` | Paso 1 de 3: registro o ingreso con correo y clave, o con Google / Apple. Es solo la interfaz: sin backend no se crea ninguna cuenta ni se guarda el correo o la clave, y la pantalla lo dice. Cualquier salida válida lleva a `/crear` conservando `?plan`. |
+| `/crear` | Paso 2 de 3: nombres, fecha (opcional), foto (opcional). |
+| `/crear/plan` | Paso 3 de 3: elegir plan. Sin pago. |
 | `/panel` | Inicio: avance y pasos. |
 | `/panel/regalos` | Lista de regalos. |
 | `/panel/invitados` | Invitados y, en la misma pantalla, Mesas y grupos (`?vista=mesas`). `/panel/mesas` redirige. |
@@ -20,7 +21,8 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 
 ## 2. Crear el evento y elegir plan
 
-1. `/crear`: nombres obligatorios; la fecha tiene «Todavía no tenemos fecha»; la foto es opcional: subir una propia o elegir una imagen de muestra de Weda. Mientras no haya foto propia, la portada usa una imagen de muestra (rosas), oscurecida para que se lean nombres y fecha; al subir una foto la reemplaza. No se muestra contenido de muestra que parezca información de la pareja. En móvil (hasta 767 px) el orden es título, campos, foto de portada, vista de la portada (compacta, 150–180 px de alto) y «Continuar» a ancho completo; desde 900 px la vista queda a la derecha, fija al hacer scroll. El indicador «Paso 1 de 2» (`pn-flow-step`) no se parte en líneas. Hay una vista de la portada mientras se completa y «Probar con Tomás y Martina» para cargar un caso completo.
+0. `/crear/cuenta` (supuesto documentado: sin backend no hay cuentas reales; Google y Apple no autentican). Los botones de la landing y del menú llevan acá primero.
+1. `/crear`: nombres obligatorios; la fecha tiene «Todavía no tenemos fecha»; la foto es opcional: subir una propia o elegir una imagen de muestra de Weda. Mientras no haya foto propia, la portada usa una imagen de muestra (rosas), oscurecida para que se lean nombres y fecha; al subir una foto la reemplaza. No se muestra contenido de muestra que parezca información de la pareja. En móvil (hasta 767 px) el orden es título, campos, foto de portada y «Continuar» a ancho completo; la vista de la portada se oculta por debajo de 900 px y, desde ahí, queda a la derecha, fija al hacer scroll. El indicador «Paso 2 de 3» (`pn-flow-step`) no se parte en líneas. Hay una vista de la portada mientras se completa y «Probar con Tomás y Martina» para cargar un caso completo.
 2. `/crear/plan`: tres planes (Regalos, Completo, Premium) con el mensaje «Probá Weda gratis, sin tarjeta. Pagás únicamente cuando publiques tu sitio.». No hay checkout ni precios.
 3. Entra a `/panel`. Sin evento el panel redirige a `/crear`; sin plan, a `/crear/plan`. El plan se puede cambiar después sin perder datos.
 
