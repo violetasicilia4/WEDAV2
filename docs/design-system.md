@@ -49,7 +49,7 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 | `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`). |
 | `PublishDialog` | Explica que todavía no se puede publicar; no simula contratación ni pago. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |
-| `PhotoPicker`, `CoupleDialog` | Foto de portada (subir, imagen de Weda, sin foto) y datos del casamiento. |
+| `PhotoPicker`, `CoupleDialog` | Foto de portada y datos del casamiento. Patrón compacto: botón «Subir una foto» + fila de miniaturas (`pn-cover-pick`: «Tu foto» si ya subió una, y las imágenes de muestra), selección visible con borde y nombre en negrita. |
 | `GroupsView` | Mesas y grupos dentro de Invitados. |
 | Chips de estado | `is-ok`, `is-todo`, `is-off`, `is-doing`, `is-done`. |
 | Selector segmentado `.pn-switch` | Alternar vistas (Invitados / Mesas y grupos, Editar / Ver como invitado, filtros de asistencia). |

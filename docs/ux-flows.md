@@ -20,7 +20,7 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 
 ## 2. Crear el evento y elegir plan
 
-1. `/crear`: nombres obligatorios; la fecha tiene «Todavía no tenemos fecha»; la foto es opcional: subir una propia o elegir una imagen de muestra de Weda. Mientras no haya foto propia, la portada usa una imagen de muestra (rosas), oscurecida para que se lean nombres y fecha; al subir una foto la reemplaza. No se muestra contenido de muestra que parezca información de la pareja. Hay una vista de la portada mientras se completa y «Probar con Tomás y Martina» para cargar un caso completo.
+1. `/crear`: nombres obligatorios; la fecha tiene «Todavía no tenemos fecha»; la foto es opcional: subir una propia o elegir una imagen de muestra de Weda. Mientras no haya foto propia, la portada usa una imagen de muestra (rosas), oscurecida para que se lean nombres y fecha; al subir una foto la reemplaza. No se muestra contenido de muestra que parezca información de la pareja. En móvil (hasta 767 px) el orden es título, campos, foto de portada, vista de la portada (compacta, 150–180 px de alto) y «Continuar» a ancho completo; desde 900 px la vista queda a la derecha, fija al hacer scroll. El indicador «Paso 1 de 2» (`pn-flow-step`) no se parte en líneas. Hay una vista de la portada mientras se completa y «Probar con Tomás y Martina» para cargar un caso completo.
 2. `/crear/plan`: tres planes (Regalos, Completo, Premium) con el mensaje «Probá Weda gratis, sin tarjeta. Pagás únicamente cuando publiques tu sitio.». No hay checkout ni precios.
 3. Entra a `/panel`. Sin evento el panel redirige a `/crear`; sin plan, a `/crear/plan`. El plan se puede cambiar después sin perder datos.
 

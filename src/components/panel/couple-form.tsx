@@ -1,15 +1,12 @@
 // Foto de portada y datos de la pareja: se usan en el onboarding y para editar después (diálogo del resumen).
 import { useRef, useState } from 'react';
-import { Check, ImagePlus } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { Field, useToast } from './ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { readImage } from '@/lib/weda/images';
 import { todayIso, validateOnboarding, WEDA_COVERS } from '@/lib/weda/logic';
 import { update, useAppState } from '@/lib/weda/store';
 import type { PhotoChoice } from '@/lib/weda/types';
-
-type Mode = 'upload' | 'weda' | 'none';
-const modeOf = (p: PhotoChoice): Mode => (p.kind === 'upload' ? 'upload' : 'weda');
 
 /** Elegir la foto: subir una, usar una imagen genérica de Weda o seguir sin foto. Todo es local. */
 export function PhotoPicker({ value, onChange, legend = 'Foto de portada' }: { value: PhotoChoice; onChange: (p: PhotoChoice) => void; legend?: string }) {
@@ -18,7 +15,6 @@ export function PhotoPicker({ value, onChange, legend = 'Foto de portada' }: { v
   const [loading, setLoading] = useState(false);
   // Se recuerda la última foto subida para no perderla si la pareja prueba otra opción y vuelve.
   const [last, setLast] = useState<{ src: string; name: string } | null>(value.kind === 'upload' ? { src: value.src, name: value.name } : null);
-  const mode = modeOf(value);
   const wedaId = value.kind === 'weda' ? value.id : WEDA_COVERS[0]!.id;
 
   const pick = async (file: File | undefined) => {
@@ -29,41 +25,38 @@ export function PhotoPicker({ value, onChange, legend = 'Foto de portada' }: { v
     finally { setLoading(false); if (fileRef.current) fileRef.current.value = ''; }
   };
 
+  const uploaded = value.kind === 'upload';
   return (
     <fieldset className="pn-photo">
-      <legend>{legend} <span className="pn-opt">· opcional</span></legend>
-      <div className="pn-choices" role="radiogroup" aria-label={legend}>
-        <label className={`pn-choice${mode === 'upload' ? ' on' : ''}`}>
-          <input type="radio" name="photo-mode" checked={mode === 'upload'} onChange={() => { if (last) onChange({ kind: 'upload', ...last }); else fileRef.current?.click(); }} />
-          <ImagePlus size={20} strokeWidth={1.4} aria-hidden="true" /><span>Subir una foto</span>
-        </label>
-        <label className={`pn-choice${mode === 'weda' ? ' on' : ''}`}>
-          <input type="radio" name="photo-mode" checked={mode === 'weda'} onChange={() => onChange({ kind: 'weda', id: wedaId })} />
-          <Check size={20} strokeWidth={1.4} aria-hidden="true" /><span>Imagen de muestra</span>
-        </label>
+      <legend>{legend} <span className="pn-opt">· Opcional · Podés cambiarla después</span></legend>
+      <div className="pn-photo-row">
+        <button type="button" className="pn-btn is-ghost is-small" onClick={() => fileRef.current?.click()} disabled={loading}>
+          <ImagePlus size={18} strokeWidth={1.4} aria-hidden="true" />{loading ? 'Cargando…' : uploaded ? 'Cambiar la foto' : 'Subir una foto'}
+        </button>
+        {last && (
+          <button type="button" className={`pn-cover-pick${uploaded ? ' on' : ''}`} aria-pressed={uploaded} onClick={() => onChange({ kind: 'upload', ...last })}>
+            <img src={last.src} alt="" /><span>Tu foto</span>
+          </button>
+        )}
       </div>
       <input ref={fileRef} className="pn-sr" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void pick(e.target.files?.[0])} aria-label="Elegir una foto de tu dispositivo" />
-      {mode === 'upload' && value.kind === 'upload' && (
-        <div className="pn-photo-row">
-          <img src={value.src} alt="" className="pn-thumb" />
-          <button type="button" className="pn-link" onClick={() => fileRef.current?.click()} disabled={loading}>{loading ? 'Cargando…' : 'Cambiar la foto'}</button>
-          <button type="button" className="pn-link is-muted" onClick={() => onChange({ kind: 'none' })}>Usar la imagen de muestra</button>
-        </div>
-      )}
-      {mode === 'weda' && (
-        <ul className="pn-covers">
-          {WEDA_COVERS.map(c => (
-            <li key={c.id}>
-              <button type="button" className={wedaId === c.id ? 'on' : ''} aria-pressed={wedaId === c.id} onClick={() => onChange({ kind: 'weda', id: c.id })}>
-                <img src={c.src} alt="" /><span>{c.name}</span>
-              </button>
-            </li>
-          ))}
+      <div className="pn-samples">
+        <p className="pn-hint" id="pn-samples-label">Imágenes de muestra</p>
+        <ul className="pn-covers" aria-labelledby="pn-samples-label">
+          {WEDA_COVERS.map(c => {
+            const on = !uploaded && wedaId === c.id;
+            return (
+              <li key={c.id}>
+                <button type="button" className={`pn-cover-pick${on ? ' on' : ''}`} aria-pressed={on} onClick={() => onChange({ kind: 'weda', id: c.id })}>
+                  <img src={c.src} alt="" style={{ objectPosition: c.pos }} /><span>{c.name}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
-      )}
-      {mode === 'weda' && <p className="pn-hint">Es una imagen de muestra: cuando tengas tu foto, subila y la reemplaza.</p>}
+      </div>
       {error && <p className="pn-error" role="alert">{error}</p>}
-      <p className="pn-hint">JPG, PNG o WebP de hasta 8 MB. La foto se queda en tu navegador.</p>
+      <p className="pn-hint">{uploaded ? 'JPG, PNG o WebP de hasta 8 MB. La foto se queda en tu navegador.' : 'La podés reemplazar por tu foto cuando quieras (JPG, PNG o WebP de hasta 8 MB; se queda en tu navegador).'}</p>
     </fieldset>
   );
 }

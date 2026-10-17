@@ -59,48 +59,55 @@ function Onboarding() {
 
   return (
     <div className="pn-onboard">
-      <form onSubmit={submit} noValidate className="pn-form">
-        <h1>Creá tu evento</h1>
-        <p className="pn-lead">Contanos lo básico. Lo demás lo completás después, a tu ritmo.</p>
-        <p className="pn-demo-note">Es una demostración: lo que cargues se guarda solo en este navegador y no se envía a ningún servidor.</p>
-
-        <div className="pn-two">
-          <Field label="Tu nombre" error={errors.first}>
-            {a => <input id="on-first" type="text" autoComplete="given-name" value={first} onChange={e => { setFirst(e.target.value); setErrors(x => ({ ...x, first: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-          </Field>
-          <Field label="El nombre de tu pareja" error={errors.second}>
-            {a => <input id="on-second" type="text" autoComplete="off" value={second} onChange={e => { setSecond(e.target.value); setErrors(x => ({ ...x, second: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-          </Field>
+      <form onSubmit={submit} noValidate className="pn-form pn-onboard-form">
+        <div className="pn-intro">
+          <h1>Creá tu evento</h1>
+          <p className="pn-lead">Contanos lo básico. Lo demás lo completás después, a tu ritmo.</p>
+          <p className="pn-demo-note">Es una demostración: lo que cargues se guarda solo en este navegador y no se envía a ningún servidor.</p>
         </div>
 
-        <Field label="Fecha del casamiento" error={errors.date}>
-          {a => <input id="on-date" type="date" min={todayIso()} value={noDate ? '' : date} disabled={noDate} onChange={e => { setDate(e.target.value); setErrors(x => ({ ...x, date: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-        </Field>
-        <label className="pn-check">
-          <input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} />
-          <span>Todavía no tenemos fecha</span>
-        </label>
+        <div className="pn-fields">
+          <div className="pn-two">
+            <Field label="Tu nombre" error={errors.first}>
+              {a => <input id="on-first" type="text" autoComplete="given-name" value={first} onChange={e => { setFirst(e.target.value); setErrors(x => ({ ...x, first: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+            </Field>
+            <Field label="El nombre de tu pareja" error={errors.second}>
+              {a => <input id="on-second" type="text" autoComplete="off" value={second} onChange={e => { setSecond(e.target.value); setErrors(x => ({ ...x, second: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+            </Field>
+          </div>
+
+          <Field label="Fecha del casamiento" error={errors.date}>
+            {a => <input id="on-date" type="date" min={todayIso()} value={noDate ? '' : date} disabled={noDate} onChange={e => { setDate(e.target.value); setErrors(x => ({ ...x, date: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+          </Field>
+          <label className="pn-check">
+            <input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} />
+            <span>Todavía no tenemos fecha</span>
+          </label>
+        </div>
 
         <PhotoPicker value={photo} onChange={setPhoto} />
 
-        <div className="pn-actions">
-          <button type="submit" className="pn-btn">Continuar</button>
-          <Link to="/" className="pn-link is-muted">Volver a Weda</Link>
-        </div>
-        <p className="pn-alt">¿Querés recorrer todo sin cargar nada? <button type="button" className="pn-link" onClick={tryExample}>Probar con Tomás y Martina</button></p>
-      </form>
-
-      <aside className="pn-live" aria-label="Así se va a ver tu portada">
-        <p className="pn-live-label">Así se va a ver tu portada</p>
-        <div className={`pn-live-cover${previewSrc ? '' : ' is-plain'}`}>
-          {previewSrc ? <img src={previewSrc} alt="" style={{ objectPosition: photoPosition(photo) }} /> : <span className="pn-live-mono" aria-hidden="true">{initials || 'W'}</span>}
-          <div className="pn-live-copy">
-            <p>¡Nos casamos!</p>
-            <strong>{names.replace(/\s*&\s*/, ' y ')}</strong>
-            <span>{noDate || !date ? 'Fecha a confirmar' : dateShort(date)}</span>
+        {/* En móvil la preview va después de los campos (chica); en desktop queda a la derecha. */}
+        <aside className="pn-live" aria-label="Así se va a ver tu portada">
+          <p className="pn-live-label">Así se va a ver tu portada</p>
+          <div className={`pn-live-cover${previewSrc ? '' : ' is-plain'}`}>
+            {previewSrc ? <img src={previewSrc} alt="" style={{ objectPosition: photoPosition(photo) }} /> : <span className="pn-live-mono" aria-hidden="true">{initials || 'W'}</span>}
+            <div className="pn-live-copy">
+              <p>¡Nos casamos!</p>
+              <strong>{names.replace(/\s*&\s*/, ' y ')}</strong>
+              <span>{noDate || !date ? 'Fecha a confirmar' : dateShort(date)}</span>
+            </div>
           </div>
+        </aside>
+
+        <div className="pn-submit">
+          <div className="pn-actions">
+            <button type="submit" className="pn-btn">Continuar</button>
+            <Link to="/" className="pn-link is-muted">Volver a Weda</Link>
+          </div>
+          <p className="pn-alt">¿Querés recorrer todo sin cargar nada? <button type="button" className="pn-link" onClick={tryExample}>Probar con Tomás y Martina</button></p>
         </div>
-      </aside>
+      </form>
     </div>
   );
 }

@@ -20,7 +20,7 @@ function CreateLayout() {
       <a className="skip-link" href="#main">Ir al contenido</a>
       <header className="pn-flow-head">
         <Link to="/" className="seed-logo" aria-label="Weda, volver al inicio">Weda<i aria-hidden="true" /></Link>
-        <p className="pn-step" aria-label={`Paso ${step} de 2`}>Paso {step} de 2</p>
+        <p className="pn-flow-step" aria-label={`Paso ${step} de 2`}>Paso {step} de 2</p>
       </header>
       <main id="main" className="pn-flow-main"><Outlet /></main>
     </div>
