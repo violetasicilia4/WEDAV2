@@ -553,7 +553,7 @@
 .dm-rsvp-menu.on span { border-color: var(--dm-blue); background: var(--paper); box-shadow: inset 0 0 0 1px var(--dm-blue); }
 .dm-rsvp-opt:focus-within span, .dm-rsvp-menu:focus-within span { box-shadow: 0 0 0 3px rgb(90 100 108 / .35); }
 .dm-rsvp-field.has-error .dm-rsvp-opt span, .dm-rsvp-field.has-error .dm-rsvp-menu span { border-color: var(--destructive); }
-.dm-rsvp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.dm-rsvp-actions { display: flex; flex-direction: row-reverse; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 .dm-rsvp-done { display: grid; gap: 0; }
 .dm-rsvp-mark { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 18px; border-radius: 50%; background: var(--paper); color: var(--dm-blue); }
 .dm-rsvp-done p { margin: 10px 0 0; font-size: 15px; line-height: 1.5; }
