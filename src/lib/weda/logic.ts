@@ -2,7 +2,7 @@
 // y para que, cuando exista una API, se puedan reemplazar por llamadas al servidor sin tocar los componentes.
 import { menus, type Category } from '@/lib/demo-wedding';
 import { catalogGift, setGifts, type GiftSet } from './catalog';
-import { can } from './plans';
+import { can, planFor, type Feature } from './plans';
 import type {
   AppState, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent,
 } from './types';
@@ -177,7 +177,7 @@ export const defaultSite = (): SiteConfig => ({
 });
 
 export const emptyState = (): AppState => ({
-  version: 1,
+  version: 2,
   onboarded: false,
   couple: { first: '', second: '' },
   date: null,
@@ -331,6 +331,19 @@ export const assignGuest = (s: AppState, guestId: string, groupId: string | null
 };
 
 /* ------------------------------------------------------------------ plan y publicación */
+
+/** Lo que la pareja ya cargó y el plan dado no incluye: se conserva como borrador (no se publica) hasta que elija un plan que lo incluya. */
+export function draftsFor(s: AppState, planId: PlanId): { feature: Feature; label: string; plan: string }[] {
+  const found: [Feature, string, boolean][] = [
+    ['site', 'La página del casamiento', s.site.events.some(hasEventDetails)],
+    ['guests', 'Los invitados', s.guests.length > 0],
+    ['groups', 'Las mesas y grupos', s.groups.length > 0],
+    ['playlist', 'La música de la fiesta', s.site.playlist.tracks.length > 0],
+    ['gallery', 'La galería de fotos', s.site.gallery.photos.length > 0],
+    ['message', 'El mensaje final', s.site.message.text.trim() !== ''],
+  ];
+  return found.filter(([f, , has]) => has && !can(planId, f)).map(([feature, label]) => ({ feature, label, plan: planFor(feature)?.name ?? '' }));
+}
 
 /** Cambia de plan. Lo que el nuevo plan no incluye se desactiva en el sitio (los datos se conservan por si vuelve a subir). */
 export function setPlan(s: AppState, planId: PlanId): AppState {

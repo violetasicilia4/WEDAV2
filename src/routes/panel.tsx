@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
-import { ConfirmDialog, SaveStatus, ToastProvider } from '@/components/panel/ui';
+import { ConfirmDialog, PlansProvider, SaveStatus, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel } from '@/lib/weda/logic';
 import { can, planById, type Feature } from '@/lib/weda/plans';
 import { reset, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
@@ -25,6 +25,14 @@ const NAV: { to: string; label: string; icon: typeof House; feature?: Feature; e
   { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
 ];
 
+/** Plan elegido, o «prueba gratuita» mientras no se eligió: el plan se elige al publicar. */
+function SidePlan() {
+  const state = useAppState();
+  const plans = usePlans();
+  const plan = planById(state.planId);
+  return <p className="pn-side-plan">{plan ? `Plan ${plan.name}` : 'Prueba gratuita'} · <button type="button" className="pn-link" onClick={plans.open}>{plan ? 'Cambiar' : 'Elegir plan'}</button></p>;
+}
+
 function PanelLayout() {
   const navigate = useNavigate();
   const state = useAppState();
@@ -33,21 +41,19 @@ function PanelLayout() {
   const [confirmReset, setConfirmReset] = useState(false);
   const onPreview = useRouterState({ select: s => s.location.pathname }) === '/panel/vista-previa';
 
-  // Sin evento no hay panel: se vuelve a crearlo. Con evento pero sin plan, se elige el plan.
+  // Sin evento no hay panel: se vuelve a crearlo. El plan no hace falta para entrar: se elige al publicar.
   useEffect(() => {
-    if (!hydrated) return;
-    if (!state.onboarded) void navigate({ to: '/crear', replace: true });
-    else if (!state.planId) void navigate({ to: '/crear/plan', replace: true });
-  }, [hydrated, state.onboarded, state.planId, navigate]);
+    if (hydrated && !state.onboarded) void navigate({ to: '/crear', replace: true });
+  }, [hydrated, state.onboarded, navigate]);
 
-  if (!hydrated || !state.onboarded || !state.planId) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
+  if (!hydrated || !state.onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
 
-  const plan = planById(state.planId);
   const names = coupleLabel(state.couple);
   const doReset = () => { setConfirmReset(false); reset(); void navigate({ to: '/crear', replace: true }); };
 
   return (
     <ToastProvider>
+      <PlansProvider>
       <div className="pn-root pn-app">
         <a className="skip-link" href="#main">Ir al contenido</a>
         <header className="pn-top">
@@ -60,7 +66,7 @@ function PanelLayout() {
           <div className="pn-side-head">
             <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
             <p className="pn-side-names">{names}</p>
-            <p className="pn-side-plan">Plan {plan?.name} · <Link to="/crear/plan">Cambiar</Link></p>
+            <SidePlan />
           </div>
           <nav aria-label="Secciones del panel" className="pn-nav">
             {NAV.map(n => {
@@ -94,6 +100,7 @@ function PanelLayout() {
           onCancel={() => setConfirmReset(false)}
         />
       </div>
+      </PlansProvider>
     </ToastProvider>
   );
 }

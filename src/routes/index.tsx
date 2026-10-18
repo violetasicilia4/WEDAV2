@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { duo, routine, unboxing } from '@/assets/images';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
-import type { PlanId } from '@/lib/weda/types';
+import { LandingPlans } from '@/components/landing-plans';
 
 // URL pública del sitio. Los metadatos sociales y el canonical necesitan una URL absoluta: se toma de VITE_SITE_URL
 // (por ejemplo "https://weda.example"). Si no está definida quedan rutas relativas, que es lo único honesto sin dominio.
@@ -36,12 +36,6 @@ export const Route = createFileRoute('/')({
   }),
   component: Index,
 });
-const planIds: Record<string, PlanId> = { Regalos: 'regalos', Completo: 'completo', Premium: 'premium' };
-const plans = [
-  { name: 'Regalos', sub: 'Para empezar con lo esencial.', items: ['Lista de regalos'] },
-  { name: 'Completo', sub: 'Para organizar todo con tus invitados.', items: ['Lista de regalos', 'Confirmación de asistencia', 'Sitio de casamiento'] },
-  { name: 'Premium', sub: 'La experiencia completa de tu casamiento.', items: ['Todo lo del plan Completo', 'Sitio de casamiento premium'] },
-];
 const features = [
   { title: 'Lista de regalos', note: 'Creen su lista con regalos y proyectos que quieran compartir con sus invitados.', icon: <GiftDemo /> },
   { title: 'Sitio del casamiento', note: 'Compartan la fecha, los lugares, las fotos y todos los detalles del evento.', icon: <SiteDemo /> },
@@ -50,12 +44,12 @@ const features = [
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
 // CTA de la landing. Cada uno tiene un destino real (una sección de esta página o una ruta existente);
 // si todavía no hay una pantalla a la que llevar (registro, pago), se muestra como botón inactivo.
-type SeedLinkProps = { children: React.ReactNode; pill?: boolean; href?: string; to?: '/ejemplo' | '/ejemplo/regalos' | '/crear/cuenta'; plan?: PlanId; disabled?: boolean };
-function SeedLink({ children, pill = false, href, to, plan, disabled }: SeedLinkProps) {
+type SeedLinkProps = { children: React.ReactNode; pill?: boolean; href?: string; to?: '/ejemplo' | '/ejemplo/regalos' | '/crear/cuenta'; disabled?: boolean };
+function SeedLink({ children, pill = false, href, to, disabled }: SeedLinkProps) {
   const content = pill ? children : <><span>{children}</span><ArrowRight size={15} /></>;
   const variant = pill ? 'seed' : 'seedLink';
   if (disabled) return <Button variant={variant} type="button" disabled>{content}</Button>;
-  if (to === '/crear/cuenta') return <Button variant={variant} asChild><Link to="/crear/cuenta" search={plan ? { plan } : {}}>{content}</Link></Button>;
+  if (to === '/crear/cuenta') return <Button variant={variant} asChild><Link to="/crear/cuenta">{content}</Link></Button>;
   if (to) return <Button variant={variant} asChild><Link to={to}>{content}</Link></Button>;
   return <Button variant={variant} asChild><a href={href}>{content}</a></Button>;
 }
@@ -151,10 +145,7 @@ function Index() {
     </div></section>
     <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Regalos para lo que viene después.</h2><p>Creen una lista con cosas que les gustan, viajes que sueñan hacer y proyectos que quieren compartir. Sus invitados eligen cómo acompañarlos y ustedes reciben los aportes directamente.</p><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
     <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
-    <section className="plans-section" id="planes"><div className="section-inner">
-      <div className="plans-head"><h2>Elegí el plan para tu casamiento.</h2><p>Pago único, pagás solo al publicar.</p></div>
-      <div className="plans-grid">{plans.map(pl=><article className="plan-card" key={pl.name}><h3>{pl.name}</h3><p className="plan-sub">{pl.sub}</p><ul>{pl.items.map(it=><li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true"/><span>{it}</span></li>)}</ul><SeedLink pill to="/crear/cuenta" plan={planIds[pl.name] ?? 'completo'}>Elegir plan</SeedLink></article>)}</div>
-    </div></section>
+    <LandingPlans />
     </main>
     <footer className="seed-footer"><div className="section-inner">
       <div className="footer-top">

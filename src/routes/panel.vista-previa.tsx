@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { PreviewFrame, PublishDialog } from '@/components/panel/ui';
+import { PreviewFrame, usePlans } from '@/components/panel/ui';
 import { publicPages, sitePath } from '@/lib/weda/logic';
 import { useAppState } from '@/lib/weda/store';
 
@@ -13,7 +13,7 @@ function Preview() {
   const pages = publicPages(s.planId);
   const [page, setPage] = useState<'home' | 'gifts'>(pages.invitation ? 'home' : 'gifts');
   const [device, setDevice] = useState<'mobile' | 'desktop'>('mobile');
-  const [publishing, setPublishing] = useState(false);
+  const plans = usePlans();
   const base = sitePath(s);
   const path = page === 'gifts' || !pages.invitation ? `${base}/regalos` : base;
 
@@ -26,7 +26,7 @@ function Preview() {
         </div>
         <div className="pn-head-actions">
           <Link to={(pages.invitation ? '/panel/sitio' : '/panel/regalos') as never} className="pn-btn is-ghost"><ArrowLeft size={16} aria-hidden="true" />{page === 'gifts' || !pages.invitation ? 'Volver a mis regalos' : 'Volver a editar mi página'}</Link>
-          <button type="button" className="pn-btn" onClick={() => setPublishing(true)}>Publicar</button>
+          <button type="button" className="pn-btn" onClick={plans.open}>Publicar</button>
         </div>
       </header>
 
@@ -43,9 +43,8 @@ function Preview() {
       </div>
 
       <PreviewFrame path={path} device={device} />
-      {!pages.invitation && <p className="pn-note">Tu plan incluye la lista de regalos. La invitación y la confirmación de asistencia están en el plan Completo.</p>}
+      {!pages.invitation && <p className="pn-note">Tu plan incluye la lista de regalos. La invitación y la confirmación de asistencia están desde el plan Invitación.</p>}
 
-      <PublishDialog open={publishing} onClose={() => setPublishing(false)} showPreviewLink={false} />
     </div>
   );
 }

@@ -708,6 +708,19 @@ html { scroll-padding-top: 80px; }
 .plan-card li { display: flex; align-items: flex-start; gap: 12px; font-size: 16px; line-height: 1.35; }
 .plan-card li svg { flex: none; margin-top: 2px; color: var(--foreground); }
 .plan-card .seed-button { margin-top: auto; align-self: flex-start; height: 48px; }
+.plan-price { margin: 22px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.plan-price strong { font-size: clamp(30px, 2.8vw, 38px); line-height: 1.05; font-weight: 400; letter-spacing: -.01em; }
+.plan-price span { font-size: 14px; color: var(--muted-foreground); }
+.plan-card ul { margin-bottom: 20px; }
+.plan-inherit span strong { font-weight: 700; }
+.plan-more { margin: 0 0 clamp(22px, 2.6vw, 32px); }
+.plan-more summary { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; list-style: none; }
+.plan-more summary::-webkit-details-marker { display: none; }
+.plan-more summary:focus-visible { outline: 2px solid var(--slate); outline-offset: 3px; border-radius: 4px; }
+.plan-more .plan-for { margin: 4px 0 14px; font-size: 14px; line-height: 1.45; color: var(--muted-foreground); }
+.plan-more h4 { margin: 14px 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.plan-card .plan-more ul { margin: 0; padding: 0; border-top: 0; gap: 8px; }
+.plan-more li { display: list-item; list-style: disc; margin-left: 18px; font-size: 14px; line-height: 1.4; }
 @media(max-width: 900px) { .plans-grid { grid-template-columns: 1fr; gap: 12px; } .plan-sub { min-height: 0; } .plan-card ul { margin: 22px 0 26px; padding-top: 20px; } }
 
 /* Testimonios: foto de fondo nueva, a color */
@@ -1512,15 +1525,8 @@ a:not([href]) { cursor: default; }
 /* CTA inactivos (todavía sin pantalla de registro): se ven como lo que son */
 .seed-button:disabled { opacity: .55; cursor: not-allowed; }
 
-/* Planes: tres escalones visuales, sin cambiar contenido ni agregar sellos */
+/* Planes: tres tarjetas con la misma jerarquía (no hay un plan recomendado) */
 .plan-card { border: 1px solid transparent; }
-.plan-card:nth-child(2) { background: #fff; border-color: rgb(59 60 58 / .2); }
-.plan-card:nth-child(3) { background: var(--slate); color: #fff; }
-.plan-card:nth-child(3) .plan-sub { color: rgb(255 255 255 / .86); }
-.plan-card:nth-child(3) ul { border-top-color: rgb(255 255 255 / .3); }
-.plan-card:nth-child(3) li svg { color: #fff; }
-.plan-card:nth-child(3) .seed-button { background: #fff; color: var(--foreground); }
-.plan-card:nth-child(3) .seed-button:disabled { opacity: .75; }
 
 
 

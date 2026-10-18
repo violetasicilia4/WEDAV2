@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Check, CircleDot, Circle, Eye, HardDrive, ListChecks, X } from 'lucide-react';
 import { CoupleDialog } from '@/components/panel/couple-form';
-import { ConfirmDialog } from '@/components/panel/ui';
+import { ConfirmDialog, usePlans } from '@/components/panel/ui';
 import { coupleLabel, dateLabel, guestStats, readiness, STATUS_LABEL_TASK, type Task } from '@/lib/weda/logic';
 import { can, planById } from '@/lib/weda/plans';
 import { reset, useAppState } from '@/lib/weda/store';
@@ -28,6 +28,7 @@ function Home() {
   const [editing, setEditing] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const plan = planById(s.planId);
+  const plans = usePlans();
   const r = readiness(s);
   const g = guestStats(s);
   const doneCount = r.tasks.filter(t => t.done).length;
@@ -46,7 +47,7 @@ function Home() {
         <div>
           <p className="pn-kicker">Tu casamiento</p>
           <h1>{coupleLabel(s.couple)}</h1>
-          <p className="pn-sub">{s.date ? dateLabel(s.date) : 'Fecha por definir'} · Plan {plan?.name}</p>
+          <p className="pn-sub">{s.date ? dateLabel(s.date) : 'Fecha por definir'} · {plan ? `Plan ${plan.name}` : 'Prueba gratuita'}</p>
         </div>
       </header>
 
@@ -88,12 +89,12 @@ function Home() {
             );
           })}
         </ul>
-        {!can(s.planId, 'site') && <p className="pn-note">Tu plan incluye la lista de regalos. La página del casamiento, la confirmación de asistencia y los invitados están en el plan Completo. <Link to="/crear/plan" className="pn-link">Ver los planes</Link></p>}
+        {!can(s.planId, 'site') && <p className="pn-note">Tu plan incluye la lista de regalos. La página del casamiento, la confirmación de asistencia y los invitados están desde el plan Invitación. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></p>}
         <div className="pn-actions"><Link to="/panel/vista-previa" className="pn-btn"><Eye size={16} aria-hidden="true" />Ver como invitado</Link>{hidden && <button type="button" className="pn-link" onClick={() => setHidden(false)}>¿Cómo funciona?</button>}</div>
       </section>
 
       <footer className="pn-page-foot">
-        <p>Demostración: tus datos se guardan solo en este navegador. <Link to="/crear/plan" className="pn-link">Cambiar de plan</Link> · <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button></p>
+        <p>Demostración: tus datos se guardan solo en este navegador. <button type="button" className="pn-link" onClick={plans.open}>{plan ? 'Cambiar de plan' : 'Elegir plan para publicar'}</button> · <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button></p>
       </footer>
 
       {editing && <CoupleDialog open onClose={() => setEditing(false)} />}

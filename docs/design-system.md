@@ -45,7 +45,9 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 | `Field` | Etiqueta + control + ayuda + error con ids asociados. Los opcionales se marcan «· opcional». |
 | `ToastProvider` / `useToast` | Avisos breves; admiten acción «Deshacer». Se usan al quitar regalos o todos los regalos de un set. |
 | `ConfirmDialog` | Confirmación de acciones destructivas (eliminar invitado, grupo, reiniciar la demo). |
-| `Locked` | Pantalla de función no incluida en el plan: qué es, en qué plan está y enlace a «Ver los planes». Sin upsell en el resto de las pantallas. |
+| `Locked`, `LockedBlock` | Función no incluida en el plan elegido: qué es, en qué plan está y que lo cargado se conserva como borrador; el botón «Ver los planes» abre el diálogo de planes. Sin upsell en el resto de las pantallas. |
+| `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. No cobra ni publica. |
+| Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver todo lo que incluye» en `<details>`, CTA «Crear mi evento gratis»). Sin plan «recomendado». Todo sale de `plans.ts`. |
 | `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`). |
 | `PublishDialog` | Explica que todavía no se puede publicar; no simula contratación ni pago. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |

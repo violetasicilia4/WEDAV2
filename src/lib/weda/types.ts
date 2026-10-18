@@ -3,7 +3,7 @@
 // El día que exista una API, este es el contrato que se persiste en el servidor.
 import type { Category, EventKey, IconKey, Gift } from '@/lib/demo-wedding';
 
-export type PlanId = 'regalos' | 'completo' | 'premium';
+export type PlanId = 'regalos' | 'invitacion' | 'completo';
 
 /** Foto elegida por la pareja: subida desde su dispositivo, una imagen genérica de Weda o ninguna. */
 export type PhotoChoice =
@@ -78,7 +78,7 @@ export type SiteConfig = {
 };
 
 export type AppState = {
-  version: 1;
+  version: 2;
   /** true cuando la pareja terminó el onboarding. */
   onboarded: boolean;
   couple: Couple;

@@ -6,12 +6,12 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 
 | Ruta | Función |
 |---|---|
-| `/` | Landing. Los botones «Crear mi evento», «Crear mi lista de regalos» y «Elegir plan» llevan a `/crear` (el último con el plan sugerido). |
+| `/` | Landing. Los botones «Crear mi evento», «Crear mi lista de regalos» y «Crear mi evento gratis» (en cada plan) llevan a `/crear/cuenta`. La sección de planes (`src/components/landing-plans.tsx`) muestra nombre, precio, 4–5 funciones y «Ver todo lo que incluye» sin pedir elegir plan. |
 | `/ejemplo`, `/ejemplo/regalos` | Casamiento de demostración (invitación y lista de regalos). |
 | `/encontrar` | Buscador de invitados ([encontrar-tu-casamiento.md](encontrar-tu-casamiento.md)). |
-| `/crear/cuenta` | Paso 1 de 3: registro o ingreso con correo y clave, o con Google / Apple. Es solo la interfaz: sin backend no se crea ninguna cuenta ni se guarda el correo o la clave (la pantalla no lo anuncia). Encabezado «¡Bienvenidos!», línea de términos y privacidad (sin páginas todavía: es texto, no enlaces) y «¿Ya sos miembro? Ingresá». Cualquier salida válida lleva a `/crear` conservando `?plan`. |
-| `/crear` | Paso 2 de 3 (sin indicador): nombres y fecha (opcional). |
-| `/crear/plan` | Paso 3 de 3: elegir plan. Sin pago. |
+| `/crear/cuenta` | Paso 1: registro o ingreso con correo y clave, o con Google / Apple. Es solo la interfaz: sin backend no se crea ninguna cuenta ni se guarda el correo o la clave (la pantalla no lo anuncia). Encabezado «¡Bienvenidos!», línea de términos y privacidad (sin páginas todavía: es texto, no enlaces) y «¿Ya sos miembro? Ingresá». Cualquier salida válida lleva a `/crear` conservando `?plan`. |
+| `/crear` | Paso 2: nombres y fecha (opcional). |
+| `/crear/plan` | Ya no existe como paso: redirige a `/panel`. El plan se elige al publicar (diálogo «Elegí tu plan para publicar»). |
 | `/panel` | Inicio: avance y pasos. |
 | `/panel/regalos` | Lista de regalos. |
 | `/panel/invitados` | Invitados y, en la misma pantalla, Mesas y grupos (`?vista=mesas`). `/panel/mesas` redirige. |
@@ -19,22 +19,26 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 | `/panel/vista-previa` | Ver como invitado. |
 | `/sitio/$slug`, `/sitio/$slug/regalos` | Página pública simulada de la pareja. Solo existe en el navegador de quien la creó. |
 
-## 2. Crear el evento y elegir plan
+## 2. Crear el evento (el plan se elige al publicar)
 
 0. `/crear/cuenta` (supuesto documentado: sin backend no hay cuentas reales; Google y Apple no autentican). Los botones de la landing y del menú llevan acá primero.
 1. `/crear`: pantalla centrada y sin encabezado (solo una «X» que vuelve al inicio): tu nombre, el nombre de tu pareja y la fecha, con el interruptor «Todavía no tenemos fecha» (se puede avanzar sin fecha). Ya no pide la foto de portada: queda la imagen de muestra (rosas, oscurecida para que se lean nombres y fecha) y la pareja la cambia después desde el panel (`CoupleDialog`/`PhotoPicker`). Tampoco hay vista previa de la portada ni aviso de demostración en este paso.
-2. `/crear/plan`: tres planes (Regalos, Completo, Premium) con el mensaje «Probá Weda gratis, sin tarjeta. Pagás únicamente cuando publiques tu sitio.». No hay checkout ni precios.
-3. Entra a `/panel`. Sin evento el panel redirige a `/crear`; sin plan, a `/crear/plan`. El plan se puede cambiar después sin perder datos.
+2. Entra directo a `/panel` con todo habilitado para probar (planId vacío = «Prueba gratuita»). Sin evento el panel redirige a `/crear`. No se pide plan ni tarjeta.
+3. Al tocar «Publicar» (o «Elegir plan» / «Ver los planes») se abre el diálogo con los tres planes, precio por evento y qué incluye cada uno. Elegir **no cobra ni publica** (no hay servicio conectado) y se puede cambiar cuando se quiera. Si ya se cargó algo que el plan elegido no incluye (música, galería, mensaje final, página, invitados, mesas), se conserva como **borrador**: no se publica y el diálogo y la pantalla bloqueada dicen en qué plan sí (`draftsFor` en `logic.ts`).
 
 ## 3. Planes (fuente: `src/lib/weda/plans.ts`)
 
-| Función | Regalos | Completo | Premium |
+| Función | Regalos (ARS 95.000) | Invitación (ARS 180.000) | Completo (ARS 320.000) |
 |---|---|---|---|
-| Lista de regalos | sí | sí | sí |
-| Tu página web (secciones estándar) | no | sí | sí |
-| Confirmación de asistencia | no | sí | sí |
-| Invitados y mesas/grupos | no | sí | sí |
+| Lista de regalos, alias/tarjeta y registro de regalos recibidos | sí | sí | sí |
+| Micrositio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
+| Confirmación de asistencia (RSVP) | no | sí | sí |
+| Invitados (panel de respuestas) y mesas/grupos | no | sí | sí |
 | Música de la fiesta (solo configuración y vista previa; sin conexión real a Spotify) | no | no | sí |
+| Galería de fotos con hashtag e Instagram | no | no | sí |
+| Mensaje final personalizado | no | no | sí |
+
+Los precios son de referencia, **por evento**, y viven solo en `src/lib/weda/plans.ts`. No se afirma pago único, ausencia de suscripción ni duración de la publicación (sin definir). Los planes son acumulativos.
 
 Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin bloquear el resto de la navegación. En el menú, lo que el plan no incluye lleva un candado (con texto para lectores de pantalla) y se explica al entrar.
 
@@ -43,7 +47,7 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 - Aviso corto y ocultable con tres ideas (orden libre, ver el resultado cuando quieras, se guarda solo en el dispositivo).
 - Barra de avance con pasos según el plan. Cada paso tiene estado **Sin empezar / En progreso / Completo**, calculado desde los datos reales (`tasks()` en `src/lib/weda/logic.ts`): datos del casamiento (completo con fecha), lista de regalos (completa con regalos y alias), tu página web (completa con un evento con nombre y dirección), invitados (completo con al menos uno), mesas y grupos (opcional; completo cuando todos tienen lugar).
 - Se marca el paso recomendado y cada paso lleva al lugar donde se resuelve. «Datos del casamiento» abre un diálogo de nombres, fecha y foto.
-- «Ver como invitado» y «Cambiar de plan» están a un clic; «Reiniciar la demo» pide confirmación.
+- «Ver como invitado» y «Cambiar de plan» (o «Elegir plan») están a un clic; «Reiniciar la demo» pide confirmación.
 
 ## 5. Lista de regalos (`/panel/regalos`)
 
@@ -55,7 +59,7 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 
 ## 6. Tu página web (`/panel/sitio`)
 
-- Una lista de secciones: Portada, Evento 1, 2 y 3 (opcionales, con nombre que elige la pareja; sin nombre se llaman «Evento 1/2/3»), Confirmación de asistencia, Dress code, Fotos, Mensaje final y Música (Premium). Cada una muestra su estado y tiene «Mostrar». Ocultar no borra lo cargado. Solo hay una sección abierta a la vez.
+- Una lista de secciones: Portada, Evento 1, 2 y 3 (opcionales, con nombre que elige la pareja; sin nombre se llaman «Evento 1/2/3»), Confirmación de asistencia, Dress code, Fotos, Mensaje final y Música (plan Completo). Cada una muestra su estado y tiene «Mostrar». Ocultar no borra lo cargado. Solo hay una sección abierta a la vez.
 - Portada: foto, nombres, fecha y «texto sobre los nombres» (puede quedar vacío).
 - Confirmación de asistencia: solo mostrar u ocultar.
 - La vista previa es la página pública real, en formato celular, a la derecha en pantallas anchas; al abrir una sección se desplaza hasta ella. Hay «Ver como invitado en otra pestaña». En pantallas angostas se alterna con «Ver como invitado».
@@ -84,7 +88,7 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 ## 10. Vacíos y supuestos (a confirmar con la autora antes de tratarlos como reglas)
 
 - **Precios, comisiones, plazos y condiciones de publicación:** no definidos. La interfaz dice que el precio se informa al publicar.
-- **Qué es «Premium»:** la landing dice «todo lo del plan Completo + sitio de casamiento premium»; el único contenido premium implementado es la música. Es un supuesto documentado.
+- **Qué hay en «Completo»:** la diferencia con Invitación son música de la fiesta, galería de fotos con hashtag y mensaje final (las tres se restringen de verdad por plan). Spotify real y más secciones no existen todavía. Los datos guardados con los nombres viejos de plan se migran (versión 1 → 2: completo→invitacion, premium→completo).
 - **Qué sucede después del pago** y qué incluye cada plan más allá de la matriz anterior: sin definir.
 - **Mercado Pago y cobro con tarjeta:** sin desarrollar.
 - **Analytics:** no existe infraestructura; no hay eventos definidos.

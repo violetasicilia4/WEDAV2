@@ -2,11 +2,8 @@ import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field } from '@/components/panel/ui';
-import { isPlanId } from '@/lib/weda/plans';
-import type { PlanId } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/crear/cuenta')({
-  validateSearch: (s: Record<string, unknown>): { plan?: PlanId } => (isPlanId(s['plan']) ? { plan: s['plan'] } : {}),
   component: Account,
 });
 
@@ -28,11 +25,10 @@ const AppleMark = () => (
   </svg>
 );
 
-/* Paso 1 de 3: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda el mail o la clave; la pantalla
+/* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda el mail o la clave; la pantalla
    solo da paso al armado del evento. */
 function Account() {
   const navigate = useNavigate();
-  const search = Route.useSearch();
   const [mode, setMode] = useState<Mode>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +36,7 @@ function Account() {
   const [errors, setErrors] = useState<{ email?: string | undefined; password?: string | undefined }>({});
   const signup = mode === 'signup';
 
-  const next = () => void navigate({ to: '/crear', search: search.plan ? { plan: search.plan } : {} });
+  const next = () => void navigate({ to: '/crear' });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

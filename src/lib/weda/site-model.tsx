@@ -107,7 +107,7 @@ export function siteFromState(s: AppState): SiteData {
     id: g.id, name: g.name, text: g.text, amount: g.amount, category: g.category, icon: g.icon, image: g.image, pos: g.pos, fit: g.fit, zoom: g.zoom,
   }));
   const present = demoCategories.filter(c => gifts.some(g => g.category === c));
-  const hasPhotos = s.site.gallery.enabled && s.site.gallery.photos.length > 0;
+  const hasPhotos = can(s.planId, 'gallery') && s.site.gallery.enabled && s.site.gallery.photos.length > 0;
   const dressOn = s.site.dressCode.enabled && (s.site.dressCode.title.trim() !== '' || s.site.dressCode.text.trim() !== '');
   return {
     kind: 'app',
@@ -135,7 +135,7 @@ export function siteFromState(s: AppState): SiteData {
       dress: dressOn,
       photos: hasPhotos,
       playlist: premiumMusic,
-      message: s.site.message.enabled,
+      message: can(s.planId, 'message') && s.site.message.enabled,
     },
     rsvp: { deadline: s.site.rsvp.deadline && parseDate(s.site.rsvp.deadline) ? dayMonth(s.site.rsvp.deadline) : null, menus: s.site.rsvp.menus ? demoMenus : null },
     dressCode: { title: s.site.dressCode.title.trim(), text: s.site.dressCode.text.trim(), palette: PALETTE },

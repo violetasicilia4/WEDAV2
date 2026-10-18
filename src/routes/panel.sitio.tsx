@@ -2,14 +2,24 @@ import { useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Plus, X } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
-import { Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
+import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
 import { dateLabel, hasEventDetails, isSafeMapsUrl, mapsLink, sitePath, uid, validateOnboarding } from '@/lib/weda/logic';
-import { can, planFor } from '@/lib/weda/plans';
+import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { update, useAppState } from '@/lib/weda/store';
 import type { SiteConfig, SiteEvent } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/panel/sitio')({ component: SiteEditor });
+
+/** Sección que el plan elegido no incluye: se conserva lo cargado como borrador y se dice en qué plan se publica. */
+function LockedBlock({ id, title, feature }: { id: string; title: string; feature: Feature }) {
+  const plans = usePlans();
+  return (
+    <section className="pn-sec is-locked" aria-labelledby={`sec-${id}`}>
+      <div className="pn-sec-head"><div className="pn-sec-main is-static"><span className="pn-sec-text"><strong id={`sec-${id}`}>{title}</strong><span className="pn-muted">No está en tu plan: está en el plan {planFor(feature)?.name}. Lo que cargaste se conserva como borrador. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></span></span></div></div>
+    </section>
+  );
+}
 
 const MAX_PHOTOS = 6;
 
@@ -118,6 +128,7 @@ function SiteEditor() {
   const [track, setTrack] = useState({ title: '', artist: '' });
   const [trackError, setTrackError] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
+  const plans = usePlans();
 
   if (!can(s.planId, 'site')) return <Locked feature="site" />;
   const site = s.site;
@@ -154,7 +165,7 @@ function SiteEditor() {
     ...site.events.filter(e => e.enabled && !(e.title.trim() && (e.name.trim() || e.address.trim()))).map(e => ({ id: e.key as SectionId, label: e.title.trim() || `el evento ${SLOT[e.key]}` })),
     ...(site.dressCode.enabled && !site.dressCode.title.trim() ? [{ id: 'dress' as SectionId, label: 'el dress code' }] : []),
   ];
-  const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, site.gallery.enabled, site.message.enabled, premium && site.playlist.enabled].filter(Boolean).length;
+  const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, can(s.planId, 'gallery') && site.gallery.enabled, can(s.planId, 'message') && site.message.enabled, premium && site.playlist.enabled].filter(Boolean).length;
 
   return (
     <div className="pn-page pn-editor">
@@ -194,6 +205,7 @@ function SiteEditor() {
             <Field label="Texto" optional>{a => <textarea id={a.id} rows={3} value={site.dressCode.text} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, text: e.target.value } }))} />}</Field>
           </Block>
 
+          {can(s.planId, 'gallery') ? (
           <Block id="fotos" title="Fotos" help="Una galería con las fotos que quieran compartir." status={!site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? `${site.gallery.photos.length} ${site.gallery.photos.length === 1 ? 'foto' : 'fotos'}` : 'Sin fotos'} tone={!site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo'} enabled={site.gallery.enabled} onToggle={v => patchSite(x => ({ ...x, gallery: { ...x.gallery, enabled: v } }))} {...shared}>
             {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
             {site.gallery.photos.length > 0 && (
@@ -215,11 +227,14 @@ function SiteEditor() {
             <Field label="Hashtag" optional>{a => <input id={a.id} type="text" value={site.gallery.hashtag} placeholder="#TomasYMartina2027" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, hashtag: e.target.value } }))} />}</Field>
             <Field label="Usuario de Instagram" optional>{a => <input id={a.id} type="text" value={site.gallery.handle} placeholder="@tomasymartina" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, handle: e.target.value } }))} />}</Field>
           </Block>
+          ) : <LockedBlock id="fotos" title="Fotos" feature="gallery" />}
 
+          {can(s.planId, 'message') ? (
           <Block id="mensaje" title="Mensaje final" help="Unas palabras de cierre para tus invitados." status={site.message.enabled ? 'Visible' : 'Oculta'} tone={site.message.enabled ? 'ok' : 'off'} enabled={site.message.enabled} onToggle={v => patchSite(x => ({ ...x, message: { ...x.message, enabled: v } }))} {...shared}>
             <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
             <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
           </Block>
+          ) : <LockedBlock id="mensaje" title="Mensaje final" feature="message" />}
 
           {premium ? (
             <Block id="musica" title="Música de la fiesta" help="Tus invitados suman las canciones que no pueden faltar." status={site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta'} tone={site.playlist.enabled ? 'ok' : 'off'} enabled={site.playlist.enabled} onToggle={v => patchSite(x => ({ ...x, playlist: { ...x.playlist, enabled: v } }))} {...shared}>
@@ -240,7 +255,7 @@ function SiteEditor() {
             </Block>
           ) : (
             <section className="pn-sec is-locked" aria-labelledby="sec-musica">
-              <div className="pn-sec-head"><div className="pn-sec-main is-static"><span className="pn-sec-text"><strong id="sec-musica">Música de la fiesta</strong><span className="pn-muted">No está en tu plan. Está disponible desde el plan {planFor('playlist')?.name}. <Link to="/crear/plan" className="pn-link">Ver los planes</Link></span></span></div></div>
+              <div className="pn-sec-head"><div className="pn-sec-main is-static"><span className="pn-sec-text"><strong id="sec-musica">Música de la fiesta</strong><span className="pn-muted">No está en tu plan. Está disponible desde el plan {planFor('playlist')?.name}. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></span></span></div></div>
             </section>
           )}
         </div>

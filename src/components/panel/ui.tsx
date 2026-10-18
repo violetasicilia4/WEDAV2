@@ -1,10 +1,12 @@
 // Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, módulos bloqueados y vista previa.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Lock } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { planFor, type Feature } from '@/lib/weda/plans';
-import { useAppState, useStorageFull } from '@/lib/weda/store';
+import { draftsFor, setPlan } from '@/lib/weda/logic';
+import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, type Feature } from '@/lib/weda/plans';
+import { update, useAppState, useStorageFull } from '@/lib/weda/store';
+import type { PlanId } from '@/lib/weda/types';
 
 /* ------------------------------------------------------------------ campos */
 
@@ -78,17 +80,19 @@ export function ConfirmDialog({ open, title, text, confirmLabel, onConfirm, onCa
 const FEATURE_NAMES: Record<Feature, string> = {
   gifts: 'La lista de regalos', site: 'El sitio del casamiento', rsvp: 'La confirmación de asistencia',
   guests: 'La gestión de invitados', groups: 'Los grupos y las mesas', playlist: 'La música de la fiesta',
+  gallery: 'La galería de fotos', message: 'El mensaje final',
 };
 
-/** Estado bloqueado: explica qué falta y a qué plan pertenece. No simula que la función esté disponible. */
+/** Estado bloqueado: explica qué falta y a qué plan pertenece. Lo cargado se conserva como borrador. */
 export function Locked({ feature, children }: { feature: Feature; children?: ReactNode }) {
   const plan = planFor(feature);
+  const plans = usePlans();
   return (
     <div className="pn-locked">
       <span className="pn-locked-icon" aria-hidden="true"><Lock size={22} strokeWidth={1.5} /></span>
       <h2>{FEATURE_NAMES[feature]} no está incluida en tu plan</h2>
-      <p>{children ?? `Está disponible desde el plan ${plan?.name ?? 'Completo'}. Podés cambiar de plan cuando quieras: no se cobra nada al elegirlo.`}</p>
-      <Link to="/crear/plan" className="pn-btn">Ver los planes</Link>
+      <p>{children ?? `Está en el plan ${plan?.name ?? 'Completo'}. Lo que ya cargaste se conserva como borrador y podés cambiar de plan cuando quieras: no se cobra nada al elegirlo.`}</p>
+      <button type="button" className="pn-btn" onClick={plans.open}>Ver los planes</button>
     </div>
   );
 }
@@ -116,21 +120,72 @@ export function PreviewFrame({ path, device, anchor }: { path: string; device: '
   );
 }
 
-/* ------------------------------------------------------------------ publicar */
+/* ------------------------------------------------------------------ plan y publicación */
 
-/** «Publicar» no publica ni cobra nada: explica qué falta. No simula una contratación. */
-export function PublishDialog({ open, onClose, showPreviewLink = true }: { open: boolean; onClose: () => void; showPreviewLink?: boolean }) {
+/** Se elige el plan al publicar (no antes). Elegir NO cobra ni publica: la publicación y el pago todavía no están conectados. */
+function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const state = useAppState();
+  const [picked, setPicked] = useState<PlanId | null>(state.planId);
+  const [chosen, setChosen] = useState(false);
+  const plan = planById(picked);
+  const drafts = picked ? draftsFor(state, picked) : [];
+  const close = () => { setChosen(false); onClose(); };
+  const choose = () => { if (!picked) return; update(s => setPlan(s, picked)); setChosen(true); };
   return (
-    <Dialog open={open} onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent className="pn-dialog is-small">
-        <DialogTitle>Todavía no se puede publicar</DialogTitle>
-        <DialogDescription>La publicación y el pago se van a habilitar cuando el servicio esté conectado. Hoy podés armar todo y revisarlo como invitado. No se cobró nada ni se publicó nada en Internet.</DialogDescription>
-        <div className="pn-actions">
-          {showPreviewLink && <Link to="/panel/vista-previa" className="pn-btn" onClick={onClose}>Ver como invitado</Link>}
-          <button type="button" className="pn-btn is-ghost" onClick={onClose}>Entendido</button>
-        </div>
+    <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
+      <DialogContent className="pn-dialog pn-plans-dialog">
+        {!chosen ? (
+          <>
+            <DialogTitle>Elegí tu plan para publicar</DialogTitle>
+            <DialogDescription>Armaste todo gratis y sin tarjeta. El plan se elige recién ahora, y podés cambiarlo cuando quieras sin perder lo que cargaste.</DialogDescription>
+            <div className="pn-plan-opts" role="radiogroup" aria-label="Plan">
+              {PLANS.map(p => (
+                <label key={p.id} className={`pn-plan-opt${picked === p.id ? ' on' : ''}`}>
+                  <input type="radio" name="plan" value={p.id} checked={picked === p.id} onChange={() => setPicked(p.id)} />
+                  <span className="pn-plan-opt-main"><strong>{p.name}</strong><small>{p.summary}</small></span>
+                  <span className="pn-plan-opt-price"><strong>{formatPrice(p.price)}</strong><small>{PRICE_UNIT}</small></span>
+                </label>
+              ))}
+            </div>
+            {plan && (
+              <div className="pn-plan-detail" aria-live="polite">
+                <p className="pn-label">{plan.inherits ? `Todo lo de ${planById(plan.inherits)?.name}, y además:` : 'Incluye:'}</p>
+                <ul className="pn-plan-items">{plan.items.map(it => <li key={it}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span>{it}</span></li>)}</ul>
+                {drafts.length > 0 && <p className="pn-note">Con este plan, {drafts.map(d => d.label.toLowerCase()).join(', ')} no se publica{drafts.length > 1 ? 'n' : ''}: lo que cargaste queda como borrador y se publica con el plan {[...new Set(drafts.map(d => d.plan))].join(' o ')}.</p>}
+              </div>
+            )}
+            <div className="pn-actions is-end">
+              <button type="button" className="pn-btn is-ghost" onClick={close}>Ahora no</button>
+              <button type="button" className="pn-btn" onClick={choose} disabled={!picked}>{plan ? `Elegir ${plan.name}` : 'Elegí un plan'}</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogTitle>Elegiste el plan {plan?.name}</DialogTitle>
+            <DialogDescription>{plan ? `${formatPrice(plan.price)} ${PRICE_UNIT}. ` : ''}Todavía no se puede publicar: la publicación y el pago se habilitan cuando el servicio esté conectado. No se cobró nada ni se publicó nada en Internet.</DialogDescription>
+            {drafts.length > 0 && <p className="pn-note">Queda como borrador: {drafts.map(d => d.label.toLowerCase()).join(', ')}.</p>}
+            <div className="pn-actions is-end">
+              <button type="button" className="pn-btn" onClick={close}>Entendido</button>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+const PlansContext = createContext<{ open: () => void }>({ open: () => {} });
+export const usePlans = () => useContext(PlansContext);
+
+/** Provee «abrir los planes» a todo el panel y renderiza el diálogo una sola vez. */
+export function PlansProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const value = useRef({ open: () => setOpen(true) }).current;
+  return (
+    <PlansContext.Provider value={value}>
+      {children}
+      {open && <PlansDialog open onClose={() => setOpen(false)} />}
+    </PlansContext.Provider>
   );
 }
 

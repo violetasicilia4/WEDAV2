@@ -2,19 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Field } from '@/components/panel/ui';
 import { todayIso, validateOnboarding } from '@/lib/weda/logic';
-import { isPlanId } from '@/lib/weda/plans';
 import { update, useAppState, useHydrated } from '@/lib/weda/store';
-import type { PhotoChoice, PlanId } from '@/lib/weda/types';
+import type { PhotoChoice } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/crear/')({
-  validateSearch: (s: Record<string, unknown>): { plan?: PlanId } => (isPlanId(s['plan']) ? { plan: s['plan'] } : {}),
   component: Onboarding,
 });
 
-/* Paso 2 de 3: datos del casamiento. La fecha y la foto son opcionales: nadie queda bloqueado por no tenerlas todavía. */
+/* Paso 2: datos del casamiento. La fecha y la foto son opcionales: nadie queda bloqueado por no tenerlas todavía. */
 function Onboarding() {
   const navigate = useNavigate();
-  const search = Route.useSearch();
   const state = useAppState();
   const hydrated = useHydrated();
   const filled = useRef(false);
@@ -30,13 +27,12 @@ function Onboarding() {
   useEffect(() => {
     if (!hydrated || filled.current) return;
     filled.current = true;
-    if (search.plan) update(s => ({ ...s, preferredPlan: search.plan ?? null }));
     if (state.couple.first || state.couple.second || state.onboarded) {
       setFirst(state.couple.first); setSecond(state.couple.second);
       setDate(state.date ?? ''); setNoDate(state.onboarded && !state.date);
       setPhoto(state.photo);
     }
-  }, [hydrated, state, search.plan]);
+  }, [hydrated, state]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +43,7 @@ function Onboarding() {
       return;
     }
     update(s => ({ ...s, onboarded: true, couple: { first: first.trim(), second: second.trim() }, date: noDate ? null : date, photo }));
-    void navigate({ to: '/crear/plan' });
+    void navigate({ to: '/panel' });
   };
 
   return (

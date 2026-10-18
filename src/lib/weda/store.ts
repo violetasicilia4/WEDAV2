@@ -5,10 +5,15 @@
 import { useSyncExternalStore } from 'react';
 import { defaultSite, emptyState } from './logic';
 import { isPlanId } from './plans';
-import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, SiteConfig } from './types';
+import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
 export const STORAGE_KEY = 'weda-app';
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
+/** Versión 1 llamaba «completo» a lo que hoy es «invitacion» y «premium» a lo que hoy es «completo». */
+const planOf = (v: unknown, from: number): PlanId | null => {
+  const id = from === 1 ? (v === 'completo' ? 'invitacion' : v === 'premium' ? 'completo' : v) : v;
+  return isPlanId(id) ? id : null;
+};
 
 /* ------------------------------------------------------------------ saneado de datos guardados */
 
@@ -74,15 +79,16 @@ function site(v: unknown): SiteConfig {
 /** Convierte cualquier cosa leída del almacenamiento en un AppState válido. Si no se puede, devuelve el estado vacío. */
 export function sanitize(raw: unknown): AppState {
   const e = emptyState();
-  if (!isObj(raw) || raw['version'] !== STORAGE_VERSION) return e;
+  if (!isObj(raw) || (raw['version'] !== STORAGE_VERSION && raw['version'] !== 1)) return e;
+  const from = raw['version'] as number;
   const c = isObj(raw['couple']) ? raw['couple'] : {}, g = isObj(raw['gifts']) ? raw['gifts'] : {};
   return {
-    version: 1, onboarded: bool(raw['onboarded'], false),
+    version: 2, onboarded: bool(raw['onboarded'], false),
     couple: { first: str(c['first']), second: str(c['second']) },
     date: typeof raw['date'] === 'string' ? raw['date'] : null,
     photo: photo(raw['photo']),
-    preferredPlan: isPlanId(raw['preferredPlan']) ? raw['preferredPlan'] : null,
-    planId: isPlanId(raw['planId']) ? raw['planId'] : null,
+    preferredPlan: planOf(raw['preferredPlan'], from),
+    planId: planOf(raw['planId'], from),
     gifts: {
       cover: typeof g['cover'] === 'string' ? g['cover'] : null, alias: str(g['alias']), acceptCard: bool(g['acceptCard'], false),
       items: arr(g['items']).map(listGift).filter((x): x is ListGift => !!x),

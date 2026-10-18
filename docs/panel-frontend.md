@@ -8,16 +8,16 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 - TanStack Start/Router (rutas por archivo) + React 19 + Vite + Tailwind 4 + Radix/shadcn (`src/components/ui`).
 - `/` landing; `/ejemplo`, `/ejemplo/regalos` casamiento ficticio (Ignacio & Martina); `/encontrar` buscador de invitados.
 - Datos de la demo en `src/lib/demo-wedding.ts` (catálogo de 26 regalos, 4 categorías, menús, eventos, dress code…).
-- Planes (landing, `src/routes/index.tsx`): **Regalos** (lista), **Completo** (lista + confirmación + sitio), **Premium** (todo Completo + sitio premium). No hay precios.
+- Planes (`src/lib/weda/plans.ts`, única fuente; la landing los muestra en `src/components/landing-plans.tsx`): **Regalos** ARS 95.000, **Invitación** ARS 180.000, **Completo** ARS 320.000, por evento y acumulativos.
 - No existía ningún flujo de registro ni de creación de evento, ni panel.
 
 ## 2. Rutas
 
 | Ruta | Qué es |
 |---|---|
-| `/crear/cuenta` | Paso 1 de 3: cuenta (solo interfaz, no guarda nada). Acepta `?plan=`. |
-| `/crear` | Paso 2 de 3: nombres y fecha (opcional); la foto se cambia después desde el panel. Acepta `?plan=regalos\|completo\|premium` (viene de los botones «Elegir plan» de la landing). |
-| `/crear/plan` | Paso 3 de 3: elegir plan. Sin checkout. |
+| `/crear/cuenta` | Paso 1: cuenta (solo interfaz, no guarda nada). |
+| `/crear` | Paso 2: nombres y fecha (opcional); la foto se cambia después desde el panel. |
+| `/crear/plan` | Redirige a `/panel`: el plan se elige al publicar, en un diálogo del panel. |
 | `/panel` | Resumen y próximo paso. |
 | `/panel/regalos` | Tres pestañas: **Mi lista** (orden, edición, quitar), **Agregar regalos** (sets + catálogo en una sola vista, con la tarjeta «Crear un regalo propio» al principio) y **Recibidos** (quién regaló qué, monto, medio, fecha y mensaje). Arriba, «Cobro y portada»: alias, preferencia de tarjeta (sin cobro real) y portada. |
 | `/panel/invitados` | Invitados (tabla en la compu, tarjetas en el celular), búsqueda, filtros, alta manual. |
@@ -26,7 +26,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 | `/panel/vista-previa` | «Ver como invitado»: la página pública real en celular o compu. |
 | `/sitio/$slug`, `/sitio/$slug/regalos` | Página pública **simulada** de la pareja (ej.: `/sitio/tomas-y-martina`). Mismos componentes que `/ejemplo`. |
 
-Modificadas: `/ejemplo*` (ahora usan los componentes compartidos; se ve y funciona igual), landing (los CTA «Crear mi evento», «Crear mi lista de regalos» y «Elegir plan» llevan a `/crear`), barra flotante.
+Modificadas: `/ejemplo*` (ahora usan los componentes compartidos; se ve y funciona igual), landing (los CTA «Crear mi evento», «Crear mi lista de regalos» y «Elegir plan» llevan a `/crear/cuenta`), barra flotante.
 `/crear`, `/panel` y `/sitio` llevan `noindex` (meta + cabecera `X-Robots-Tag`).
 Se eligió `/sitio/$slug` y no `/$slug` para no chocar con las rutas existentes; el slug se normaliza (`Tomás & Martina` → `tomas-y-martina`).
 
@@ -59,15 +59,19 @@ src/lib/weda/
 
 ## 5. Matriz de planes (y su supuesto)
 
-| Función | Regalos | Completo | Premium |
+| Función | Regalos | Invitación | Completo |
 |---|---|---|---|
-| Lista de regalos | ✓ | ✓ | ✓ |
-| Sitio del casamiento (editor y página) | – | ✓ | ✓ |
-| Confirmación de asistencia | – | ✓ | ✓ |
-| Invitados y grupos/mesas | – | ✓ | ✓ |
-| Música de la fiesta (configuración y vista previa; sin conexión real a Spotify) | – | – | ✓ |
+| Lista de regalos, alias/tarjeta y registro de regalos recibidos | sí | sí | sí |
+| Micrositio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
+| Confirmación de asistencia (RSVP) | no | sí | sí |
+| Invitados (panel de respuestas) y mesas/grupos | no | sí | sí |
+| Música de la fiesta (solo configuración y vista previa; sin conexión real a Spotify) | no | no | sí |
+| Galería de fotos con hashtag e Instagram | no | no | sí |
+| Mensaje final personalizado | no | no | sí |
 
-Premium = todo Completo + música. No hay otra personalización avanzada implementada ni documentada, así que no se declara. Las restricciones se aplican al mostrar: al bajar de plan los datos (temas, invitados, grupos) se conservan y reaparecen al volver a subir. La primera parte sale de la landing. **El repositorio no define qué bloques del sitio son «premium».** Se asumió que solo la música (playlist) lo es; está declarado en `plans.ts` y se cambia en un lugar. Los módulos que el plan no incluye se muestran bloqueados con el plan que los trae. Al cambiar de plan los datos se conservan.
+Los precios son de referencia, **por evento**, y viven solo en `src/lib/weda/plans.ts`. No se afirma pago único, ausencia de suscripción ni duración de la publicación (sin definir). Los planes son acumulativos.
+
+Sin plan elegido (prueba gratuita) `can()` devuelve verdadero para todo. Las restricciones se aplican al mostrar y solo con plan elegido: al bajar de plan los datos se conservan como borrador. Qué hay cargado y no se incluye: `draftsFor()`.
 
 ## 6. Qué es real en el frontend y qué depende del backend
 
