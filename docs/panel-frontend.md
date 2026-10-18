@@ -16,7 +16,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 | Ruta | Qué es |
 |---|---|
 | `/crear/cuenta` | Paso 1 de 3: cuenta (solo interfaz, no guarda nada). Acepta `?plan=`. |
-| `/crear` | Paso 2 de 3: nombres, fecha (opcional), foto (opcional). También «Probar con Tomás y Martina» (datos de ejemplo). Acepta `?plan=regalos\|completo\|premium` (viene de los botones «Elegir plan» de la landing). |
+| `/crear` | Paso 2 de 3: nombres y fecha (opcional); la foto se cambia después desde el panel. También «Probar con Tomás y Martina» (datos de ejemplo). Acepta `?plan=regalos\|completo\|premium` (viene de los botones «Elegir plan» de la landing). |
 | `/crear/plan` | Paso 3 de 3: elegir plan. Sin checkout. |
 | `/panel` | Resumen y próximo paso. |
 | `/panel/regalos` | Tres pestañas: **Mi lista** (orden, edición, quitar), **Agregar regalos** (sets + catálogo en una sola vista, con la tarjeta «Crear un regalo propio» al principio) y **Recibidos** (quién regaló qué, monto, medio, fecha y mensaje). Arriba, «Cobro y portada»: alias, preferencia de tarjeta (sin cobro real) y portada. |
