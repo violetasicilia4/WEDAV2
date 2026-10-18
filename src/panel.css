@@ -46,8 +46,9 @@
 .pn-dialog input[type='text'], .pn-dialog input[type='date'], .pn-dialog input[type='time'], .pn-dialog input[type='url'], .pn-dialog input[type='search'], .pn-dialog select, .pn-dialog textarea {
   width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--pn-line-s); border-radius: 12px; background: #fff; color: var(--pn-ink); font-size: 16px;
 }
-.pn-root input[type='date'], .pn-dialog input[type='date'] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; text-align: left; }
-.pn-root input[type='date']::-webkit-date-and-time-value, .pn-dialog input[type='date']::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
+.pn-root input[type='date'], .pn-dialog input[type='date'] { -webkit-appearance: none; appearance: none; display: flex; align-items: center; height: 48px; min-width: 0; max-width: 100%; line-height: 1.2; text-align: left; }
+.pn-root input[type='date']::-webkit-date-and-time-value, .pn-dialog input[type='date']::-webkit-date-and-time-value { text-align: left; margin: 0; min-height: 0; width: 100%; }
+.pn-root input[type='date']::-webkit-datetime-edit, .pn-dialog input[type='date']::-webkit-datetime-edit { padding: 0; }
 .pn-root textarea, .pn-dialog textarea { padding: 12px 14px; min-height: 96px; resize: vertical; line-height: 1.45; }
 .pn-root input:disabled { background: rgb(59 60 58 / .05); color: var(--pn-muted); }
 .pn-field.has-error input, .pn-field.has-error select, .pn-field.has-error textarea { border-color: var(--destructive, #b3402f); }

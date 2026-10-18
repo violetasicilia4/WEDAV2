@@ -3,8 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Field } from '@/components/panel/ui';
 import { todayIso, validateOnboarding } from '@/lib/weda/logic';
 import { isPlanId } from '@/lib/weda/plans';
-import { seedState } from '@/lib/weda/seed';
-import { replace, update, useAppState, useHydrated } from '@/lib/weda/store';
+import { update, useAppState, useHydrated } from '@/lib/weda/store';
 import type { PhotoChoice, PlanId } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/crear/')({
@@ -51,8 +50,6 @@ function Onboarding() {
     void navigate({ to: '/crear/plan' });
   };
 
-  const tryExample = () => { replace(seedState()); void navigate({ to: '/panel' }); };
-
   return (
     <div className="pn-account">
       <header className="pn-account-head">
@@ -78,7 +75,6 @@ function Onboarding() {
         <button type="submit" className="pn-btn pn-block">Continuar</button>
       </form>
 
-      <p className="pn-alt pn-account-switch">¿Querés recorrer todo sin cargar nada? <button type="button" className="pn-link" onClick={tryExample}>Probar con Tomás y Martina</button></p>
     </div>
   );
 }

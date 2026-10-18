@@ -22,7 +22,7 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 ## 2. Crear el evento y elegir plan
 
 0. `/crear/cuenta` (supuesto documentado: sin backend no hay cuentas reales; Google y Apple no autentican). Los botones de la landing y del menú llevan acá primero.
-1. `/crear`: pantalla centrada y sin encabezado (solo una «X» que vuelve al inicio): tu nombre, el nombre de tu pareja y la fecha, con el interruptor «Todavía no tenemos fecha» (se puede avanzar sin fecha). Ya no pide la foto de portada: queda la imagen de muestra (rosas, oscurecida para que se lean nombres y fecha) y la pareja la cambia después desde el panel (`CoupleDialog`/`PhotoPicker`). Tampoco hay vista previa de la portada ni aviso de demostración en este paso. «Probar con Tomás y Martina» carga un caso completo.
+1. `/crear`: pantalla centrada y sin encabezado (solo una «X» que vuelve al inicio): tu nombre, el nombre de tu pareja y la fecha, con el interruptor «Todavía no tenemos fecha» (se puede avanzar sin fecha). Ya no pide la foto de portada: queda la imagen de muestra (rosas, oscurecida para que se lean nombres y fecha) y la pareja la cambia después desde el panel (`CoupleDialog`/`PhotoPicker`). Tampoco hay vista previa de la portada ni aviso de demostración en este paso.
 2. `/crear/plan`: tres planes (Regalos, Completo, Premium) con el mensaje «Probá Weda gratis, sin tarjeta. Pagás únicamente cuando publiques tu sitio.». No hay checkout ni precios.
 3. Entra a `/panel`. Sin evento el panel redirige a `/crear`; sin plan, a `/crear/plan`. El plan se puede cambiar después sin perder datos.
 
