@@ -74,7 +74,8 @@
 .pn-flow-head.is-account { justify-content: flex-end; padding: 8px 0 0; }
 .pn-close { display: grid; place-items: center; width: 44px; height: 44px; margin-right: -10px; color: var(--pn-ink); border-radius: 999px; }
 .pn-flow-step { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--pn-muted); white-space: nowrap; flex: none; }
-.pn-flow-main { width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 4px 0 max(32px, env(safe-area-inset-bottom)); }
+.pn-flow { display: flex; flex-direction: column; }
+.pn-flow-main { flex: 1; display: flex; flex-direction: column; width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 4px 0 max(32px, env(safe-area-inset-bottom)); }
 @media (min-width: 768px) { .pn-flow-main { padding-bottom: 64px; } }
 .pn-flow h1, .pn-page h1 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; letter-spacing: -.01em; }
 .pn-lead { color: var(--pn-muted); font-size: 16px; margin-top: 8px; }
@@ -106,8 +107,9 @@
 .pn-live-copy span { font-size: 13px; letter-spacing: .06em; opacity: .9; }
 
 /* ---------- cuenta (/crear/cuenta) ---------- */
-.pn-account { display: grid; gap: 12px; width: 100%; max-width: 440px; margin: 0 auto; }
+.pn-account { display: grid; gap: 12px; width: 100%; max-width: 440px; margin: auto; }
 .pn-account .pn-form { gap: 12px; }
+@media (min-height: 760px) { .pn-account { transform: translateY(-6vh); } }
 .pn-account .pn-field { gap: 4px; }
 .pn-account-head { display: grid; gap: 2px; text-align: center; padding: 0 0 8px; }
 .pn-account-head h1 { font-size: clamp(28px, 7.4vw, 34px); line-height: 1.1; font-weight: 700; }
