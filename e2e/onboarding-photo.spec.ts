@@ -1,4 +1,4 @@
-import { expect, PNG_1PX, previewText, stored, test } from './helpers';
+import { expect, openPreview, PNG_1PX, previewText, stored, test } from './helpers';
 
 /** Alta del evento hasta el paso de la foto (/crear/foto). */
 async function untilPhotoStep(page: import('@playwright/test').Page) {
@@ -36,6 +36,7 @@ test.describe('Onboarding: foto de la pareja', () => {
 
     // La página del casamiento usa esa foto como portada.
     await page.getByRole('link', { name: /Tu página/ }).click();
+    await openPreview(page);
     await expect.poll(() => previewText(page)).toMatch(/luc[ií]a y violeta/i);
     const cover = await page.frameLocator('iframe').locator('.iv-cover-img').getAttribute('src');
     expect(cover).toBe(saved.photo.src);

@@ -114,3 +114,10 @@ Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila
 - Pasos: elegir regalos → «Tu regalo» (total, quitar, agregar otro) → cómo pagar → datos → agradecimiento. Todo es una demostración y el paso de pago lo dice («Es una demostración: no se cobra ni se envía nada»).
 - «Enviar» solo se habilita si el recorrido es coherente: con alias de los novios cargado, comprobante, nombre y apellido. El correo es opcional: vacío no bloquea y, si se completa, se valida el formato (hoy no se usa para nada). Sin alias o con «Tarjeta» (todavía no disponible) queda deshabilitado y explica por qué. No se muestra «Comprobante» cuando no hay alias.
 - En el sitio de una pareja se puede regalar el mismo regalo más de una vez (no se bloquea tras enviar); en `/ejemplo` se conserva el comportamiento original.
+
+
+## 12. Rediseño del panel (2026-10): cambios de flujo
+- Inicio: el «avance» ya no es un porcentaje; se cuenta cuántos pasos de armado están completos según los datos reales (`stages()`). `progress()` sigue en `journey.ts` (tests) pero el Inicio no lo muestra.
+- Editor de la página: ya no hay acordeón con todas las secciones; se elige una sección y se editan solo sus campos. La vista previa del celular es una pantalla completa que se abre y se cierra a pedido.
+- Regalos: «Cobro» se llama «Aportes». Se puede entrar directo a esa solapa con `/panel/regalos?tab=cobro`.
+- **Pendientes (no implementados, requieren definición):** capacidad por mesa, acciones masivas en Invitados, un ítem «Regalos» dentro del editor de la página (hoy la lista de regalos se edita en su propia sección del panel).

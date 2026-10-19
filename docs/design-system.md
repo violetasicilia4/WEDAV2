@@ -100,6 +100,14 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
   - Estados deshabilitados: el botón «Elegí un plan» explica el motivo; al llegar al máximo de fotos, el texto dice qué hacer.
 - **Cabecera:** botón «Ver como invitado» de 44 px y bajadas (`.pn-sub`) de 15 px en celular.
 
+## 4d. Rediseño de la arquitectura del panel (2026-10)
+
+- **Acciones (panel y diálogos):** primaria = pizarra oscura (`#5A646C`) en negrita con esquinas de 12 px; secundaria (`is-ghost`) = superficie tintada sin borde; terciaria = enlace (`pn-link`); destructiva = rojo (`is-danger`). Las píldoras quedan para filtros, solapas, selectores de vista y la barra flotante de regalos. Encabezados compactos (`.pn-page-head.is-compact`): título de 24 px y una acción chica a la derecha (baja a un segundo renglón a ≤ 380 px).
+- **Inicio:** pareja y fecha, UNA tarjeta «Siguiente paso» (copia y destino salen de `nextAction()` en `journey.ts`; «Configurar aportes» abre `/panel/regalos?tab=cobro`), «Estado» con un conteo real («N de M pasos listos», sin porcentajes: los segmentos reflejan el estado de cada etapa) y tres accesos (Invitación, Regalos, Invitados) con su dato real. Publicar queda como acción secundaria. En escritorio, siguiente paso y estado van en dos columnas.
+- **Editor de la página:** navegación de secciones con punto de estado (verde completa, ámbar falta, gris oculta/sin cargar): Portada · Eventos · Confirmación · Dress code · Fotos · Mensaje final · Música (las que el plan no incluye quedan marcadas con su plan). Solo se ven los campos de la sección elegida; en «Eventos» cada momento es una fila que se abre sola (una a la vez) y tiene su «Mostrar». Celular: «Vista previa» abre la página pública real a pantalla completa (`.pn-pvfull`, con «Volver a editar»); la navegación de secciones queda fija arriba. Escritorio (≥ 1100 px): secciones | campos | vista previa fija. El botón «Ver como invitado» del encabezado se oculta en el editor del celular para no duplicar la acción.
+- **Regalos:** encabezado «Tu lista de regalos» + «N regalos · $ total» y «Agregar regalos» como acción principal (se oculta en «Elegir regalos»). Solapas: Elegir · Mi lista · Aportes · Recibidos (mismos contenidos que antes; «Cobro» pasó a llamarse «Aportes»).
+- **Invitados:** encabezado con conteo («12 invitados · 5 confirmaron») y «Agregar invitados»; filtros como píldoras con conteo; estado vacío compacto con una acción principal («Agregar invitados»), una secundaria («Importar desde Excel») y un enlace.
+
 ## 5. Páginas públicas
 
 Los componentes de la página pública son **los mismos** para `/ejemplo` y `/sitio/$slug`: `src/components/site/{invitation,gifts-page,site-cover,site-shell,site-providers}.tsx`, alimentados por `useSite()` (`demoSiteData` o `siteFromState`). No se crea una segunda versión de la página. El formulario de confirmación es `src/components/rsvp-dialog.tsx`.

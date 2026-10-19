@@ -22,12 +22,12 @@ for (const w of WIDTHS) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
     });
 
-    test('Regalos: seleccionado se distingue con tilde y «Tu lista» deja editar y quitar', async ({ page }) => {
+    test('Regalos: seleccionado se distingue con tilde y «Mi lista» deja editar y quitar', async ({ page }) => {
       await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
       await page.getByRole('button', { name: /Luna de miel, 8 regalos/ }).click();
       await expect(page.locator('.pn-settile.is-on .pn-gcheck')).toBeVisible();
       await expect(page.locator('.pn-gcard.is-in .pn-gcheck').first()).toBeVisible();
-      await page.getByRole('tab', { name: /Tu lista/ }).click();
+      await page.getByRole('tab', { name: /Mi lista/ }).click();
       await page.getByRole('button', { name: 'Editar Pasaje luna de miel' }).click();
       await expect(page.getByRole('dialog')).toBeVisible();
       await page.keyboard.press('Escape');
@@ -80,27 +80,28 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
   });
 
-  test('Editor: muestra la sección activa, se puede plegar la vista previa y se pliega sola con el teclado', async ({ page }) => {
-    await page.addInitScript(() => { const f = new EventTarget() as EventTarget & { height: number }; f.height = window.innerHeight; Object.defineProperty(window, '__vv', { value: f }); Object.defineProperty(window, 'visualViewport', { value: f, configurable: true }); });
+  test('Editor: una sección a la vez con su estado, campos sin tapar por la barra inferior y vista previa que se abre y se cierra', async ({ page }) => {
     await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
-    await expect(page.locator('.pn-edit-label')).toContainText('Editando: Portada');
-    const frame = page.locator('.pn-editor .pn-frame');
-    await expect(frame).toBeVisible();
-    await page.getByRole('button', { name: 'Ocultar la vista previa' }).click();
-    await expect(frame).toBeHidden();
-    await page.getByRole('button', { name: 'Mostrar la vista previa' }).click();
-    await expect(frame).toBeVisible();
-    // Teclado abierto sobre un campo de la página: la vista previa cede el lugar.
-    await page.locator('#sec-ceremonia').click();
-    await page.getByLabel('Nombre del lugar').focus();
-    await page.evaluate(() => { const v = (window as unknown as { __vv: EventTarget & { height: number } }).__vv; v.height = 480; v.dispatchEvent(new Event('resize')); });
-    await expect(frame).toBeHidden();
-    // El campo editado sigue a la vista y por encima de la barra inferior.
-    const field = (await page.getByLabel('Nombre del lugar').boundingBox())!;
+    const snav = page.getByRole('navigation', { name: 'Secciones de tu página' });
+    await expect(snav.getByRole('button', { name: /Portada/ })).toHaveAttribute('aria-current', 'true');
+    await expect(snav.getByRole('button', { name: /Eventos · Sin eventos|Eventos/ })).toBeVisible();
+    // Solo los campos de la sección elegida.
+    await expect(page.getByLabel('Tu nombre')).toBeVisible();
+    await snav.getByRole('button', { name: /Dress code/ }).click();
+    await expect(page.getByLabel('Tu nombre')).toHaveCount(0);
+    await page.getByRole('checkbox', { name: 'Mostrar' }).check();
+    await page.getByLabel('Título').fill('Elegante sport');
+    // El campo en edición queda por encima de la barra inferior.
+    const field = (await page.getByLabel('Título').boundingBox())!;
     const bottomNav = (await page.locator('.pn-side').boundingBox())!;
     expect(field.y + field.height).toBeLessThanOrEqual(bottomNav.y);
-    await page.getByLabel('Nombre del lugar').fill('Salón Aurora');
-    expect((await stored(page)).site.events[0].name).toBe('Salón Aurora');
+    await expect(snav.getByRole('button', { name: /Dress code/ })).toContainText('Completa');
+    expect((await stored(page)).site.dressCode.title).toBe('Elegante sport');
+    // La vista previa es la página real y se cierra con «Volver a editar».
+    await page.getByRole('button', { name: 'Vista previa', exact: true }).click();
+    await expect.poll(() => page.frameLocator('iframe').locator('#dresscode').count()).toBe(1);
+    await page.getByRole('button', { name: 'Volver a editar' }).click();
+    await expect(page.getByLabel('Título')).toHaveValue('Elegante sport');
   });
 
   test('Diálogos: «Datos del casamiento» deja sus botones a la vista aunque el contenido sea largo', async ({ page }) => {

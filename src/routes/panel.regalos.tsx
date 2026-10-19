@@ -15,14 +15,17 @@ import { getState, update, useAppState } from '@/lib/weda/store';
 import type { Category } from '@/lib/demo-wedding';
 import type { ListGift } from '@/lib/weda/types';
 
-export const Route = createFileRoute('/panel/regalos')({ component: GiftsModule });
+export const Route = createFileRoute('/panel/regalos')({
+  validateSearch: (q: Record<string, unknown>): { tab?: 'cobro' } => (q['tab'] === 'cobro' ? { tab: 'cobro' } : {}),
+  component: GiftsModule,
+});
 
 type Tab = 'lista' | 'agregar' | 'recibidos' | 'cobro';
 /* Orden de uso: elegir → revisar la lista → cobro (opcional) y, aparte, lo ya recibido. Se puede entrar a cualquiera.
    En pantallas angostas se muestra la etiqueta corta para que las cuatro solapas entren sin scroll lateral. */
 const TABS: { id: Tab; label: string; short: string }[] = [
-  { id: 'agregar', label: 'Elegí tus regalos', short: 'Elegir' }, { id: 'lista', label: 'Revisá tu lista', short: 'Tu lista' },
-  { id: 'cobro', label: 'Cómo vas a recibirlos', short: 'Cobro' }, { id: 'recibidos', label: 'Recibidos', short: 'Recibidos' },
+  { id: 'agregar', label: 'Elegir regalos', short: 'Elegir' }, { id: 'lista', label: 'Mi lista', short: 'Mi lista' },
+  { id: 'cobro', label: 'Aportes', short: 'Aportes' }, { id: 'recibidos', label: 'Recibidos', short: 'Recibidos' },
 ];
 
 const Thumb = ({ src, name }: { src?: string | undefined; name: string }) => (
@@ -239,7 +242,8 @@ function SelectionSummary({ items, onRemove, onReview }: { items: ListGift[]; on
 function GiftsModule() {
   const s = useAppState();
   const toast = useToast();
-  const [tab, setTab] = useState<Tab>(() => (getState().gifts.items.length > 0 ? 'lista' : 'agregar'));
+  const search = Route.useSearch();
+  const [tab, setTab] = useState<Tab>(() => search.tab ?? (getState().gifts.items.length > 0 ? 'lista' : 'agregar'));
   const [viewSet, setViewSet] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ListGift | null>(null);
@@ -277,11 +281,12 @@ function GiftsModule() {
 
   return (
     <div className="pn-page">
-      <header className="pn-page-head">
+      <header className="pn-page-head is-compact">
         <div>
-          <h1>Armá tu lista de regalos</h1>
-          <p className="pn-sub">Elegí un set completo o seleccioná los regalos uno por uno. Podés cambiar tu lista cuando quieras.</p>
+          <h1>Tu lista de regalos</h1>
+          <p className="pn-sub" role="status" aria-live="polite">{items.length === 0 ? 'Todavía no elegiste regalos' : `${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} · ${formatARS(giftTotal(items))}`}</p>
         </div>
+        {tab !== 'agregar' && <button type="button" className="pn-btn" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Agregar regalos</button>}
       </header>
 
       <div className="pn-tabs" role="tablist" aria-label="Armar la lista">
@@ -306,10 +311,6 @@ function GiftsModule() {
             </div>
           ) : (
             <>
-              <div className="pn-block-head">
-                <h2>Revisá tu lista</h2>
-                <p className="pn-muted" role="status">{items.length} {items.length === 1 ? 'regalo' : 'regalos'} · {formatARS(giftTotal(items))}. Tus invitados los ven en este orden.</p>
-              </div>
               <div className="pn-switch is-small pn-views" role="group" aria-label="Cómo ver tu lista">
                 <button type="button" className={listView === 'cards' ? 'on' : ''} aria-pressed={listView === 'cards'} onClick={() => setListView('cards')}>Tarjetas</button>
                 <button type="button" className={listView === 'order' ? 'on' : ''} aria-pressed={listView === 'order'} onClick={() => setListView('order')}>Ordenar</button>
@@ -374,7 +375,7 @@ function GiftsModule() {
           <div className="pn-catalog">
             <div className="pn-block-head">
               <h2>Sets completos</h2>
-              <p className="pn-muted">Tocá un set para sumar todos sus regalos. Tocá de nuevo para quitarlos. Con el ícono de lista elegís uno por uno.</p>
+              <p className="pn-muted">Tocá un set para sumar todos sus regalos. El ícono de lista los muestra de a uno.</p>
             </div>
             <ul className="pn-settiles" aria-label="Sets de regalos">
               {SETS.map(set => {
@@ -398,7 +399,6 @@ function GiftsModule() {
 
             <div className="pn-block-head">
               <h2>Regalos de a uno</h2>
-              <p className="pn-muted">Buscá, filtrá por categoría y tocá «Agregar» en los que quieras.</p>
             </div>
             <div className="pn-filters is-chips">
               <label className="pn-sr" htmlFor="pn-q">Buscar un regalo</label>

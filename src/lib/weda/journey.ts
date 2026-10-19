@@ -27,7 +27,7 @@ export type Stage = {
   locked: boolean;
 };
 
-export type NextAction = { label: string; to: string; stage: StageId };
+export type NextAction = { label: string; to: string; stage: StageId; /** Copy para la tarjeta «Siguiente paso» del Inicio. */ title: string; text: string; cta: string; search?: { tab: 'cobro' } };
 
 /** Un momento está completo con nombre propio y al menos el lugar o la dirección (misma regla que muestra el editor). */
 export const eventComplete = (e: SiteEvent) => e.enabled && e.title.trim() !== '' && (e.name.trim() !== '' || e.address.trim() !== '');
@@ -126,9 +126,9 @@ export function headline(pct: number): string {
 /** El paso más útil ahora, según el estado real. Ninguna de estas acciones bloquea a las demás. */
 export function nextAction(s: AppState): NextAction {
   const g = giftsStage(s), si = siteStage(s), gu = guestsStage(s);
-  if (!g.locked && s.gifts.items.length === 0) return { label: 'Elegí los primeros regalos', to: '/panel/regalos', stage: 'regalos' };
-  if (!g.locked && s.gifts.alias.trim() === '') return { label: 'Configurá cómo vas a recibir los aportes', to: '/panel/regalos', stage: 'regalos' };
-  if (!si.locked && si.status !== 'done') return { label: 'Terminá de personalizar tu invitación', to: '/panel/sitio', stage: 'sitio' };
-  if (!gu.locked && s.guests.length === 0) return { label: 'Importá tu lista o agregá tu primera persona', to: '/panel/invitados', stage: 'invitados' };
-  return { label: 'Revisá cómo lo verán tus invitados', to: '/panel/vista-previa', stage: 'publicar' };
+  if (!g.locked && s.gifts.items.length === 0) return { label: 'Elegí los primeros regalos', to: '/panel/regalos', stage: 'regalos', title: 'Armá tu lista de regalos', text: 'Elegí un set completo o los regalos uno por uno.', cta: 'Elegir regalos' };
+  if (!g.locked && s.gifts.alias.trim() === '') return { label: 'Configurá cómo vas a recibir los aportes', to: '/panel/regalos', search: { tab: 'cobro' }, stage: 'regalos', title: 'Dejá lista tu lista de regalos', text: 'Elegí cómo querés recibir los aportes.', cta: 'Configurar aportes' };
+  if (!si.locked && si.status !== 'done') return { label: 'Terminá de personalizar tu invitación', to: '/panel/sitio', stage: 'sitio', title: 'Terminá tu invitación', text: si.detail, cta: 'Editar invitación' };
+  if (!gu.locked && s.guests.length === 0) return { label: 'Importá tu lista o agregá tu primera persona', to: '/panel/invitados', stage: 'invitados', title: 'Sumá a tus invitados', text: 'Importá una planilla o agregá a la primera persona.', cta: 'Agregar invitados' };
+  return { label: 'Revisá cómo lo verán tus invitados', to: '/panel/vista-previa', stage: 'publicar', title: 'Revisá cómo lo ven tus invitados', text: 'Mirá la invitación completa antes de compartirla.', cta: 'Ver vista previa' };
 }

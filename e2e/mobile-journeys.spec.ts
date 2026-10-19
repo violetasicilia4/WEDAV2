@@ -1,11 +1,11 @@
-import { expect, nav, onboard, previewText, stored, test } from './helpers';
+import { expect, nav, onboard, openPreview, previewText, stored, test } from './helpers';
 
 test.describe('Recorridos del panel en celular (390 px)', () => {
   test.beforeEach(async ({ page }) => { await onboard(page); });
 
   test('Flujo 1: Inicio → Regalos → selección → revisión, sin perder nada', async ({ page }) => {
     // Inicio: una sola acción principal que lleva a elegir los primeros regalos.
-    await page.getByRole('link', { name: 'Elegí los primeros regalos' }).click();
+    await page.getByRole('link', { name: /Elegir regalos/ }).click();
     await expect(page).toHaveURL(/\/panel\/regalos/);
 
     // Las cuatro solapas entran en el ancho de la pantalla (sin scroll lateral).
@@ -17,7 +17,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByRole('button', { name: /8 regalos elegidos/ }).click();
     // El aviso «Deshacer» no tapa los botones del diálogo: el clic llega a «Revisar mi lista».
     await page.getByRole('button', { name: 'Revisar mi lista' }).click();
-    await expect(page.getByRole('tab', { name: /Tu lista/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: /Mi lista/ })).toHaveAttribute('aria-selected', 'true');
 
     const cards = page.getByRole('list', { name: 'Regalos de tu lista' }).getByRole('listitem');
     await expect(cards).toHaveCount(8);
@@ -45,59 +45,57 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
   test('Flujo 2: Regalos → cobro (opcional) → volver a la lista → continuar sin alias', async ({ page }) => {
     await nav(page, 'Regalos').click();
     await page.getByRole('button', { name: /Hogar, 8 regalos/ }).click();
-    await page.getByRole('tab', { name: /Cobro/ }).click();
+    await page.getByRole('tab', { name: /Aportes/ }).click();
     await expect(page.getByText('No es obligatorio para seguir armando tu casamiento')).toBeVisible();
     await expect(page.getByText('Estado: sin configurar. Podés dejarlo para después.')).toBeVisible();
 
     // Se puede seguir sin completar el cobro.
     await nav(page, 'Tu página').click();
-    await expect(page.getByRole('heading', { name: 'Tu página web' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu página' })).toBeVisible();
     await nav(page, 'Regalos').click();
 
-    await page.getByRole('tab', { name: /Cobro/ }).click();
+    await page.getByRole('tab', { name: /Aportes/ }).click();
     await page.getByLabel('Tu alias bancario').fill('lucia.violeta');
     await expect(page.getByText('Estado: configurado.')).toBeVisible();
     await expect(page.locator('.pn-alias-card code')).toHaveText('lucia.violeta');
-    await page.getByRole('tab', { name: /Tu lista/ }).click();
+    await page.getByRole('tab', { name: /Mi lista/ }).click();
     await expect(page.getByRole('list', { name: 'Regalos de tu lista' }).getByRole('listitem')).toHaveCount(8);
     expect((await stored(page)).gifts.alias).toBe('lucia.violeta');
   });
 
-  test('Flujo 3: Tu página → editar un evento → verlo en la vista previa → ampliar y volver sin perder datos', async ({ page }) => {
+  test('Flujo 3: Tu página → elegir Eventos → editar → verlo en la vista previa a pantalla completa → volver sin perder datos', async ({ page }) => {
     await nav(page, 'Tu página').click();
-    await expect(page.locator('.pn-preview-pane iframe')).toBeVisible();
-    await page.locator('#sec-ceremonia').click();
+    // Una sola sección a la vez: solo se ven los campos de la portada, no los de los eventos.
+    await expect(page.getByRole('navigation', { name: 'Secciones de tu página' })).toBeVisible();
+    await expect(page.getByLabel('Nombre del lugar')).toHaveCount(0);
+    await page.locator('#sec-eventos').click();
+    // La primera fila de eventos ya viene abierta.
+    if ((await page.locator('#sec-ceremonia').getAttribute('aria-expanded')) !== 'true') await page.locator('#sec-ceremonia').click();
     await page.getByLabel('Nombre del evento').fill('Ceremonia');
     await page.getByLabel('Nombre del lugar').fill('Parroquia San Isidro');
     await page.getByLabel('Dirección').fill('Calle 123, Ciudad');
+    await expect(page.locator('#sec-ceremonia')).toContainText('Ceremonia');
 
-    // La vista previa queda a la vista mientras se edita y refleja el cambio.
-    const box = await page.locator('.pn-preview-pane').boundingBox();
-    expect(box!.y).toBeGreaterThanOrEqual(0);
+    // La vista previa se abre a pantalla completa con los datos reales y tiene una salida clara.
+    await page.getByRole('button', { name: 'Vista previa', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Vista previa de tu página' })).toBeVisible();
     await expect.poll(() => previewText(page)).toContain('Parroquia San Isidro');
-    await expect(page.locator('#sec-ceremonia')).toContainText('Ceremonia');
-
-    await page.getByRole('button', { name: 'Ampliar vista' }).click();
-    await expect(page.getByLabel('Nombre del lugar')).toBeHidden();
-    await page.getByRole('button', { name: 'Seguir editando' }).click();
+    await page.getByRole('button', { name: 'Volver a editar' }).click();
+    await expect(page.getByRole('dialog', { name: 'Vista previa de tu página' })).toHaveCount(0);
     await expect(page.getByLabel('Nombre del lugar')).toHaveValue('Parroquia San Isidro');
-
-    // «Listo» vuelve a la vista general y la sección conserva su estado.
-    await page.getByRole('button', { name: 'Listo' }).click();
-    await expect(page.locator('#sec-ceremonia')).toContainText('Ceremonia');
     await page.reload({ waitUntil: 'networkidle' });
     expect((await stored(page)).site.events[0].name).toBe('Parroquia San Isidro');
   });
 
   test('Flujo 4: mostrar y ocultar secciones se refleja en la vista previa', async ({ page }) => {
     await nav(page, 'Tu página').click();
-    const rsvp = page.locator('.pn-sec', { has: page.locator('#sec-rsvp') });
-    const toggle = rsvp.getByRole('checkbox', { name: 'Mostrar' });
-    const inPreview = () => page.frameLocator('iframe').locator('#confirmar').count();
+    await page.locator('#sec-rsvp').click();
+    const toggle = page.getByRole('checkbox', { name: 'Mostrar' });
+    const inPreview = async () => { await openPreview(page); await page.frameLocator('iframe').locator('.iv-cover-img').waitFor(); const n = await page.frameLocator('iframe').locator('#confirmar').count(); await page.getByRole('button', { name: 'Volver a editar' }).click().catch(() => {}); return n; };
     await expect.poll(inPreview).toBe(1);
     await toggle.uncheck();
+    await expect(page.locator('.pn-spanel .pn-sec-status')).toContainText('Oculta');
     await expect.poll(inPreview).toBe(0);
-    await expect(rsvp).toContainText('Oculta');
     await toggle.check();
     await expect.poll(inPreview).toBe(1);
   });

@@ -1,82 +1,84 @@
 import { useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { Check, CircleDot, Circle, Lock, Pencil } from 'lucide-react';
+import { ArrowRight, Gift, Globe, Lock, Pencil, Users } from 'lucide-react';
 import { CoupleDialog } from '@/components/panel/couple-form';
 import { ConfirmDialog, usePlans } from '@/components/panel/ui';
-import { headline, nextAction, progress, stages, STAGE_STATUS_LABEL, type Stage } from '@/lib/weda/journey';
-import { coupleLabel, dateLabel } from '@/lib/weda/logic';
+import { formatARS } from '@/lib/demo-wedding';
+import { eventComplete, nextAction, sectionGaps, stages, type Stage, type StageStatus } from '@/lib/weda/journey';
+import { coupleLabel, dateLabel, giftTotal } from '@/lib/weda/logic';
 import { planFor } from '@/lib/weda/plans';
 import { reset, useAppState } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/panel/')({ component: Home });
 
 const featureOf: Record<Stage['id'], Parameters<typeof planFor>[0] | null> = { regalos: 'gifts', sitio: 'site', invitados: 'guests', publicar: null };
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const TONE: Record<StageStatus, 'ok' | 'todo' | 'off'> = { done: 'ok', review: 'todo', doing: 'todo', todo: 'off' };
 
-/* Inicio: bienvenida, un único progreso y las cuatro etapas del recorrido. Se puede entrar a cualquiera, en cualquier orden. */
+/* Inicio: la pareja, cuántos pasos de armado están listos (se cuentan, no se estiman), UN siguiente paso y accesos directos. Se puede entrar a cualquiera, en cualquier orden. */
 function Home() {
   const s = useAppState();
-  const navigate = useNavigate();
   const plans = usePlans();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const list = stages(s);
-  const pct = progress(list);
+  const build = list.filter(x => x.id !== 'publicar' && !x.locked);
+  const done = build.filter(x => x.status === 'done').length;
   const next = nextAction(s);
-  const fresh = pct === 0;
+  const stage = (id: Stage['id']) => list.find(x => x.id === id)!;
+  const gaps = sectionGaps(s);
+  const eventsDone = s.site.events.filter(eventComplete).length;
+  const confirmed = s.guests.filter(g => g.status === 'confirmed').length;
+  const tiles = [
+    { st: stage('sitio'), label: 'Invitación', Icon: Globe, to: '/panel/sitio',
+      sub: gaps.length > 0 ? `Falta: ${gaps[0]!.label}${gaps.length > 1 ? ` y ${gaps.length - 1} más` : ''}` : eventsDone > 0 ? plural(eventsDone, 'evento listo', 'eventos listos') : 'Sin empezar' },
+    { st: stage('regalos'), label: 'Regalos', Icon: Gift, to: '/panel/regalos',
+      sub: s.gifts.items.length === 0 ? 'Sin regalos todavía' : `${plural(s.gifts.items.length, 'regalo', 'regalos')} · ${formatARS(giftTotal(s.gifts.items))}` },
+    { st: stage('invitados'), label: 'Invitados', Icon: Users, to: '/panel/invitados',
+      sub: s.guests.length === 0 ? 'Sin invitados todavía' : `${s.guests.length} · ${plural(confirmed, 'confirmó', 'confirmaron')}` },
+  ];
 
   return (
     <div className="pn-page pn-journey">
-      <header className="pn-page-head">
-        <div>
-          <p className="pn-kicker">Tu casamiento</p>
-          <h1>{coupleLabel(s.couple)}</h1>
-          <p className="pn-sub">
-            {s.date ? dateLabel(s.date) : 'Fecha por definir'} · <button type="button" className="pn-link" onClick={() => setEditing(true)}><Pencil size={12} aria-hidden="true" /> Editar datos</button>
-          </p>
-        </div>
+      <header className="pn-home-head">
+        <h1>{coupleLabel(s.couple)}</h1>
+        <p className="pn-sub">
+          {s.date ? dateLabel(s.date) : 'Fecha por definir'} · <button type="button" className="pn-link" onClick={() => setEditing(true)}><Pencil size={12} aria-hidden="true" /> Editar datos</button>
+        </p>
       </header>
 
-      <section className="pn-welcome" aria-labelledby="pn-welcome-title">
-        <h2 id="pn-welcome-title">{fresh ? '¡Empecemos a crear su casamiento!' : headline(pct)}</h2>
-        <p>{fresh
-          ? 'Armá tu lista de regalos, diseñá tu invitación y organizá a tus invitados. Podés hacerlo a tu ritmo, guardar los cambios y publicar cuando estés listo.'
-          : 'Seguí a tu ritmo: todo se guarda solo y podés volver cuando quieras.'}</p>
-        <div className="pn-welcome-actions">
-          <Link to={next.to as never} className="pn-btn">{next.label}</Link>
-        </div>
-        <div className="pn-progress" role="progressbar" aria-label="Avance general" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{ width: `${pct}%` }} /></div>
-        <p className="pn-muted" role="status">{pct}% de tu casamiento armado</p>
+      <section className="pn-next" aria-labelledby="pn-next-title">
+        <p className="pn-label-s">Siguiente paso</p>
+        <h2 id="pn-next-title">{next.title}</h2>
+        <p className="pn-muted">{next.text}</p>
+        <Link to={next.to as never} {...(next.search ? { search: next.search as never } : {})} className="pn-btn">{next.cta}<ArrowRight size={16} aria-hidden="true" /></Link>
       </section>
 
-      <section className="pn-section" aria-labelledby="pn-stages">
-        <h2 id="pn-stages" className="pn-sr">Etapas</h2>
-        <ol className="pn-stages">
-          {list.map(st => {
-            const Icon = st.status === 'done' ? Check : st.status === 'todo' ? Circle : CircleDot;
-            const isNext = next.stage === st.id;
-            const feat = featureOf[st.id];
-            const needs = st.locked && feat ? planFor(feat)?.name : null;
-            return (
-              <li key={st.id} className={`pn-stage is-${st.status}${isNext ? ' is-next' : ''}${st.locked ? ' is-locked' : ''}`}>
-                <span className="pn-stage-ico" aria-hidden="true"><Icon size={18} strokeWidth={1.7} /></span>
-                <div className="pn-stage-text">
-                  <p className="pn-stage-kicker">{st.step}{st.optional && ' · cuando quieras'}{isNext && ' · Siguiente paso'}</p>
-                  <h3>{st.title}</h3>
-                  {st.status === 'todo' && <p className="pn-muted">{st.description}</p>}
-                  {st.status !== 'todo' && <p className="pn-stage-detail">{st.detail}</p>}
-                  {needs && <p className="pn-note is-inline"><Lock size={13} aria-hidden="true" /> Se publica desde el plan {needs}. Lo que cargues se conserva.</p>}
-                </div>
-                <div className="pn-stage-side">
-                  <span className={`pn-chip is-${st.locked ? 'todo' : st.status}`}>{st.locked ? 'No está en tu plan' : STAGE_STATUS_LABEL[st.status]}</span>
-                  <Link to={st.to as never} className="pn-btn is-small is-ghost">{st.cta}</Link>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-        <div className="pn-actions">
-          <button type="button" className="pn-btn is-ghost" onClick={plans.open}>Publicar mi casamiento</button>
-          <span className="pn-muted">Hoy es una demostración: podés ver qué incluye cada plan, pero no se publica ni se cobra nada.</span>
+      <section className="pn-state" aria-labelledby="pn-state-title">
+        <div className="pn-state-head">
+          <h2 id="pn-state-title" className="pn-label-s">Estado</h2>
+          <p role="status">{build.length === 0 ? 'Elegí un plan para empezar' : `${done} de ${build.length} ${build.length === 1 ? 'paso listo' : 'pasos listos'}`}</p>
+        </div>
+        <div className="pn-segs" aria-hidden="true">{build.map(x => <i key={x.id} className={`is-${x.status}`} />)}</div>
+        <ul className="pn-tiles">
+          {tiles.map(({ st, label, Icon, to, sub }) => (
+            <li key={st.id}>
+              <Link to={to as never} className={`pn-tile${st.locked ? ' is-locked' : ''}`}>
+                <span className="pn-tile-ico" aria-hidden="true"><Icon size={20} strokeWidth={1.7} /></span>
+                <span className="pn-tile-text">
+                  <strong>{label}</strong>
+                  <span>{st.locked ? <><Lock size={12} aria-hidden="true" /> Desde el plan {planFor(featureOf[st.id]!)?.name}</> : sub}</span>
+                </span>
+                {!st.locked && <i className={`pn-sdot is-${TONE[st.status]}`} aria-hidden="true" />}
+                <span className="pn-sr">{st.locked ? '' : ` · ${st.status === 'done' ? 'Completo' : st.status === 'todo' ? 'Sin empezar' : 'En progreso'}`}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="pn-actions is-tight">
+          <button type="button" className="pn-btn is-ghost" onClick={plans.open}>Ver planes y publicar</button>
+          <span className="pn-hint">Hoy es una demo: no se publica ni se cobra nada.</span>
         </div>
       </section>
 

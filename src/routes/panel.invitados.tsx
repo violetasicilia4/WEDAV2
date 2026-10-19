@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ChevronRight, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { ChevronRight, Download, Pencil, Plus, Trash2, Upload, Users } from 'lucide-react';
 import { GroupsView } from '@/components/panel/groups-view';
 import { Field, Locked, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -103,12 +103,12 @@ function GuestsModule() {
 
   return (
     <div className="pn-page">
-      <header className="pn-page-head">
+      <header className="pn-page-head is-compact">
         <div>
           <h1>Invitados</h1>
-          <p className="pn-sub">Quién viene, quién no, a quién le falta responder y dónde se sienta cada uno.</p>
+          <p className="pn-sub">{st.total === 0 ? 'Quién viene y dónde se sienta.' : `${st.total} ${st.total === 1 ? 'invitado' : 'invitados'} · ${st.confirmed} ${st.confirmed === 1 ? 'confirmó' : 'confirmaron'}`}</p>
         </div>
-        <div className="pn-head-actions"><button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button></div>
+        {st.total > 0 && <div className="pn-head-actions"><button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitados</button></div>}
       </header>
 
       {can(s.planId, 'groups') && (
@@ -122,20 +122,20 @@ function GuestsModule() {
       {vista === 'mesas' ? null : (
         <>
       {st.total === 0 ? (
-        <div className="pn-empty">
-          <h2>Sumá a tu primera persona</h2>
-          <p>Cargá a tus invitados a mano o esperá a que respondan desde la página de tu casamiento: las respuestas aparecen acá solas.</p>
-          <div className="pn-actions"><button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button><button type="button" className="pn-btn" onClick={() => setAdding(true)}>Agregar invitado</button><Link to="/panel/vista-previa" className="pn-btn is-ghost">Probar el formulario de confirmación</Link></div>
+        <div className="pn-empty is-compact">
+          <span className="pn-empty-ico" aria-hidden="true"><Users size={22} strokeWidth={1.6} /></span>
+          <h2>Todavía no hay invitados</h2>
+          <p>Cargalos de a uno o importá tu planilla. Las respuestas de la página también llegan acá.</p>
+          <div className="pn-actions is-center"><button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitados</button><button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button></div>
+          {can(s.planId, 'rsvp') && <Link to="/panel/vista-previa" className="pn-link">Probar el formulario de confirmación</Link>}
         </div>
       ) : (
         <>
-          <section className="pn-stats is-guests" aria-label="Confirmaciones de asistencia">
-            {([['all', 'Total de invitados', st.total], ['confirmed', 'Confirmados', st.confirmed], ['declined', 'Rechazados', st.declined], ['pending', 'Sin responder', st.pending]] as const).map(([k, label, n]) => (
-              <button key={k} type="button" className={`pn-stat is-btn${filter === k ? ' on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(filter === k ? 'all' : k)}>
-                <span className="pn-stat-label">{label}</span><strong>{n}</strong>
-              </button>
+          <div className="pn-chips" role="group" aria-label="Filtrar por asistencia">
+            {([['all', 'Todos', st.total], ['confirmed', 'Confirmados', st.confirmed], ['pending', 'Sin responder', st.pending], ['declined', 'No asisten', st.declined]] as const).map(([k, label, n]) => (
+              <button key={k} type="button" className={`pn-chipbtn${filter === k ? ' on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(filter === k ? 'all' : k)}>{label} <span className="pn-chipn">{n}</span></button>
             ))}
-          </section>
+          </div>
           {st.fromSite > 0 && (
             <p className="pn-note">{st.fromSite} {st.fromSite === 1 ? 'persona respondió' : 'personas respondieron'} desde el sitio y ya {st.fromSite === 1 ? 'figura' : 'figuran'} en tu lista. <button type="button" className="pn-link" onClick={() => setFilter(filter === 'site' ? 'all' : 'site')}>{filter === 'site' ? 'Ver todos' : 'Verlos'}</button></p>
           )}

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ExternalLink, Eye, Maximize2, Pencil, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ExternalLink, Eye, Lock, Plus, X } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
@@ -8,19 +8,9 @@ import { dateLabel, hasEventDetails, isSafeMapsUrl, mapsLink, sitePath, uid, val
 import { eventComplete, sectionGaps } from '@/lib/weda/journey';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { update, useAppState } from '@/lib/weda/store';
-import type { SiteConfig, SiteEvent } from '@/lib/weda/types';
+import type { AppState, SiteConfig, SiteEvent } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/panel/sitio')({ component: SiteEditor });
-
-/** Sección que el plan elegido no incluye: se conserva lo cargado como borrador y se dice en qué plan se publica. */
-function LockedBlock({ id, title, feature }: { id: string; title: string; feature: Feature }) {
-  const plans = usePlans();
-  return (
-    <section className="pn-sec is-locked" aria-labelledby={`sec-${id}`}>
-      <div className="pn-sec-head"><div className="pn-sec-main is-static"><span className="pn-sec-text"><strong id={`sec-${id}`}>{title}</strong><span className="pn-muted">No está en tu plan: está en el plan {planFor(feature)?.name}. Lo que cargaste se conserva como borrador. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></span></span></div></div>
-    </section>
-  );
-}
 
 const MAX_PHOTOS = 6;
 
@@ -33,55 +23,68 @@ const tagFor = (f: Feature): string | undefined => {
 /** Cada cambio del editor se guarda al instante en el estado local; la vista previa lo toma sin recargar. */
 const patchSite = (fn: (s: SiteConfig) => SiteConfig) => update(x => ({ ...x, site: fn(x.site) }));
 
-type SectionId = 'portada' | 'ceremonia' | 'recepcion' | 'fiesta' | 'civil' | 'brunch' | 'rsvp' | 'dress' | 'fotos' | 'mensaje' | 'musica';
-/** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
-const TITLE: Record<string, string> = { portada: 'Portada', rsvp: 'Confirmación de asistencia', dress: 'Dress code', fotos: 'Fotos', mensaje: 'Mensaje final', musica: 'Música de la fiesta' };
-const ANCHOR: Record<string, string> = { portada: '', ceremonia: 'dia', recepcion: 'dia', fiesta: 'dia', civil: 'dia', brunch: 'dia', rsvp: 'confirmar', dress: 'dresscode', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
+/** Secciones del editor. «Eventos» agrupa los momentos del día (ceremonia, recepción…): cada uno se prende y edita por separado. */
+type SectionId = 'portada' | 'eventos' | 'rsvp' | 'dress' | 'fotos' | 'mensaje' | 'musica';
 type Tone = 'ok' | 'todo' | 'off';
+type Sec = { id: SectionId; label: string; title: string; status: string; tone: Tone; locked?: Feature };
+/** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
+const ANCHOR: Record<SectionId, string> = { portada: '', eventos: 'dia', rsvp: 'confirmar', dress: 'dresscode', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
+const photoWord = (n: number) => `${n} ${n === 1 ? 'foto' : 'fotos'}`;
 
-type BlockProps = {
-  id: SectionId; title: string; help: string; status: string; tone: Tone;
-  /** Etiqueta discreta del plan, solo en funciones que diferencian planes: «Incluido en Completo». */
-  planTag?: string | undefined;
-  enabled?: boolean | undefined; onToggle?: ((v: boolean) => void) | undefined;
-  active: SectionId | null; onActive: (id: SectionId | null) => void; onSeeResult: (id: SectionId) => void;
-  children: React.ReactNode;
-};
+/** Estado de cada sección, derivado de los datos reales (misma regla que el Inicio: eventComplete/sectionGaps). */
+function sectionsOf(s: AppState): Sec[] {
+  const site = s.site;
+  const on = site.events.filter(e => e.enabled);
+  const done = site.events.filter(eventComplete);
+  const gaps = on.filter(e => !eventComplete(e));
+  const dressOk = site.dressCode.title.trim() !== '' || site.dressCode.text.trim() !== '';
+  const list: Sec[] = [
+    { id: 'portada', label: 'Portada', title: 'Portada', status: s.date ? 'Completa' : 'Falta la fecha', tone: s.date ? 'ok' : 'todo' },
+    { id: 'eventos', label: 'Eventos', title: 'Eventos', status: on.length === 0 ? 'Sin eventos' : gaps.length > 0 ? 'Falta completar' : `${done.length} ${done.length === 1 ? 'listo' : 'listos'}`, tone: on.length === 0 ? 'off' : gaps.length > 0 ? 'todo' : 'ok' },
+    { id: 'rsvp', label: 'Confirmación', title: 'Confirmación de asistencia', status: site.rsvp.enabled ? 'Visible' : 'Oculta', tone: site.rsvp.enabled ? 'ok' : 'off' },
+    { id: 'dress', label: 'Dress code', title: 'Dress code', status: !site.dressCode.enabled ? 'Oculta' : dressOk ? 'Completa' : 'Falta completar', tone: !site.dressCode.enabled ? 'off' : dressOk ? 'ok' : 'todo' },
+  ];
+  list.push(can(s.planId, 'gallery')
+    ? { id: 'fotos', label: 'Fotos', title: 'Fotos', status: !site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? photoWord(site.gallery.photos.length) : 'Sin fotos', tone: !site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo' }
+    : { id: 'fotos', label: 'Fotos', title: 'Fotos', status: `Plan ${planFor('gallery')?.name}`, tone: 'off', locked: 'gallery' });
+  list.push(can(s.planId, 'message')
+    ? { id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: site.message.enabled ? 'Visible' : 'Oculta', tone: site.message.enabled ? 'ok' : 'off' }
+    : { id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: `Plan ${planFor('message')?.name}`, tone: 'off', locked: 'message' });
+  list.push(can(s.planId, 'playlist')
+    ? { id: 'musica', label: 'Música', title: 'Música de la fiesta', status: site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta', tone: site.playlist.enabled ? 'ok' : 'off' }
+    : { id: 'musica', label: 'Música', title: 'Música de la fiesta', status: `Plan ${planFor('playlist')?.name}`, tone: 'off', locked: 'playlist' });
+  return list;
+}
 
-/** Una sección de la página: qué ve el invitado, en qué estado está, mostrar/ocultar y, abierta, sus campos. Una sola abierta a la vez. */
-function Block({ id, title, help, status, tone, planTag, enabled, onToggle, active, onActive, onSeeResult, children }: BlockProps) {
-  const open = active === id;
-  const hidden = enabled === false;
-  const ref = useRef<HTMLElement>(null);
-  const seen = useRef(open);
-  // En el celular la vista previa queda fija arriba: al abrir una sección se la lleva justo debajo para editarla sin perderla de vista.
-  useEffect(() => {
-    if (!open || seen.current) { seen.current = open; return; }
-    seen.current = true;
-    if (window.matchMedia('(max-width: 1099px)').matches) ref.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  }, [open]);
+const useWide = () => useSyncExternalStore(
+  cb => { const m = window.matchMedia('(min-width: 1100px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
+  () => window.matchMedia('(min-width: 1100px)').matches,
+  () => false,
+);
+
+/** La sección elegida: título, estado, «Mostrar» (si se puede ocultar) y solo sus campos. */
+function Panel({ sec, planTag, enabled, onToggle, onSee, children }: { sec: Sec; planTag?: string | undefined; enabled?: boolean | undefined; onToggle?: ((v: boolean) => void) | undefined; onSee: () => void; children: React.ReactNode }) {
+  const plans = usePlans();
+  if (sec.locked) {
+    return (
+      <section className="pn-spanel is-locked" aria-labelledby={`panel-${sec.id}`}>
+        <header className="pn-spanel-head"><div><h2 id={`panel-${sec.id}`}>{sec.title}</h2></div></header>
+        <p className="pn-note"><Lock size={14} aria-hidden="true" /> No está en tu plan: está en el plan {planFor(sec.locked)?.name}. Lo que cargaste se conserva como borrador. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></p>
+      </section>
+    );
+  }
   return (
-    <section ref={ref} className={`pn-sec${open ? ' is-open' : ''}${hidden ? ' is-off' : ''}`} aria-labelledby={`sec-${id}`}>
-      <div className="pn-sec-head">
-        <button type="button" className="pn-sec-main" aria-expanded={open} aria-controls={`sec-body-${id}`} onClick={() => onActive(open ? null : id)}>
-          <span className="pn-sec-text">
-            <strong id={`sec-${id}`}>{title}{planTag && <em className="pn-plantag">{planTag}</em>}</strong>
-            {!open && <span className="pn-muted">{help}</span>}
-          </span>
-          <span className={`pn-sec-status is-${tone}`}>{status}</span>
-          <ChevronDown size={18} aria-hidden="true" className="pn-sec-chev" />
-        </button>
-        {onToggle && (
-          <label className="pn-sec-toggle"><input type="checkbox" checked={!!enabled} onChange={e => { onToggle(e.target.checked); if (e.target.checked) onActive(id); }} /><span>Mostrar</span></label>
-        )}
-      </div>
-      {open && (
-        <div className="pn-block-body" id={`sec-body-${id}`}>
-          {hidden
-            ? <p className="pn-note">Esta sección está oculta y tus invitados no la ven. Lo que ya cargaste se conserva: activá «Mostrar» para volver a usarla.</p>
-            : <>{children}<div className="pn-actions is-tight"><button type="button" className="pn-btn is-small" onClick={() => onActive(null)}>Listo</button><button type="button" className="pn-link" onClick={() => onSeeResult(id)}><Eye size={14} aria-hidden="true" />Ver en la vista previa</button></div></>}
+    <section className="pn-spanel" aria-labelledby={`panel-${sec.id}`}>
+      <header className="pn-spanel-head">
+        <div>
+          <h2 id={`panel-${sec.id}`}>{sec.title}{planTag && <em className="pn-plantag">{planTag}</em>}</h2>
+          <p className={`pn-sec-status is-${sec.tone}`}>{sec.status}</p>
         </div>
-      )}
+        {onToggle && <label className="pn-sec-toggle"><input type="checkbox" checked={!!enabled} onChange={e => onToggle(e.target.checked)} /><span>Mostrar</span></label>}
+      </header>
+      {enabled === false
+        ? <p className="pn-note">Esta sección está oculta y tus invitados no la ven. Lo que ya cargaste se conserva: activá «Mostrar» para volver a usarla.</p>
+        : <>{children}<div className="pn-spanel-foot"><button type="button" className="pn-link" onClick={onSee}><Eye size={14} aria-hidden="true" />Ver en la vista previa</button></div></>}
     </section>
   );
 }
@@ -112,19 +115,32 @@ function CoverFields() {
   );
 }
 
-type Shared = { active: SectionId | null; onActive: (id: SectionId | null) => void; onSeeResult: (id: SectionId) => void };
 
 const SLOT: Record<string, number> = { ceremonia: 1, recepcion: 2, fiesta: 3, civil: 4, brunch: 5 };
 
-function EventBlock({ ev, shared }: { ev: SiteEvent; shared: Shared }) {
+/** Un momento del día: fila compacta con estado y «Mostrar»; abierta, muestra solo sus campos. */
+function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: (k: SiteEvent['key'] | null) => void }) {
   const set = (patch: Partial<SiteEvent>) => patchSite(s => ({ ...s, events: s.events.map(e => (e.key === ev.key ? { ...e, ...patch } : e)) }));
   const url = ev.mapsUrl.trim();
   const urlError = url && !isSafeMapsUrl(url) ? 'Usá un enlace de Google Maps (https://maps.app.goo.gl/… o https://www.google.com/maps/…).' : undefined;
   const link = mapsLink(ev);
   const complete = eventComplete(ev);
   const status = !ev.enabled ? 'Oculta' : complete ? 'Completa' : hasEventDetails(ev) ? 'Falta completar' : 'Sin cargar';
+  const title = ev.title.trim() || `Evento ${SLOT[ev.key]}`;
+  const tone: Tone = !ev.enabled ? 'off' : complete ? 'ok' : 'todo';
   return (
-    <Block id={ev.key as SectionId} title={ev.title.trim() || `Evento ${SLOT[ev.key]}`} help="Un momento del día, con el nombre que quieras: ceremonia, brindis, fiesta…" status={status} tone={!ev.enabled ? 'off' : complete ? 'ok' : 'todo'} enabled={ev.enabled} onToggle={v => set({ enabled: v })} {...shared}>
+    <li className={`pn-ev${open ? ' is-open' : ''}${ev.enabled ? '' : ' is-off'}`}>
+      <div className="pn-ev-head">
+        <button type="button" className="pn-ev-main" id={`sec-${ev.key}`} aria-expanded={open} aria-controls={`ev-body-${ev.key}`} onClick={() => onOpen(open ? null : ev.key)}>
+          <span className="pn-ev-title">{title}</span>
+          <span className={`pn-sec-status is-${tone}`}>{status}</span>
+          <ChevronDown size={18} aria-hidden="true" className="pn-sec-chev" />
+        </button>
+        <label className="pn-sec-toggle"><input type="checkbox" checked={ev.enabled} onChange={e => { set({ enabled: e.target.checked }); if (e.target.checked) onOpen(ev.key); }} aria-label={`Mostrar ${title}`} /><span>Mostrar</span></label>
+      </div>
+      {open && (
+        <div className="pn-ev-body" id={`ev-body-${ev.key}`}>
+          {!ev.enabled ? <p className="pn-note">Este evento está oculto y tus invitados no lo ven. Lo que cargaste se conserva: activá «Mostrar» para volver a usarlo.</p> : <>
       <Field label="Nombre del evento">{a => <input id={a.id} type="text" value={ev.title} placeholder="Ceremonia, brindis, after beach…" onChange={e => set({ title: e.target.value })} />}</Field>
       <Field label="Nombre del lugar">{a => <input id={a.id} type="text" value={ev.name} placeholder="Parroquia San Isidro Labrador" onChange={e => set({ name: e.target.value })} />}</Field>
       <Field label="Dirección">{a => <input id={a.id} type="text" value={ev.address} placeholder="Calle 123, Ciudad" onChange={e => set({ address: e.target.value })} />}</Field>
@@ -139,44 +155,41 @@ function EventBlock({ ev, shared }: { ev: SiteEvent; shared: Shared }) {
         </div>
       </details>
       {link ? <a className="pn-link" href={link} target="_blank" rel="noopener noreferrer">Probar el enlace de «Cómo llegar» <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a> : <p className="pn-hint">Cargá el nombre o la dirección para que aparezca «Cómo llegar».</p>}
-    </Block>
+          </>}
+        </div>
+      )}
+    </li>
   );
 }
 
 function SiteEditor() {
   const s = useAppState();
   const toast = useToast();
-  // En el celular la vista previa queda fija arriba y se edita debajo; «Ampliar vista» la agranda y oculta los campos. En desktop se ven las dos a la vez.
-  const [expanded, setExpanded] = useState(false);
-  const [jump, setJump] = useState(0);
-  // La vista previa se puede ocultar a mano, y se pliega sola mientras el teclado está abierto sobre un campo de la página.
-  const [hidden, setHidden] = useState(false);
-  const [kb, setKb] = useState(false);
-  const [active, setActive] = useState<SectionId | null>('portada');
+  const wide = useWide();
+  const [active, setActive] = useState<SectionId>('portada');
+  const [openEv, setOpenEv] = useState<SiteEvent['key'] | null>(() => s.site.events.find(e => e.enabled)?.key ?? null);
   const [anchor, setAnchor] = useState<string | undefined>(undefined);
+  const [jump, setJump] = useState(0);
+  const [previewing, setPreviewing] = useState(false);
   const [track, setTrack] = useState({ title: '', artist: '' });
   const [trackError, setTrackError] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
-  const plans = usePlans();
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const check = () => setKb(window.innerHeight - vv.height > 150 && !!document.activeElement?.closest('.pn-editor-pane'));
-    vv.addEventListener('resize', check);
-    document.addEventListener('focusout', check);
-    return () => { vv.removeEventListener('resize', check); document.removeEventListener('focusout', check); };
-  }, []);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   if (!can(s.planId, 'site')) return <Locked feature="site" />;
   const site = s.site;
   const path = sitePath(s);
-  const premium = can(s.planId, 'playlist');
+  const sections = sectionsOf(s);
+  const sec = sections.find(x => x.id === active)!;
+  const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, can(s.planId, 'gallery') && site.gallery.enabled, can(s.planId, 'message') && site.message.enabled, can(s.planId, 'playlist') && site.playlist.enabled].filter(Boolean).length;
 
-  // Al abrir una sección, la vista previa (si está al lado) se lleva hasta ahí.
-  const onActive = (id: SectionId | null) => { setActive(id); if (id) setAnchor(ANCHOR[id]); };
-  const seeResult = (id: SectionId) => { setHidden(false); setAnchor(ANCHOR[id]); setJump(n => n + 1); };
-  const activeTitle = active === null ? '' : site.events.find(e => e.key === active)?.title.trim() || (active in TITLE ? TITLE[active] : `Evento ${SLOT[active]}`);
-  const shared: Shared = { active, onActive, onSeeResult: seeResult };
+  // Elegir una sección lleva la vista previa (si está al lado) hasta ahí y deja el formulario a la vista.
+  const pick = (id: SectionId) => {
+    setActive(id); setAnchor(ANCHOR[id]);
+    if (!wide) window.setTimeout(() => panelRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 0);
+  };
+  // «Ver en la vista previa»: al lado en pantallas grandes; en el celular se abre a pantalla completa.
+  const see = (id: SectionId) => { setAnchor(ANCHOR[id]); setJump(n => n + 1); if (!wide) setPreviewing(true); };
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -197,49 +210,57 @@ function SiteEditor() {
     patchSite(x => ({ ...x, playlist: { ...x.playlist, tracks: [...x.playlist.tracks, { title: track.title.trim(), artist: track.artist.trim() || 'Artista a confirmar' }] } }));
     setTrack({ title: '', artist: '' });
   };
-  // Lo que falta, de forma discreta y con acceso directo a cada sección (misma regla que el Inicio: sectionGaps).
-  const missing: { id: SectionId; label: string }[] = [
-    ...(s.date ? [] : [{ id: 'portada' as SectionId, label: 'la fecha' }]),
-    ...sectionGaps(s).map(g => ({ id: g.id as SectionId, label: g.label })),
-  ];
-  const dressOk = site.dressCode.title.trim() !== '' || site.dressCode.text.trim() !== '';
-  const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, can(s.planId, 'gallery') && site.gallery.enabled, can(s.planId, 'message') && site.message.enabled, premium && site.playlist.enabled].filter(Boolean).length;
+  const flag = (k: 'rsvp' | 'dressCode' | 'gallery' | 'message' | 'playlist') => (v: boolean) => patchSite(x => ({ ...x, [k]: { ...x[k], enabled: v } }));
 
   return (
     <div className="pn-page pn-editor">
-      <header className="pn-page-head">
+      <header className="pn-page-head is-compact">
         <div>
-          <h1>Tu página web</h1>
+          <h1>Tu página</h1>
           <p className="pn-sub">Tus invitados ven {visibleCount} {visibleCount === 1 ? 'sección' : 'secciones'}.</p>
         </div>
+        {!wide && <button type="button" className="pn-btn" onClick={() => { setAnchor(ANCHOR[active]); setPreviewing(true); }}><Eye size={16} aria-hidden="true" />Vista previa</button>}
       </header>
 
-      <div className={`pn-editor-grid${expanded ? ' is-expanded' : ''}${hidden ? ' is-collapsed' : ''}${kb ? ' is-kb' : ''}`}>
-        <div className="pn-editor-pane">
-          {missing.length > 0 && (
-            <p className="pn-missing">Falta completar:{' '}
-              {missing.map((m, i) => <span key={m.id}>{i > 0 && ', '}<button type="button" className="pn-link" onClick={() => onActive(m.id)}>{m.label}</button></span>)}
-            </p>
+      <div className="pn-editor-grid">
+        <nav className="pn-snav" aria-label="Secciones de tu página">
+          <ul>
+            {sections.map(x => (
+              <li key={x.id}>
+                <button type="button" id={`sec-${x.id}`} className={`pn-snav-btn${active === x.id ? ' on' : ''}`} aria-current={active === x.id ? 'true' : undefined} onClick={() => pick(x.id)}>
+                  <i className={`pn-sdot is-${x.tone}`} aria-hidden="true" />{x.label}<span className="pn-sr"> · {x.status}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="pn-editor-pane" ref={panelRef}>
+          {active === 'portada' && (
+            <Panel sec={sec} onSee={() => see('portada')}>
+              <CoverFields />
+              <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
+              {!s.date && <p className="pn-hint">La cuenta regresiva aparece cuando definas la fecha.</p>}
+            </Panel>
           )}
-          <Block id="portada" title="Portada" help="Lo primero que ven tus invitados: tu foto, los nombres y la fecha." status={s.date ? 'Completa' : 'Falta la fecha'} tone={s.date ? 'ok' : 'todo'} {...shared}>
-            <CoverFields />
-            <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
-            {!s.date && <p className="pn-hint">La cuenta regresiva aparece cuando definas la fecha.</p>}
-          </Block>
-
-          {site.events.map(ev => <EventBlock key={ev.key} ev={ev} shared={shared} />)}
-
-          <Block id="rsvp" title="Confirmación de asistencia" help="Tus invitados te avisan si van, desde la página." status={site.rsvp.enabled ? 'Visible' : 'Oculta'} tone={site.rsvp.enabled ? 'ok' : 'off'} enabled={site.rsvp.enabled} onToggle={v => patchSite(x => ({ ...x, rsvp: { ...x.rsvp, enabled: v } }))} {...shared}>
+          {active === 'eventos' && (
+            <Panel sec={sec} onSee={() => see('eventos')}>
+              <ul className="pn-evlist">{site.events.map(ev => <EventRow key={ev.key} ev={ev} open={openEv === ev.key} onOpen={k => { setOpenEv(k); if (k) setAnchor('dia'); }} />)}</ul>
+            </Panel>
+          )}
+          {active === 'rsvp' && (
+            <Panel sec={sec} enabled={site.rsvp.enabled} onToggle={flag('rsvp')} onSee={() => see('rsvp')}>
             <p className="pn-muted">Tus invitados confirman desde la página y las respuestas se suman solas a la solapa Invitados. No hace falta cargar nada.</p>
-          </Block>
-
-          <Block id="dress" title="Dress code" help="Cómo sugerís que se vistan." status={!site.dressCode.enabled ? 'Oculta' : dressOk ? 'Completa' : 'Falta completar'} tone={!site.dressCode.enabled ? 'off' : dressOk ? 'ok' : 'todo'} enabled={site.dressCode.enabled} onToggle={v => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, enabled: v } }))} {...shared}>
+            </Panel>
+          )}
+          {active === 'dress' && (
+            <Panel sec={sec} enabled={site.dressCode.enabled} onToggle={flag('dressCode')} onSee={() => see('dress')}>
             <Field label="Título">{a => <input id={a.id} type="text" value={site.dressCode.title} placeholder="Elegante sport" onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, title: e.target.value } }))} />}</Field>
             <Field label="Texto" optional>{a => <textarea id={a.id} rows={3} value={site.dressCode.text} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, text: e.target.value } }))} />}</Field>
-          </Block>
-
-          {can(s.planId, 'gallery') ? (
-          <Block id="fotos" planTag={tagFor('gallery')} title="Fotos" help="Una galería con las fotos que quieran compartir." status={!site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? `${site.gallery.photos.length} ${site.gallery.photos.length === 1 ? 'foto' : 'fotos'}` : 'Sin fotos'} tone={!site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo'} enabled={site.gallery.enabled} onToggle={v => patchSite(x => ({ ...x, gallery: { ...x.gallery, enabled: v } }))} {...shared}>
+            </Panel>
+          )}
+          {active === 'fotos' && (
+            <Panel sec={sec} planTag={tagFor('gallery')} enabled={site.gallery.enabled} onToggle={flag('gallery')} onSee={() => see('fotos')}>
             {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
             {site.gallery.photos.length > 0 && (
               <ul className="pn-photos">
@@ -259,18 +280,16 @@ function SiteEditor() {
             <div className="pn-actions is-tight"><button type="button" className="pn-btn is-ghost is-small" disabled={site.gallery.photos.length >= MAX_PHOTOS} onClick={() => photoRef.current?.click()}><Plus size={15} aria-hidden="true" />Agregar fotos</button><span className="pn-hint">{site.gallery.photos.length >= MAX_PHOTOS ? `Llegaste al máximo de ${MAX_PHOTOS} fotos. Quitá alguna para sumar otra.` : `${site.gallery.photos.length} de ${MAX_PHOTOS}. Se guardan en este dispositivo.`}</span></div>
             <Field label="Hashtag" optional>{a => <input id={a.id} type="text" value={site.gallery.hashtag} placeholder="#TomasYMartina2027" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, hashtag: e.target.value } }))} />}</Field>
             <Field label="Usuario de Instagram" optional>{a => <input id={a.id} type="text" value={site.gallery.handle} placeholder="@tomasymartina" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, handle: e.target.value } }))} />}</Field>
-          </Block>
-          ) : <LockedBlock id="fotos" title="Fotos" feature="gallery" />}
-
-          {can(s.planId, 'message') ? (
-          <Block id="mensaje" planTag={tagFor('message')} title="Mensaje final" help="Unas palabras de cierre para tus invitados." status={site.message.enabled ? 'Visible' : 'Oculta'} tone={site.message.enabled ? 'ok' : 'off'} enabled={site.message.enabled} onToggle={v => patchSite(x => ({ ...x, message: { ...x.message, enabled: v } }))} {...shared}>
+            </Panel>
+          )}
+          {active === 'mensaje' && (
+            <Panel sec={sec} planTag={tagFor('message')} enabled={site.message.enabled} onToggle={flag('message')} onSee={() => see('mensaje')}>
             <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
             <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
-          </Block>
-          ) : <LockedBlock id="mensaje" title="Mensaje final" feature="message" />}
-
-          {premium ? (
-            <Block id="musica" planTag={tagFor('playlist')} title="Música de la fiesta" help="Tus invitados suman las canciones que no pueden faltar." status={site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta'} tone={site.playlist.enabled ? 'ok' : 'off'} enabled={site.playlist.enabled} onToggle={v => patchSite(x => ({ ...x, playlist: { ...x.playlist, enabled: v } }))} {...shared}>
+            </Panel>
+          )}
+          {active === 'musica' && (
+            <Panel sec={sec} planTag={tagFor('playlist')} enabled={site.playlist.enabled} onToggle={flag('playlist')} onSee={() => see('musica')}>
               <p className="pn-note">Es una lista armada acá, solo para la vista previa: no está conectada a Spotify ni a otro servicio de música.</p>
               <Field label="Nombre de la playlist" optional>{a => <input id={a.id} type="text" value={site.playlist.name} placeholder="Nuestra fiesta" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, name: e.target.value } }))} />}</Field>
               <form onSubmit={addTrack} noValidate className="pn-inline-form is-tracks">
@@ -285,25 +304,43 @@ function SiteEditor() {
                   ))}
                 </ol>
               )}
-            </Block>
-          ) : (
-            <section className="pn-sec is-locked" aria-labelledby="sec-musica">
-              <div className="pn-sec-head"><div className="pn-sec-main is-static"><span className="pn-sec-text"><strong id="sec-musica">Música de la fiesta</strong><span className="pn-muted">No está en tu plan. Está disponible desde el plan {planFor('playlist')?.name}. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></span></span></div></div>
-            </section>
+            </Panel>
           )}
         </div>
 
-        <div className="pn-preview-pane">
-          <div className="pn-preview-bar">
-            <p className="pn-edit-label pn-mobile-only" aria-live="polite">{expanded || !activeTitle ? 'Vista previa' : <>Editando: <strong>{activeTitle}</strong></>}</p>
-            {!expanded && <button type="button" className="pn-icon pn-mobile-only" aria-pressed={hidden} aria-label={hidden ? 'Mostrar la vista previa' : 'Ocultar la vista previa'} onClick={() => setHidden(v => !v)}>{hidden ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}</button>}
-            <button type="button" className={`pn-btn is-small pn-mobile-only${expanded ? '' : ' is-ghost'}`} aria-pressed={expanded} onClick={() => setExpanded(v => !v)}>{expanded ? <><Pencil size={15} aria-hidden="true" />Seguir editando</> : <><Maximize2 size={15} aria-hidden="true" />Ampliar vista</>}</button>
-            <a className="pn-link pn-clean-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
+        {wide && (
+          <div className="pn-preview-pane">
+            <div className="pn-preview-bar">
+              <p className="pn-edit-label">Vista previa</p>
+              <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
+            </div>
+            <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
           </div>
-          <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
-        </div>
+        )}
       </div>
 
+      {!wide && previewing && <PreviewSheet path={path} anchor={anchor} jump={jump} onClose={() => setPreviewing(false)} />}
+    </div>
+  );
+}
+
+/** Vista previa a pantalla completa (celular): la misma página pública, con una salida clara de vuelta a la edición. */
+function PreviewSheet({ path, anchor, jump, onClose }: { path: string; anchor: string | undefined; jump: number; onClose: () => void }) {
+  const back = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    back.current?.focus();
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', key);
+    return () => { document.removeEventListener('keydown', key); opener?.focus?.(); };
+  }, [onClose]);
+  return (
+    <div className="pn-pvfull" role="dialog" aria-modal="true" aria-label="Vista previa de tu página">
+      <div className="pn-pvfull-bar">
+        <button type="button" ref={back} className="pn-btn is-ghost" onClick={onClose}><ArrowLeft size={16} aria-hidden="true" />Volver a editar</button>
+        <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
+      </div>
+      <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
     </div>
   );
 }
