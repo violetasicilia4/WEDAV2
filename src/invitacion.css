@@ -18,13 +18,13 @@
   --iv-hair: rgb(59 60 58 / .22);
   --iv-curve: clamp(24px, 3.5vw, 48px);
   --iv-pad: clamp(48px, 7vw, 96px);
-  --iv-font: Arial, Helvetica, sans-serif;
+  --iv-font: var(--font-ui);
 }
 
 /* ---------- base ---------- */
 .dm-root .iv-wrap { width: 92%; max-width: 1040px; margin: 0 auto; }
 .dm-root .iv-section { padding: var(--iv-pad) 0; background: #fff; color: var(--iv-ink); font-family: var(--iv-font); }
-.dm-root .iv-eyebrow { margin: 0 0 14px; font: 400 12px/1.5 var(--iv-font) !important; letter-spacing: .1em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-eyebrow { margin: 0 0 14px; font: 400 12px/1.5 var(--iv-font) !important; letter-spacing: .02em; text-transform: none; color: var(--iv-muted); }
 .dm-root .iv-h2 { margin: 0; font: 400 clamp(30px, 3vw, 40px)/1.08 var(--iv-font) !important; letter-spacing: -.01em !important; color: inherit; }
 .dm-root .iv-h3 { margin: 0; font: 400 clamp(20px, 1.8vw, 24px)/1.2 var(--iv-font) !important; letter-spacing: 0 !important; color: var(--iv-ink); }
 .dm-root .iv-strong { margin: 14px 0 0; font: 400 17px/1.35 var(--iv-font); color: var(--iv-ink); }
@@ -78,7 +78,7 @@
 .dm-root .iv-cover-back { margin-top: 8px; text-decoration: underline; text-underline-offset: 4px; }
 .dm-root .iv-cover-down { position: absolute; left: 50%; bottom: 14px; z-index: 2; display: grid; place-items: center; width: 48px; height: 48px; margin-left: -24px; color: #fff; }
 .dm-root .iv-cover.is-gifts { height: clamp(360px, 52svh, 520px); }
-.dm-root .iv-cover-names { margin: 0 0 10px; font: 400 12px/1.4 var(--iv-font) !important; letter-spacing: .1em; text-transform: uppercase; color: #fff; }
+.dm-root .iv-cover-names { margin: 0 0 10px; font: 400 12px/1.4 var(--iv-font) !important; letter-spacing: .02em; text-transform: none; color: #fff; }
 .dm-root .iv-cover.is-gifts .iv-cover-date { margin-top: 12px; }
 
 /* ---------- el día ---------- */
@@ -87,14 +87,14 @@
 .dm-root .iv-count { display: flex; gap: clamp(20px, 3vw, 36px); }
 .dm-root .iv-count p { margin: 0; display: grid; gap: 4px; }
 .dm-root .iv-count-n { font: 400 clamp(30px, 3vw, 40px)/1 var(--iv-font); color: var(--iv-ink); font-variant-numeric: tabular-nums; }
-.dm-root .iv-count-l { font: 400 12px/1.2 var(--iv-font); letter-spacing: .1em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-count-l { font: 400 12px/1.2 var(--iv-font); letter-spacing: .02em; text-transform: none; color: var(--iv-muted); }
 .dm-root .iv-events { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--iv-hair); }
 .dm-root .iv-events li {
   display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr) auto; align-items: start; gap: 8px clamp(20px, 4vw, 48px);
   padding: clamp(20px, 2.4vw, 28px) 0; border-top: 1px solid var(--iv-hair);
 }
 .dm-root .iv-ev-time { margin: 0; font: 400 clamp(22px, 2.2vw, 28px)/1.15 var(--iv-font); color: var(--iv-ink); font-variant-numeric: tabular-nums; }
-.dm-root .iv-ev-body h3 { margin: 0 0 6px; font: 400 12px/1.4 var(--iv-font) !important; letter-spacing: .1em; text-transform: uppercase; color: var(--iv-muted); }
+.dm-root .iv-ev-body h3 { margin: 0 0 6px; font: 400 12px/1.4 var(--iv-font) !important; letter-spacing: .02em; text-transform: none; color: var(--iv-muted); }
 .dm-root .iv-ev-place { margin: 0; font: 400 17px/1.35 var(--iv-font); color: var(--iv-ink); }
 .dm-root .iv-ev-addr { margin: 4px 0 0; font: 400 15px/1.45 var(--iv-font); color: var(--iv-muted); }
 .dm-root .iv-ev-note { margin: 10px 0 0; max-width: 52ch; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
@@ -211,7 +211,7 @@
 .rg-dialog .rg-sim { margin: 8px 0 0; font-size: 13px; line-height: 1.4; color: #575757; }
 .rg-dialog .rg-field textarea, .dm-rsvp .dm-rsvp-field textarea {
   width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid rgb(59 60 58 / .3); border-radius: 12px; background: #fff;
-  font: 400 15px/1.4 Arial, Helvetica, sans-serif; color: #3b3c3a; resize: vertical;
+  font: 400 15px/1.4 var(--font-ui); color: #3b3c3a; resize: vertical;
 }
 
 /* ---------- responsive ---------- */
@@ -248,7 +248,7 @@
   padding: clamp(88px, 14svh, 132px) 0 clamp(64px, 9svh, 96px);
 }
 .dm-root .iv-cover-title.iv-cover-top, .dm-root .iv-cover:not(.is-gifts) .iv-cover-date {
-  font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--iv-font) !important; letter-spacing: .1em !important; text-transform: uppercase; color: #fff !important;
+  font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--iv-font) !important; letter-spacing: .02em !important; text-transform: none; color: #fff !important;
   text-shadow: 0 1px 12px rgb(0 0 0 / .35);
 }
 .dm-root .iv-cover-bottom { display: grid; justify-items: center; }
@@ -262,8 +262,8 @@
 /* Portada: nombres grandes en el centro (escala de títulos de la landing); la fecha y las acciones quedan abajo. */
 .dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: flex-end; }
 .dm-root .iv-cover-title.iv-cover-top {
-  margin: auto 0 clamp(40px, 11svh, 120px) !important; font: 400 clamp(30px, 5.2vw, 72px)/1.12 var(--iv-font) !important; letter-spacing: .1em !important;
-  text-transform: uppercase !important; overflow-wrap: anywhere; text-wrap: balance; text-shadow: 0 2px 22px rgb(0 0 0 / .4);
+  margin: auto 0 clamp(40px, 11svh, 120px) !important; font: 400 clamp(30px, 5.2vw, 72px)/1.12 var(--iv-font) !important; letter-spacing: .02em !important;
+  text-transform: none !important; overflow-wrap: anywhere; text-wrap: balance; text-shadow: 0 2px 22px rgb(0 0 0 / .4);
 }
 .dm-root .iv-cover:not(.is-gifts)::after {
   background:
@@ -291,8 +291,8 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 .dm-root .iv-cover-group .iv-cover-date { margin: clamp(6px, 1svh, 10px) 0 0 !important; text-align: center; }
 
 /* tipografía de Weda (Arial, como la landing): nombres en mayúscula con interletrado, fecha igual */
-.dm-root .iv-cover-title.iv-cover-top { font: 400 clamp(24px, 4.2vw, 64px)/1.12 var(--iv-font) !important; letter-spacing: .1em !important; text-transform: uppercase !important; white-space: nowrap; text-shadow: 0 2px 22px rgb(0 0 0 / .4); }
-.dm-root .iv-cover:not(.is-gifts) .iv-cover-date { font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--iv-font) !important; letter-spacing: .1em !important; }
+.dm-root .iv-cover-title.iv-cover-top { font: 400 clamp(24px, 4.2vw, 64px)/1.12 var(--iv-font) !important; letter-spacing: .02em !important; text-transform: none !important; white-space: nowrap; text-shadow: 0 2px 22px rgb(0 0 0 / .4); }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-date { font: 400 clamp(14px, 1.3vw, 16px)/1.4 var(--iv-font) !important; letter-spacing: .02em !important; }
 
 /* ---------- horarios y lugares: un solo bloque, tarjetita ---------- */
 .dm-root .iv-card {
@@ -305,13 +305,13 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 .dm-root .iv-card-events li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 0 clamp(16px, 3vw, 32px); padding: clamp(20px, 3vw, 32px) 0; border-top: 1px solid var(--iv-hair); scroll-margin-top: 88px; }
 .dm-root .iv-card-events li:first-child { border-top: 0; padding-top: 0; }
 .dm-root .iv-card-icon { display: grid; justify-items: start; color: var(--iv-ink); padding-top: 2px; }
-.dm-root .iv-card-body h3 { margin: 0 0 8px; font: 400 clamp(16px, 1.6vw, 18px)/1.3 var(--iv-font) !important; letter-spacing: .08em; text-transform: uppercase; color: var(--iv-ink); }
+.dm-root .iv-card-body h3 { margin: 0 0 8px; font: 400 clamp(16px, 1.6vw, 18px)/1.3 var(--iv-font) !important; letter-spacing: .02em; text-transform: none; color: var(--iv-ink); }
 .dm-root .iv-card-time { margin: 0 0 6px; font: 400 clamp(26px, 3vw, 34px)/1.15 var(--iv-font); color: var(--iv-ink); font-variant-numeric: tabular-nums; }
 .dm-root .iv-card-date { margin: 0 0 14px; font: 400 16px/1.4 var(--iv-font); color: var(--iv-muted); }
 .dm-root .iv-card-place { margin: 0; font: 400 17px/1.5 var(--iv-font); color: var(--iv-ink); }
 .dm-root .iv-card-addr { margin: 2px 0 0; font: 400 16px/1.5 var(--iv-font); color: var(--iv-muted); }
 .dm-root .iv-card-note { margin: 10px 0 0; font: 400 15px/1.5 var(--iv-font); color: var(--iv-muted); }
-.dm-root .iv-card-map { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding-bottom: 4px; min-height: 28px; font: 400 14px/1.2 var(--iv-font); letter-spacing: .1em; text-transform: uppercase; color: var(--iv-ink); border-bottom: 1px solid currentColor; }
+.dm-root .iv-card-map { display: inline-flex; align-items: center; gap: 6px; margin-top: 16px; padding-bottom: 4px; min-height: 28px; font: 400 14px/1.2 var(--iv-font); letter-spacing: .02em; text-transform: none; color: var(--iv-ink); border-bottom: 1px solid currentColor; }
 .dm-root .iv-card > .iv-calendar { margin-top: clamp(16px, 2.4vw, 24px); }
 .dm-root .iv-card :where(a, button):focus-visible { outline: 2px solid var(--iv-ink); outline-offset: 3px; border-radius: 4px; }
 @media (max-width: 480px) { .dm-root .iv-card-events li { grid-template-columns: 1fr; gap: 12px; } }
@@ -347,7 +347,7 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 .dm-root .iv-cover-eyebrow { margin: 0 0 clamp(20px, 4svh, 44px); font: 400 clamp(16px, 1.5vw, 20px)/1.3 var(--iv-font); color: #fff; text-shadow: 0 1px 14px rgb(0 0 0 / .45); }
 .dm-root .iv-cover-group { margin: auto 0 !important; padding: clamp(40px, 8svh, 96px) 0 clamp(40px, 6svh, 72px); }
 .dm-root .iv-cover-title.iv-cover-top { font: 400 clamp(36px, 6.2vw, 88px)/1.08 var(--iv-font) !important; letter-spacing: -.01em !important; text-transform: none !important; white-space: normal; text-wrap: balance; }
-.dm-root .iv-cover-group .iv-cover-date { margin: clamp(20px, 4svh, 44px) 0 0 !important; font: 700 clamp(14px, 1.3vw, 17px)/1.4 var(--iv-font) !important; letter-spacing: .12em !important; text-transform: none !important; }
+.dm-root .iv-cover-group .iv-cover-date { margin: clamp(20px, 4svh, 44px) 0 0 !important; font: 700 clamp(14px, 1.3vw, 17px)/1.4 var(--iv-font) !important; letter-spacing: .02em !important; text-transform: none !important; }
 .dm-root .iv-cover:not(.is-gifts)::after { background: linear-gradient(180deg, rgb(0 0 0 / .3), rgb(0 0 0 / 0) 26%), radial-gradient(ellipse 70% 40% at 50% 50%, rgb(0 0 0 / .38), rgb(0 0 0 / 0) 100%), linear-gradient(0deg, rgb(0 0 0 / .3), rgb(0 0 0 / 0) 45%); }
 /* barra: cristal translúcido claro, no gris */
 .dm-root .ej-bar .ej-bar-pill { background: rgb(255 255 255 / .16) !important; border: 1px solid rgb(255 255 255 / .38); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); box-shadow: none; }
@@ -367,10 +367,10 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 .dm-root .iv-cover-eyebrow { margin-bottom: clamp(10px, 2.2svh, 24px); }
 .dm-root .iv-cover-group .iv-cover-date { margin-top: clamp(10px, 2.2svh, 24px) !important; }
 
-/* Solo la portada usa la tipografía de la referencia (Cormorant Garamond); el resto de la invitación sigue en Arial, como Weda. */
-.dm-root .iv-cover:not(.is-gifts) .iv-cover-eyebrow { font: 500 clamp(18px, 1.7vw, 24px)/1.3 'Cormorant Garamond', Garamond, Georgia, serif; letter-spacing: 0; }
-.dm-root .iv-cover:not(.is-gifts) .iv-cover-title.iv-cover-top { font: 400 clamp(40px, 5.2vw, 84px)/1.02 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: 0 !important; }
-.dm-root .iv-cover:not(.is-gifts) .iv-cover-group .iv-cover-date { font: 600 clamp(16px, 1.5vw, 20px)/1.4 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: .14em !important; }
+/* Portada: Geist, con los nombres como protagonistas por tamaño, peso y ajuste de espaciado (sin otra familia). */
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-eyebrow { font: var(--w-medium) clamp(16px, 1.5vw, 20px)/1.3 var(--font-ui); letter-spacing: 0; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-title.iv-cover-top { font: var(--w-semibold) clamp(36px, 6vw, 88px)/1.02 var(--font-ui) !important; letter-spacing: var(--ls-display) !important; text-transform: none !important; }
+.dm-root .iv-cover:not(.is-gifts) .iv-cover-group .iv-cover-date { font: var(--w-medium) clamp(14px, 1.3vw, 17px)/1.4 var(--font-ui) !important; letter-spacing: .04em !important; font-variant-numeric: tabular-nums; }
 
 /* bloque (¡Nos casamos! + nombres + fecha) centrado en el medio de la foto */
 .dm-root .iv-cover:not(.is-gifts) .iv-cover-copy { justify-content: center; padding-top: 0; padding-bottom: 0; }
@@ -384,11 +384,11 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 /* cielo claro: oscurecido más leve para no ensuciar el azul */
 .dm-root .iv-cover:not(.is-gifts)::after { background: linear-gradient(180deg, rgb(0 0 0 / .22), rgb(0 0 0 / 0) 22%), radial-gradient(ellipse 64% 30% at 50% 50%, rgb(0 0 0 / .26), rgb(0 0 0 / 0) 100%); }
 
-/* portada de regalos: misma tipografía de la portada de la invitación (Cormorant Garamond) */
-.dm-root .iv-cover.is-gifts .iv-cover-names { font: 500 clamp(18px, 1.7vw, 24px)/1.3 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: 0; text-transform: none; }
-.dm-root .iv-cover.is-gifts .iv-cover-title { font: 400 clamp(40px, 5.2vw, 84px)/1.02 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: 0 !important; text-transform: none !important; }
-.dm-root .iv-cover.is-gifts .iv-cover-date { font: 600 clamp(16px, 1.5vw, 20px)/1.4 'Cormorant Garamond', Garamond, Georgia, serif !important; letter-spacing: .14em !important; text-transform: none !important; }
-.dm-root .iv-cover.is-gifts .iv-cover-back { font: 500 clamp(16px, 1.4vw, 18px)/1.3 'Cormorant Garamond', Garamond, Georgia, serif; letter-spacing: 0; }
+/* portada de regalos: misma tipografía que la portada de la invitación */
+.dm-root .iv-cover.is-gifts .iv-cover-names { font: var(--w-medium) clamp(16px, 1.5vw, 20px)/1.3 var(--font-ui) !important; letter-spacing: 0; text-transform: none; }
+.dm-root .iv-cover.is-gifts .iv-cover-title { font: var(--w-semibold) clamp(36px, 6vw, 88px)/1.02 var(--font-ui) !important; letter-spacing: var(--ls-display) !important; text-transform: none !important; }
+.dm-root .iv-cover.is-gifts .iv-cover-date { font: var(--w-medium) clamp(14px, 1.3vw, 17px)/1.4 var(--font-ui) !important; letter-spacing: .04em !important; text-transform: none !important; font-variant-numeric: tabular-nums; }
+.dm-root .iv-cover.is-gifts .iv-cover-back { font: var(--w-medium) clamp(14px, 1.3vw, 16px)/1.3 var(--font-ui); letter-spacing: 0; }
 .dm-root .iv-cover.is-gifts .iv-cover-img { object-position: 50% 62%; }
 
 /* barra: sin borde; cristal claro sobre la foto, gris translúcido cuando pasa a fondo blanco */
@@ -431,8 +431,8 @@ html:has(.dm-root), body:has(.dm-root) { background: #fff; }
 .dm-root .rg-list .section-inner { max-width: min(92%, 1400px); width: 100%; }
 
 /* barra de arriba: tipografía original (Arial, como Weda) y cristal con más intensidad */
-.dm-root .ej-bar, .dm-root .ej-bar :where(a, button, span) { font-family: Arial, Helvetica, sans-serif !important; }
-.dm-root:has(#nos-casamos) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-family: Arial, Helvetica, sans-serif !important; font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; font-size-adjust: none; color: #fff; text-shadow: 0 1px 10px rgb(0 0 0 / .6); }
+.dm-root .ej-bar, .dm-root .ej-bar :where(a, button, span) { font-family: var(--font-ui) !important; }
+.dm-root:has(#nos-casamos) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-family: var(--font-ui) !important; font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; font-size-adjust: none; color: #fff; text-shadow: 0 1px 10px rgb(0 0 0 / .6); }
 @media (max-width: 640px) { .dm-root:has(#nos-casamos) .ej-bar .ej-bar-link, .dm-root .ej-bar .ej-bar-link { font-size: 13px; } }
 .dm-root .ej-bar .ej-bar-pill { background: rgb(255 255 255 / .28) !important; -webkit-backdrop-filter: blur(20px) saturate(1.3); backdrop-filter: blur(20px) saturate(1.3); box-shadow: 0 6px 24px rgb(0 0 0 / .16); }
 .dm-root .ej-bar.is-over-light .ej-bar-pill { background: rgb(59 60 58 / .82) !important; }
@@ -451,7 +451,7 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 /* bienvenida: misma letra que "CEREMONIA" (mayúscula, interletrado, sin negrita), más arriba y más delicada */
 .dm-root .iv-welcome { padding: clamp(44px, 7vw, 96px) 0 clamp(32px, 5vw, 56px); }
 .dm-root .iv-welcome-title {
-  font: 400 clamp(22px, 2.6vw, 34px)/1.2 var(--iv-font) !important; font-weight: 400 !important; letter-spacing: .1em !important; text-transform: uppercase !important; color: var(--iv-ink);
+  font: 400 clamp(22px, 2.6vw, 34px)/1.2 var(--iv-font) !important; font-weight: 400 !important; letter-spacing: .02em !important; text-transform: none !important; color: var(--iv-ink);
 }
 .dm-root .iv-welcome-text { margin-top: clamp(12px, 1.6vw, 20px); font: 400 clamp(15px, 1.25vw, 17px)/1.6 var(--iv-font); font-weight: 400 !important; letter-spacing: .02em; color: var(--iv-muted); }
 
@@ -465,7 +465,7 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-day-grid .iv-card-icon { justify-items: center; }
 .dm-root .iv-day-grid .iv-card-icon svg { width: 34px; height: 34px; }
 .dm-root .iv-day-grid .iv-card-body { display: grid; justify-items: center; }
-.dm-root .iv-day-grid .iv-card-body h3 { font-size: 15px !important; margin-bottom: 10px; letter-spacing: .1em; }
+.dm-root .iv-day-grid .iv-card-body h3 { font-size: 15px !important; margin-bottom: 10px; letter-spacing: .02em; }
 .dm-root .iv-day-grid .iv-card-time { font-size: clamp(26px, 2.6vw, 34px); margin-bottom: 4px; }
 .dm-root .iv-day-grid .iv-card-date { font-size: 14px; margin-bottom: 14px; }
 .dm-root .iv-day-grid .iv-card-place { font-size: 16px; }
@@ -483,21 +483,21 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 @media (max-width: 860px) { .dm-root .iv-day-grid .iv-card-icon svg { width: 48px; height: 48px; } }
 
 /* fecha bajo la frase de bienvenida: misma letra que "CEREMONIA" */
-.dm-root .iv-welcome-date { margin: clamp(14px, 1.8vw, 22px) 0 0; font: 400 clamp(14px, 1.2vw, 16px)/1.4 var(--iv-font); letter-spacing: .1em; text-transform: uppercase; color: var(--iv-ink); }
+.dm-root .iv-welcome-date { margin: clamp(14px, 1.8vw, 22px) 0 0; font: 400 clamp(14px, 1.2vw, 16px)/1.4 var(--iv-font); letter-spacing: .02em; text-transform: none; color: var(--iv-ink); }
 
 /* bienvenida: "Save the date" chico, la fecha grande y el botón para guardarla */
-.dm-root .iv-welcome-title { font: 400 clamp(12px, 1vw, 14px)/1.3 var(--iv-font) !important; letter-spacing: .14em !important; color: var(--iv-muted); }
-.dm-root .iv-welcome-date { margin: clamp(10px, 1.4vw, 18px) 0 0; font: 400 clamp(28px, 4vw, 52px)/1.12 var(--iv-font); letter-spacing: .06em; text-transform: uppercase; color: var(--iv-ink); text-wrap: balance; }
+.dm-root .iv-welcome-title { font: 400 clamp(12px, 1vw, 14px)/1.3 var(--iv-font) !important; letter-spacing: .02em !important; color: var(--iv-muted); }
+.dm-root .iv-welcome-date { margin: clamp(10px, 1.4vw, 18px) 0 0; font: 400 clamp(28px, 4vw, 52px)/1.12 var(--iv-font); letter-spacing: .02em; text-transform: none; color: var(--iv-ink); text-wrap: balance; }
 .dm-root .iv-welcome-btn { margin-top: clamp(20px, 2.6vw, 32px); }
 
 /* bienvenida como la referencia: save the date chico en color, fecha en tamaño medio (sin negrita), cuenta regresiva y enlace para agendar */
-.dm-root .iv-welcome-title { color: var(--iv-slate); font-size: clamp(12px, 1vw, 14px) !important; letter-spacing: .16em !important; }
+.dm-root .iv-welcome-title { color: var(--iv-slate); font-size: clamp(12px, 1vw, 14px) !important; letter-spacing: .02em !important; }
 .dm-root .iv-welcome-date { font: 400 clamp(26px, 3.2vw, 42px)/1.15 var(--iv-font); font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--iv-ink); margin-top: clamp(8px, 1.2vw, 14px); }
 .dm-root .iv-welcome .iv-count { justify-content: center; gap: clamp(22px, 4vw, 52px); margin-top: clamp(20px, 2.6vw, 32px); }
 .dm-root .iv-welcome .iv-count p { gap: 6px; justify-items: center; }
 .dm-root .iv-welcome .iv-count-n { font: 400 clamp(28px, 3vw, 40px)/1 var(--iv-font); color: var(--iv-slate); font-variant-numeric: tabular-nums; }
-.dm-root .iv-welcome .iv-count-l { font: 400 11px/1.2 var(--iv-font); letter-spacing: .14em; text-transform: uppercase; color: var(--iv-muted); }
-.dm-root .iv-welcome .iv-welcome-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: clamp(20px, 2.6vw, 30px); font: 400 12px/1.2 var(--iv-font); letter-spacing: .14em; text-transform: uppercase; color: var(--iv-ink); background: none; border: 0; padding: 8px 4px; min-height: 44px; cursor: pointer; }
+.dm-root .iv-welcome .iv-count-l { font: 400 11px/1.2 var(--iv-font); letter-spacing: .02em; text-transform: none; color: var(--iv-muted); }
+.dm-root .iv-welcome .iv-welcome-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: clamp(20px, 2.6vw, 30px); font: 400 12px/1.2 var(--iv-font); letter-spacing: .02em; text-transform: none; color: var(--iv-ink); background: none; border: 0; padding: 8px 4px; min-height: 44px; cursor: pointer; }
 .dm-root .iv-welcome .iv-welcome-btn span { border-bottom: 1px solid currentColor; padding-bottom: 2px; }
 
 /* bloque de ceremonia, recepción y fiesta: fondo celestito */
@@ -515,17 +515,17 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 
 /* cada momento con la estructura de la referencia: ícono, nombre, día/mes | hora, línea, lugar y dirección, botón "Cómo llegar" */
 .dm-root .iv-day .iv-card-events li { gap: 0; }
-.dm-root .iv-day .iv-card-body h3 { font-size: 16px !important; letter-spacing: .14em; margin: 12px 0 20px; }
+.dm-root .iv-day .iv-card-body h3 { font-size: 16px !important; letter-spacing: .02em; margin: 12px 0 20px; }
 .dm-root .iv-day .iv-when { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; width: 100%; max-width: 300px; padding-bottom: 22px; margin-bottom: 20px; border-bottom: 1px solid rgb(255 255 255 / .32); }
 .dm-root .iv-day .iv-when-cell { margin: 0; display: grid; gap: 6px; justify-items: center; padding: 0 12px; }
 .dm-root .iv-day .iv-when-cell + .iv-when-cell { border-left: 1px solid rgb(255 255 255 / .32); }
 .dm-root .iv-day .iv-when-n { font: 400 clamp(28px, 2.8vw, 38px)/1 var(--iv-font); color: #fff; font-variant-numeric: tabular-nums; }
-.dm-root .iv-day .iv-when-l { font: 400 12px/1.2 var(--iv-font); letter-spacing: .14em; text-transform: uppercase; color: rgb(255 255 255 / .92); }
+.dm-root .iv-day .iv-when-l { font: 400 12px/1.2 var(--iv-font); letter-spacing: .02em; text-transform: none; color: rgb(255 255 255 / .92); }
 .dm-root .iv-day .iv-card-place { font-size: 18px; margin-top: 0; }
 .dm-root .iv-day .iv-card-addr { font-size: 15px; margin-top: 4px; color: rgb(255 255 255 / .92); }
 .dm-root .iv-day .iv-card-map {
   margin-top: 22px; padding: 0 24px; min-height: 44px; border: 0; border-radius: 999px; background: #fff; color: var(--iv-ink);
-  font: 400 13px/1 var(--iv-font); letter-spacing: .12em; text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center;
+  font: 400 13px/1 var(--iv-font); letter-spacing: .02em; text-transform: none; display: inline-flex; align-items: center; justify-content: center;
 }
 .dm-root .iv-day .iv-card-map:hover { background: var(--iv-paper); }
 .dm-root .iv-day .iv-card-map span { border: 0; padding: 0; }
@@ -539,13 +539,6 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root .iv-day .iv-card-events { border-top: 0 !important; border-bottom: 0 !important; }
 .dm-root .iv-day .iv-card-events li, .dm-root .iv-day .iv-card-events li:first-child { border: 0 !important; }
 @media (max-width: 860px) { .dm-root .iv-day .iv-card-events li { border: 0 !important; } }
-
-/* ---------- tipografía de la invitación (Cormorant Garamond) en todas las secciones de /ejemplo, después de la portada ----------
-   No incluye la barra de arriba, el pie, los pop-ups ni la lista de regalos: esos siguen en Arial. */
-.dm-root:has(#nos-casamos) main > section:not(.iv-cover) { --iv-font: 'Cormorant Garamond', Garamond, Georgia, serif; font-family: var(--iv-font); font-weight: 500; font-size-adjust: 0.46; }
-.dm-root:has(#nos-casamos) main > section:not(.iv-cover) :where(h1, h2, h3, h4, p, a, button, li, span, summary, label, input, textarea, select, small, strong, code, dt, dd, time) { font-family: var(--iv-font); }
-.dm-root:has(#nos-casamos) main > section:not(.iv-cover) :where(h2, h3, .iv-card-time, .iv-when-n, .iv-count-n, .iv-welcome-date) { font-weight: 500; }
-.dm-root:has(#nos-casamos) main > section:not(.iv-cover) :where(.iv-link, .iv-btn, .iv-card-map, .iv-welcome-btn, button) { font-weight: 600; }
 
 /* más aire entre ceremonia, recepción y fiesta, con una rayita corta que las separa (en orden cronológico, de izquierda a derecha) */
 .dm-root .iv-day .iv-card-events li { padding-left: clamp(24px, 4vw, 64px); padding-right: clamp(24px, 4vw, 64px); position: relative; }
@@ -648,7 +641,7 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
   .dm-root .ej-bar .ej-bar-burger { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; }
   .dm-root .ej-bar .ej-bar-inner { position: relative; }
   .dm-root .ej-bar .ej-bar-menu:not([hidden]) { display: flex; flex-direction: column; gap: 14px; position: absolute; left: 0; right: 0; top: calc(100% + 8px); padding: 22px; border-radius: 28px; color: #fff; background: rgb(43 64 69 / .88); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: 0 14px 40px rgb(0 0 0 / .28), inset 0 0 0 1px rgb(255 255 255 / .16); z-index: 3; }
-  .dm-root .ej-bar .ej-bar-menu .menu-row { display: flex; align-items: center; gap: 20px; width: 100%; min-height: 76px; padding: 0; border: 0; border-radius: 20px; background: transparent; color: #fff; font: 400 16px/1.2 Arial, Helvetica, sans-serif; text-align: left; text-decoration: none; text-shadow: none; cursor: pointer; }
+  .dm-root .ej-bar .ej-bar-menu .menu-row { display: flex; align-items: center; gap: 20px; width: 100%; min-height: 76px; padding: 0; border: 0; border-radius: 20px; background: transparent; color: #fff; font: 400 16px/1.2 var(--font-ui); text-align: left; text-decoration: none; text-shadow: none; cursor: pointer; }
   .dm-root .ej-bar .ej-bar-menu .menu-tile { flex: none; width: 76px; height: 76px; display: grid; place-items: center; border-radius: 18px; background: rgb(255 255 255 / .14); }
   .dm-root .ej-bar .ej-bar-menu .menu-row small { display: block; font-size: 14px; opacity: .72; margin-bottom: 4px; }
   .dm-root .ej-bar .ej-bar-menu .menu-row strong { font-weight: 500; font-size: 20px; line-height: 1.2; }
@@ -670,12 +663,12 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 
 /* Páginas públicas de una pareja (/sitio/…): portada sin foto, avisos y vista previa dentro del panel */
 .dm-root .iv-cover.is-plain { background: linear-gradient(160deg, #707d87, #5a646c); }
-.dm-root .iv-cover-mono { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 18%; font: 400 clamp(72px, 16vw, 160px)/1 'Cormorant Garamond', Georgia, serif; letter-spacing: .04em; color: rgb(255 255 255 / .16); pointer-events: none; }
-.dm-root .site-notice { min-height: 100svh; display: grid; align-content: center; justify-items: start; gap: 16px; width: min(92%, 560px); margin: 0 auto; font-family: Arial, Helvetica, sans-serif; color: #3b3c3a; }
-.dm-root .site-notice h1 { margin: 0; font: 400 clamp(26px, 4vw, 34px)/1.15 Arial, Helvetica, sans-serif; }
+.dm-root .iv-cover-mono { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 18%; font: var(--w-semibold) clamp(72px, 16vw, 160px)/1 var(--font-ui); letter-spacing: var(--ls-display); letter-spacing: .04em; color: rgb(255 255 255 / .16); pointer-events: none; }
+.dm-root .site-notice { min-height: 100svh; display: grid; align-content: center; justify-items: start; gap: 16px; width: min(92%, 560px); margin: 0 auto; font-family: var(--font-ui); color: #3b3c3a; }
+.dm-root .site-notice h1 { margin: 0; font: 400 clamp(26px, 4vw, 34px)/1.15 var(--font-ui); }
 .dm-root .site-notice p { margin: 0; line-height: 1.5; color: #575757; }
 .dm-root .site-notice a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; border-radius: 999px; background: #707d87; color: #fff; text-decoration: none; }
-.dm-root .site-loading { min-height: 100svh; display: grid; place-items: center; margin: 0; font-family: Arial, Helvetica, sans-serif; color: #575757; }
+.dm-root .site-loading { min-height: 100svh; display: grid; place-items: center; margin: 0; font-family: var(--font-ui); color: #575757; }
 .dm-root .ej-bar.is-embedded .ej-bar-close { display: none; }
 .dm-root .ej-bar.is-embedded .ej-bar-inner { justify-content: flex-end; }
 

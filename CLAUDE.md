@@ -18,7 +18,7 @@ Weda crea y gestiona la experiencia digital de un casamiento (página web, lista
 - Una sola fuente de datos: el panel, la vista previa y la página pública leen el mismo estado (`src/lib/weda/`). No dupliques contenido ni crees una segunda versión de una página existente.
 
 ## Identidad visual (restricción permanente)
-Tres contextos que no se mezclan: **landing** (`styles.css`, Arial), **administración** (`panel.css`, Arial, fondo blanco, pizarra `#707d87`/`#5A646C`/`#8A959E`) y **página pública** (`/ejemplo*`, `/sitio/*`; Cormorant Garamond solo en las secciones de la invitación posteriores a la portada). Detalle en `docs/design-system.md`. No agregues gradientes, sombras, colores, fuentes ni animaciones sin razón funcional. No rompas la landing ni `/ejemplo`.
+Tres contextos que no se mezclan: **landing** (`styles.css`), **administración** (`panel.css`, fondo blanco, pizarra `#707d87`/`#5A646C`/`#8A959E`) y **página pública** (`/ejemplo*`, `/sitio/*`). Tipografía única: **Geist** (variable, local en `public/fonts/geist`; tokens en `src/typography.css`), sin otras familias. Detalle en `docs/design-system.md`. No agregues gradientes, sombras, colores, fuentes ni animaciones sin razón funcional. No rompas la landing ni `/ejemplo`.
 
 ## Reglas de trabajo del proyecto
 - Interfaz en español rioplatense (voseo). Sin `alert` del navegador y sin botones decorativos: cada botón hace algo real.

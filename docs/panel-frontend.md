@@ -36,7 +36,7 @@ Se eligió `/sitio/$slug` y no `/$slug` para no chocar con las rutas existentes;
 - **Página pública**: `ejemplo.index.tsx`, `ejemplo.regalos.tsx` y el layout de `/ejemplo` se movieron a `src/components/site/` (`invitation.tsx`, `gifts-page.tsx`, `site-shell.tsx`, `site-cover.tsx`). Leen todo de un contexto (`useSite()`); `/ejemplo` le pasa los datos de la demo y `/sitio/$slug` los de la pareja. No hay una segunda página de regalos.
 - `rsvp-dialog.tsx` (formulario de confirmación) se reutiliza tal cual; ahora toma menús y fecha límite del sitio y avisa al panel al enviar.
 - Estilos del ejemplo (`ejemplo.css`, `invitacion.css`, `demo.css`) sin cambios de diseño.
-- Administración: identidad de la landing (Arial, azul `#707d87`, `#5A646C`, `#8A959E`, papel `#f5f2eb`, botones en píldora) en `src/panel.css`.
+- Administración: identidad de la landing (Geist, azul `#707d87`, `#5A646C`, `#8A959E`, papel `#f5f2eb`, botones en píldora) en `src/panel.css`.
 
 ## 4. Estado local y preparación para backend
 

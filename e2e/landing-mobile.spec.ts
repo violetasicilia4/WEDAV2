@@ -138,8 +138,8 @@ test.describe('Landing · escritorio no cambia', () => {
     const m = await page.evaluate(() => { const pills = [...document.querySelectorAll('.float-pill')]; return { n: pills.length, radius: getComputedStyle(pills[0]!).borderRadius, h1: getComputedStyle(document.querySelector('.seed-hero h1')!).fontSize, ws: getComputedStyle(document.querySelector('.seed-hero h1')!).whiteSpace, pad: getComputedStyle(document.querySelector('.products-section')!).paddingTop, weight: getComputedStyle(document.querySelector('.feat-head h2')!).fontWeight }; });
     expect(m.n).toBe(2);
     expect(m.radius).not.toBe('0px');
-    expect(m.h1).toBe('66px');
+    expect(m.h1).toBe('64px'); // Display XL (token --t-display-xl)
     expect(m.pad).toBe('72px');
-    expect(m.weight).toBe('400');
+    expect(m.weight).toBe('500'); // Medium
   });
 });

@@ -42,7 +42,7 @@
   background: rgb(255 255 255 / .78); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
 }
 .dm-gift-body { padding: 22px 22px 0; flex: 1; }
-.dm-gift-cat { margin: 0 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); }
+.dm-gift-cat { margin: 0 0 8px; font-size: 12px; letter-spacing: .02em; text-transform: none; color: var(--muted-foreground); }
 .dm-gift h3 { margin: 0; font-size: 21px; line-height: 1.2; font-weight: 400; text-wrap: balance; }
 .dm-gift-text { margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted-foreground); }
 .dm-fund { margin-top: 16px; }
@@ -103,7 +103,7 @@
 .dm-form-actions .seed-button { background: var(--dm-blue); color: #fff; height: 52px; padding: 0 28px; font-size: 15px; }
 .dm-form-actions .seed-button:hover { background: color-mix(in srgb, var(--dm-blue) 85%, #000); }
 .dm-form-aside { position: sticky; top: 96px; padding: 32px; border-radius: 24px; background: #fff; }
-.dm-form-aside .eyebrow { text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; color: var(--muted-foreground); }
+.dm-form-aside .eyebrow { text-transform: none; letter-spacing: .02em; margin-bottom: 14px; color: var(--muted-foreground); }
 .dm-form-aside h2 { font-size: 28px; line-height: 1.1; margin-bottom: 14px; }
 .dm-form-aside p:not(.eyebrow) { margin: 6px 0 0; font-size: 15px; line-height: 1.5; }
 
@@ -329,7 +329,7 @@
    secciones a todo el ancho, fondos que alternan y curvas que se montan.
    ========================================================================= */
 .dm-hero { box-shadow: 0 25px 0 0 #fff; }
-.dm-eyebrow { margin: 0 0 18px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.dm-eyebrow { margin: 0 0 18px; font-size: 12px; letter-spacing: .02em; text-transform: none; }
 .dm-sec { position: relative; margin-top: calc(var(--curve) * -1); border-radius: var(--curve) var(--curve) 0 0; padding: clamp(64px, 9vw, 128px) 0 calc(clamp(64px, 9vw, 128px) + var(--curve)); }
 .dm-sec h2 { margin: 0; font-weight: 400; font-size: clamp(30px, 4vw, 56px); line-height: 1.06; letter-spacing: -.01em; text-wrap: balance; }
 .dm-closing { padding-bottom: clamp(64px, 9vw, 128px); }
@@ -341,7 +341,7 @@
 .dm-intro .dm-eyebrow { color: var(--muted-foreground); }
 .dm-lead { margin: 0; font-size: clamp(16px, 1.35vw, 20px); line-height: 1.6; max-width: 34em; }
 .dm-story { margin: clamp(28px, 4vw, 48px) 0 0; padding-top: 24px; border-top: 1px solid rgb(59 60 58 / .2); }
-.dm-story figcaption { margin-bottom: 14px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-foreground); }
+.dm-story figcaption { margin-bottom: 14px; font-size: 12px; letter-spacing: .02em; text-transform: none; color: var(--muted-foreground); }
 .dm-story blockquote { margin: 0; font-size: clamp(17px, 1.5vw, 22px); line-height: 1.5; max-width: 30em; }
 .dm-sign { margin: 22px 0 0; font-size: 15px; color: var(--muted-foreground); }
 
@@ -352,7 +352,7 @@
 .dm-days-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 64px); }
 .dm-days-grid article { padding-top: 20px; border-top: 1px solid rgb(255 255 255 / .4); display: flex; flex-direction: column; }
 .dm-days-n { margin: 0; display: flex; align-items: center; justify-content: space-between; font-size: 13px; opacity: .85; font-variant-numeric: tabular-nums; }
-.dm-days-grid h3 { margin: 28px 0 0; font-weight: 400; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; opacity: .9; }
+.dm-days-grid h3 { margin: 28px 0 0; font-weight: 400; font-size: 14px; letter-spacing: .02em; text-transform: none; opacity: .9; }
 .dm-time { margin: 8px 0 0; font-size: clamp(36px, 3.6vw, 56px); line-height: 1; letter-spacing: -.01em; }
 .dm-venue { margin: clamp(20px, 2.4vw, 32px) 0 0; font-size: 18px; line-height: 1.3; }
 .dm-addr { margin: 6px 0 0; font-size: 15px; line-height: 1.45; opacity: .9; }
@@ -418,7 +418,7 @@
 /* 8 · playlist */
 .dm-music { background: var(--section); }
 .dm-playlist { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(32px, 7vw, 120px); align-items: start; }
-.dm-playlist-status { margin: 0 0 18px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-foreground); }
+.dm-playlist-status { margin: 0 0 18px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .02em; text-transform: none; color: var(--muted-foreground); }
 .dm-playlist-status i { width: 8px; height: 8px; border-radius: 50%; background: var(--dm-blue); }
 .dm-playlist h2 { max-width: 10em; }
 .dm-playlist-meta { margin: 18px 0 0; max-width: 26em; font-size: 16px; line-height: 1.55; color: var(--muted-foreground); }
@@ -482,7 +482,7 @@
    mayúscula inicial) con el tratamiento tipográfico de Seed: titulares
    compactos, etiquetas de 12 px en mayúsculas con .1em y texto de 14–16 px.
    ========================================================================= */
-.dm-root { font-family: Arial, Helvetica, sans-serif; font-weight: 400; letter-spacing: 0; }
+.dm-root { font-family: var(--font-ui); font-weight: 400; letter-spacing: 0; }
 .dm-root button, .dm-root input, .dm-root textarea, .dm-root select { font-family: inherit; }
 
 /* nombres: igual que el h1 del hero de la landing, a mayor escala */
@@ -504,7 +504,7 @@
 
 /* etiquetas: 12 px, mayúsculas, .1em (como ".eyebrow" de la landing) */
 .dm-root .dm-eyebrow, .dm-root .dm-playlist-status, .dm-root .dm-story figcaption, .dm-root .dm-days-grid h3, .dm-root .dm-days-n {
-  font-style: normal; font-weight: 400; text-transform: uppercase; letter-spacing: .1em; font-size: 12px;
+  font-style: normal; font-weight: 400; text-transform: none; letter-spacing: .02em; font-size: 12px;
 }
 .dm-root .dm-days-grid h3 { margin-top: 28px; }
 .dm-root .dm-time { font-weight: 400; letter-spacing: -.01em; font-size: clamp(30px, 3vw, 44px); font-variant-numeric: tabular-nums; }
@@ -529,7 +529,7 @@
 .dm-footer-btn { display: inline-flex; align-items: center; min-height: 40px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
 .dm-footer-btn:hover { text-decoration: underline; }
 
-.dm-rsvp { width: calc(100% - 24px) !important; max-width: 560px !important; max-height: calc(100dvh - 32px); overflow-y: auto; border: 0 !important; border-radius: 24px !important; background: #fff !important; padding: clamp(20px, 3.4vw, 36px) !important; gap: 0 !important; font-family: Arial, Helvetica, sans-serif; color: var(--foreground); }
+.dm-rsvp { width: calc(100% - 24px) !important; max-width: 560px !important; max-height: calc(100dvh - 32px); overflow-y: auto; border: 0 !important; border-radius: 24px !important; background: #fff !important; padding: clamp(20px, 3.4vw, 36px) !important; gap: 0 !important; font-family: var(--font-ui); color: var(--foreground); }
 .dm-rsvp h2 { margin: 0; font-size: clamp(24px, 3vw, 30px); font-weight: 400; line-height: 1.12; letter-spacing: -.01em; }
 .dm-rsvp [id^="radix-"][class*="muted"], .dm-rsvp p { color: var(--muted-foreground); }
 .dm-rsvp header p { margin: 8px 0 0; font-size: 15px; line-height: 1.5; }

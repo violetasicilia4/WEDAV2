@@ -11,6 +11,7 @@ import {
 import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import typographyCss from "../typography.css?url";
 
 function NotFoundComponent() {
   return (
@@ -82,6 +83,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "preload", href: "/fonts/geist/geist-latin-wght-normal.woff2", as: "font", type: "font/woff2", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: typographyCss },
       {
         rel: "stylesheet",
         href: appCss,

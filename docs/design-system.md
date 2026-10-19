@@ -12,10 +12,21 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 
 ## 1. Tipografía
 
-- **Landing y administración:** Arial (`--font-sans`, y `font-family: Arial, Helvetica, sans-serif` en `panel.css`). No se agregan fuentes.
-- **Página pública, secciones de la invitación después de la portada:** Cormorant Garamond (`--iv-font`, se activa cuando existe la sección «Save the date», `.dm-root:has(#nos-casamos)`). La portada y la página de regalos (`/ejemplo/regalos`) usan Arial.
-- **Excepción en la landing:** las escenas de demostración de la página (`feature-demos`) reproducen la invitación con Cormorant Garamond.
-- Los tamaños se definen a mano en cada componente (ver Vacíos).
+**Una sola familia: Geist (variable)** en landing, onboarding, panel y micrositios (decisión de 2026-10; reemplaza a Arial y Cormorant Garamond). Se sirve desde `public/fonts/geist/` (`latin` y `latin-ext`, licencia SIL OFL 1.1 en `OFL.txt`), con `@font-face` y los tokens en `src/typography.css` (cargado desde `__root.tsx`, con `preload` del subconjunto latino). Pila de respaldo: `ui-sans-serif, system-ui, …, Arial`. No hay otras familias ni Google Fonts.
+
+| Token | Celular | ≥ 768 px | Uso |
+|---|---|---|---|
+| `--t-display-xl` | 42 | 64 | Título del hero de la landing (con tope `min(…, 8.6vw)` para que entre en un renglón) |
+| `--t-display-l` | 36 | 48 | Techo de los títulos de sección de la landing |
+| `--t-page` | 28 | 32 | Títulos de página (panel, onboarding), mínimo de los títulos de sección de la landing |
+| `--t-section` | 22 | 24 | Títulos de tarjeta/sección |
+| `--t-subtitle` | 18 | 20 | Subtítulos |
+| `--t-body` / `--t-small` / `--t-label` / `--t-btn` | 16 / 14 / 13 / 15 | igual | Texto, secundario, etiquetas, botones |
+
+Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etiquetas, títulos secundarios, hero), `--w-semibold` 600 (énfasis, métricas, precios, títulos de página y los nombres de la pareja en la portada). Interlineado: `--lh-display` 1.05, `--lh-title` 1.15, `--lh-snug` 1.3, `--lh-body` 1.5. Tracking: `--ls-display` −.03em, `--ls-title` −.02em, `--ls-section` −.01em. Sin mayúsculas sostenidas ni tracking ancho: los rótulos van en minúscula (excepciones: ninguna). Números con `tabular-nums` (montos, contadores, conteos).
+
+- La invitación pública usa Geist en todo: el protagonismo de los nombres sale del tamaño (`clamp(36px, 6vw, 88px)`), el peso 600 y el tracking −.03em.
+- Los tamaños de componentes que no están en la escala se siguen definiendo a mano (ver Vacíos); migrar el resto a los tokens es trabajo pendiente.
 
 ## 2. Color
 

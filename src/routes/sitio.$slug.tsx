@@ -9,11 +9,6 @@ export const Route = createFileRoute('/sitio/$slug')({
       { title: 'Sitio de casamiento • Weda' },
       { name: 'robots', content: 'noindex, nofollow' },
     ],
-    links: [
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
-    ],
   }),
   component: SiteLayout,
 });
