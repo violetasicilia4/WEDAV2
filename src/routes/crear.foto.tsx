@@ -40,7 +40,7 @@ function PhotoStep() {
     <div className="pn-account pn-photo-step">
       <header className="pn-account-head">
         <h1>Sumá una foto de ustedes</h1>
-        <p className="is-soft">Es lo primero que van a ver tus invitados: la portada de tu página. Podés cambiarla cuando quieras.</p>
+        <p className="is-soft">Es lo primero que ven tus invitados. Podés cambiarla cuando quieras.</p>
       </header>
 
       <figure className="pn-cover-preview">

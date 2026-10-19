@@ -40,6 +40,25 @@ test.describe('Onboarding: foto de la pareja', () => {
     expect(cover).toBe(saved.photo.src);
   });
 
+  for (const [w, h] of [[320, 568], [375, 667], [390, 844], [430, 932]] as const) {
+    test(`en celular (${w} px): título en un renglón, centrado, y la portada con el mismo ancho que el botón`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h });
+      await untilPhotoStep(page);
+      await page.locator('.pn-photo-step h1').waitFor();
+      const m = await page.evaluate(() => {
+        const r = (e: Element) => e.getBoundingClientRect();
+        const h1 = document.querySelector('.pn-photo-step h1')!, fig = document.querySelector('.pn-cover-preview')!, btn = document.querySelector('.pn-photo-step .pn-btn.pn-block')!;
+        return { lines: Math.round(r(h1).height / parseFloat(getComputedStyle(h1).lineHeight)), center: (r(h1).left + r(h1).right) / 2, vw: innerWidth, figL: r(fig).left, figR: r(fig).right, btnL: r(btn).left, btnR: r(btn).right, btnBottom: r(btn).bottom, vh: innerHeight, sw: document.documentElement.scrollWidth };
+      });
+      expect(m.lines).toBe(1);
+      expect(Math.abs(m.center - m.vw / 2)).toBeLessThan(2);
+      expect(Math.abs(m.figL - m.btnL)).toBeLessThan(1);
+      expect(Math.abs(m.figR - m.btnR)).toBeLessThan(1);
+      expect(m.btnBottom).toBeLessThanOrEqual(m.vh);        // el botón principal se ve sin hacer scroll
+      expect(m.sw).toBe(m.vw);
+    });
+  }
+
   test('se puede seguir sin foto: queda la imagen de muestra y se sube después', async ({ page }) => {
     await untilPhotoStep(page);
     await page.getByRole('button', { name: 'Ahora no, la subo después' }).click();
