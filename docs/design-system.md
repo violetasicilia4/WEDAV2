@@ -90,6 +90,14 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
 - **Hoja inferior** (`.pn-dialog.is-sheet`, ≤ 560 px): pegada abajo, hasta 90 dvh, botones fijos al pie. Todo `.pn-dialog .pn-actions.is-end` queda a la vista en celular.
 - **Mesas:** accesos con conteo (`.pn-mesa-nav`: «Sin lugar N», una píldora por mesa), selector compacto por persona («Asignar a…» si no tiene mesa). No hay capacidad por mesa en el modelo, por eso no se muestra.
 - **Editor del sitio en celular:** la barra de la vista previa dice «Editando: sección», la vista se oculta con un botón y se pliega sola cuando el teclado reduce el `visualViewport` más de 150 px con foco en un campo de la página.
+- **Segunda ronda (superficies, referencias visuales).** Principios adoptados (sin copiar estilos): grupos sobre una *superficie tintada* en vez de bordes (`--pn-surface` = pizarra al 8 %, `--pn-surface-2` al 16 %); «seleccionado» = pizarra sólida con texto blanco (píldoras, solapas, categorías) o aro interior de 2 px (tarjetas, planes, secciones abiertas, totales); filas con inicial + título + detalle + estado + chevron; hojas inferiores con asa y cierre circular. El fondo de la página sigue siendo blanco y no se agregaron colores.
+  - Solapas y selectores de vista (≤ 560 px): píldoras sobre superficie; la activa en pizarra.
+  - Barra inferior (< 900 px): el ítem activo es una píldora tintada (se eliminó la barra superior de 3 px).
+  - Diálogos (≤ 560 px): todos son hojas pegadas abajo (`.pn-dialog`, hasta 92 dvh), con asa, cierre circular de 44 px (texto accesible «Cerrar») y botones fijos al pie.
+  - Regalos: categorías como píldoras con scroll horizontal (`.pn-chips`/`.pn-chipbtn`), tarjetas sobre superficie (`.pn-gcard`), barra de selección flotante con sombra funcional. A ≤ 380 px el monto de «Tu lista» ocupa su renglón.
+  - Invitados (≤ 760 px): fila = tarjeta suave con inicial (`.pn-avatar`), nombre, detalle (mesa · restricción) y chip de estado (`.pn-gchip`). Eliminar vive en la hoja «Editar invitado».
+  - Mesas: cada grupo es una tarjeta sobre superficie. Editor: cada sección es una tarjeta; la abierta lleva aro. Inicio: cada etapa es una tarjeta; la siguiente lleva aro.
+  - Estados deshabilitados: el botón «Elegí un plan» explica el motivo; al llegar al máximo de fotos, el texto dice qué hacer.
 - **Cabecera:** botón «Ver como invitado» de 44 px y bajadas (`.pn-sub`) de 15 px en celular.
 
 ## 5. Páginas públicas

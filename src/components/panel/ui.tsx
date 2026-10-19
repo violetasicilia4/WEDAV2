@@ -176,9 +176,10 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
                 {drafts.length > 0 && <p className="pn-note">Con este plan, {drafts.map(d => d.label.toLowerCase()).join(', ')} no se publica{drafts.length > 1 ? 'n' : ''}: lo que cargaste queda como borrador y se publica con el plan {[...new Set(drafts.map(d => d.plan))].join(' o ')}.</p>}
               </div>
             )}
+            {!picked && <p className="pn-hint pn-why" id="pn-plan-why">Elegí uno de los tres planes para ver su resumen.</p>}
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" onClick={close}>Ahora no</button>
-              <button type="button" className="pn-btn" onClick={choose} disabled={!picked}>{plan ? `Ver resumen con ${plan.name}` : 'Elegí un plan'}</button>
+              <button type="button" className="pn-btn" onClick={choose} disabled={!picked} aria-describedby={picked ? undefined : 'pn-plan-why'}>{plan ? `Ver resumen con ${plan.name}` : 'Elegí un plan'}</button>
             </div>
           </>
         ) : (

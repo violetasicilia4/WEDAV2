@@ -111,4 +111,40 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     const b = (await save.boundingBox())!;
     expect(b.y + b.height).toBeLessThanOrEqual(640);
   });
+
+  test('Regalos: las categorías son píldoras seleccionables y filtran el catálogo', async ({ page }) => {
+    await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
+    const total = await page.locator('.pn-status-line').innerText();
+    const chip = page.getByRole('group', { name: 'Categoría' }).getByRole('button').nth(1);
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    await expect.poll(() => page.locator('.pn-status-line').innerText()).not.toBe(total);
+    await page.getByRole('group', { name: 'Categoría' }).getByRole('button', { name: 'Todas' }).click();
+    await expect.poll(() => page.locator('.pn-status-line').innerText()).toBe(total);
+  });
+
+  test('Invitados: se elimina desde la hoja de edición y se puede deshacer', async ({ page }) => {
+    await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
+    await page.getByLabel('Nombre', { exact: true }).fill('Lola');
+    await page.getByLabel('Apellido').fill('Mora');
+    await page.getByRole('button', { name: 'Agregar' }).last().click();
+    await page.getByRole('button', { name: 'Editar a Lola Mora' }).click();
+    await page.getByRole('button', { name: 'Eliminar invitado' }).click();
+    expect((await stored(page)).guests).toHaveLength(0);
+    await page.getByRole('button', { name: 'Deshacer' }).click();
+    expect((await stored(page)).guests).toHaveLength(1);
+  });
+
+  test('Planes: el botón deshabilitado explica por qué y todos los diálogos son hojas con botones a la vista', async ({ page }) => {
+    await page.goto('/panel/vista-previa', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'Publicar', exact: true }).click();
+    const dlg = page.getByRole('dialog');
+    await expect(dlg.getByRole('button', { name: 'Elegí un plan' })).toBeDisabled();
+    await expect(dlg.getByText('Elegí uno de los tres planes')).toBeVisible();
+    const box = (await dlg.boundingBox())!;
+    expect(box.x).toBe(0);
+    expect(Math.round(box.y + box.height)).toBe(844);
+    await expect(dlg.getByRole('button', { name: 'Cerrar' })).toBeVisible();
+  });
 });

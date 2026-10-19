@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { ChevronRight, Download, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { GroupsView } from '@/components/panel/groups-view';
 import { Field, Locked, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/panel/invitados')({
 });
 
 /* Formulario de una persona: sirve para agregarla a mano y para editarla. El grupo es opcional. */
-function GuestForm({ initial, groups, submitLabel, onSubmit, onCancel }: { initial?: Guest | undefined; groups: Group[]; submitLabel: string; onSubmit: (v: { first: string; last: string; status: GuestStatus; menu: string; groupId: string | null }) => void; onCancel: () => void }) {
+function GuestForm({ initial, groups, submitLabel, onSubmit, onCancel, onDelete }: { initial?: Guest | undefined; groups: Group[]; submitLabel: string; onSubmit: (v: { first: string; last: string; status: GuestStatus; menu: string; groupId: string | null }) => void; onCancel: () => void; onDelete?: () => void }) {
   const [first, setFirst] = useState(initial?.first ?? '');
   const [last, setLast] = useState(initial?.last ?? '');
   const [status, setStatus] = useState<GuestStatus>(initial?.status ?? 'pending');
@@ -50,6 +50,7 @@ function GuestForm({ initial, groups, submitLabel, onSubmit, onCancel }: { initi
         {a => <select id={a.id} value={groupId} onChange={e => setGroupId(e.target.value)}><option value="">Sin grupo</option>{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>}
       </Field>
       <div className="pn-actions is-end">
+        {onDelete && <button type="button" className="pn-link is-danger" onClick={onDelete}><Trash2 size={15} aria-hidden="true" />Eliminar invitado</button>}
         <button type="button" className="pn-btn is-ghost" onClick={onCancel}>Cancelar</button>
         <button type="submit" className="pn-btn">{submitLabel}</button>
       </div>
@@ -157,9 +158,11 @@ function GuestsModule() {
                     <th scope="row" data-label="Nombre">{guestName(g)}</th>
                     <td className="pn-g-sum">
                       <button type="button" onClick={() => setEditing(g)} aria-label={`Editar a ${guestName(g)}`}>
-                        <span><i className={`pn-dot is-${g.status}`} aria-hidden="true" />{STATUS_LABEL[g.status]}</span>
-                        {s.groups.length > 0 && <span>{groupName(g.groupId) || 'Sin grupo'}</span>}
-                        {g.status === 'confirmed' && menuName(g.menu) && <span>{menuName(g.menu)}</span>}
+                        <span className="pn-avatar" aria-hidden="true">{(g.first.trim()[0] ?? '?').toUpperCase()}</span>
+                        <span className="pn-g-name">{guestName(g)}</span>
+                        <span className="pn-g-sub">{[s.groups.length > 0 ? groupName(g.groupId) || 'Sin grupo' : '', g.status === 'confirmed' ? menuName(g.menu) : ''].filter(Boolean).join(' · ') || (g.source === 'rsvp' ? 'Respondió en el sitio' : 'Cargado por ustedes')}</span>
+                        <span className={`pn-gchip is-${g.status}`}>{STATUS_LABEL[g.status]}</span>
+                        <ChevronRight size={16} className="pn-g-go" aria-hidden="true" />
                       </button>
                     </td>
                     <td data-label="Asistencia">
@@ -247,7 +250,7 @@ function GuestsModule() {
           <DialogContent className="pn-dialog is-sheet">
             <DialogTitle>Editar invitado</DialogTitle>
             <DialogDescription>{guestName(editing)}</DialogDescription>
-            <GuestForm initial={editing} groups={s.groups} submitLabel="Guardar" onCancel={() => setEditing(null)} onSubmit={v => { update(x => updateGuest(x, editing.id, v)); setEditing(null); toast('Cambios guardados.'); }} />
+            <GuestForm initial={editing} groups={s.groups} submitLabel="Guardar" onCancel={() => setEditing(null)} onDelete={() => { const g = editing; setEditing(null); removeNow(g); }} onSubmit={v => { update(x => updateGuest(x, editing.id, v)); setEditing(null); toast('Cambios guardados.'); }} />
           </DialogContent>
         </Dialog>
       )}

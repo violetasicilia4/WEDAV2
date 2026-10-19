@@ -6,6 +6,7 @@
 
 .pn-root, .pn-dialog {
   --pn-ink: #3b3c3a; --pn-muted: #575757; --pn-slate: #707d87; --pn-slate-d: #5a646c; --pn-slate-l: #8a959e;
+  --pn-surface: rgb(112 125 135 / .08); --pn-surface-2: rgb(112 125 135 / .16); /* superficie tintada con la pizarra: agrupa sin bordes */
   --pn-r-ctl: 12px; --pn-r-card: 16px; --pn-r-sheet: 20px; /* radios: controles, tarjetas, hojas y diálogos; píldoras 999px */
   --pn-paper: #fff; --pn-bg: #fff; --pn-line: rgb(59 60 58 / .16); --pn-line-s: rgb(59 60 58 / .3);
   font-family: Arial, Helvetica, sans-serif; color: var(--pn-ink); line-height: 1.5;
@@ -769,4 +770,109 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .pn-top .pn-preview-btn { min-height: 44px; }
   .pn-sub { font-size: 15px; line-height: 1.4; }
   .pn-dialog .pn-actions.is-end { position: sticky; bottom: calc(-1 * max(20px, env(safe-area-inset-bottom))); margin-bottom: calc(-1 * max(20px, env(safe-area-inset-bottom))); padding: 12px 0 max(20px, env(safe-area-inset-bottom)); background: #fff; z-index: 2; }
+}
+
+
+/* ===== Sistema de superficies (celular) =====
+   Principios tomados de las referencias, traducidos a la paleta de Weda: grupos sobre una superficie tintada en vez de bordes,
+   «seleccionado» = pizarra sólida con texto blanco, una sola acción principal por bloque y hojas inferiores con asa. */
+@media (max-width: 899px) {
+  .pn-nav-link { margin: 6px 4px; min-height: 48px; border-radius: 16px; }
+  .pn-nav-link[aria-current='page'] { background: var(--pn-surface-2); }
+  .pn-nav-link[aria-current='page']::before { display: none; }
+  .pn-nav-lock { top: 4px; }
+}
+@media (max-width: 560px) {
+  .pn-tabs { gap: 0; padding: 4px; border-bottom: 0; border-radius: 999px; background: var(--pn-surface); }
+  .pn-tabs button { min-height: 40px; border-bottom: 0; border-radius: 999px; }
+  .pn-tabs button.on { background: var(--pn-slate-d); color: #fff; }
+  .pn-tabs button.on .pn-count { background: rgb(255 255 255 / .25); color: #fff; }
+  .pn-switch { border-color: transparent; background: var(--pn-surface); }
+  .pn-switch button.on { background: var(--pn-slate-d); }
+
+  /* Todos los diálogos son hojas inferiores con asa y cierre circular; los botones quedan fijos al pie. */
+  .pn-dialog { top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; translate: none !important; max-height: 92dvh; border-radius: var(--pn-r-sheet) var(--pn-r-sheet) 0 0 !important; padding-bottom: max(20px, env(safe-area-inset-bottom)) !important; }
+  .pn-dialog::before { content: ''; justify-self: center; width: 36px; height: 4px; margin: -8px 0 -4px; border-radius: 999px; background: var(--pn-line-s); }
+  .pn-dialog > button[class*='absolute'] { top: 10px !important; right: 12px !important; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: var(--pn-surface); opacity: 1 !important; }
+  .pn-dialog > button[class*='absolute'] svg { width: 18px; height: 18px; }
+  .pn-dialog h2 { padding-right: 44px; }
+}
+
+/* Regalos · categorías como píldoras (seleccionada = pizarra sólida) y tarjetas sobre superficie tintada. */
+.pn-filters.is-chips { grid-template-columns: 1fr; }
+.pn-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px; scrollbar-width: none; scroll-snap-type: x proximity; }
+.pn-chips::-webkit-scrollbar { display: none; }
+@media (min-width: 900px) { .pn-chips { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; } }
+.pn-chipbtn { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--pn-surface); color: var(--pn-ink); font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; scroll-snap-align: start; }
+.pn-chipbtn:hover:not(.on) { background: var(--pn-surface-2); }
+.pn-chipbtn.on { background: var(--pn-slate-d); color: #fff; }
+.pn-gcard { padding: 6px; border-radius: var(--pn-r-card); background: var(--pn-surface); }
+.pn-gphoto { border-radius: 12px; }
+.pn-gcard h3 { margin: 10px 8px 0; }
+.pn-gprice { margin: 2px 8px 10px; }
+.pn-gcard-foot { padding: 0 0 2px 0; }
+.pn-gcard-foot .pn-gprice { margin: 0 8px; }
+.pn-gcard > .pn-btn { margin: auto 2px 2px; width: calc(100% - 4px); }
+.pn-gcard > .pn-btn.is-white { border-color: transparent; background: #fff; }
+.pn-gcard-actions .pn-icon:hover:not(:disabled) { background: #fff; }
+@media (max-width: 1023px) {
+  .pn-selbar { background: transparent; border-top: 0; padding: 0 16px 8px; pointer-events: none; }
+  .pn-selbar .pn-btn { pointer-events: auto; background: var(--pn-slate-d); box-shadow: 0 6px 20px rgb(90 100 108 / .26); }
+  .pn-pick { padding-bottom: 92px; }
+}
+
+/* Invitados (celular): cada fila es una tarjeta suave con inicial, nombre, detalle y estado; tocarla abre la hoja de edición (ahí también se elimina). */
+.pn-link.is-danger { color: #8a3d31; margin-right: auto; }
+.pn-actions .pn-link.is-danger { min-height: 44px; }
+.pn-gchip { display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; color: var(--pn-muted); font-size: 12px; white-space: nowrap; }
+.pn-gchip.is-confirmed { background: #e3ecdf; color: #34502c; }
+.pn-gchip.is-declined { background: #f3e2de; color: #8a3d31; }
+.pn-avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #fff; color: var(--pn-slate-d); font-size: 15px; font-weight: 700; }
+@media (max-width: 760px) {
+  .pn-table tbody tr { margin-bottom: 8px; padding: 0; border-radius: var(--pn-r-card); background: var(--pn-surface); min-height: 68px; }
+  .pn-table tbody th { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); padding: 0; }
+  .pn-table .pn-row-actions { display: none; }
+  .pn-g-sum button { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 16px; grid-template-areas: 'av name chip go' 'av sub chip go'; column-gap: 12px; align-items: center; min-height: 68px; padding: 14px 12px; color: var(--pn-ink); }
+  .pn-g-sum button::after { display: none; }
+  .pn-g-sum .pn-avatar { grid-area: av; }
+  .pn-g-sum .pn-g-name { grid-area: name; font-size: 16px; font-weight: 700; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pn-g-sum .pn-g-sub { grid-area: sub; font-size: 13px; color: var(--pn-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pn-g-sum .pn-gchip { grid-area: chip; }
+  .pn-g-sum .pn-g-go { grid-area: go; color: var(--pn-muted); }
+  .pn-g-sum button span + span::before { content: none; }
+}
+
+.pn-why { text-align: right; margin-top: 4px; }
+/* Mesas, editor e inicio (celular): bloques como superficies tintadas en lugar de líneas divisorias. */
+@media (max-width: 560px) {
+  .pn-group { padding: 14px; border: 0; border-radius: var(--pn-r-card); background: var(--pn-surface); margin-top: 12px; }
+  .pn-group .pn-member { border-top-color: var(--pn-line); }
+  .pn-sec { margin: 10px 0 0; border: 0; border-radius: var(--pn-r-card); background: var(--pn-surface); }
+  .pn-sec + .pn-sec { margin-top: 10px; }
+  .pn-sec.is-open { background: var(--pn-surface); box-shadow: inset 0 0 0 2px var(--pn-slate-d) !important; }
+  .pn-sec-main { padding-left: 16px; }
+  .pn-sec .pn-block-body { padding: 0 16px 18px; }
+  .pn-sec-toggle { margin-left: 16px; }
+  .pn-stages { gap: 10px; }
+  .pn-stage { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 14px; border-bottom: 0; border-radius: var(--pn-r-card); background: var(--pn-surface); }
+  .pn-stage.is-next { box-shadow: inset 0 0 0 2px var(--pn-slate-d); }
+  .pn-stage-ico { width: 36px; height: 36px; padding: 0; border-radius: 50%; background: #fff; }
+  .pn-stage .pn-chip.is-todo { background: #fff; }
+  .pn-stage .pn-btn.is-ghost { background: #fff; border-color: transparent; }
+  .pn-top .pn-save { font-size: 12px; line-height: 1.2; }
+}
+
+/* Selección unificada también en planes y totales de invitados: superficie tintada; elegido = aro de pizarra (sin dobles contornos). */
+.pn-plan-opt { border: 0; border-radius: var(--pn-r-card); background: var(--pn-surface); }
+.pn-plan-opt.on { background: var(--pn-surface); box-shadow: inset 0 0 0 2px var(--pn-slate-d); }
+.pn-plan-opt:focus-within { outline-offset: 0; }
+@media (max-width: 899px) {
+  .pn-stat.is-btn { border-color: transparent; background: var(--pn-surface); }
+  .pn-stat.is-btn.on { border-color: transparent; box-shadow: inset 0 0 0 2px var(--pn-slate-d); }
+}
+/* «Tu lista» en pantallas angostas: el monto y las acciones no entran en un renglón; el monto ocupa el suyo. */
+@media (max-width: 380px) {
+  .pn-gcard-foot { flex-wrap: wrap; }
+  .pn-gcard-foot .pn-gprice { flex: 1 0 100%; margin-bottom: 0; }
+  .pn-gcard-actions { margin-left: auto; }
 }

@@ -400,14 +400,12 @@ function GiftsModule() {
               <h2>Regalos de a uno</h2>
               <p className="pn-muted">Buscá, filtrá por categoría y tocá «Agregar» en los que quieras.</p>
             </div>
-            <div className="pn-filters">
+            <div className="pn-filters is-chips">
               <label className="pn-sr" htmlFor="pn-q">Buscar un regalo</label>
               <input id="pn-q" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar un regalo" autoComplete="off" />
-              <label className="pn-sr" htmlFor="pn-cat">Categoría</label>
-              <select id="pn-cat" value={cat} onChange={e => setCat(e.target.value)}>
-                <option>Todas</option>
-                {categories.map(c => <option key={c}>{c}</option>)}
-              </select>
+              <div className="pn-chips" role="group" aria-label="Categoría">
+                {['Todas', ...categories].map(c => <button key={c} type="button" className={`pn-chipbtn${cat === c ? ' on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>{c}</button>)}
+              </div>
             </div>
 
             <ul className="pn-ggrid">
