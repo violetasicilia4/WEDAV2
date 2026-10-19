@@ -52,15 +52,11 @@ export function FloatNav({ onLanding = false, back = false }: { onLanding?: bool
             <Link to="/" className="float-link"><ArrowLeft size={15} aria-hidden="true" /><span>Volver</span></Link>
           </div>
         ) : (
-          <>
-          {/* En el celular el botón va en una píldora propia, al centro de la barra; en pantallas grandes sigue a la derecha. */}
-          <div className="float-pill float-center"><Link to="/crear/cuenta" className="float-cta">Crear mi evento</Link></div>
           <div className="float-pill float-right">
             <Link to="/encontrar" className="float-link float-desktop">Hacé un regalo</Link>
-            <Link to="/crear/cuenta" className="float-cta float-cta-inline">Crear mi evento</Link>
+            <Link to="/crear/cuenta" className="float-cta">Crear mi evento</Link>
             <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
           </div>
-          </>
         )}
       </nav>
       <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
