@@ -16,7 +16,8 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 | Ruta | Qué es |
 |---|---|
 | `/crear/cuenta` | Paso 1: cuenta (solo interfaz, no guarda nada). |
-| `/crear` | Paso 2: nombres y fecha (opcional); la foto se cambia después desde el panel. |
+| `/crear` | Paso 2: nombres y fecha (opcional). |
+| `/crear/foto` | Paso 3: foto de la pareja (omitible; se puede cambiar después desde el panel). |
 | `/crear/plan` | Redirige a `/panel`: el plan se elige al publicar, en un diálogo del panel. |
 | `/panel` | Resumen y próximo paso. |
 | `/panel/regalos` | Tres pestañas: **Mi lista** (orden, edición, quitar), **Agregar regalos** (sets + catálogo en una sola vista, con la tarjeta «Crear un regalo propio» al principio) y **Recibidos** (quién regaló qué, monto, medio, fecha y mensaje). Arriba, «Cobro y portada»: alias, preferencia de tarjeta (sin cobro real) y portada. |

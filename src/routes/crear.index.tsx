@@ -9,7 +9,7 @@ export const Route = createFileRoute('/crear/')({
   component: Onboarding,
 });
 
-/* Paso 2: datos del casamiento. La fecha y la foto son opcionales: nadie queda bloqueado por no tenerlas todavía. */
+/* Paso 2: datos del casamiento. La fecha es opcional: nadie queda bloqueado por no tenerla todavía. La foto se pide en el paso siguiente (/crear/foto). */
 function Onboarding() {
   const navigate = useNavigate();
   const state = useAppState();
@@ -19,7 +19,7 @@ function Onboarding() {
   const [second, setSecond] = useState('');
   const [date, setDate] = useState('');
   const [noDate, setNoDate] = useState(false);
-  // La foto de portada ya no se pide acá: se conserva la que hubiera (o la imagen de muestra) y se cambia después desde el panel.
+  // La foto se pide en el paso siguiente: acá se conserva la que hubiera (o la imagen de muestra).
   const [photo, setPhoto] = useState<PhotoChoice>({ kind: 'none' });
   const [errors, setErrors] = useState<ReturnType<typeof validateOnboarding>>({});
 
@@ -43,7 +43,7 @@ function Onboarding() {
       return;
     }
     update(s => ({ ...s, onboarded: true, couple: { first: first.trim(), second: second.trim() }, date: noDate ? null : date, photo }));
-    void navigate({ to: '/panel' });
+    void navigate({ to: '/crear/foto' });
   };
 
   return (

@@ -11,6 +11,7 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 | `/encontrar` | Buscador de invitados ([encontrar-tu-casamiento.md](encontrar-tu-casamiento.md)). |
 | `/crear/cuenta` | Paso 1: registro o ingreso con correo y clave, o con Google / Apple. Es solo la interfaz: sin backend no se crea ninguna cuenta ni se guarda el correo o la clave (la pantalla no lo anuncia). Encabezado «¡Bienvenidos!», línea de términos y privacidad (sin páginas todavía: es texto, no enlaces) y «¿Ya sos miembro? Ingresá». Cualquier salida válida lleva a `/crear` conservando `?plan`. |
 | `/crear` | Paso 2: nombres y fecha (opcional). |
+| `/crear/foto` | Paso 3: la foto de la pareja (portada de la página), con la portada y los nombres a la vista. Se puede omitir («Ahora no, la subo después»). Sin nombres cargados vuelve a `/crear`. |
 | `/crear/plan` | Ya no existe como paso: redirige a `/panel`. El plan se elige al publicar (diálogo «Elegí tu plan para publicar»). |
 | `/panel` | Inicio: avance y pasos. |
 | `/panel/regalos` | Lista de regalos. |
@@ -22,8 +23,9 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 ## 2. Crear el evento (el plan se elige al publicar)
 
 0. `/crear/cuenta` (supuesto documentado: sin backend no hay cuentas reales; Google y Apple no autentican). Los botones de la landing y del menú llevan acá primero.
-1. `/crear`: pantalla centrada y sin encabezado (solo una «X» que vuelve al inicio): tu nombre, el nombre de tu pareja y la fecha, con el interruptor «Todavía no tenemos fecha» (se puede avanzar sin fecha). Ya no pide la foto de portada: queda la imagen de muestra (rosas, oscurecida para que se lean nombres y fecha) y la pareja la cambia después desde el panel (`CoupleDialog`/`PhotoPicker`). Tampoco hay vista previa de la portada ni aviso de demostración en este paso.
-2. Entra directo a `/panel` con todo habilitado para probar (planId vacío = «Prueba gratuita»). Sin evento el panel redirige a `/crear`. No se pide plan ni tarjeta.
+1. `/crear`: pantalla centrada y sin encabezado (solo una «X» que vuelve al inicio): tu nombre, el nombre de tu pareja y la fecha, con el interruptor «Todavía no tenemos fecha» (se puede avanzar sin fecha). «Continuar» guarda los datos y pasa a la foto.
+1b. `/crear/foto` («Sumá una foto de ustedes»): la foto es lo primero que ven los invitados y le da identidad a la página, por eso se pide en el onboarding. La pantalla muestra la portada con los nombres (la imagen de muestra hasta que suban la suya); la acción principal es «Subir una foto de ustedes» y, ya subida, «Continuar» (con «Cambiar la foto»). **Supuesto (a confirmar): no es obligatoria**; «Ahora no, la subo después» sigue con la imagen de muestra y la pareja la cambia desde el panel (`CoupleDialog`/`PhotoPicker` o «Editar datos»). Si se quisiera exigirla, es una decisión comercial: hoy no bloquea. La foto se reduce y se guarda en este navegador (no se sube a ningún servidor).
+2. Desde la foto entra a `/panel` con todo habilitado para probar (planId vacío = «Prueba gratuita»). Sin evento el panel redirige a `/crear`. No se pide plan ni tarjeta.
 3. Al tocar «Publicar» (o «Elegir plan» / «Ver los planes») se abre el diálogo con los tres planes, precio por evento y qué incluye cada uno. Elegir **no cobra ni publica** (no hay servicio conectado) y se puede cambiar cuando se quiera. Si ya se cargó algo que el plan elegido no incluye (música, galería, mensaje final, página, invitados, mesas), se conserva como **borrador**: no se publica y el diálogo y la pantalla bloqueada dicen en qué plan sí (`draftsFor` en `logic.ts`).
 
 ## 3. Planes (fuente: `src/lib/weda/plans.ts`)
