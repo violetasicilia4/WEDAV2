@@ -424,7 +424,7 @@ html { scroll-padding-top: 80px; }
 }
 @supports (height: 100lvh) {
   /* Celular: la altura visible (svh, sin la barra del navegador) menos un margen, para que asome el título «Todo para compartir su casamiento.». */
-  @media(max-width:640px) { .seed-hero { height: calc(100svh - 132px); min-height: 460px; } }
+  @media(max-width:640px) { .seed-hero { height: calc(100svh - 120px); min-height: 450px; } }
 }
 
 /* Web: bloque de regalos más compacto (menos aire arriba y abajo y foto grande más baja); las fotos de abajo no cambian de tamaño */
