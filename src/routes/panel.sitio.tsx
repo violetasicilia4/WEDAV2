@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ExternalLink, Eye, Lock, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, ChevronDown, ExternalLink, Eye, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
@@ -27,6 +27,7 @@ const patchSite = (fn: (s: SiteConfig) => SiteConfig) => update(x => ({ ...x, si
 type SectionId = 'portada' | 'eventos' | 'rsvp' | 'dress' | 'fotos' | 'mensaje' | 'musica';
 type Tone = 'ok' | 'todo' | 'off';
 type Sec = { id: SectionId; label: string; title: string; status: string; tone: Tone; locked?: Feature };
+const ICON: Record<SectionId, LucideIcon> = { portada: ImageIcon, eventos: CalendarDays, rsvp: UserCheck, dress: Shirt, fotos: Images, mensaje: MessageSquareText, musica: Music };
 /** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
 const ANCHOR: Record<SectionId, string> = { portada: '', eventos: 'dia', rsvp: 'confirmar', dress: 'dresscode', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
 const photoWord = (n: number) => `${n} ${n === 1 ? 'foto' : 'fotos'}`;
@@ -57,8 +58,8 @@ function sectionsOf(s: AppState): Sec[] {
 }
 
 const useWide = () => useSyncExternalStore(
-  cb => { const m = window.matchMedia('(min-width: 1100px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
-  () => window.matchMedia('(min-width: 1100px)').matches,
+  cb => { const m = window.matchMedia('(min-width: 1280px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
+  () => window.matchMedia('(min-width: 1280px)').matches,
   () => false,
 );
 
@@ -228,7 +229,7 @@ function SiteEditor() {
             {sections.map(x => (
               <li key={x.id}>
                 <button type="button" id={`sec-${x.id}`} className={`pn-snav-btn${active === x.id ? ' on' : ''}`} aria-current={active === x.id ? 'true' : undefined} onClick={() => pick(x.id)}>
-                  <i className={`pn-sdot is-${x.tone}`} aria-hidden="true" />{x.label}<span className="pn-sr"> · {x.status}</span>
+                  {(() => { const Icon = ICON[x.id]; return <Icon size={18} strokeWidth={1.6} className="pn-snav-ico" aria-hidden="true" />; })()}<i className={`pn-sdot is-${x.tone}`} aria-hidden="true" />{x.label}<span className="pn-sr"> · {x.status}</span>
                 </button>
               </li>
             ))}

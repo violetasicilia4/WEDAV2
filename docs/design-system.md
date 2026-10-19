@@ -120,6 +120,15 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
 
 - **Alta (`/crear/*`: registro, datos y foto):** foto de fondo a pantalla completa (`public/fondo-registro.webp`, vía `.pn-flow`) y una tarjeta blanca (`#fff`, radio 20) con los campos; el cierre es un círculo blanco. Los botones principales son gris claro neutro (`#e8e9ea`, texto oscuro) y los secundarios blancos con borde gris; el interruptor activo va en gris medio `#9a9d9f`. Todo en la gama de blancos y grises. Sin sombras. En el paso de la foto en celular, la tarjeta ocupa la pantalla sin scroll.
 
+## 4e. Versión web del panel (≥ 1024 px): esquema de dashboard
+
+Tomado del ejemplo de dashboard del 2026-10, con la tipografía y la paleta de Weda:
+- **Lienzo y tarjeta:** el fondo de la administración es un gris claro (`--pn-canvas` `#eceeef`) y el contenido va en una tarjeta blanca (`.pn-main`, radio 20, borde de 1 px y una sombra muy suave que la separa del lienzo). El encabezado de cada página tiene un separador fino debajo.
+- **Columna izquierda:** logo, pareja y plan, navegación con el ítem activo en blanco con borde, y abajo un indicador de avance real («N de M pasos listos» con un segmento por etapa, calculado con `stages()`; sin porcentajes) que lleva al Inicio.
+- **Controles segmentados** (`.pn-tabs`, `.pn-switch`): pista gris tenue y opción elegida blanca con borde y sombra mínima. En celular siguen las píldoras de siempre.
+- **Grupos:** bloques de configuración, mesas y guías sobre superficie gris (`--pn-surface`), con los campos blancos adentro. Los inputs llevan una sombra mínima y los botones secundarios son blancos con borde.
+- **Editor de «Tu página»:** desde 1280 px, tres zonas (secciones con ícono y estado | campos | vista previa fija). Entre 1024 y 1279 px usa el patrón del celular (chips con ícono y «Vista previa» a pantalla completa) dentro de la tarjeta.
+
 ## 5. Páginas públicas
 
 Los componentes de la página pública son **los mismos** para `/ejemplo` y `/sitio/$slug`: `src/components/site/{invitation,gifts-page,site-cover,site-shell,site-providers}.tsx`, alimentados por `useSite()` (`demoSiteData` o `siteFromState`). No se crea una segunda versión de la página. El formulario de confirmación es `src/components/rsvp-dialog.tsx`.

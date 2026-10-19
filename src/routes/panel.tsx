@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
 import { ConfirmDialog, PlansProvider, SaveStatus, ToastProvider, usePlans } from '@/components/panel/ui';
+import { stages } from '@/lib/weda/journey';
 import { coupleLabel } from '@/lib/weda/logic';
 import { can, planById, type Feature } from '@/lib/weda/plans';
 import { reset, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
@@ -31,6 +32,20 @@ function SidePlan() {
   const plans = usePlans();
   const plan = planById(state.planId);
   return <p className="pn-side-plan">{plan ? `Plan ${plan.name}` : 'Prueba gratuita'} · <button type="button" className="pn-link" onClick={plans.open}>{plan ? 'Cambiar' : 'Elegir plan'}</button></p>;
+}
+
+/* Avance real del armado (misma regla que el Inicio): cuántos pasos están completos, sin porcentajes. Solo en la barra lateral de escritorio. */
+function SideProgress() {
+  const state = useAppState();
+  const build = stages(state).filter(x => x.id !== 'publicar' && !x.locked);
+  if (build.length === 0) return null;
+  const done = build.filter(x => x.status === 'done').length;
+  return (
+    <Link to="/panel" className="pn-side-prog">
+      <span>{done} de {build.length} {build.length === 1 ? 'paso listo' : 'pasos listos'}</span>
+      <span className="pn-segs" aria-hidden="true">{build.map(x => <i key={x.id} className={`is-${x.status}`} />)}</span>
+    </Link>
+  );
 }
 
 function PanelLayout() {
@@ -80,6 +95,7 @@ function PanelLayout() {
               );
             })}
           </nav>
+          <SideProgress />
           <div className="pn-side-foot">
             <p>Demostración: tus datos se guardan solo en este navegador.</p>
             <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button>
