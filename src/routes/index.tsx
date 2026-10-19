@@ -28,6 +28,10 @@ export const Route = createFileRoute('/')({
     ],
     links: [
       ...(SITE_URL ? [{ rel: 'canonical', href: `${SITE_URL}/` }] : []),
+      // Tipografía del micrositio, solo para la maqueta del bloque "Sitio del casamiento".
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' as const },
+      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
     ],
   }),
   component: Index,

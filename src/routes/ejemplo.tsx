@@ -10,6 +10,11 @@ export const Route = createFileRoute('/ejemplo')({
       { property: 'og:locale', content: 'es_AR' },
       { name: 'twitter:card', content: 'summary_large_image' },
     ],
+    links: [
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
+    ],
   }),
   component: () => <DemoSite><Outlet /></DemoSite>,
 });

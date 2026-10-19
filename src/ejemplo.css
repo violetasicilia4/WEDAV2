@@ -17,7 +17,7 @@
 .ej-paper { background: var(--paper); }
 .ej-slate { background: var(--ej-slate); color: #fff; border-radius: var(--curve); margin: 0 clamp(8px, 1.2vw, 16px); }
 .ej-narrow { max-width: 760px; text-align: center; }
-.ej-eyebrow { margin: 0 0 18px; font-size: 12px; letter-spacing: .02em; text-transform: none; color: var(--ej-muted); }
+.ej-eyebrow { margin: 0 0 18px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ej-muted); }
 .ej-slate .ej-eyebrow { color: rgb(255 255 255 / .75); }
 .ej-block h2, .ej-block h1 { margin: 0; font-weight: 400; letter-spacing: -.015em; text-wrap: balance; }
 .ej-block h2 { font-size: clamp(30px, 3.6vw, 52px); line-height: 1.08; }
@@ -33,7 +33,7 @@
 .ej-btns.is-center { justify-content: center; margin-top: 36px; }
 
 /* ---------- portada ---------- */
-.ej-cover-kicker { margin: 0 0 14px !important; font-size: 12px !important; letter-spacing: .02em; text-transform: none; opacity: .9; }
+.ej-cover-kicker { margin: 0 0 14px !important; font-size: 12px !important; letter-spacing: .16em; text-transform: uppercase; opacity: .9; }
 .ej-cover .hero-copy > p:not(.ej-cover-kicker) { letter-spacing: .02em; }
 
 /* ---------- agenda: filas separadas por líneas finas ---------- */
@@ -42,7 +42,7 @@
   display: grid; grid-template-columns: 44px minmax(150px, 1fr) minmax(0, 1.5fr) minmax(180px, 240px); gap: clamp(16px, 3vw, 48px);
   align-items: center; padding: clamp(24px, 3vw, 40px) 0; border-bottom: 1px solid var(--ej-line);
 }
-.ej-day-n { font-size: 13px; letter-spacing: .02em; color: var(--ej-muted); align-self: start; padding-top: 8px; }
+.ej-day-n { font-size: 13px; letter-spacing: .1em; color: var(--ej-muted); align-self: start; padding-top: 8px; }
 .ej-day-when h3 { margin: 0; font-weight: 400; font-size: clamp(22px, 2.2vw, 30px); letter-spacing: -.01em; }
 .ej-day-when p { margin: 6px 0 0; font-size: clamp(18px, 1.6vw, 22px); color: var(--ej-slate); }
 .ej-venue { margin: 0; font-size: 17px; }
@@ -146,7 +146,7 @@
 .ej-wall { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .ej-wall li { padding: 24px 26px; border-radius: 22px; background: rgb(255 255 255 / .1); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16); }
 .ej-wall q { display: block; quotes: none; font-size: 18px; line-height: 1.45; }
-.ej-wall span { display: block; margin-top: 14px; font-size: 13px; letter-spacing: .02em; text-transform: none; color: rgb(255 255 255 / .75); }
+.ej-wall span { display: block; margin-top: 14px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: rgb(255 255 255 / .75); }
 
 /* ---------- playlist ---------- */
 .ej-tracks { padding: clamp(20px, 2.4vw, 32px); border-radius: var(--ej-r); background: var(--paper); }
@@ -220,13 +220,13 @@
 /* pop-up del regalo */
 .rg-dialog {
   width: calc(100% - 24px) !important; max-width: 420px !important; border: 0 !important; border-radius: 26px !important; background: #fff !important;
-  padding: clamp(22px, 3vw, 30px) !important; gap: 0 !important; max-height: calc(100dvh - 32px); overflow-y: auto; font-family: var(--font-ui); color: var(--foreground);
+  padding: clamp(22px, 3vw, 30px) !important; gap: 0 !important; max-height: calc(100dvh - 32px); overflow-y: auto; font-family: Arial, Helvetica, sans-serif; color: var(--foreground);
 }
 .rg-form { display: grid; gap: 18px; }
 .rg-head { display: flex; align-items: center; gap: 14px; }
 .rg-thumb { flex: none; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 16px; overflow: hidden; background: var(--paper); color: var(--ej-slate); }
 .rg-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.rg-kicker { margin: 0 0 4px; font-size: 11px; letter-spacing: .02em; text-transform: none; color: var(--ej-muted); }
+.rg-kicker { margin: 0 0 4px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ej-muted); }
 .rg-dialog h2 { margin: 0; font-size: 20px; font-weight: 400; line-height: 1.2; letter-spacing: -.005em; }
 .rg-head p:not(.rg-kicker) { margin: 4px 0 0; font-size: 15px; color: var(--ej-muted); }
 .rg-field { border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -309,7 +309,7 @@
 .ej-closing .ej-lead { color: rgb(255 255 255 / .9); font-family: var(--ej-sans); font-size: 22px; font-style: italic; line-height: 1.2; }
 .ej-addr, .ej-note, .rg-note, .rg-head p:not(.rg-kicker), .rg-fund p, .rg-live, .ej-tracks small, .ej-tracks-top small { font-size: 14px; line-height: 1.2; color: var(--gl-gray); }
 .ej-eyebrow, .rg-kicker, .ej-cover-kicker, .rg-field label, .rg-field legend, .ej-cal-month, .ej-wall span {
-  font-family: var(--ej-sans) !important; font-size: 12px; line-height: 1.2; letter-spacing: 0; text-transform: none; color: var(--gl-ink);
+  font-family: var(--ej-sans) !important; font-size: 12px; line-height: 1.2; letter-spacing: 0; text-transform: uppercase; color: var(--gl-ink);
 }
 .ej-cal-month { font-style: normal; }
 .ej-slate .ej-eyebrow, .ej-closing .ej-eyebrow, .ej-wall span { color: rgb(255 255 255 / .85); }
@@ -540,7 +540,7 @@
 
 /* confirmación de asistencia: mismo sistema que el pop-up de regalos */
 .dm-rsvp-field label:not(.dm-rsvp-opt):not(.dm-rsvp-menu), .dm-rsvp-field legend {
-  font-family: var(--ej-sans); font-size: 12px; line-height: 1.2; text-transform: none; color: var(--gl-ink); margin: 0 0 8px;
+  font-family: var(--ej-sans); font-size: 12px; line-height: 1.2; text-transform: uppercase; color: var(--gl-ink); margin: 0 0 8px;
 }
 .dm-rsvp-field label span { text-transform: none; }
 .dm-rsvp-pair { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px; }
@@ -573,9 +573,9 @@
    Sin excepciones: la invitación usa la misma tipografía que la landing.
    ========================================================================= */
 :root {
-  --ej-sans: var(--font-ui);
+  --ej-sans: Arial, Helvetica, sans-serif;
 }
-.dm-root, .dm-root button, .dm-root input, .dm-root textarea, .dm-rsvp, .dm-rsvp *, .rg-dialog, .rg-dialog * { font-family: var(--font-ui); line-height: 1.5; }
+.dm-root, .dm-root button, .dm-root input, .dm-root textarea, .dm-rsvp, .dm-rsvp *, .rg-dialog, .rg-dialog * { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; }
 .dm-root { color: var(--foreground); }
 
 /* títulos */
@@ -595,7 +595,7 @@
 .dm-rsvp-menu strong { font-size: 14px; }
 
 /* textos */
-.dm-root .ej-lead { font-size: clamp(16px, 1.25vw, 18px); line-height: 1.5; font-style: normal; font-family: var(--font-ui); }
+.dm-root .ej-lead { font-size: clamp(16px, 1.25vw, 18px); line-height: 1.5; font-style: normal; font-family: Arial, Helvetica, sans-serif; }
 .dm-root .ej-text, .dm-root .ej-sub, .dm-root .ej-card p, .dm-root .rg-help, .dm-root .ej-hashtag p:last-child { font-size: 15px; line-height: 1.5; }
 .dm-root .ej-addr, .dm-root .ej-letter-addr, .dm-root .rg-note, .dm-root .rg-fund p, .dm-root .rg-live, .dm-root .ej-tracks small, .dm-root .ej-tracks .t small,
 .dm-root .rg-head p:not(.rg-kicker), .dm-root .rg-intro .dm-back { font-size: 14px; line-height: 1.5; }
@@ -605,7 +605,7 @@
 /* etiquetas */
 .dm-root .ej-eyebrow, .dm-root .rg-kicker, .rg-dialog .rg-kicker, .dm-root .ej-wall span, .rg-field label:not(.rg-chip), .rg-field legend,
 .dm-rsvp-field label:not(.dm-rsvp-opt):not(.dm-rsvp-menu), .dm-rsvp-field legend {
-  font-size: 12px; line-height: 1.5; letter-spacing: .02em; text-transform: none; color: inherit;
+  font-size: 12px; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; color: inherit;
 }
 .dm-root .ej-eyebrow { color: var(--muted-foreground); }
 .dm-root .ej-slate .ej-eyebrow, .dm-root .ej-letter-head .ej-eyebrow, .dm-root .ej-wall span { color: rgb(255 255 255 / .8); }
@@ -615,7 +615,7 @@
 .dm-root .seed-link, .dm-root .seed-link span, .ej-letter-btn, .dm-back { font-size: 14px; font-weight: 500; }
 
 /* cierre y pie: igual que la landing */
-.dm-root .ej-closing .ej-lead { font-size: clamp(16px, 1.25vw, 18px); font-style: normal; font-family: var(--font-ui); }
+.dm-root .ej-closing .ej-lead { font-size: clamp(16px, 1.25vw, 18px); font-style: normal; font-family: Arial, Helvetica, sans-serif; }
 .dm-root .dm-footer .footer-mission { font-size: 25px; line-height: 1.2; }
 .dm-root .dm-footer-side p { font-size: 15px; line-height: 1.5; }
 .dm-root .footer-bottom span { font-size: 10px; }
@@ -685,7 +685,7 @@
 /* eje común: "¡Nos casamos!" y "Lista de regalos" con la misma tipografía y en el mismo lugar, centrados */
 .dm-root .rg-intro { padding-top: clamp(36px, 4.4vw, 56px); padding-bottom: 0; text-align: center; }
 .dm-root .rg-intro .ej-narrow { max-width: 760px; margin-left: auto; margin-right: auto; text-align: center; }
-.dm-root .rg-intro h1.ej-eyebrow { margin: 0 0 18px; font-size: 12px !important; line-height: 1.5 !important; letter-spacing: .02em !important; text-transform: none; color: var(--muted-foreground); font-weight: 400 !important; }
+.dm-root .rg-intro h1.ej-eyebrow { margin: 0 0 18px; font-size: 12px !important; line-height: 1.5 !important; letter-spacing: .1em !important; text-transform: uppercase; color: var(--muted-foreground); font-weight: 400 !important; }
 .dm-root .rg-list { padding-top: 0; }
 /* fecha de la carta un poco más chica */
 .dm-root .ej-letter-head h2 { font-size: clamp(20px, 2.1vw, 28px) !important; }
@@ -694,8 +694,8 @@
 /* "¡Nos casamos!" y "Lista de regalos": un poco más grandes, idénticos y en la misma posición */
 .dm-root .ej-welcome .ej-eyebrow,
 .dm-root .rg-intro h1.ej-eyebrow {
-  font-size: clamp(15px, 1.35vw, 18px) !important; line-height: 1.3 !important; letter-spacing: .02em !important; margin: 0 0 18px !important;
-  color: var(--foreground); text-transform: none; font-weight: 400 !important;
+  font-size: clamp(15px, 1.35vw, 18px) !important; line-height: 1.3 !important; letter-spacing: .12em !important; margin: 0 0 18px !important;
+  color: var(--foreground); text-transform: uppercase; font-weight: 400 !important;
 }
 
 /* foto completa (sin recortar), con su propio fondo difuminado a los costados */
@@ -748,7 +748,7 @@
 #rg-proof:focus-visible + .rg-file { box-shadow: 0 0 0 3px rgb(90 100 108 / .25); }
 .rg-dialog .rg-send:disabled { background: rgb(59 60 58 / .12); color: var(--ej-muted); cursor: not-allowed; }
 .rg-missing { margin: -6px 0 0; font-size: 13px; color: var(--ej-muted); text-align: center; }
-.rg-up-label { font-size: 12px; line-height: 1.5; letter-spacing: .02em; text-transform: none; color: var(--ej-muted); }
+.rg-up-label { font-size: 12px; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; color: var(--ej-muted); }
 
 /* Un nombre de archivo largo no debe ensanchar el pop-up: todo en una sola columna que puede encogerse. */
 .rg-form { grid-template-columns: minmax(0, 1fr); }

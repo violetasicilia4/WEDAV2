@@ -6,6 +6,14 @@ import { resolvePhoto } from '@/lib/weda/logic';
 import { update, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/crear/foto')({
+  // La vista de la portada usa la misma tipografía que la página pública (Cormorant Garamond), que se carga igual que ahí.
+  head: () => ({
+    links: [
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
+    ],
+  }),
   component: PhotoStep,
 });
 

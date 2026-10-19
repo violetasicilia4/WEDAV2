@@ -659,18 +659,18 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-cover-preview::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(0 0 0 / .28), rgb(0 0 0 / 0) 24%), radial-gradient(ellipse 70% 30% at 50% 50%, rgb(0 0 0 / .34), rgb(0 0 0 / 0) 100%); }
 /* La vista de la portada reproduce la de la página pública (medidas de invitacion.css para un celular de 390 px, escaladas al ancho de la tarjeta). */
 .pn-cover-preview { container-type: inline-size; }
-.pn-cover-copy { position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 6%; text-align: center; color: #fff; font-family: var(--font-ui); }
+.pn-cover-copy { position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 6%; text-align: center; color: #fff; font-family: 'Cormorant Garamond', Garamond, Georgia, serif; }
 .pn-cover-copy > span { display: block; max-width: 100%; }
-.pn-cover-eyebrow { font-size: calc(16 * 100cqw / 390); font-weight: var(--w-medium); line-height: 1.3; text-shadow: 0 1px 14px rgb(0 0 0 / .45); margin-bottom: calc(18 * 100cqw / 390); }
-.pn-cover-names { font-size: calc(36 * 100cqw / 390); font-weight: var(--w-semibold); line-height: 1.02; letter-spacing: var(--ls-display); text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 1px 14px rgb(0 0 0 / .3); }
-.pn-cover-date { font-size: calc(14 * 100cqw / 390); font-weight: var(--w-medium); line-height: 1.4; letter-spacing: .04em; font-variant-numeric: tabular-nums; margin-top: calc(18 * 100cqw / 390); text-shadow: 0 1px 12px rgb(0 0 0 / .3); }
+.pn-cover-eyebrow { font-size: calc(18 * 100cqw / 390); font-weight: 500; line-height: 1.3; text-shadow: 0 1px 14px rgb(0 0 0 / .45); margin-bottom: calc(18 * 100cqw / 390); }
+.pn-cover-names { font-size: calc(40 * 100cqw / 390); font-weight: 400; line-height: 1.02; text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 1px 14px rgb(0 0 0 / .3); }
+.pn-cover-date { font-size: calc(16 * 100cqw / 390); font-weight: 600; line-height: 1.4; letter-spacing: .14em; margin-top: calc(18 * 100cqw / 390); text-shadow: 0 1px 12px rgb(0 0 0 / .3); }
 .pn-photo-ok { text-align: center; font-size: 15px; color: #34502c; }
 .pn-skip { justify-self: center; min-height: 44px; color: var(--pn-muted); }
 .pn-center { text-align: center; }
 .pn-cover-preview img, .pn-gphoto img, .pn-gthumb img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* Paso de la foto en el celular: título en un solo renglón (≈12,45 em de ancho) y la portada con el mismo ancho que el botón. */
-.pn-photo-step .pn-account-head h1 { font-size: min(var(--t-page), calc((100vw - 40px) / 12.8)); white-space: nowrap; }
+.pn-photo-step .pn-account-head h1 { font-size: min(var(--t-page), calc((100vw - 84px) / 12.8)); white-space: nowrap; }
 @media (max-height: 640px) { .pn-cover-preview { max-height: 34dvh; } }
 
 /* Paso de la foto en el celular: todo en una sola pantalla, sin scroll. La portada ocupa el alto que sobra entre el título y los botones. */
@@ -980,3 +980,13 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-app h1, .pn-flow h1 { text-wrap: balance; }
 @media (max-width: 360px) { .pn-selbar-text { font-weight: var(--w-regular); letter-spacing: -.01em; gap: 6px; } }
 @media (max-width: 360px) { .pn-app .pn-selbar .pn-btn { font-size: var(--t-label); padding: 0 12px; } }
+
+/* ===== Alta (registro, datos y foto): foto de fondo y tarjeta clara =====
+   Fondo fotográfico a pantalla completa y, encima, una tarjeta blanca casi opaca con los campos. Sin sombras ni colores nuevos. */
+.pn-flow { min-height: 100svh; background: #e9ece6 url('/fondo-registro.webp') center / cover no-repeat; }
+.pn-flow-head.is-account .pn-close { margin-top: 4px; background: rgb(255 255 255 / .92); }
+.pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: rgb(255 255 255 / .94); transform: none; }
+@media (max-width: 640px) {
+  .pn-flow .pn-account { padding: 22px 18px; }
+  .pn-flow .pn-photo-step { padding: 18px 16px; margin-top: 4px; }
+}

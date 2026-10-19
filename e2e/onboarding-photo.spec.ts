@@ -69,7 +69,7 @@ test.describe('Onboarding: foto de la pareja', () => {
         expect(m.sw).toBe(m.vw);
         expect(Math.abs(m.figL - m.btnL)).toBeLessThan(1);   // la portada tiene el ancho del botón
         expect(Math.abs(m.figR - m.btnR)).toBeLessThan(1);
-        expect(m.namesFont).toContain('Geist Variable'); // misma tipografía que toda la app
+        expect(m.namesFont).toContain('Cormorant Garamond'); // tipografía de la portada pública
         expect(Math.abs(m.namesCx - m.figCx)).toBeLessThan(2);
         expect(Math.abs(m.copyCy - m.figCy)).toBeLessThan(2); // bloque centrado en la portada
       };

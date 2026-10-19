@@ -12,7 +12,7 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 
 ## 1. Tipografía
 
-**Una sola familia: Geist (variable)** en landing, onboarding, panel y micrositios (decisión de 2026-10; reemplaza a Arial y Cormorant Garamond). Se sirve desde `public/fonts/geist/` (`latin` y `latin-ext`, licencia SIL OFL 1.1 en `OFL.txt`), con `@font-face` y los tokens en `src/typography.css` (cargado desde `__root.tsx`, con `preload` del subconjunto latino). Pila de respaldo: `ui-sans-serif, system-ui, …, Arial`. No hay otras familias ni Google Fonts.
+**Geist (variable)** en landing, onboarding y panel (decisión de 2026-10; reemplaza a Arial). **Excepción: el micrositio mantiene su tipografía anterior** — Cormorant Garamond en la portada y en las secciones de la invitación posteriores a la portada, y Arial en la barra superior, el pie, los pop-ups y la lista de regalos — y lo mismo en todo lo que lo reproduce: `/ejemplo*`, `/sitio/*`, la tarjeta «Sitio del casamiento» de la landing (`fd-*`) y la portada de `/crear/foto`. Esos archivos (`invitacion.css`, `ejemplo.css`, `demo.css`) y los `<link>` de Google Fonts de Cormorant en `index`, `ejemplo`, `sitio.$slug` y `crear.foto` volvieron a su estado anterior. Se sirve desde `public/fonts/geist/` (`latin` y `latin-ext`, licencia SIL OFL 1.1 en `OFL.txt`), con `@font-face` y los tokens en `src/typography.css` (cargado desde `__root.tsx`, con `preload` del subconjunto latino). Pila de respaldo: `ui-sans-serif, system-ui, …, Arial`. No hay otras familias ni Google Fonts.
 
 | Token | Celular | ≥ 768 px | Uso |
 |---|---|---|---|
@@ -25,7 +25,6 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 
 Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etiquetas, títulos secundarios, hero), `--w-semibold` 600 (énfasis, métricas, precios, títulos de página y los nombres de la pareja en la portada). Interlineado: `--lh-display` 1.05, `--lh-title` 1.15, `--lh-snug` 1.3, `--lh-body` 1.5. Tracking: `--ls-display` −.03em, `--ls-title` −.02em, `--ls-section` −.01em. Sin mayúsculas sostenidas ni tracking ancho: los rótulos van en minúscula (excepciones: ninguna). Números con `tabular-nums` (montos, contadores, conteos).
 
-- La invitación pública usa Geist en todo: el protagonismo de los nombres sale del tamaño (`clamp(36px, 6vw, 88px)`), el peso 600 y el tracking −.03em.
 - Los tamaños de componentes que no están en la escala se siguen definiendo a mano (ver Vacíos); migrar el resto a los tokens es trabajo pendiente.
 
 ## 2. Color
@@ -118,6 +117,8 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
 - **Editor de la página:** navegación de secciones con punto de estado (verde completa, ámbar falta, gris oculta/sin cargar): Portada · Eventos · Confirmación · Dress code · Fotos · Mensaje final · Música (las que el plan no incluye quedan marcadas con su plan). Solo se ven los campos de la sección elegida; en «Eventos» cada momento es una fila que se abre sola (una a la vez) y tiene su «Mostrar». Celular: «Vista previa» abre la página pública real a pantalla completa (`.pn-pvfull`, con «Volver a editar»); la navegación de secciones queda fija arriba. Escritorio (≥ 1100 px): secciones | campos | vista previa fija. El botón «Ver como invitado» del encabezado se oculta en el editor del celular para no duplicar la acción.
 - **Regalos:** encabezado «Tu lista de regalos» + «N regalos · $ total» y «Agregar regalos» como acción principal (se oculta en «Elegir regalos»). Solapas: Elegir · Mi lista · Aportes · Recibidos (mismos contenidos que antes; «Cobro» pasó a llamarse «Aportes»).
 - **Invitados:** encabezado con conteo («12 invitados · 5 confirmaron») y «Agregar invitados»; filtros como píldoras con conteo; estado vacío compacto con una acción principal («Agregar invitados»), una secundaria («Importar desde Excel») y un enlace.
+
+- **Alta (`/crear/*`: registro, datos y foto):** foto de fondo a pantalla completa (`public/fondo-registro.webp`, vía `.pn-flow`) y una tarjeta blanca casi opaca (`rgb(255 255 255 / .94)`, radio 20) con los campos; el cierre es un círculo blanco. Sin sombras ni colores nuevos. En el paso de la foto en celular, la tarjeta ocupa la pantalla sin scroll.
 
 ## 5. Páginas públicas
 
