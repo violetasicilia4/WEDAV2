@@ -1540,20 +1540,21 @@ a:not([href]) { cursor: default; }
 /* 2 · sitio del casamiento: maqueta fiel al micrositio actual (portada con foto, save the date, momentos y confirmación) */
 .fd-page { gap: 0; padding-bottom: 0; }
 .fd-hero { position: relative; height: calc(98 * var(--px)); display: grid; place-content: center; justify-items: center; gap: calc(4 * var(--px)); text-align: center; color: #fff; background: linear-gradient(rgb(0 0 0 / .3), rgb(0 0 0 / .3)), url('/pareja-portada-ejemplo.webp') 50% 35% / cover; font-family: var(--font-ui); }
-.fd-hero small { font-size: calc(8 * var(--px)); }
+.fd-hero { font-family: 'Cormorant Garamond', Garamond, Georgia, serif; }
+.fd-hero small { font-size: calc(8 * var(--px)); font-weight: 500; }
 .fd-hero b { font-size: calc(17 * var(--px)); font-weight: 400; line-height: 1.05; }
 .fd-hero i { font-style: normal; font-size: calc(7 * var(--px)); font-weight: 600; letter-spacing: .14em; }
-.fd-std { display: grid; justify-items: center; gap: calc(3 * var(--px)); padding: calc(14 * var(--px)) 0 calc(14 * var(--px)); background: #fff; text-align: center; font-family: var(--font-ui); }
-.fd-std small { font-size: calc(6 * var(--px)); letter-spacing: .02em; text-transform: none; color: #66747f; }
+.fd-std { display: grid; justify-items: center; gap: calc(3 * var(--px)); padding: calc(14 * var(--px)) 0 calc(14 * var(--px)); background: #fff; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; }
+.fd-std small { font-size: calc(6 * var(--px)); letter-spacing: .16em; text-transform: uppercase; color: #66747f; }
 .fd-std b { font-size: calc(12 * var(--px)); font-weight: 500; color: #3b3c3a; }
 .fd-count { display: flex; gap: calc(9 * var(--px)); margin-top: calc(3 * var(--px)); }
-.fd-count span { display: grid; justify-items: center; gap: calc(1 * var(--px)); font-size: calc(5 * var(--px)); letter-spacing: .02em; text-transform: none; color: #575757; }
+.fd-count span { display: grid; justify-items: center; gap: calc(1 * var(--px)); font-size: calc(5 * var(--px)); letter-spacing: .12em; text-transform: uppercase; color: #575757; }
 .fd-count u { text-decoration: none; font-size: calc(11 * var(--px)); letter-spacing: 0; color: #66747f; }
-.fd-events { display: grid; grid-template-columns: repeat(3, 1fr); background: #66747f; color: #fff; padding: calc(14 * var(--px)) calc(6 * var(--px)); font-family: var(--font-ui); text-align: center; }
+.fd-events { display: grid; grid-template-columns: repeat(3, 1fr); background: #66747f; color: #fff; padding: calc(14 * var(--px)) calc(6 * var(--px)); font-family: 'Cormorant Garamond', Georgia, serif; text-align: center; }
 .fd-events div { display: grid; justify-items: center; gap: calc(3 * var(--px)); }
 .fd-events div + div { border-left: 1px solid rgb(255 255 255 / .4); }
 .fd-events em { display: block; width: calc(11 * var(--px)); height: calc(11 * var(--px)); border: 1px solid rgb(255 255 255 / .85); border-radius: 50%; }
-.fd-events span { font-size: calc(5.5 * var(--px)); letter-spacing: .02em; text-transform: none; }
+.fd-events span { font-size: calc(5.5 * var(--px)); letter-spacing: .14em; text-transform: uppercase; }
 .fd-events b { font-size: calc(11 * var(--px)); font-weight: 500; }
 
 /* escena de lista de regalos: botones "Regalar" blanquecinos y con borde fino, como en el ejemplo */
