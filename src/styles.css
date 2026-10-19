@@ -1939,9 +1939,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .viacap-section { padding-block: clamp(24px, 2.8vw, 40px); }
 
 /* Landing, celular: «Todo para compartir su casamiento.» en un solo renglón y centrado.
-   El texto mide ≈16 em de ancho: 5,3 vw entra en el 88 % de la pantalla desde 320 px. Va al final para ganar a las reglas anteriores. */
+   En negrita el texto mide ≈17 em de ancho: 4,8 vw entra en el 88 % de la pantalla desde 320 px. Va al final para ganar a las reglas anteriores. */
 @media (max-width: 640px) {
-  .feat-head h2 { font-size: clamp(16px, 5.3vw, 26px); white-space: nowrap; text-align: center; max-width: none; }
+  .feat-head h2 { font-size: clamp(15px, 4.8vw, 24px); font-weight: 700; white-space: nowrap; text-align: center; max-width: none; }
   .products-section .feat-head { justify-items: center; text-align: center; }
   .feat-head-side { align-items: center; }
   .products-section { padding-top: 28px; }
