@@ -1805,10 +1805,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (min-width: 901px) {
   .products-section .feat-head { gap: 10px; }
   .feat-head-side { align-items: center; }
-  .products-section { padding-top: 28px; }
-  /* Hero: «Tu gran día empieza acá.» en un solo renglón (≈11,3 em de ancho: 7,6 vw entra en el 88 % desde 320 px). */
-  .seed-hero .hero-copy { width: 100%; max-width: 100%; }
-  .seed-hero .hero-copy h1 { font-size: min(7.6vw, 34px); white-space: nowrap; text-wrap: nowrap; }
 }
 
 /* Web: título y descripción de cada card quedan estructurados y separados de las vecinas:
@@ -1945,6 +1941,23 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .products-section .feat-head { justify-items: center; text-align: center; }
   .feat-head-side { align-items: center; }
   .products-section { padding-top: 28px; }
+  /* Todo centrado en el celular. Las listas de «qué incluye» de cada plan quedan alineadas a la izquierda para leerse bien. */
+  .feat-card { align-items: center; justify-items: center; }
+  /* Las reglas anteriores de estas tarjetas usan !important: acá también hace falta. */
+  .feat-card > h3, .feat-card > p { text-align: center !important; justify-self: center !important; }
+  .feat-head-side .feat-cta { display: flex; justify-content: center; }
+  .duo-copy { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .duo-copy p { margin-left: auto; margin-right: auto; }
+  .duo-copy a { margin-left: auto; margin-right: auto; }
+  .plans-head { text-align: center; }
+  .plans-head p { margin-left: auto; margin-right: auto; }
+  .plan-card h3, .plan-sub, .plan-price, .plan-for, .plan-more summary { text-align: center; }
+  .plan-price { justify-content: center; }
+  .plan-more summary { display: flex; justify-content: center; }
+  .plan-card .seed-button { align-self: center; }
+  .plans-note { text-align: center; margin-left: auto; margin-right: auto; }
+  .seed-footer .footer-top, .seed-footer .footer-bottom { text-align: center; justify-items: center; justify-content: center; }
+  .seed-footer .footer-nav { align-items: center; justify-content: center; }
   /* Hero: «Tu gran día empieza acá.» en un solo renglón (≈11,3 em de ancho: 7,6 vw entra en el 88 % desde 320 px). */
   .seed-hero .hero-copy { width: 100%; max-width: 100%; }
   .seed-hero .hero-copy h1 { font-size: min(7.6vw, 34px); white-space: nowrap; text-wrap: nowrap; }
