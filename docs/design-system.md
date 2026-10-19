@@ -118,7 +118,7 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
 - **Regalos:** encabezado «Tu lista de regalos» + «N regalos · $ total» y «Agregar regalos» como acción principal (se oculta en «Elegir regalos»). Solapas: Elegir · Mi lista · Aportes · Recibidos (mismos contenidos que antes; «Cobro» pasó a llamarse «Aportes»).
 - **Invitados:** encabezado con conteo («12 invitados · 5 confirmaron») y «Agregar invitados»; filtros como píldoras con conteo; estado vacío compacto con una acción principal («Agregar invitados»), una secundaria («Importar desde Excel») y un enlace.
 
-- **Alta (`/crear/*`: registro, datos y foto):** foto de fondo a pantalla completa (`public/fondo-registro.webp`, vía `.pn-flow`) y una tarjeta blanca casi opaca (`rgb(255 255 255 / .94)`, radio 20) con los campos; el cierre es un círculo blanco. Sin sombras ni colores nuevos. En el paso de la foto en celular, la tarjeta ocupa la pantalla sin scroll.
+- **Alta (`/crear/*`: registro, datos y foto):** foto de fondo a pantalla completa (`public/fondo-registro.webp`, vía `.pn-flow`) y una tarjeta blanca (`#fff`, radio 20) con los campos; el cierre es un círculo blanco. Los botones principales son gris claro neutro (`#e8e9ea`, texto oscuro) y los secundarios blancos con borde gris; el interruptor activo va en gris medio `#9a9d9f`. Todo en la gama de blancos y grises. Sin sombras. En el paso de la foto en celular, la tarjeta ocupa la pantalla sin scroll.
 
 ## 5. Páginas públicas
 

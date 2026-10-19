@@ -985,8 +985,18 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
    Fondo fotográfico a pantalla completa y, encima, una tarjeta blanca casi opaca con los campos. Sin sombras ni colores nuevos. */
 .pn-flow { min-height: 100svh; background: #e9ece6 url('/fondo-registro.webp') center / cover no-repeat; }
 .pn-flow-head.is-account .pn-close { margin-top: 4px; background: rgb(255 255 255 / .92); }
-.pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: rgb(255 255 255 / .97); transform: none; }
+.pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: #fff; transform: none; }
 @media (max-width: 640px) {
   .pn-flow .pn-account { padding: 22px 18px; }
   .pn-flow .pn-photo-step { padding: 18px 16px; margin-top: 4px; }
 }
+
+/* Alta: botones en la gama de blancos y grises (gris claro neutro con texto oscuro), sin azul ni negro. */
+.pn-flow { --pn-btn: #e8e9ea; --pn-btn-h: #dbdcdd; }
+.pn-flow .pn-btn, .pn-flow .pn-account .pn-btn.pn-block { background: var(--pn-btn); color: var(--pn-ink); }
+.pn-flow .pn-btn:hover:not(:disabled) { background: var(--pn-btn-h); }
+.pn-flow .pn-btn:disabled { background: #f2f3f3; color: var(--pn-muted); }
+.pn-flow .pn-btn.is-ghost, .pn-flow .pn-account .pn-btn.is-ghost { background: #fff; color: var(--pn-ink); border-color: var(--pn-line-s); }
+.pn-flow .pn-btn.is-ghost:hover:not(:disabled) { background: rgb(59 60 58 / .06); }
+.pn-flow .pn-toggle input:checked + .pn-toggle-track { background: #9a9d9f; }
+.pn-flow :where(a, button, input, select, textarea):focus-visible { outline-color: var(--pn-ink); }
