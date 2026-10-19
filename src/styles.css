@@ -1806,6 +1806,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .products-section .feat-head { gap: 10px; }
   .feat-head-side { align-items: center; }
   .products-section { padding-top: 28px; }
+  /* Hero: «Tu gran día empieza acá.» en un solo renglón (≈11,3 em de ancho: 7,6 vw entra en el 88 % desde 320 px). */
+  .seed-hero .hero-copy { width: 100%; max-width: 100%; }
+  .seed-hero .hero-copy h1 { font-size: min(7.6vw, 34px); white-space: nowrap; text-wrap: nowrap; }
 }
 
 /* Web: título y descripción de cada card quedan estructurados y separados de las vecinas:
@@ -1942,4 +1945,7 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .products-section .feat-head { justify-items: center; text-align: center; }
   .feat-head-side { align-items: center; }
   .products-section { padding-top: 28px; }
+  /* Hero: «Tu gran día empieza acá.» en un solo renglón (≈11,3 em de ancho: 7,6 vw entra en el 88 % desde 320 px). */
+  .seed-hero .hero-copy { width: 100%; max-width: 100%; }
+  .seed-hero .hero-copy h1 { font-size: min(7.6vw, 34px); white-space: nowrap; text-wrap: nowrap; }
 }
