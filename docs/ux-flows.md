@@ -50,7 +50,7 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 - Supuestos (definición propia, a confirmar): regalos queda «Lista para revisar» con regalos pero sin alias (el cobro **no bloquea**) y «Completada» con alias; la invitación queda «Lista para revisar» si hay una sección prendida sin datos mínimos (`incompleteSections`); invitados queda «Completada» con al menos una persona; mesas y grupos no entran en el progreso.
 - Siguiente paso recomendado (`nextAction`): primeros regalos → configurar cobro → terminar la invitación → cargar invitados → revisar cómo lo verán.
 - Etapas fuera del plan elegido: se avisa «Se publica desde el plan X» y el contenido se conserva.
-- «Publicar mi casamiento» abre la elección de plan; dice que la publicación y el pago **no están conectados**. «Editar datos» abre nombres, fecha y foto. «Reiniciar la demo» pide confirmación.
+- «Publicar mi casamiento» (secundario) abre la elección de plan; una sola frase dice que es una demostración y que no se publica ni se cobra nada. Las etapas fuera del plan muestran «No está en tu plan». Sin botón extra de vista previa: el acceso es el de arriba y el paso 4. «Editar datos» abre nombres, fecha y foto. «Reiniciar la demo» pide confirmación.
 
 ## 5. Lista de regalos (`/panel/regalos`)
 
@@ -83,8 +83,10 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 ## 8. Vista previa y publicación
 
 - `/panel/vista-previa`: la página pública real, con alternancia Invitación / Lista de regalos y Celular / Compu, y vuelta directa al editor. Sin banners de estado: el subtítulo dice «Todavía no está publicada» y el botón de la cabecera no se repite en esa pantalla.
-- «Publicar mi casamiento» abre el diálogo de planes y, al elegir uno, un **resumen de publicación** (`publishSummary` en `src/lib/weda/publish.ts`): qué se publica con ese plan, qué está incluido pero vacío y qué queda como borrador (con el plan que lo habilita), más avisos sin bloqueo (falta el cobro, falta la fecha). Cambiar de plan no borra nada. «Pagar y publicar» está **deshabilitado y rotulado «sin conexión»**: no simula contratación, pago ni publicación.
+- «Publicar mi casamiento» abre el diálogo de planes y, al elegir uno, un **resumen de publicación**, que **no cambia el sitio**: solo «Ver mi sitio con este plan» lo aplica y «Volver a probar todo» lo deshace (`publishSummary` en `src/lib/weda/publish.ts`): qué se publica con ese plan, qué está incluido pero vacío y qué queda como borrador (con el plan que lo habilita), más avisos sin bloqueo (falta el cobro, falta la fecha). Cambiar de plan no borra nada. «Pagar y publicar» está **deshabilitado y rotulado «sin conexión»**: no simula contratación, pago ni publicación.
 - Pendiente (necesita backend): borrador privado, vista previa compartible protegida, versión pública con URL estable, verificación real del pago antes de publicar y «publicar cambios» explícito.
+
+- La vista previa («Ver como invitado») lista debajo, por función, si está **Configurada**, **Incluida pero falta cargar** o **Requiere plan X**, y los pendientes de completar con acceso al editor. Sin plan elegido se muestra como quedaría con el más completo.
 
 ## 9. Persistencia y comportamiento sin backend
 

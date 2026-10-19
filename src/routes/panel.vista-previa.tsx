@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { PreviewFrame, usePlans } from '@/components/panel/ui';
+import { sectionGaps } from '@/lib/weda/journey';
 import { publicPages, sitePath } from '@/lib/weda/logic';
+import { planById } from '@/lib/weda/plans';
+import { publishSummary } from '@/lib/weda/publish';
 import { useAppState } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/panel/vista-previa')({ component: Preview });
@@ -15,6 +18,9 @@ function Preview() {
   const [device, setDevice] = useState<'mobile' | 'desktop'>('mobile');
   const plans = usePlans();
   const base = sitePath(s);
+  // Sin plan elegido se prueba todo: el resumen se muestra como quedaría con el plan más completo.
+  const summary = publishSummary(s, s.planId ?? 'completo');
+  const gaps = sectionGaps(s);
   const path = page === 'gifts' || !pages.invitation ? `${base}/regalos` : base;
 
   return (
@@ -40,8 +46,19 @@ function Preview() {
 
       <PreviewFrame path={path} device={device} />
       <p className="pn-hint">Los invitados la abren sobre todo desde el celular. <button type="button" className="pn-link" onClick={() => setDevice(device === 'mobile' ? 'desktop' : 'mobile')}>{device === 'mobile' ? 'Probar en pantalla de compu' : 'Volver a la vista de celular'}</button></p>
-      {!pages.invitation && <p className="pn-note">Tu plan incluye la lista de regalos. La invitación y la confirmación de asistencia están desde el plan Invitación.</p>}
-
+      <section className="pn-sec-sum" aria-labelledby="pn-sum-title">
+        <h2 id="pn-sum-title">Qué estás viendo</h2>
+        <p className="pn-muted">{s.planId ? `Con el plan ${planById(s.planId)?.name}.` : 'Todavía no elegiste plan: ves todas las funciones. Al publicar, cada plan incluye distintas.'}</p>
+        <ul>
+          {summary.items.map(i => (
+            <li key={i.feature}>
+              <span>{i.label}</span>
+              <span className={`pn-sum-tag is-${i.state}`}>{i.state === 'published' ? 'Configurado' : i.state === 'empty' ? 'Incluido, falta cargar' : `Requiere plan ${i.plan}`}</span>
+            </li>
+          ))}
+        </ul>
+        {gaps.length > 0 && <p className="pn-note">Pendiente de completar: {gaps.map(g => g.label).join(', ')}. <Link to="/panel/sitio" className="pn-link">Ir a completarlo</Link></p>}
+      </section>
     </div>
   );
 }

@@ -132,7 +132,10 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
   const summary = picked ? publishSummary(state, picked) : null;
   const drafts = picked ? draftsFor(state, picked) : [];
   const close = () => { setChosen(false); onClose(); };
-  const choose = () => { if (!picked) return; update(s => setPlan(s, picked)); setChosen(true); };
+  // Mirar el resumen no cambia nada: el sitio solo se ajusta al plan si la pareja lo pide («Ver mi sitio con este plan»).
+  const choose = () => { if (picked) setChosen(true); };
+  const applyPlan = () => { if (picked) update(s => setPlan(s, picked)); close(); };
+  const backToTrial = () => { update(s => ({ ...s, planId: null })); close(); };
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
       <DialogContent className="pn-dialog pn-plans-dialog">
@@ -174,10 +177,12 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
               </div>
             )}
             <p className="pn-note" role="status"><strong>La publicación y el pago todavía no están conectados.</strong> Hoy no se cobra ni se publica nada en Internet: el sitio sigue viéndose solo en este navegador.</p>
+            <p className="pn-muted">{state.planId === picked ? `Tu sitio ya se muestra con el plan ${plan?.name}.` : state.planId ? `Tu sitio se muestra con el plan ${planById(state.planId)?.name}.` : 'Mientras no elijas, ves y probás todas las funciones.'}{' '}
+              {state.planId !== picked && <button type="button" className="pn-link" onClick={applyPlan}>Ver mi sitio con este plan</button>}
+              {state.planId && <>{state.planId !== picked && ' · '}<button type="button" className="pn-link" onClick={backToTrial}>Volver a probar todo</button></>}</p>
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" onClick={() => setChosen(false)}>Cambiar de plan</button>
               <button type="button" className="pn-btn" disabled aria-disabled="true">Pagar y publicar (sin conexión)</button>
-              <button type="button" className="pn-btn is-ghost" onClick={close}>Cerrar</button>
             </div>
           </>
         )}
