@@ -66,7 +66,7 @@ export const demoSiteData: SiteData = {
   exit: { href: '/', label: 'Volver a Weda' },
   names: demoWedding.couple,
   coverPhoto: demoWedding.photo,
-  photoAlt: 'Ignacio y Martina riéndose juntos en la playa, en blanco y negro',
+  photoAlt: 'Ignacio y Martina abrazándose entre sus invitados, en blanco y negro',
   coverText: '¡Nos casamos!',
   eventDate: demoEventDate,
   eventOffset: demoOffset,
