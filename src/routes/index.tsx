@@ -103,7 +103,7 @@ function Testimonials() {
       </div>
       <div className="tm-track" ref={track} onScroll={e => onScroll(e.currentTarget)} tabIndex={0} aria-live="off" aria-label="Testimonios, usá las flechas para cambiar" onKeyDown={e => { if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } }}>
         {slides.map((t, k) => (
-          <figure className="tm-slide" key={k} role="group" aria-roledescription="diapositiva" aria-label={`${(k % n) + 1} de ${n}`} aria-hidden={k < n || k >= 2 * n ? true : undefined}>
+          <figure className={`tm-slide${k % n === i ? ' is-on' : ''}`} key={k} role="group" aria-roledescription="diapositiva" aria-label={`${(k % n) + 1} de ${n}`} aria-hidden={k < n || k >= 2 * n ? true : undefined}>
             <div className="tm-top">
               <img src={t.photo} alt={k >= n && k < 2 * n ? `${t.who}, pareja` : ''} width={48} height={48} loading="lazy" />
               <figcaption><strong>{t.who}</strong></figcaption>
@@ -137,13 +137,13 @@ function Index() {
     <main id="main">
     <section className="seed-hero" id="top">
       <video className="hero-image" src="/hero.mp4" poster="/hero-poster.jpg" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
-      <div className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
+      <div className="hero-inner"><div className="hero-copy"><h1>Tu gran día empieza acá.</h1><p>Creá tu lista de regalos, compartí tu sitio y organizá las confirmaciones de tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
       <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear/cuenta">Crear mi evento</SeedLink></div></div></div>
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
-    <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Regalos para lo que viene después.</h2><p>Creen una lista con cosas que les gustan, viajes que sueñan hacer y proyectos que quieren compartir. Sus invitados eligen cómo acompañarlos y ustedes reciben los aportes directamente.</p><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
+    <section className="duo-section" id="regalos"><div className="section-inner duo-layout"><div className="duo-copy"><p className="eyebrow">Regalos</p><h2>Una lista de regalos hecha para ustedes.</h2><p>Desde ese viaje que sueñan hasta las cosas que quieren para su casa. Creen una lista a su manera y reciban los aportes directamente.</p><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div><div className="duo-media"><img className="duo-main" src={duo.url} alt="Ollas y cacerolas esmaltadas de una lista de regalos" loading="lazy"/><div className="duo-thumbnails">{[routine,unboxing].map((im,i)=><img key={im.url} src={im.url} alt={['Mesa de madera de una lista de regalos','Lámpara de mesa de una lista de regalos'][i]} loading="lazy"/>)}</div></div></div></section>
     <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
     <LandingPlans />
     </main>

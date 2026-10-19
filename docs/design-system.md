@@ -72,6 +72,10 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 - Una acción principal por pantalla; las secundarias son «ghost» (borde, sin relleno).
 - El plan restringe el acceso, no borra datos: al cambiar de plan se conservan.
 
+## 4b. Landing en celular (hasta 640 px)
+
+Detalle y causas en [auditoria-landing-mobile-2026-10-19.md](auditoria-landing-mobile-2026-10-19.md). Reglas vigentes: la barra superior (`FloatNav`) **conserva sus dos píldoras translúcidas** (sin relleno arriba de todo, «globo» de vidrio al scrollear); no se le pone `backdrop-filter` ni `transform` al header, porque el menú es `position: fixed` y se desancla; alturas de pantalla con `svh` (no `lvh`/`vh`); objetivos táctiles de 44 px; los ajustes de celular van al final de `styles.css`, dentro de `@media (max-width: 640px)`, para no tocar tablet, escritorio ni `/encontrar`.
+
 ## 5. Páginas públicas
 
 Los componentes de la página pública son **los mismos** para `/ejemplo` y `/sitio/$slug`: `src/components/site/{invitation,gifts-page,site-cover,site-shell,site-providers}.tsx`, alimentados por `useSite()` (`demoSiteData` o `siteFromState`). No se crea una segunda versión de la página. El formulario de confirmación es `src/components/rsvp-dialog.tsx`.

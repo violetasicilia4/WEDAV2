@@ -1962,3 +1962,69 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .seed-hero .hero-copy { width: 100%; max-width: 100%; }
   .seed-hero .hero-copy h1 { font-size: min(7.6vw, 34px); white-space: nowrap; text-wrap: nowrap; }
 }
+
+/* =========================================================================================================
+   LANDING · CELULAR (hasta 640 px) — secciones: funciones, regalos, testimonios, planes, cierre y footer
+   Misma regla que el bloque anterior: solo landing, solo celular, al final para ganar a las reglas previas.
+   ========================================================================================================= */
+@media (max-width: 640px) {
+  /* Hero: el bloque de texto (título, subtítulo y botones) queda en el centro de la pantalla. */
+  .seed-hero .hero-inner { padding-top: 14px; }
+
+  /* Funciones: menos aire entre demostraciones y contenedores más chicos. La lista de regalos pesa más que las otras dos. */
+  .products-section { padding-top: 28px; padding-bottom: calc(28px + var(--curve)); }
+  .products-section .feat-head { margin-bottom: 22px; }
+  .feat-grid { row-gap: 30px; }
+  .feat-stage { border-radius: 20px; }
+  .feat-card:not(:first-child) .feat-stage { height: 300px; }
+  .feat-card:first-child h3 { font-size: 23px; }
+  .feat-card:first-child .feat-stage { background: var(--section); }
+
+  /* Regalos (diferencial): título más grande, texto más cerca del botón y fotos con la misma proporción (4:3, sin deformar). */
+  .duo-section { padding-top: 34px; padding-bottom: 34px; }
+  .duo-layout { gap: 18px; }
+  .duo-copy .eyebrow { margin-bottom: 10px; }
+  .duo-copy h2 { font-size: 28px; line-height: 1.12; text-wrap: balance; }
+  .duo-copy > p:not(.eyebrow) { margin: 14px auto 18px; max-width: 34ch; }
+  .duo-main { height: auto; aspect-ratio: 4 / 3; }
+  .duo-main img, img.duo-main { width: 100%; height: 100%; object-fit: cover; }
+  .duo-thumbnails { margin-top: 10px; }
+  .duo-thumbnails img { height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+
+  /* Testimonios: el principal se lee entero y la siguiente tarjeta asoma; el resto se atenúa. */
+  .viacap-section { padding: 22px 0 20px; }
+  .tm-track { overscroll-behavior-x: contain; }
+  .tm-slide { width: min(84%, 320px); padding: 18px; gap: 10px; opacity: .6; transition: opacity .2s ease; }
+  .tm-slide.is-on { opacity: 1; }
+  .tm-top img { width: 44px; height: 44px; }
+  .tm-top strong { font-size: 15px; }
+  .tm-mark { font-size: 40px; opacity: .35; }
+  .tm-slide blockquote { font-size: 15px; line-height: 1.5; }
+  @media (prefers-reduced-motion: reduce) { .tm-slide { transition: none; } }
+
+  /* Planes: tarjetas verticales más compactas, lo que suma cada plan se destaca y el botón queda siempre al pie, a lo ancho. */
+  .plans-section { padding-top: 44px; padding-bottom: 44px; }
+  .plans-head h2 { font-size: clamp(26px, 7.2vw, 30px); line-height: 1.12; text-wrap: balance; }
+  .plans-head p { font-size: 15px; line-height: 1.5; max-width: 34ch; }
+  .plan-card { padding: 22px 20px; }
+  .plan-card .plan-price { margin-top: 14px; }
+  .plan-card ul { margin: 16px 0 14px; padding-top: 16px; gap: 10px; }
+  .plan-card li { font-size: 15px; gap: 10px; }
+  .plan-card li.plan-inherit { font-size: 13px; color: var(--muted-foreground); }
+  .plan-card li.plan-inherit strong { font-weight: 400; }
+  .plan-card li:not(.plan-inherit) { font-weight: 500; }
+  .plan-more { margin: 0 0 16px; }
+  .plan-more summary { justify-content: center; gap: 8px; min-height: 44px; border: 1px solid var(--line-strong, rgb(59 60 58 / .3)); border-radius: 999px; text-decoration: none; font-size: 14px; }
+  .plan-more summary::after { content: '+'; font-size: 18px; line-height: 1; }
+  .plan-more[open] summary::after { content: '–'; }
+  /* Texto blanco sobre #66747f llega a 4,9:1 (sobre #707d87 era 4,2:1): es el mismo tono que ya usa la invitación pública. */
+  .plan-card .seed-button { align-self: stretch; width: 100%; margin-top: auto; background: #66747f; }
+  .plans-note { margin-top: 22px; font-size: 13px; line-height: 1.5; }
+
+  /* Objetivos táctiles de 44 px: puntos del carrusel (la zona de toque se amplía sin agrandar lo que se ve). */
+  .tm-dots { gap: 0; }
+  .tm-dots button { width: 44px; height: 44px; }
+
+  /* Cierre: el footer sube con la misma curva que la sección de regalos y respira menos. */
+  .seed-footer { border-radius: 24px 24px 0 0; padding-top: 36px; }
+}
