@@ -82,6 +82,8 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 - Eliminar un invitado y importar una planilla no piden confirmación: se pueden deshacer desde el aviso. El aviso se cierra al cambiar de pantalla (para que un «Deshacer» viejo no pise cambios nuevos) y, con un diálogo abierto, aparece arriba para no tapar sus botones.
 - Las respuestas del formulario público se suman solas a la lista (sin duplicar al enviar dos veces).
 
+Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila compacta y la edición (asistencia, restricción, grupo) pasa por la hoja «Editar invitado». Cambiar asistencia o grupo ya no es de un toque en la lista; es una decisión de densidad. **Mejora futura (no implementada):** acciones masivas (marcar confirmados, mover varios a una mesa, eliminar), filtro por mesa y capacidad por mesa (hoy el modelo no tiene capacidad; hay que definirla comercialmente antes de mostrarla).
+
 ## 8. Vista previa y publicación
 
 - `/panel/vista-previa`: la página pública real, con alternancia Invitación / Lista de regalos y Celular / Compu, y vuelta directa al editor. Sin banners de estado: el subtítulo dice «Todavía no está publicada» y el botón de la cabecera no se repite en esa pantalla.

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Maximize2, Pencil, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ExternalLink, Eye, Maximize2, Pencil, Plus, X } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
@@ -35,6 +35,7 @@ const patchSite = (fn: (s: SiteConfig) => SiteConfig) => update(x => ({ ...x, si
 
 type SectionId = 'portada' | 'ceremonia' | 'recepcion' | 'fiesta' | 'civil' | 'brunch' | 'rsvp' | 'dress' | 'fotos' | 'mensaje' | 'musica';
 /** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
+const TITLE: Record<string, string> = { portada: 'Portada', rsvp: 'Confirmación de asistencia', dress: 'Dress code', fotos: 'Fotos', mensaje: 'Mensaje final', musica: 'Música de la fiesta' };
 const ANCHOR: Record<string, string> = { portada: '', ceremonia: 'dia', recepcion: 'dia', fiesta: 'dia', civil: 'dia', brunch: 'dia', rsvp: 'confirmar', dress: 'dresscode', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
 type Tone = 'ok' | 'todo' | 'off';
 
@@ -148,12 +149,23 @@ function SiteEditor() {
   // En el celular la vista previa queda fija arriba y se edita debajo; «Ampliar vista» la agranda y oculta los campos. En desktop se ven las dos a la vez.
   const [expanded, setExpanded] = useState(false);
   const [jump, setJump] = useState(0);
+  // La vista previa se puede ocultar a mano, y se pliega sola mientras el teclado está abierto sobre un campo de la página.
+  const [hidden, setHidden] = useState(false);
+  const [kb, setKb] = useState(false);
   const [active, setActive] = useState<SectionId | null>('portada');
   const [anchor, setAnchor] = useState<string | undefined>(undefined);
   const [track, setTrack] = useState({ title: '', artist: '' });
   const [trackError, setTrackError] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
   const plans = usePlans();
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const check = () => setKb(window.innerHeight - vv.height > 150 && !!document.activeElement?.closest('.pn-editor-pane'));
+    vv.addEventListener('resize', check);
+    document.addEventListener('focusout', check);
+    return () => { vv.removeEventListener('resize', check); document.removeEventListener('focusout', check); };
+  }, []);
 
   if (!can(s.planId, 'site')) return <Locked feature="site" />;
   const site = s.site;
@@ -162,7 +174,8 @@ function SiteEditor() {
 
   // Al abrir una sección, la vista previa (si está al lado) se lleva hasta ahí.
   const onActive = (id: SectionId | null) => { setActive(id); if (id) setAnchor(ANCHOR[id]); };
-  const seeResult = (id: SectionId) => { setAnchor(ANCHOR[id]); setJump(n => n + 1); };
+  const seeResult = (id: SectionId) => { setHidden(false); setAnchor(ANCHOR[id]); setJump(n => n + 1); };
+  const activeTitle = active === null ? '' : site.events.find(e => e.key === active)?.title.trim() || (active in TITLE ? TITLE[active] : `Evento ${SLOT[active]}`);
   const shared: Shared = { active, onActive, onSeeResult: seeResult };
 
   const addPhotos = async (files: FileList | null) => {
@@ -201,7 +214,7 @@ function SiteEditor() {
         </div>
       </header>
 
-      <div className={`pn-editor-grid${expanded ? ' is-expanded' : ''}`}>
+      <div className={`pn-editor-grid${expanded ? ' is-expanded' : ''}${hidden ? ' is-collapsed' : ''}${kb ? ' is-kb' : ''}`}>
         <div className="pn-editor-pane">
           {missing.length > 0 && (
             <p className="pn-missing">Falta completar:{' '}
@@ -282,8 +295,10 @@ function SiteEditor() {
 
         <div className="pn-preview-pane">
           <div className="pn-preview-bar">
+            <p className="pn-edit-label pn-mobile-only" aria-live="polite">{expanded || !activeTitle ? 'Vista previa' : <>Editando: <strong>{activeTitle}</strong></>}</p>
+            {!expanded && <button type="button" className="pn-icon pn-mobile-only" aria-pressed={hidden} aria-label={hidden ? 'Mostrar la vista previa' : 'Ocultar la vista previa'} onClick={() => setHidden(v => !v)}>{hidden ? <ChevronDown size={18} aria-hidden="true" /> : <ChevronUp size={18} aria-hidden="true" />}</button>}
             <button type="button" className={`pn-btn is-small pn-mobile-only${expanded ? '' : ' is-ghost'}`} aria-pressed={expanded} onClick={() => setExpanded(v => !v)}>{expanded ? <><Pencil size={15} aria-hidden="true" />Seguir editando</> : <><Maximize2 size={15} aria-hidden="true" />Ampliar vista</>}</button>
-            <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
+            <a className="pn-link pn-clean-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
           </div>
           <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
         </div>

@@ -76,6 +76,22 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 
 Detalle y causas en [auditoria-landing-mobile-2026-10-19.md](auditoria-landing-mobile-2026-10-19.md). Reglas vigentes: la barra superior (`FloatNav`) **conserva sus dos píldoras translúcidas** (sin relleno arriba de todo, «globo» de vidrio al scrollear); no se le pone `backdrop-filter` ni `transform` al header, porque el menú es `position: fixed` y se desancla; alturas de pantalla con `svh` (no `lvh`/`vh`); objetivos táctiles de 44 px; los ajustes de celular van al final de `styles.css`, dentro de `@media (max-width: 640px)`, para no tocar tablet, escritorio ni `/encontrar`.
 
+## 4c. Panel · mejora visual móvil (2026-10)
+
+Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigentes en `src/panel.css` (se agregaron como tokens `--pn-r-*` en `.pn-root`/`.pn-dialog`):
+
+- **Radios:** controles 12 px (`--pn-r-ctl`), tarjetas y fotos 16 px (`--pn-r-card`), diálogos y hojas 20 px (`--pn-r-sheet`), píldoras 999 px, círculos 50 %. Excepciones deliberadas: el marco del celular de la vista previa y la portada de `/crear/foto` (copian la invitación).
+- **Tipografía (panel):** 12 · 13 · 14 · 15 · 16 · 18 · 20 · 26 px. Se unificaron 11.5/12.5/14.5/17/19/22.
+- **Estado «seleccionado» en regalos:** tilde circular arriba a la izquierda de la foto (pizarra en tarjetas, blanco sobre las fotos de los sets) + aro interior de 3 px. Se reemplazan los halos dobles y las sombras.
+- **Tarjeta de regalo** (`.pn-gcard`): sin caja ni sombra; foto cuadrada, nombre (2 renglones), monto en negrita pizarra y una sola acción. En «Tu lista» las acciones son íconos de 44 px (`Editar`, `Quitar`), sin borde.
+- **Sets** (`.pn-settile`): degradé inferior reforzado (0.05 → 0.86) para que el nombre y el contador se lean sobre cualquier foto.
+- **Barra de selección** (`.pn-selbar`): cantidad y monto a la izquierda, «Ver» a la derecha; `.pn-pick` deja 80 px al final para que no tape el contenido.
+- **Invitados en celular (≤ 760 px):** fila de 68 px (nombre en negrita + estado · mesa · restricción). Tocar la fila abre la hoja de edición; el detalle y los selectores completos están ahí. En escritorio sigue la tabla con selectores.
+- **Hoja inferior** (`.pn-dialog.is-sheet`, ≤ 560 px): pegada abajo, hasta 90 dvh, botones fijos al pie. Todo `.pn-dialog .pn-actions.is-end` queda a la vista en celular.
+- **Mesas:** accesos con conteo (`.pn-mesa-nav`: «Sin lugar N», una píldora por mesa), selector compacto por persona («Asignar a…» si no tiene mesa). No hay capacidad por mesa en el modelo, por eso no se muestra.
+- **Editor del sitio en celular:** la barra de la vista previa dice «Editando: sección», la vista se oculta con un botón y se pliega sola cuando el teclado reduce el `visualViewport` más de 150 px con foco en un campo de la página.
+- **Cabecera:** botón «Ver como invitado» de 44 px y bajadas (`.pn-sub`) de 15 px en celular.
+
 ## 5. Páginas públicas
 
 Los componentes de la página pública son **los mismos** para `/ejemplo` y `/sitio/$slug`: `src/components/site/{invitation,gifts-page,site-cover,site-shell,site-providers}.tsx`, alimentados por `useSite()` (`demoSiteData` o `siteFromState`). No se crea una segunda versión de la página. El formulario de confirmación es `src/components/rsvp-dialog.tsx`.

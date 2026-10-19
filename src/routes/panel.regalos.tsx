@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { CalendarDays, Check, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, List, Pencil, Plus, Users, Wallet, X } from 'lucide-react';
+import { CalendarDays, Check, ChevronUp, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, List, Pencil, Plus, Users, Wallet, X } from 'lucide-react';
 import { Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/catalog';
@@ -82,15 +82,16 @@ const SET_COVER: Record<string, string> = {
   proyectos: '/regalo-casa.jpg', 'primer-hogar': '/lista-de-regalos-olla.jpg', escapada: '/regalo-cena-mar.webp',
 };
 
-/* Mismo orden que la tarjeta de la página pública: foto cuadrada, monto sobre la foto, nombre y botón. */
+/* Foto cuadrada, nombre, monto y una sola acción. El estado «en tu lista» se marca con tilde sobre la foto y botón liviano. */
 function CatalogCard({ gift, inList, onAdd, onRemove }: { gift: Gift; inList: boolean; onAdd: () => void; onRemove: () => void }) {
   return (
     <li className={`pn-gcard${inList ? ' is-in' : ''}`}>
       <div className="pn-gphoto">
         {gift.image ? <img src={gift.image} alt="" loading="lazy" style={gift.pos ? { objectPosition: gift.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
-        <span className="pn-gprice">{formatARS(gift.amount)}</span>
+        {inList && <span className="pn-gcheck" aria-hidden="true"><Check size={16} strokeWidth={2.5} /></span>}
       </div>
       <h3 title={gift.name}>{gift.name}</h3>
+      <p className="pn-gprice">{formatARS(gift.amount)}</p>
       {inList
         ? <button type="button" className="pn-btn is-small is-white" onClick={onRemove} aria-label={`Quitar ${gift.name} de tu lista`}><Check size={15} aria-hidden="true" />Quitar</button>
         : <button type="button" className="pn-btn is-small" onClick={onAdd} aria-label={`Agregar ${gift.name} a tu lista`}><Plus size={15} aria-hidden="true" />Agregar</button>}
@@ -214,7 +215,8 @@ function SelectionSummary({ items, onRemove, onReview }: { items: ListGift[]; on
       </aside>
       <div className="pn-selbar">
         <button type="button" className="pn-btn" onClick={() => setOpen(true)} aria-haspopup="dialog">
-          <GiftIcon size={16} aria-hidden="true" />{items.length} {items.length === 1 ? 'regalo elegido' : 'regalos elegidos'}{items.length > 0 && <> · {formatARS(total)}</>} · Ver
+          <span className="pn-selbar-text"><GiftIcon size={18} aria-hidden="true" />{items.length} {items.length === 1 ? 'regalo elegido' : 'regalos elegidos'}{items.length > 0 && <> · {formatARS(total)}</>}</span>
+          <span className="pn-selbar-go">Ver<ChevronUp size={16} aria-hidden="true" /></span>
         </button>
       </div>
       {open && (
@@ -318,12 +320,14 @@ function GiftsModule() {
                     <li key={g.id} className="pn-gcard">
                       <div className="pn-gphoto">
                         {g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
-                        <span className="pn-gprice">{formatARS(g.amount)}</span>
                       </div>
                       <h3>{g.name}</h3>
-                      <div className="pn-gcard-actions">
-                        <button type="button" className="pn-btn is-small is-ghost" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={14} aria-hidden="true" />Editar</button>
-                        <button type="button" className="pn-btn is-small is-ghost" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={14} aria-hidden="true" />Quitar</button>
+                      <div className="pn-gcard-foot">
+                        <p className="pn-gprice">{formatARS(g.amount)}</p>
+                        <div className="pn-gcard-actions">
+                          <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
+                          <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -368,6 +372,10 @@ function GiftsModule() {
         {tab === 'agregar' && (
           <div className="pn-pick">
           <div className="pn-catalog">
+            <div className="pn-block-head">
+              <h2>Sets completos</h2>
+              <p className="pn-muted">Tocá un set para sumar todos sus regalos. Tocá de nuevo para quitarlos. Con el ícono de lista elegís uno por uno.</p>
+            </div>
             <ul className="pn-settiles" aria-label="Sets de regalos">
               {SETS.map(set => {
                 const gs = setGifts(set);
@@ -378,16 +386,20 @@ function GiftsModule() {
                 return (
                   <li key={set.id} className={`pn-settile${all ? ' is-on' : ''}`} style={cover ? { backgroundImage: `url(${cover})` } : undefined}>
                     <button type="button" className="pn-settile-main" aria-pressed={all} onClick={toggle} aria-label={`${set.name}, ${gs.length} regalos. ${all ? 'Tocá para quitarlos todos' : 'Tocá para agregarlos todos'}`}>
+                      {all && <span className="pn-gcheck" aria-hidden="true"><Check size={16} strokeWidth={2.5} /></span>}
                       <span className="pn-settile-name">{set.name}</span>
-                      <span className="pn-settile-meta">{all ? <><Check size={13} aria-hidden="true" />{gs.length} agregados</> : inList ? `${inList} de ${gs.length} agregados` : `${gs.length} regalos`}</span>
+                      <span className="pn-settile-meta">{all ? `${gs.length} agregados` : inList ? `${inList} de ${gs.length} agregados` : `${gs.length} regalos`}</span>
                     </button>
                     <button type="button" className="pn-settile-view" onClick={() => setViewSet(set.id)} aria-label={`Ver los regalos de ${set.name}`}><List size={16} aria-hidden="true" /></button>
                   </li>
                 );
               })}
             </ul>
-            <p className="pn-hint">Tocá un set para sumar todos sus regalos o quitarlos. Con el ícono de lista elegís uno por uno.</p>
 
+            <div className="pn-block-head">
+              <h2>Regalos de a uno</h2>
+              <p className="pn-muted">Buscá, filtrá por categoría y tocá «Agregar» en los que quieras.</p>
+            </div>
             <div className="pn-filters">
               <label className="pn-sr" htmlFor="pn-q">Buscar un regalo</label>
               <input id="pn-q" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar un regalo" autoComplete="off" />

@@ -146,7 +146,11 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByRole('heading', { name: 'Sin grupo' })).toBeVisible();
     // Asignar desde la lista de invitados.
     await page.getByRole('button', { name: /^Invitados/ }).click();
-    await page.getByLabel('Grupo de Marta Sosa').selectOption({ label: 'Mesa 1' });
+    // En el celular la fila es compacta: el grupo se cambia desde la hoja de edición.
+    await page.getByRole('button', { name: 'Editar a Marta Sosa' }).click();
+    await page.getByLabel('Grupo o mesa').selectOption({ label: 'Mesa 1' });
+    await page.getByRole('button', { name: 'Guardar' }).click();
+    await expect(page.getByRole('button', { name: 'Editar a Marta Sosa' })).toContainText('Mesa 1');
     const state = await stored(page);
     expect(state.groups.map((g: { name: string }) => g.name)).toEqual(['Mesa 1']);
     expect(state.guests[0].groupId).toBe(state.groups[0].id);

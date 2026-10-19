@@ -7,7 +7,7 @@ import { update, useAppState } from '@/lib/weda/store';
 import type { Group, Guest } from '@/lib/weda/types';
 
 /* Una persona dentro de un grupo (o sin grupo), con un selector simple para moverla. Sirve igual en el celular y en la compu. */
-function Member({ guest, groups, onMove }: { guest: Guest; groups: Group[]; onMove: (groupId: string | null) => void }) {
+function Member({ guest, groups, onMove, unassigned }: { guest: Guest; groups: Group[]; onMove: (groupId: string | null) => void; unassigned?: boolean }) {
   return (
     <li className="pn-member">
       <div className="pn-gmeta">
@@ -16,7 +16,7 @@ function Member({ guest, groups, onMove }: { guest: Guest; groups: Group[]; onMo
       </div>
       <label className="pn-sr" htmlFor={`mv-${guest.id}`}>Mover a {guestName(guest)}</label>
       <select id={`mv-${guest.id}`} className="pn-select" value={guest.groupId ?? ''} onChange={e => onMove(e.target.value || null)}>
-        <option value="">Sin grupo</option>
+        <option value="">{unassigned ? 'Asignar a…' : 'Sin grupo'}</option>
         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
       </select>
     </li>
@@ -56,6 +56,13 @@ export function GroupsView() {
     <div className="pn-groups-view">
       <p className="pn-muted">{s.groups.length ? `${s.groups.length} ${s.groups.length === 1 ? 'grupo' : 'grupos'} · ${st.withoutGroup} ${st.withoutGroup === 1 ? 'persona sin lugar' : 'personas sin lugar'}` : 'Creá una mesa o un grupo y asignale personas con un selector.'}</p>
 
+      {s.groups.length > 0 && s.guests.length > 0 && (
+        <nav className="pn-mesa-nav" aria-label="Ir a una mesa o grupo">
+          <a href="#grp-none" className={unassigned.length ? 'is-warn' : ''}>Sin lugar <strong>{unassigned.length}</strong></a>
+          {s.groups.map(g => <a key={g.id} href={`#grp-${g.id}`}>{g.name} <strong>{s.guests.filter(x => x.groupId === g.id).length}</strong></a>)}
+        </nav>
+      )}
+
       <form onSubmit={create} noValidate className="pn-inline-form">
         <Field label="Nuevo grupo o mesa" error={error || undefined} hint="Ponele el nombre que quieras: «Mesa 1», «Familia», «Amigos del club»…">
           {a => <input id={a.id} type="text" value={name} placeholder={nextGroupName(s.groups)} onChange={e => { setName(e.target.value); setError(''); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
@@ -72,7 +79,7 @@ export function GroupsView() {
             ? <p className="pn-muted">Todos los que asisten o pueden asistir tienen grupo.</p>
             : s.groups.length === 0
               ? <p className="pn-muted">Creá un grupo o una mesa para empezar a asignar.</p>
-              : <ul className="pn-members">{unassigned.map(m => <Member key={m.id} guest={m} groups={s.groups} onMove={id => move(m.id, id)} />)}</ul>}
+              : <ul className="pn-members">{unassigned.map(m => <Member key={m.id} guest={m} groups={s.groups} unassigned onMove={id => move(m.id, id)} />)}</ul>}
         </section>
       )}
 
@@ -84,7 +91,7 @@ export function GroupsView() {
             <header>
               <div>
                 <h2 id={`grp-${g.id}`}>{g.name}</h2>
-                <p className="pn-muted">{members.length} {members.length === 1 ? 'persona' : 'personas'} · {confirmed} confirmadas</p>
+                <p className="pn-muted">{members.length} {members.length === 1 ? 'persona' : 'personas'} · {confirmed} {confirmed === 1 ? 'confirmada' : 'confirmadas'}</p>
               </div>
               <div className="pn-gactions">
                 <button type="button" className="pn-icon" aria-label={`Cambiar el nombre de ${g.name}`} onClick={() => { setRenaming(g); setNewName(g.name); setRenameError(''); }}><Pencil size={16} aria-hidden="true" /></button>

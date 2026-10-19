@@ -155,6 +155,13 @@ function GuestsModule() {
                 {shown.map(g => (
                   <tr key={g.id}>
                     <th scope="row" data-label="Nombre">{guestName(g)}</th>
+                    <td className="pn-g-sum">
+                      <button type="button" onClick={() => setEditing(g)} aria-label={`Editar a ${guestName(g)}`}>
+                        <span><i className={`pn-dot is-${g.status}`} aria-hidden="true" />{STATUS_LABEL[g.status]}</span>
+                        {s.groups.length > 0 && <span>{groupName(g.groupId) || 'Sin grupo'}</span>}
+                        {g.status === 'confirmed' && menuName(g.menu) && <span>{menuName(g.menu)}</span>}
+                      </button>
+                    </td>
                     <td data-label="Asistencia">
                       <select className={`pn-select is-${g.status}`} value={g.status} aria-label={`Asistencia de ${guestName(g)}`} onChange={e => update(x => updateGuest(x, g.id, { status: e.target.value as GuestStatus }))}>
                         {(Object.keys(STATUS_LABEL) as GuestStatus[]).map(k => <option key={k} value={k}>{STATUS_LABEL[k]}</option>)}
@@ -228,7 +235,7 @@ function GuestsModule() {
       </Dialog>
 
       <Dialog open={adding} onOpenChange={setAdding}>
-        <DialogContent className="pn-dialog">
+        <DialogContent className="pn-dialog is-sheet">
           <DialogTitle>Agregar invitado</DialogTitle>
           <DialogDescription>Aparece en tu lista aunque todavía no haya confirmado.</DialogDescription>
           <GuestForm groups={s.groups} submitLabel="Agregar" onCancel={() => setAdding(false)} onSubmit={v => { update(x => addGuest(x, v)); setAdding(false); toast(`Agregaste a ${v.first} ${v.last}.`); }} />
@@ -237,7 +244,7 @@ function GuestsModule() {
 
       {editing && (
         <Dialog open onOpenChange={o => { if (!o) setEditing(null); }}>
-          <DialogContent className="pn-dialog">
+          <DialogContent className="pn-dialog is-sheet">
             <DialogTitle>Editar invitado</DialogTitle>
             <DialogDescription>{guestName(editing)}</DialogDescription>
             <GuestForm initial={editing} groups={s.groups} submitLabel="Guardar" onCancel={() => setEditing(null)} onSubmit={v => { update(x => updateGuest(x, editing.id, v)); setEditing(null); toast('Cambios guardados.'); }} />
