@@ -985,7 +985,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
    Fondo fotográfico a pantalla completa y, encima, una tarjeta blanca casi opaca con los campos. Sin sombras ni colores nuevos. */
 .pn-flow { min-height: 100svh; background: #e9ece6 url('/fondo-registro.webp') center / cover no-repeat; }
 .pn-flow-head.is-account .pn-close { margin-top: 4px; background: rgb(255 255 255 / .92); }
-.pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: rgb(255 255 255 / .94); transform: none; }
+.pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: rgb(255 255 255 / .97); transform: none; }
 @media (max-width: 640px) {
   .pn-flow .pn-account { padding: 22px 18px; }
   .pn-flow .pn-photo-step { padding: 18px 16px; margin-top: 4px; }
