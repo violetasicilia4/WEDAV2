@@ -1962,3 +1962,20 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .seed-hero .hero-copy { width: 100%; max-width: 100%; }
   .seed-hero .hero-copy h1 { font-size: min(7.6vw, 34px); white-space: nowrap; text-wrap: nowrap; }
 }
+
+/* Barra superior en el celular: «Weda» a la izquierda, «Crear mi evento» exactamente al centro y el menú a la derecha. */
+.float-center { display: none; }
+@media (max-width: 640px) {
+  .float-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .float-left { justify-self: start; }
+  .float-right { justify-self: end; }
+  .float-center { display: flex; padding: 0 6px; justify-self: center; }
+  .float-cta-inline { display: none; }
+}
+@media (max-width: 360px) {
+  .float-left { padding: 0 12px; }
+  .float-left .seed-logo { font-size: 18px; }
+  .float-center { padding: 0 4px; }
+  .float-center .float-cta { padding: 0 10px; font-size: 12px; }
+  .float-right { padding: 0 2px; }
+}
