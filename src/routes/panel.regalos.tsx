@@ -18,9 +18,11 @@ import type { ListGift } from '@/lib/weda/types';
 export const Route = createFileRoute('/panel/regalos')({ component: GiftsModule });
 
 type Tab = 'lista' | 'agregar' | 'recibidos' | 'cobro';
-/* Tres bloques en orden de uso (elegir → cobrar → revisar) y, aparte, lo ya recibido. Se puede entrar a cualquiera. */
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'agregar', label: 'Elegí tus regalos' }, { id: 'cobro', label: 'Cómo vas a recibirlos' }, { id: 'lista', label: 'Revisá tu lista' }, { id: 'recibidos', label: 'Recibidos' },
+/* Orden de uso: elegir → revisar la lista → cobro (opcional) y, aparte, lo ya recibido. Se puede entrar a cualquiera.
+   En pantallas angostas se muestra la etiqueta corta para que las cuatro solapas entren sin scroll lateral. */
+const TABS: { id: Tab; label: string; short: string }[] = [
+  { id: 'agregar', label: 'Elegí tus regalos', short: 'Elegir' }, { id: 'lista', label: 'Revisá tu lista', short: 'Tu lista' },
+  { id: 'cobro', label: 'Cómo vas a recibirlos', short: 'Cobro' }, { id: 'recibidos', label: 'Recibidos', short: 'Recibidos' },
 ];
 
 const Thumb = ({ src, name }: { src?: string | undefined; name: string }) => (
@@ -240,6 +242,8 @@ function GiftsModule() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ListGift | null>(null);
   const [preview, setPreview] = useState(false);
+  const [listView, setListView] = useState<'cards' | 'order'>('cards');
+  const [showPage, setShowPage] = useState(false);
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<string>('Todas');
 
@@ -282,7 +286,10 @@ function GiftsModule() {
         {TABS.map(t => (
           <button key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls="pn-tabpanel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}
             onKeyDown={e => { const i = TABS.findIndex(x => x.id === t.id); if (e.key === 'ArrowRight') { e.preventDefault(); setTab(TABS[(i + 1) % TABS.length]!.id); } if (e.key === 'ArrowLeft') { e.preventDefault(); setTab(TABS[(i + TABS.length - 1) % TABS.length]!.id); } }}>
-            {t.label}{t.id === 'lista' && items.length > 0 && <span className="pn-count">{items.length}</span>}{t.id === 'cobro' && (alias ? null : <span className="pn-count is-todo" title="Pendiente">Pendiente</span>)}{t.id === 'recibidos' && received.length > 0 && <span className="pn-count">{received.length}</span>}
+            <span className="pn-tab-long">{t.label}</span><span className="pn-tab-short">{t.short}</span>
+            {t.id === 'lista' && items.length > 0 && <span className="pn-count">{items.length}</span>}
+            {t.id === 'cobro' && !alias && <><span className="pn-dot-todo" aria-hidden="true" /><span className="pn-sr">(pendiente, opcional por ahora)</span></>}
+            {t.id === 'recibidos' && received.length > 0 && <span className="pn-count">{received.length}</span>}
           </button>
         ))}
       </div>
@@ -299,24 +306,61 @@ function GiftsModule() {
             <>
               <div className="pn-block-head">
                 <h2>Revisá tu lista</h2>
-                <p className="pn-muted" role="status">{items.length} {items.length === 1 ? 'regalo' : 'regalos'} · {formatARS(giftTotal(items))}. Podés editarlos, ordenarlos o quitarlos.</p>
+                <p className="pn-muted" role="status">{items.length} {items.length === 1 ? 'regalo' : 'regalos'} · {formatARS(giftTotal(items))}. Tus invitados los ven en este orden.</p>
               </div>
-              <SortableGifts items={items} onMove={(id, to) => update(x => moveGiftTo(x, id, to))} renderRow={g => (
+              <div className="pn-switch is-small pn-views" role="group" aria-label="Cómo ver tu lista">
+                <button type="button" className={listView === 'cards' ? 'on' : ''} aria-pressed={listView === 'cards'} onClick={() => setListView('cards')}>Tarjetas</button>
+                <button type="button" className={listView === 'order' ? 'on' : ''} aria-pressed={listView === 'order'} onClick={() => setListView('order')}>Ordenar</button>
+              </div>
+              {listView === 'cards' ? (
+                <ul className="pn-ggrid is-list" aria-label="Regalos de tu lista">
+                  {items.map(g => (
+                    <li key={g.id} className="pn-gcard">
+                      <div className="pn-gphoto">
+                        {g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
+                        <span className="pn-gprice">{formatARS(g.amount)}</span>
+                      </div>
+                      <h3>{g.name}</h3>
+                      <div className="pn-gcard-actions">
+                        <button type="button" className="pn-btn is-small is-ghost" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={14} aria-hidden="true" />Editar</button>
+                        <button type="button" className="pn-btn is-small is-ghost" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={14} aria-hidden="true" />Quitar</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
                 <>
-                  <Thumb src={g.image} name={g.name} />
-                  <div className="pn-gmeta">
-                    <strong>{g.name}</strong>
-                    <span>{formatARS(g.amount)} · {g.category}</span>
-                  </div>
-                  <div className="pn-gactions">
-                    <GripVertical size={18} className="pn-grip" aria-hidden="true" />
-                    <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
-                    <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
-                  </div>
+                  <SortableGifts items={items} onMove={(id, to) => update(x => moveGiftTo(x, id, to))} renderRow={g => (
+                    <>
+                      <Thumb src={g.image} name={g.name} />
+                      <div className="pn-gmeta">
+                        <strong>{g.name}</strong>
+                        <span>{formatARS(g.amount)} · {g.category}</span>
+                      </div>
+                      <div className="pn-gactions">
+                        <GripVertical size={18} className="pn-grip" aria-hidden="true" />
+                        <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
+                        <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
+                      </div>
+                    </>
+                  )} />
+                  <p className="pn-hint">Para ordenar, mantené apretado un regalo y movelo.</p>
                 </>
-              )} />
-              <p className="pn-hint">Para ordenar, mantené apretado un regalo y movelo.</p>
-              <div className="pn-actions"><button type="button" className="pn-btn is-ghost" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Volver al catálogo</button></div>
+              )}
+              <section className="pn-page-view" aria-labelledby="pn-pv-title">
+                <h2 id="pn-pv-title" className="pn-sr">Página de regalos</h2>
+                <button type="button" className="pn-btn" aria-expanded={showPage} aria-controls="pn-pv-frame" onClick={() => setShowPage(v => !v)}><Eye size={16} aria-hidden="true" />{showPage ? 'Ocultar la página de regalos' : 'Ver cómo la ven tus invitados'}</button>
+                {showPage && (
+                  <div id="pn-pv-frame" className="pn-pv-frame">
+                    <p className="pn-muted">Es la página de regalos con tus datos y se actualiza sola. Todavía no está publicada.</p>
+                    <PreviewFrame path={`${sitePath(s)}/regalos`} device="mobile" />
+                  </div>
+                )}
+              </section>
+              <div className="pn-actions">
+                <button type="button" className="pn-btn is-ghost" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Agregar más regalos</button>
+                <button type="button" className="pn-btn is-ghost" onClick={() => setTab('cobro')}>Cómo vas a recibirlos · opcional</button>
+              </div>
             </>
           )
         )}

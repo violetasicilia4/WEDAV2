@@ -43,26 +43,32 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 | Componente | Qué hace y reglas de uso |
 |---|---|
 | `Field` | Etiqueta + control + ayuda + error con ids asociados. Los opcionales se marcan «· opcional». |
-| `ToastProvider` / `useToast` | Avisos breves; admiten acción «Deshacer». Se usan al quitar regalos o todos los regalos de un set. |
+| `ToastProvider` / `useToast` | Avisos breves; admiten acción «Deshacer» (botón de 44 px). Se cierran al cambiar de ruta y, con un diálogo abierto, suben a la parte superior para no tapar sus botones. |
 | `ConfirmDialog` | Confirmación de acciones destructivas (eliminar invitado, grupo, reiniciar la demo). |
 | `Locked`, `LockedBlock` | Función no incluida en el plan elegido: qué es, en qué plan está y que lo cargado se conserva como borrador; el botón «Ver los planes» abre el diálogo de planes. Sin upsell en el resto de las pantallas. |
 | `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. No cobra ni publica. |
 | Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver todo lo que incluye» en `<details>`, CTA «Crear mi evento gratis»). Sin plan «recomendado». Todo sale de `plans.ts`. |
-| `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`). |
+| `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`; `jump` repite el pedido para la misma sección y espera si la sección todavía no existe). |
 | `PublishDialog` | Explica que todavía no se puede publicar; no simula contratación ni pago. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |
 | `PhotoPicker`, `CoupleDialog` | Foto de portada y datos del casamiento. Patrón compacto: botón «Subir una foto» + fila de miniaturas (`pn-cover-pick`: «Tu foto» si ya subió una, y las imágenes de muestra), selección visible con borde y nombre en negrita. |
 | `GroupsView` | Mesas y grupos dentro de Invitados. |
 | Chips de estado | `is-ok`, `is-todo`, `is-off`, `is-doing`, `is-done`. |
 | Selector segmentado `.pn-switch` | Alternar vistas (Invitados / Mesas y grupos, Editar / Ver como invitado, filtros de asistencia). |
-| Solapas `.pn-tabs` | Módulo de regalos (Mi lista, Agregar regalos, Recibidos, Cobro). |
+| Solapas `.pn-tabs` | Módulo de regalos. Hasta 560 px ocupan todo el ancho en columnas iguales y usan la etiqueta corta (`pn-tab-short`); el título largo va dentro de cada panel. Nunca deben necesitar scroll lateral. |
 | Lista ordenable (`SortableGifts`) | Orden por arrastre (mantener apretado en el celular), Alt + flechas con teclado. |
+
+| Editor en el celular | Vista previa fija arriba (`.pn-editor .pn-preview-pane`, sticky bajo 1100 px y desde 520 px de alto) + secciones debajo; «Ampliar vista»/«Seguir editando» alterna; cada sección cierra con «Listo». |
+| Tarjetas de la lista | `.pn-ggrid.is-list`: mismas tarjetas `.pn-gcard` que el catálogo, con «Editar» y «Quitar». |
+| Más opciones `.pn-more` | `<details>` para campos opcionales de un formulario corto. |
 
 **Patrones de interacción vigentes (obligatorios al agregar pantallas):**
 - Botones de un diálogo o formulario: **Cancelar a la izquierda, acción principal a la derecha** (`.pn-actions.is-end`).
 - Quitar algo reversible: aviso con **Deshacer**; destructivo e irreversible: `ConfirmDialog`.
 - Los cambios del panel **se guardan solos**; no hay botón «Guardar» por pantalla (los diálogos de edición sí confirman).
 - Botón «Ver como invitado» siempre visible en la cabecera del panel.
+- En pantallas táctiles todo botón llega a 44 px (`pointer: coarse`).
+- Editar con resultado a la vista: en el celular los campos se editan debajo de una vista previa fija; no se mueve la edición a otra pantalla.
 - Una acción principal por pantalla; las secundarias son «ghost» (borde, sin relleno).
 - El plan restringe el acceso, no borra datos: al cambiar de plan se conservan.
 

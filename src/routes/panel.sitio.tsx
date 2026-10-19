@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Pencil, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Maximize2, Pencil, Plus, X } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
@@ -51,8 +51,16 @@ type BlockProps = {
 function Block({ id, title, help, status, tone, planTag, enabled, onToggle, active, onActive, onSeeResult, children }: BlockProps) {
   const open = active === id;
   const hidden = enabled === false;
+  const ref = useRef<HTMLElement>(null);
+  const seen = useRef(open);
+  // En el celular la vista previa queda fija arriba: al abrir una sección se la lleva justo debajo para editarla sin perderla de vista.
+  useEffect(() => {
+    if (!open || seen.current) { seen.current = open; return; }
+    seen.current = true;
+    if (window.matchMedia('(max-width: 1099px)').matches) ref.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, [open]);
   return (
-    <section className={`pn-sec${open ? ' is-open' : ''}${hidden ? ' is-off' : ''}`} aria-labelledby={`sec-${id}`}>
+    <section ref={ref} className={`pn-sec${open ? ' is-open' : ''}${hidden ? ' is-off' : ''}`} aria-labelledby={`sec-${id}`}>
       <div className="pn-sec-head">
         <button type="button" className="pn-sec-main" aria-expanded={open} aria-controls={`sec-body-${id}`} onClick={() => onActive(open ? null : id)}>
           <span className="pn-sec-text">
@@ -70,7 +78,7 @@ function Block({ id, title, help, status, tone, planTag, enabled, onToggle, acti
         <div className="pn-block-body" id={`sec-body-${id}`}>
           {hidden
             ? <p className="pn-note">Esta sección está oculta y tus invitados no la ven. Lo que ya cargaste se conserva: activá «Mostrar» para volver a usarla.</p>
-            : <>{children}<div className="pn-actions is-tight"><button type="button" className="pn-link" onClick={() => onSeeResult(id)}><Eye size={14} aria-hidden="true" />Ver cómo queda</button></div></>}
+            : <>{children}<div className="pn-actions is-tight"><button type="button" className="pn-btn is-small" onClick={() => onActive(null)}>Listo</button><button type="button" className="pn-link" onClick={() => onSeeResult(id)}><Eye size={14} aria-hidden="true" />Ver en la vista previa</button></div></>}
         </div>
       )}
     </section>
@@ -120,10 +128,15 @@ function EventBlock({ ev, shared }: { ev: SiteEvent; shared: Shared }) {
       <Field label="Nombre del lugar">{a => <input id={a.id} type="text" value={ev.name} placeholder="Parroquia San Isidro Labrador" onChange={e => set({ name: e.target.value })} />}</Field>
       <Field label="Dirección">{a => <input id={a.id} type="text" value={ev.address} placeholder="Calle 123, Ciudad" onChange={e => set({ address: e.target.value })} />}</Field>
       <Field label="Horario">{a => <input id={a.id} type="time" value={ev.time} onChange={e => set({ time: e.target.value })} />}</Field>
-      <Field label="Nota para los invitados" optional>{a => <textarea id={a.id} rows={2} value={ev.note} onChange={e => set({ note: e.target.value })} />}</Field>
-      <Field label="Enlace propio a Google Maps" optional error={urlError} hint="Si lo dejás vacío, armamos el enlace con la dirección.">
-        {a => <input id={a.id} type="url" value={ev.mapsUrl} placeholder="https://maps.app.goo.gl/…" onChange={e => set({ mapsUrl: e.target.value })} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-      </Field>
+      <details className="pn-more" open={!!(ev.note || ev.mapsUrl)}>
+        <summary>Más opciones: nota y enlace de Maps</summary>
+        <div className="pn-more-body">
+          <Field label="Nota para los invitados" optional>{a => <textarea id={a.id} rows={2} value={ev.note} onChange={e => set({ note: e.target.value })} />}</Field>
+          <Field label="Enlace propio a Google Maps" optional error={urlError} hint="Si lo dejás vacío, armamos el enlace con la dirección.">
+            {a => <input id={a.id} type="url" value={ev.mapsUrl} placeholder="https://maps.app.goo.gl/…" onChange={e => set({ mapsUrl: e.target.value })} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+          </Field>
+        </div>
+      </details>
       {link ? <a className="pn-link" href={link} target="_blank" rel="noopener noreferrer">Probar el enlace de «Cómo llegar» <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a> : <p className="pn-hint">Cargá el nombre o la dirección para que aparezca «Cómo llegar».</p>}
     </Block>
   );
@@ -132,8 +145,9 @@ function EventBlock({ ev, shared }: { ev: SiteEvent; shared: Shared }) {
 function SiteEditor() {
   const s = useAppState();
   const toast = useToast();
-  // En el celular la página es la protagonista: se abre la vista previa y se edita desde un botón. En desktop se ven las dos a la vez.
-  const [view, setView] = useState<'edit' | 'preview'>('preview');
+  // En el celular la vista previa queda fija arriba y se edita debajo; «Ampliar vista» la agranda y oculta los campos. En desktop se ven las dos a la vez.
+  const [expanded, setExpanded] = useState(false);
+  const [jump, setJump] = useState(0);
   const [active, setActive] = useState<SectionId | null>('portada');
   const [anchor, setAnchor] = useState<string | undefined>(undefined);
   const [track, setTrack] = useState({ title: '', artist: '' });
@@ -148,7 +162,7 @@ function SiteEditor() {
 
   // Al abrir una sección, la vista previa (si está al lado) se lleva hasta ahí.
   const onActive = (id: SectionId | null) => { setActive(id); if (id) setAnchor(ANCHOR[id]); };
-  const seeResult = (id: SectionId) => { setAnchor(ANCHOR[id]); setView('preview'); };
+  const seeResult = (id: SectionId) => { setAnchor(ANCHOR[id]); setJump(n => n + 1); };
   const shared: Shared = { active, onActive, onSeeResult: seeResult };
 
   const addPhotos = async (files: FileList | null) => {
@@ -187,9 +201,8 @@ function SiteEditor() {
         </div>
       </header>
 
-      <div className="pn-editor-grid">
-        <div className={`pn-editor-pane${view === 'preview' ? ' is-hidden' : ''}`}>
-          <div className="pn-mobile-only pn-editor-back"><button type="button" className="pn-btn is-ghost is-small" onClick={() => setView('preview')}><Eye size={15} aria-hidden="true" />Ver cómo queda</button></div>
+      <div className={`pn-editor-grid${expanded ? ' is-expanded' : ''}`}>
+        <div className="pn-editor-pane">
           {missing.length > 0 && (
             <p className="pn-missing">Falta completar:{' '}
               {missing.map((m, i) => <span key={m.id}>{i > 0 && ', '}<button type="button" className="pn-link" onClick={() => onActive(m.id)}>{m.label}</button></span>)}
@@ -267,12 +280,12 @@ function SiteEditor() {
           )}
         </div>
 
-        <div className={`pn-preview-pane${view === 'edit' ? ' is-hidden' : ''}`}>
+        <div className="pn-preview-pane">
           <div className="pn-preview-bar">
-            <button type="button" className="pn-btn is-small pn-mobile-only" onClick={() => setView('edit')}><Pencil size={15} aria-hidden="true" />Editar mi página</button>
+            <button type="button" className={`pn-btn is-small pn-mobile-only${expanded ? '' : ' is-ghost'}`} aria-pressed={expanded} onClick={() => setExpanded(v => !v)}>{expanded ? <><Pencil size={15} aria-hidden="true" />Seguir editando</> : <><Maximize2 size={15} aria-hidden="true" />Ampliar vista</>}</button>
             <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
           </div>
-          <PreviewFrame path={path} device="mobile" anchor={anchor} />
+          <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
         </div>
       </div>
 

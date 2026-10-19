@@ -42,7 +42,7 @@ function Home() {
           ? 'Armá tu lista de regalos, diseñá tu invitación y organizá a tus invitados. Podés hacerlo a tu ritmo, guardar los cambios y publicar cuando estés listo.'
           : 'Seguí a tu ritmo: todo se guarda solo y podés volver cuando quieras.'}</p>
         <div className="pn-welcome-actions">
-          <Link to={next.to as never} className="pn-btn">{fresh ? 'Continuar creando mi casamiento' : next.label}</Link>
+          <Link to={next.to as never} className="pn-btn">{next.label}</Link>
         </div>
         <div className="pn-progress" role="progressbar" aria-label="Avance general" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{ width: `${pct}%` }} /></div>
         <p className="pn-muted" role="status">{pct}% de tu casamiento armado</p>
@@ -60,15 +60,15 @@ function Home() {
               <li key={st.id} className={`pn-stage is-${st.status}${isNext ? ' is-next' : ''}${st.locked ? ' is-locked' : ''}`}>
                 <span className="pn-stage-ico" aria-hidden="true"><Icon size={18} strokeWidth={1.7} /></span>
                 <div className="pn-stage-text">
-                  <p className="pn-stage-kicker">{st.step}{st.optional && ' · cuando quieras'}</p>
+                  <p className="pn-stage-kicker">{st.step}{st.optional && ' · cuando quieras'}{isNext && ' · Siguiente paso'}</p>
                   <h3>{st.title}</h3>
                   {st.status === 'todo' && <p className="pn-muted">{st.description}</p>}
-                  <p className="pn-stage-detail">{st.detail}</p>
+                  {st.status !== 'todo' && <p className="pn-stage-detail">{st.detail}</p>}
                   {needs && <p className="pn-note is-inline"><Lock size={13} aria-hidden="true" /> Se publica desde el plan {needs}. Lo que cargues se conserva.</p>}
                 </div>
                 <div className="pn-stage-side">
                   <span className={`pn-chip is-${st.locked ? 'todo' : st.status}`}>{st.locked ? 'No está en tu plan' : STAGE_STATUS_LABEL[st.status]}</span>
-                  <Link to={st.to as never} className={`pn-btn is-small${isNext ? '' : ' is-ghost'}`}>{st.cta}</Link>
+                  <Link to={st.to as never} className="pn-btn is-small is-ghost">{st.cta}</Link>
                 </div>
               </li>
             );

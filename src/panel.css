@@ -607,3 +607,51 @@ body:has(.pn-selbar) .pn-toast-region { bottom: 140px; }
 .pn-sum-tag { font-size: 13px; color: var(--pn-muted); text-align: right; }
 .pn-sum-tag.is-published { color: #34502c; }
 .pn-sum-tag.is-draft { color: #6b4a10; }
+
+/* Avisos: con un diálogo abierto suben a la parte superior para no tapar sus botones. */
+body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
+.pn-toast button { min-height: 44px; padding: 0 8px; }
+
+/* Regalos en el celular: las cuatro solapas entran en el ancho (etiqueta corta) y «Tu lista» se ve como tarjetas. */
+.pn-tab-short { display: none; }
+.pn-dot-todo { width: 8px; height: 8px; border-radius: 50%; background: #6b4a10; flex: none; }
+@media (max-width: 560px) {
+  .pn-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; overflow: visible; }
+  .pn-tabs button { justify-content: center; gap: 4px; padding: 0 2px; font-size: 14px; min-width: 0; }
+  .pn-tab-long { display: none; }
+  .pn-tab-short { display: inline; }
+}
+.pn-ggrid.is-list { margin-top: 4px; }
+.pn-gcard-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 4px 4px; }
+.pn-gcard-actions .pn-btn { margin: 0; width: 100%; padding: 0 8px; min-height: 44px; }
+.pn-ggrid.is-list .pn-gcard h3 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pn-page-view { display: grid; gap: 12px; justify-items: start; margin-top: 8px; }
+.pn-pv-frame { display: grid; gap: 4px; width: 100%; }
+.pn-settile-view { width: 44px; height: 44px; top: 4px; right: 4px; }
+
+/* Editor de la página en el celular: la vista previa queda fija arriba y los campos se editan debajo, así se ve cada cambio. */
+.pn-more { border-top: 1px solid var(--pn-line); }
+.pn-more summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; font-size: 14px; color: var(--pn-muted); list-style: none; }
+.pn-more summary::-webkit-details-marker { display: none; }
+.pn-more summary::after { content: '+'; margin-left: auto; font-size: 20px; }
+.pn-more[open] summary::after { content: '–'; }
+.pn-more-body { display: grid; gap: 16px; padding: 4px 0 8px; }
+@media (max-width: 1099px) {
+  .pn-editor { --pn-prev-h: max(170px, min(34dvh, 280px)); }
+  .pn-editor-grid { gap: 0; }
+  .pn-editor .pn-preview-pane { order: -1; background: #fff; padding: 4px 0 10px; border-bottom: 1px solid var(--pn-line); }
+  .pn-editor .pn-preview-bar { flex-wrap: nowrap; }
+  .pn-editor .pn-frame { margin-top: 8px; }
+  .pn-editor .pn-frame.is-mobile { height: var(--pn-prev-h); border-radius: 20px; }
+  .pn-editor .pn-editor-pane { border-top: 0; }
+  .pn-editor .pn-sec { scroll-margin-top: calc(var(--pn-prev-h) + 84px); }
+  .pn-editor .pn-field { scroll-margin-top: calc(var(--pn-prev-h) + 96px); }
+  .pn-editor-grid.is-expanded .pn-editor-pane { display: none; }
+  .pn-editor-grid.is-expanded .pn-frame.is-mobile { height: max(360px, calc(100dvh - 220px)); max-height: 820px; }
+}
+@media (max-width: 1099px) and (min-height: 520px) {
+  .pn-editor .pn-preview-pane { position: sticky; top: 0; z-index: 20; }
+}
+
+/* Pantallas táctiles: los botones chicos también llegan a 44 px. */
+@media (pointer: coarse) { .pn-btn.is-small { min-height: 44px; } }

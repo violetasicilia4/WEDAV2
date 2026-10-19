@@ -1,6 +1,6 @@
 // Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, módulos bloqueados y vista previa.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
 import { Check, Lock } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { draftsFor, setPlan } from '@/lib/weda/logic';
@@ -44,6 +44,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     timer.current = window.setTimeout(() => setT(null), action ? 8000 : tone === 'error' ? 6000 : 3200);
   }, []);
   useEffect(() => () => window.clearTimeout(timer.current), []);
+  // Un «Deshacer» guarda una foto de la lista de ese momento: al cambiar de pantalla se cierra para que no pise cambios posteriores.
+  const pathname = useRouterState({ select: r => r.location.pathname });
+  useEffect(() => { window.clearTimeout(timer.current); setT(null); }, [pathname]);
   return (
     <ToastContext.Provider value={show}>
       {children}
@@ -101,18 +104,32 @@ export function Locked({ feature, children }: { feature: Feature; children?: Rea
 /* ------------------------------------------------------------------ vista previa */
 
 /** Muestra la página pública REAL (la misma de /sitio/…) en un iframe. Comparte el estado local: cada cambio se ve al instante. */
-export function PreviewFrame({ path, device, anchor }: { path: string; device: 'mobile' | 'desktop'; anchor?: string | undefined }) {
+export function PreviewFrame({ path, device, anchor, jump }: { path: string; device: 'mobile' | 'desktop'; anchor?: string | undefined; jump?: number | undefined }) {
   const ref = useRef<HTMLIFrameElement>(null);
+  const watch = useRef<MutationObserver | null>(null);
   // `anchor`: id de la sección de la página a la que llevar la vista previa ('' = arriba de todo).
+  // Si la sección todavía no existe (por ejemplo, un evento recién cargado), espera a que aparezca.
   const go = useCallback(() => {
+    watch.current?.disconnect();
     if (anchor === undefined) return;
     try {
       const w = ref.current?.contentWindow;
       if (!w) return;
-      if (anchor === '') w.scrollTo({ top: 0, behavior: 'smooth' });
-      else w.document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (anchor === '') { w.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      const el = w.document.getElementById(anchor);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      const obs = new MutationObserver(() => {
+        const found = w.document.getElementById(anchor);
+        if (found) { obs.disconnect(); found.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+      obs.observe(w.document.body, { childList: true, subtree: true });
+      watch.current = obs;
+      window.setTimeout(() => obs.disconnect(), 3000);
     } catch { /* la página todavía no cargó */ }
-  }, [anchor]);
+    // `jump` cambia cada vez que se pide volver a la misma sección: por eso es dependencia aunque no se lea.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor, jump]);
+  useEffect(() => () => watch.current?.disconnect(), []);
   useEffect(go, [go]);
   return (
     <div className={`pn-frame is-${device}`}>
