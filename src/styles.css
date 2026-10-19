@@ -424,7 +424,7 @@ html { scroll-padding-top: 80px; }
 }
 @supports (height: 100lvh) {
   /* Celular: la altura visible (svh, sin la barra del navegador) menos un margen, para que asome el título «Todo para compartir su casamiento.». */
-  @media(max-width:640px) { .seed-hero { height: calc(100svh - 120px); min-height: 450px; } }
+  @media(max-width:640px) { .seed-hero { height: calc(100svh - 104px); min-height: 450px; } }
 }
 
 /* Web: bloque de regalos más compacto (menos aire arriba y abajo y foto grande más baja); las fotos de abajo no cambian de tamaño */
@@ -1805,6 +1805,7 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (min-width: 901px) {
   .products-section .feat-head { gap: 10px; }
   .feat-head-side { align-items: center; }
+  .products-section { padding-top: 28px; }
 }
 
 /* Web: título y descripción de cada card quedan estructurados y separados de las vecinas:
@@ -1940,4 +1941,5 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .feat-head h2 { font-size: clamp(16px, 5.3vw, 26px); white-space: nowrap; text-align: center; max-width: none; }
   .products-section .feat-head { justify-items: center; text-align: center; }
   .feat-head-side { align-items: center; }
+  .products-section { padding-top: 28px; }
 }
