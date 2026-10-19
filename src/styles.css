@@ -1978,7 +1978,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .feat-stage { border-radius: 20px; }
   .feat-card:not(:first-child) .feat-stage { height: 300px; }
   .feat-card:first-child h3 { font-size: 23px; }
-  .feat-card:first-child .feat-stage { background: var(--section); }
 
   /* Regalos (diferencial): título más grande, texto más cerca del botón y fotos con la misma proporción (4:3, sin deformar). */
   .duo-section { padding-top: 34px; padding-bottom: 34px; }
