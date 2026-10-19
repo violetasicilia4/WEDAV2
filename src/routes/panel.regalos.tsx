@@ -7,19 +7,20 @@ import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/ca
 import { formatARS, type Gift } from '@/lib/demo-wedding';
 import { readImage } from '@/lib/weda/images';
 import {
-  addCatalogGift, addCustomGift, addSet, hasCatalogGift, moveGiftTo, norm, parseAmount, receivedGifts, receivedTotal, removeGift, removeSetGifts, sitePath, updateGift,
+  addCatalogGift, addCustomGift, addSet, giftTotal, hasCatalogGift, moveGiftTo, norm, parseAmount, receivedGifts, receivedTotal, removeGift, removeSetGifts, sitePath, updateGift,
   validateAlias, validateGift,
 } from '@/lib/weda/logic';
 import { can } from '@/lib/weda/plans';
-import { update, useAppState } from '@/lib/weda/store';
+import { getState, update, useAppState } from '@/lib/weda/store';
 import type { Category } from '@/lib/demo-wedding';
 import type { ListGift } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/panel/regalos')({ component: GiftsModule });
 
 type Tab = 'lista' | 'agregar' | 'recibidos' | 'cobro';
+/* Tres bloques en orden de uso (elegir → cobrar → revisar) y, aparte, lo ya recibido. Se puede entrar a cualquiera. */
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'lista', label: 'Mi lista' }, { id: 'agregar', label: 'Agregar regalos' }, { id: 'recibidos', label: 'Recibidos' }, { id: 'cobro', label: 'Cobro' },
+  { id: 'agregar', label: 'Elegí tus regalos' }, { id: 'cobro', label: 'Cómo vas a recibirlos' }, { id: 'lista', label: 'Revisá tu lista' }, { id: 'recibidos', label: 'Recibidos' },
 ];
 
 const Thumb = ({ src, name }: { src?: string | undefined; name: string }) => (
@@ -192,10 +193,49 @@ function SortableGifts({ items, onMove, renderRow }: { items: ListGift[]; onMove
   );
 }
 
+/* Resumen de la selección: panel lateral en desktop y barra inferior en el celular. Siempre a mano mientras se explora el catálogo. */
+function SelectionSummary({ items, onRemove, onReview }: { items: ListGift[]; onRemove: (g: ListGift) => void; onReview: () => void }) {
+  const [open, setOpen] = useState(false);
+  const total = giftTotal(items);
+  const body = items.length === 0
+    ? <p className="pn-muted">Todavía no elegiste ningún regalo. Tocá un set o «Agregar» en cada regalo.</p>
+    : <ul className="pn-sel-list">{items.map(g => (
+        <li key={g.id}><Thumb src={g.image} name={g.name} /><span><strong>{g.name}</strong><small>{formatARS(g.amount)}</small></span><button type="button" className="pn-icon" onClick={() => onRemove(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button></li>
+      ))}</ul>;
+  return (
+    <>
+      <aside className="pn-sel" aria-label="Resumen de tu selección">
+        <h2>Tu selección</h2>
+        <p className="pn-sel-count" role="status" aria-live="polite"><strong>{items.length}</strong> {items.length === 1 ? 'regalo elegido' : 'regalos elegidos'}{items.length > 0 && <> · {formatARS(total)}</>}</p>
+        {body}
+        <button type="button" className="pn-btn is-ghost" onClick={onReview} disabled={items.length === 0}>Revisar mi lista</button>
+      </aside>
+      <div className="pn-selbar">
+        <button type="button" className="pn-btn" onClick={() => setOpen(true)} aria-haspopup="dialog">
+          <GiftIcon size={16} aria-hidden="true" />{items.length} {items.length === 1 ? 'regalo elegido' : 'regalos elegidos'}{items.length > 0 && <> · {formatARS(total)}</>} · Ver
+        </button>
+      </div>
+      {open && (
+        <Dialog open onOpenChange={o => { if (!o) setOpen(false); }}>
+          <DialogContent className="pn-dialog">
+            <DialogTitle>Tu selección</DialogTitle>
+            <DialogDescription>{items.length === 0 ? 'Todavía no elegiste regalos.' : `${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} · ${formatARS(total)}`}</DialogDescription>
+            {body}
+            <div className="pn-actions is-end">
+              <button type="button" className="pn-btn is-ghost" onClick={() => setOpen(false)}>Seguir eligiendo</button>
+              <button type="button" className="pn-btn" onClick={() => { setOpen(false); onReview(); }} disabled={items.length === 0}>Revisar mi lista</button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+}
+
 function GiftsModule() {
   const s = useAppState();
   const toast = useToast();
-  const [tab, setTab] = useState<Tab>('lista');
+  const [tab, setTab] = useState<Tab>(() => (getState().gifts.items.length > 0 ? 'lista' : 'agregar'));
   const [viewSet, setViewSet] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ListGift | null>(null);
@@ -233,7 +273,8 @@ function GiftsModule() {
     <div className="pn-page">
       <header className="pn-page-head">
         <div>
-          <h1>Lista de regalos</h1>
+          <h1>Armá tu lista de regalos</h1>
+          <p className="pn-sub">Elegí un set completo o seleccioná los regalos uno por uno. Podés cambiar tu lista cuando quieras.</p>
         </div>
       </header>
 
@@ -241,7 +282,7 @@ function GiftsModule() {
         {TABS.map(t => (
           <button key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls="pn-tabpanel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}
             onKeyDown={e => { const i = TABS.findIndex(x => x.id === t.id); if (e.key === 'ArrowRight') { e.preventDefault(); setTab(TABS[(i + 1) % TABS.length]!.id); } if (e.key === 'ArrowLeft') { e.preventDefault(); setTab(TABS[(i + TABS.length - 1) % TABS.length]!.id); } }}>
-            {t.label}{t.id === 'lista' && items.length > 0 && <span className="pn-count">{items.length}</span>}{t.id === 'recibidos' && received.length > 0 && <span className="pn-count">{received.length}</span>}
+            {t.label}{t.id === 'lista' && items.length > 0 && <span className="pn-count">{items.length}</span>}{t.id === 'cobro' && (alias ? null : <span className="pn-count is-todo" title="Pendiente">Pendiente</span>)}{t.id === 'recibidos' && received.length > 0 && <span className="pn-count">{received.length}</span>}
           </button>
         ))}
       </div>
@@ -256,6 +297,10 @@ function GiftsModule() {
             </div>
           ) : (
             <>
+              <div className="pn-block-head">
+                <h2>Revisá tu lista</h2>
+                <p className="pn-muted" role="status">{items.length} {items.length === 1 ? 'regalo' : 'regalos'} · {formatARS(giftTotal(items))}. Podés editarlos, ordenarlos o quitarlos.</p>
+              </div>
               <SortableGifts items={items} onMove={(id, to) => update(x => moveGiftTo(x, id, to))} renderRow={g => (
                 <>
                   <Thumb src={g.image} name={g.name} />
@@ -271,12 +316,13 @@ function GiftsModule() {
                 </>
               )} />
               <p className="pn-hint">Para ordenar, mantené apretado un regalo y movelo.</p>
-              <div className="pn-actions"><button type="button" className="pn-btn is-ghost" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Agregar más regalos</button></div>
+              <div className="pn-actions"><button type="button" className="pn-btn is-ghost" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Volver al catálogo</button></div>
             </>
           )
         )}
 
         {tab === 'agregar' && (
+          <div className="pn-pick">
           <div className="pn-catalog">
             <ul className="pn-settiles" aria-label="Sets de regalos">
               {SETS.map(set => {
@@ -321,6 +367,8 @@ function GiftsModule() {
             {shownCatalog.length === 0 && <p className="pn-note">No encontramos regalos con esa búsqueda.</p>}
             <p className="pn-status-line" aria-live="polite" role="status">{shownCatalog.length} {shownCatalog.length === 1 ? 'regalo' : 'regalos'}</p>
           </div>
+          <SelectionSummary items={items} onRemove={rm} onReview={() => setTab('lista')} />
+          </div>
         )}
 
         {tab === 'recibidos' && (
@@ -361,9 +409,13 @@ function GiftsModule() {
 
         {tab === 'cobro' && (
           <div className="pn-config">
-            <p className="pn-muted">Elegí cómo querés recibir los aportes de tus invitados.</p>
+            <div className="pn-block-head">
+              <h2>Cómo vas a recibir tus regalos</h2>
+              <p className="pn-muted">Acá configurás cómo recibís vos los aportes. No es obligatorio para seguir armando tu casamiento, pero para activar los regalos reales al publicar vas a necesitar completarlo.</p>
+              <p className="pn-muted" role="status">{alias ? 'Estado: configurado.' : 'Estado: sin configurar. Podés dejarlo para después.'}</p>
+            </div>
             <section className="pn-cfg-block" aria-labelledby="cfg-alias">
-              <div className="pn-cfg-head"><h2 id="cfg-alias">Alias bancario</h2><span className={`pn-chip${alias ? ' is-ok' : ' is-todo'}`}>{alias ? 'Configurado' : 'Falta configurar'}</span></div>
+              <div className="pn-cfg-head"><h2 id="cfg-alias">Alias bancario</h2><span className={`pn-chip${alias ? ' is-ok' : ' is-todo'}`}>{alias ? 'Configurado' : 'Sin configurar'}</span></div>
               <AliasField value={s.gifts.alias} />
               <div className="pn-cfg-review">
                 <p className="pn-label">Así lo ven tus invitados</p>

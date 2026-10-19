@@ -364,3 +364,77 @@ describe('correo opcional al regalar', () => {
     expect(isValidOptionalEmail('ana correo.com')).toBe(false);
   });
 });
+
+import { eventComplete, headline, nextAction, progress, sectionGaps, stages } from '@/lib/weda/journey';
+
+describe('recorrido guiado (journey)', () => {
+  it('una pareja nueva tiene 4 etapas sin empezar, 0% y el primer paso es elegir regalos', () => {
+    const e = emptyState();
+    const list = stages(e);
+    expect(list.map(x => x.id)).toEqual(['regalos', 'sitio', 'invitados', 'publicar']);
+    expect(list.every(x => x.status === 'todo')).toBe(true);
+    expect(progress(list)).toBe(0);
+    expect(nextAction(e).label).toBe('Elegí los primeros regalos');
+  });
+  it('el cobro pendiente no bloquea: con regalos y sin alias la etapa queda para revisar y se recomienda configurarlo', () => {
+    const s = seedState();
+    const st = { ...s, gifts: { ...s.gifts, alias: '' } };
+    expect(stages(st)[0]!.status).toBe('review');
+    expect(nextAction(st).label).toBe('Configurá cómo vas a recibir los aportes');
+  });
+  it('prender una sección sin datos mínimos no la deja lista', () => {
+    const s = seedState();
+    const st = { ...s, site: { ...s.site, dressCode: { enabled: true, title: '', text: '' } } };
+    expect(stages(st)[1]!.status).toBe('review');
+    expect(stages(st)[1]!.detail).toContain('Dress code');
+  });
+  it('sin invitados se recomienda cargarlos; con todo listo, revisar cómo lo verán', () => {
+    const s = seedState();
+    expect(nextAction({ ...s, guests: [] }).stage === 'invitados' || nextAction({ ...s, guests: [] }).stage === 'sitio').toBe(true);
+    expect(nextAction(s).stage).toBe('publicar');
+    expect(progress(stages(s))).toBe(100);
+    expect(headline(100)).toContain('preparado');
+  });
+  it('con plan Regalos la invitación queda bloqueada y no cuenta para el progreso', () => {
+    const s = { ...seedState(), planId: 'regalos' as const };
+    expect(stages(s)[1]!.locked).toBe(true);
+    expect(nextAction(s).stage).not.toBe('sitio');
+  });
+});
+
+describe('reglas de secciones (sectionGaps)', () => {
+  it('un mensaje final vacío no es un pendiente (usa el cierre por defecto)', () => {
+    const s = seedState();
+    expect(sectionGaps({ ...s, site: { ...s.site, message: { ...s.site.message, enabled: true, text: '' } } }).some(g => g.id === 'mensaje')).toBe(false);
+  });
+  it('dress code, fotos y música prendidos sin datos son pendientes; un momento necesita nombre propio y lugar o dirección', () => {
+    const s = seedState();
+    const site = { ...s.site, dressCode: { enabled: true, title: '', text: '' }, gallery: { ...s.site.gallery, enabled: true, photos: [] }, playlist: { ...s.site.playlist, enabled: true, tracks: [] } };
+    expect(sectionGaps({ ...s, site }).map(g => g.id)).toEqual(expect.arrayContaining(['dress', 'fotos', 'musica']));
+    const ev = s.site.events[0]!;
+    expect(eventComplete({ ...ev, enabled: true, title: 'Ceremonia', name: 'Parroquia', address: '' })).toBe(true);
+    expect(eventComplete({ ...ev, enabled: true, title: '', name: 'Parroquia', address: 'Calle 1' })).toBe(false);
+  });
+});
+
+import { publishSummary } from '@/lib/weda/publish';
+
+describe('resumen de publicación', () => {
+  it('con Completo se publica todo lo que tiene contenido', () => {
+    const r = publishSummary(seedState(), 'completo');
+    expect(r.drafts).toEqual([]);
+    expect(r.published.map(i => i.feature)).toEqual(expect.arrayContaining(['gifts', 'site', 'rsvp']));
+  });
+  it('con Regalos el sitio y lo premium quedan como borrador, con el plan que los habilita, sin tocar el estado', () => {
+    const s = seedState();
+    const before = JSON.stringify(s);
+    const r = publishSummary(s, 'regalos');
+    expect(r.published.map(i => i.feature)).toEqual(['gifts']);
+    expect(r.drafts.find(i => i.feature === 'site')?.plan).toBe('Invitación');
+    expect(JSON.stringify(s)).toBe(before);
+  });
+  it('avisa si falta el cobro, sin bloquear', () => {
+    const s = seedState();
+    expect(publishSummary({ ...s, gifts: { ...s.gifts, alias: '' } }, 'invitacion').warnings.join(' ')).toContain('cómo vas a recibir');
+  });
+});

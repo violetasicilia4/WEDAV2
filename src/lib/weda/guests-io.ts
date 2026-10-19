@@ -34,7 +34,8 @@ const parseMenu = (v: string): string | null => {
 };
 
 export type NewGuest = { first: string; last: string; status: GuestStatus; menu: string };
-export type ImportResult = { ok: NewGuest[]; problems: { row: number; reason: string }[]; duplicates: number; missingColumns: string[] };
+/** `duplicates`: filas que ya estaban en la lista o repetidas en la planilla; se saltean (nunca pisan datos existentes). `duplicateNames` dice cuáles. */
+export type ImportResult = { ok: NewGuest[]; problems: { row: number; reason: string }[]; duplicates: number; duplicateNames: string[]; missingColumns: string[] };
 
 const HEADER_KEYS: Record<string, 'first' | 'last' | 'status' | 'menu'> = {
   nombre: 'first', apellido: 'last', asistencia: 'status', 'restriccion alimentaria': 'menu', restriccion: 'menu', menu: 'menu',
@@ -42,7 +43,7 @@ const HEADER_KEYS: Record<string, 'first' | 'last' | 'status' | 'menu'> = {
 
 /** Valida las filas de una planilla. No cambia nada: devuelve qué se va a importar y qué filas tienen problemas. */
 export function parseGuestRows(rows: string[][], existing: Pick<Guest, 'first' | 'last'>[]): ImportResult {
-  const res: ImportResult = { ok: [], problems: [], duplicates: 0, missingColumns: [] };
+  const res: ImportResult = { ok: [], problems: [], duplicates: 0, duplicateNames: [], missingColumns: [] };
   const head = rows[0] ?? [];
   const col: Partial<Record<'first' | 'last' | 'status' | 'menu', number>> = {};
   head.forEach((h, i) => { const k = HEADER_KEYS[norm(h)]; if (k && col[k] === undefined) col[k] = i; });
@@ -62,7 +63,7 @@ export function parseGuestRows(rows: string[][], existing: Pick<Guest, 'first' |
     const menu = parseMenu(cell('menu'));
     if (menu === null) { res.problems.push({ row: line, reason: `No reconocemos la restricción «${cell('menu')}».` }); return; }
     const key = norm(`${first} ${last}`);
-    if (seen.has(key)) { res.duplicates++; return; }
+    if (seen.has(key)) { res.duplicates++; res.duplicateNames.push(`${first} ${last}`); return; }
     seen.add(key);
     res.ok.push({ first, last, status, menu: status === 'confirmed' ? menu : '' });
   });

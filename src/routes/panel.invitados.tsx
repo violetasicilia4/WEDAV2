@@ -61,7 +61,7 @@ function GuestsModule() {
   const s = useAppState();
   const toast = useToast();
   const [q, setQ] = useState('');
-  const [filter, setFilter] = useState<GuestStatus | 'all'>('all');
+  const [filter, setFilter] = useState<GuestStatus | 'all' | 'site'>('all');
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Guest | null>(null);
   const [importing, setImporting] = useState(false);
@@ -98,7 +98,7 @@ function GuestsModule() {
     toast(`Importaste ${list.length} ${list.length === 1 ? 'invitado' : 'invitados'}.`, 'ok', { label: 'Deshacer', onClick: () => update(x => ({ ...x, guests: before })) });
     closeImport();
   };
-  const shown = s.guests.filter(g => (filter === 'all' || g.status === filter) && (!q.trim() || norm(guestName(g)).includes(norm(q))));
+  const shown = s.guests.filter(g => (filter === 'all' || (filter === 'site' ? g.source === 'rsvp' : g.status === filter)) && (!q.trim() || norm(guestName(g)).includes(norm(q))));
 
   return (
     <div className="pn-page">
@@ -128,14 +128,19 @@ function GuestsModule() {
         </div>
       ) : (
         <>
-          <div className="pn-switch pn-guest-chips" role="group" aria-label="Filtrar por asistencia">
-            {([['all', 'Todos', st.total], ['confirmed', 'Confirmaron', st.confirmed], ['pending', 'Sin responder', st.pending], ['declined', 'No asisten', st.declined]] as const).map(([k, label, n]) => (
-              <button key={k} type="button" className={filter === k ? 'on' : ''} aria-pressed={filter === k} onClick={() => setFilter(k)}>{label} <span className="pn-count">{n}</span></button>
+          <section className="pn-stats is-guests" aria-label="Confirmaciones de asistencia">
+            {([['all', 'Total de invitados', st.total], ['confirmed', 'Confirmados', st.confirmed], ['declined', 'Rechazados', st.declined], ['pending', 'Sin responder', st.pending]] as const).map(([k, label, n]) => (
+              <button key={k} type="button" className={`pn-stat is-btn${filter === k ? ' on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(filter === k ? 'all' : k)}>
+                <span className="pn-stat-label">{label}</span><strong>{n}</strong>
+              </button>
             ))}
-          </div>
-          <div className="pn-sheet-actions">
-            <button type="button" className="pn-btn is-ghost is-small" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={15} aria-hidden="true" />Exportar a Excel</button>
+          </section>
+          {st.fromSite > 0 && (
+            <p className="pn-note">{st.fromSite} {st.fromSite === 1 ? 'persona respondió' : 'personas respondieron'} desde el sitio y ya {st.fromSite === 1 ? 'figura' : 'figuran'} en tu lista. <button type="button" className="pn-link" onClick={() => setFilter(filter === 'site' ? 'all' : 'site')}>{filter === 'site' ? 'Ver todos' : 'Verlos'}</button></p>
+          )}
+          <div className="pn-sheet-actions" role="group" aria-label="Importar y exportar la lista">
             <button type="button" className="pn-btn is-ghost is-small" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button>
+            <button type="button" className="pn-btn is-ghost is-small" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={15} aria-hidden="true" />Exportar a Excel</button>
           </div>
           <div className="pn-filters is-guests">
             <label className="pn-sr" htmlFor="g-q">Buscar un invitado</label>
@@ -194,7 +199,16 @@ function GuestsModule() {
                   ? <p className="pn-error">A la planilla le faltan las columnas: {imported.result.missingColumns.join(' y ')}. Descargá el modelo para ver el formato.</p>
                   : (
                     <>
-                      <p><strong>{imported.result.ok.length}</strong> {imported.result.ok.length === 1 ? 'invitado listo' : 'invitados listos'} para importar{imported.result.duplicates ? ` · ${imported.result.duplicates} ya estaban en tu lista` : ''}.</p>
+                      <p><strong>{imported.result.ok.length}</strong> {imported.result.ok.length === 1 ? 'invitado listo' : 'invitados listos'} para importar. Revisalos antes de confirmar: no se cambia nada hasta que toques «Importar».</p>
+                      {imported.result.ok.length > 0 && (
+                        <table className="pn-table is-compact">
+                          <caption className="pn-sr">Vista previa de lo que se va a importar</caption>
+                          <thead><tr><th scope="col">Nombre</th><th scope="col">Asistencia</th></tr></thead>
+                          <tbody>{imported.result.ok.slice(0, 6).map((g, i) => <tr key={`${g.first}-${g.last}-${i}`}><th scope="row">{guestName(g)}</th><td>{STATUS_LABEL[g.status]}</td></tr>)}</tbody>
+                        </table>
+                      )}
+                      {imported.result.ok.length > 6 && <p className="pn-muted">…y {imported.result.ok.length - 6} más.</p>}
+                      {imported.result.duplicates > 0 && <p className="pn-muted">{imported.result.duplicates} {imported.result.duplicates === 1 ? 'fila repetida o que ya estaba' : 'filas repetidas o que ya estaban'} en tu lista; no se tocan ni se pisan: {imported.result.duplicateNames.slice(0, 4).join(', ')}{imported.result.duplicateNames.length > 4 ? '…' : ''}.</p>}
                       {imported.result.problems.length > 0 && (
                         <>
                           <p className="pn-muted">{imported.result.problems.length} {imported.result.problems.length === 1 ? 'fila no se puede importar' : 'filas no se pueden importar'}:</p>

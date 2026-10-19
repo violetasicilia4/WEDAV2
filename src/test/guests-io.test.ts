@@ -32,3 +32,12 @@ describe('planilla de invitados', () => {
     expect(r.ok).toEqual([{ first: 'Ana', last: 'Paz', status: 'declined', menu: '' }]);
   });
 });
+
+describe('importación: duplicados sin pisar datos', () => {
+  it('saltea los que ya están o se repiten en la planilla y dice cuáles', () => {
+    const r = parseGuestRows([['Nombre', 'Apellido', 'Asistencia'], ['Ana', 'Pérez', 'Confirmado'], ['ana', 'perez', 'Pendiente'], ['Luis', 'Gómez', 'Pendiente']], [{ first: 'Luis', last: 'Gómez' }]);
+    expect(r.ok.map(g => `${g.first} ${g.last}`)).toEqual(['Ana Pérez']);
+    expect(r.duplicates).toBe(2);
+    expect(r.duplicateNames).toEqual(['ana perez', 'Luis Gómez']);
+  });
+});

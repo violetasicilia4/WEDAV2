@@ -35,14 +35,11 @@ function Preview() {
           {pages.invitation && <button type="button" className={page === 'home' ? 'on' : ''} aria-pressed={page === 'home'} onClick={() => setPage('home')}>Invitación</button>}
           {pages.gifts && <button type="button" className={page === 'gifts' || !pages.invitation ? 'on' : ''} aria-pressed={page === 'gifts' || !pages.invitation} onClick={() => setPage('gifts')}>Lista de regalos</button>}
         </div>
-        <div className="pn-switch is-small" role="group" aria-label="Tamaño de la vista previa">
-          <button type="button" className={device === 'mobile' ? 'on' : ''} aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Celular</button>
-          <button type="button" className={device === 'desktop' ? 'on' : ''} aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Compu</button>
-        </div>
-        <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir en otra pestaña <ExternalLink size={13} aria-hidden="true" /></a>
+        <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
       </div>
 
       <PreviewFrame path={path} device={device} />
+      <p className="pn-hint">Los invitados la abren sobre todo desde el celular. <button type="button" className="pn-link" onClick={() => setDevice(device === 'mobile' ? 'desktop' : 'mobile')}>{device === 'mobile' ? 'Probar en pantalla de compu' : 'Volver a la vista de celular'}</button></p>
       {!pages.invitation && <p className="pn-note">Tu plan incluye la lista de regalos. La invitación y la confirmación de asistencia están desde el plan Invitación.</p>}
 
     </div>

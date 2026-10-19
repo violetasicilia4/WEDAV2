@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { Check, Lock } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { draftsFor, setPlan } from '@/lib/weda/logic';
+import { publishSummary } from '@/lib/weda/publish';
 import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, type Feature } from '@/lib/weda/plans';
 import { update, useAppState, useStorageFull } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
@@ -128,6 +129,7 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
   const [picked, setPicked] = useState<PlanId | null>(state.planId);
   const [chosen, setChosen] = useState(false);
   const plan = planById(picked);
+  const summary = picked ? publishSummary(state, picked) : null;
   const drafts = picked ? draftsFor(state, picked) : [];
   const close = () => { setChosen(false); onClose(); };
   const choose = () => { if (!picked) return; update(s => setPlan(s, picked)); setChosen(true); };
@@ -156,16 +158,26 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
             )}
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" onClick={close}>Ahora no</button>
-              <button type="button" className="pn-btn" onClick={choose} disabled={!picked}>{plan ? `Elegir ${plan.name}` : 'Elegí un plan'}</button>
+              <button type="button" className="pn-btn" onClick={choose} disabled={!picked}>{plan ? `Ver resumen con ${plan.name}` : 'Elegí un plan'}</button>
             </div>
           </>
         ) : (
           <>
-            <DialogTitle>Elegiste el plan {plan?.name}</DialogTitle>
-            <DialogDescription>{plan ? `${formatPrice(plan.price)} ${PRICE_UNIT}. ` : ''}Todavía no se puede publicar: la publicación y el pago se habilitan cuando el servicio esté conectado. No se cobró nada ni se publicó nada en Internet.</DialogDescription>
-            {drafts.length > 0 && <p className="pn-note">Queda como borrador: {drafts.map(d => d.label.toLowerCase()).join(', ')}.</p>}
+            <DialogTitle>Resumen de publicación · Plan {plan?.name}</DialogTitle>
+            <DialogDescription>{plan ? `${formatPrice(plan.price)} ${PRICE_UNIT}. ` : ''}Esto es lo que se publicaría con este plan. Cambiar de plan no borra nada de lo que cargaste.</DialogDescription>
+            {summary && (
+              <div className="pn-publish">
+                {summary.published.length > 0 && (<><p className="pn-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
+                {summary.empty.length > 0 && (<><p className="pn-label">Incluido, pero vacío</p><ul className="pn-plan-items is-plain">{summary.empty.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
+                {summary.drafts.length > 0 && (<><p className="pn-label">Queda como borrador</p><ul className="pn-plan-items is-plain">{summary.drafts.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail} Se publica desde el plan {i.plan}.</span></li>)}</ul></>)}
+                {summary.warnings.map(w => <p key={w} className="pn-note">{w}</p>)}
+              </div>
+            )}
+            <p className="pn-note" role="status"><strong>La publicación y el pago todavía no están conectados.</strong> Hoy no se cobra ni se publica nada en Internet: el sitio sigue viéndose solo en este navegador.</p>
             <div className="pn-actions is-end">
-              <button type="button" className="pn-btn" onClick={close}>Entendido</button>
+              <button type="button" className="pn-btn is-ghost" onClick={() => setChosen(false)}>Cambiar de plan</button>
+              <button type="button" className="pn-btn" disabled aria-disabled="true">Pagar y publicar (sin conexión)</button>
+              <button type="button" className="pn-btn is-ghost" onClick={close}>Cerrar</button>
             </div>
           </>
         )}

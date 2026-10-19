@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ExternalLink, Eye, Pencil, Plus, X } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
 import { dateLabel, hasEventDetails, isSafeMapsUrl, mapsLink, sitePath, uid, validateOnboarding } from '@/lib/weda/logic';
+import { eventComplete, sectionGaps } from '@/lib/weda/journey';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { update, useAppState } from '@/lib/weda/store';
 import type { SiteConfig, SiteEvent } from '@/lib/weda/types';
@@ -23,6 +24,12 @@ function LockedBlock({ id, title, feature }: { id: string; title: string; featur
 
 const MAX_PHOTOS = 6;
 
+/** «Incluido en Completo»: solo para funciones que NO están en el plan base del sitio (lo que realmente diferencia los planes). */
+const tagFor = (f: Feature): string | undefined => {
+  const p = planFor(f), base = planFor('site');
+  return p && base && p.id !== base.id ? `Incluido en ${p.name}` : undefined;
+};
+
 /** Cada cambio del editor se guarda al instante en el estado local; la vista previa lo toma sin recargar. */
 const patchSite = (fn: (s: SiteConfig) => SiteConfig) => update(x => ({ ...x, site: fn(x.site) }));
 
@@ -33,13 +40,15 @@ type Tone = 'ok' | 'todo' | 'off';
 
 type BlockProps = {
   id: SectionId; title: string; help: string; status: string; tone: Tone;
+  /** Etiqueta discreta del plan, solo en funciones que diferencian planes: «Incluido en Completo». */
+  planTag?: string | undefined;
   enabled?: boolean | undefined; onToggle?: ((v: boolean) => void) | undefined;
   active: SectionId | null; onActive: (id: SectionId | null) => void; onSeeResult: (id: SectionId) => void;
   children: React.ReactNode;
 };
 
 /** Una sección de la página: qué ve el invitado, en qué estado está, mostrar/ocultar y, abierta, sus campos. Una sola abierta a la vez. */
-function Block({ id, title, help, status, tone, enabled, onToggle, active, onActive, onSeeResult, children }: BlockProps) {
+function Block({ id, title, help, status, tone, planTag, enabled, onToggle, active, onActive, onSeeResult, children }: BlockProps) {
   const open = active === id;
   const hidden = enabled === false;
   return (
@@ -47,7 +56,8 @@ function Block({ id, title, help, status, tone, enabled, onToggle, active, onAct
       <div className="pn-sec-head">
         <button type="button" className="pn-sec-main" aria-expanded={open} aria-controls={`sec-body-${id}`} onClick={() => onActive(open ? null : id)}>
           <span className="pn-sec-text">
-            <strong id={`sec-${id}`}>{title}</strong>
+            <strong id={`sec-${id}`}>{title}{planTag && <em className="pn-plantag">{planTag}</em>}</strong>
+            {!open && <span className="pn-muted">{help}</span>}
           </span>
           <span className={`pn-sec-status is-${tone}`}>{status}</span>
           <ChevronDown size={18} aria-hidden="true" className="pn-sec-chev" />
@@ -60,7 +70,7 @@ function Block({ id, title, help, status, tone, enabled, onToggle, active, onAct
         <div className="pn-block-body" id={`sec-body-${id}`}>
           {hidden
             ? <p className="pn-note">Esta sección está oculta y tus invitados no la ven. Lo que ya cargaste se conserva: activá «Mostrar» para volver a usarla.</p>
-            : <><p className="pn-muted">{help}</p>{children}<div className="pn-actions is-tight"><button type="button" className="pn-link" onClick={() => onSeeResult(id)}><Eye size={14} aria-hidden="true" />Ver cómo queda</button></div></>}
+            : <>{children}<div className="pn-actions is-tight"><button type="button" className="pn-link" onClick={() => onSeeResult(id)}><Eye size={14} aria-hidden="true" />Ver cómo queda</button></div></>}
         </div>
       )}
     </section>
@@ -102,7 +112,7 @@ function EventBlock({ ev, shared }: { ev: SiteEvent; shared: Shared }) {
   const url = ev.mapsUrl.trim();
   const urlError = url && !isSafeMapsUrl(url) ? 'Usá un enlace de Google Maps (https://maps.app.goo.gl/… o https://www.google.com/maps/…).' : undefined;
   const link = mapsLink(ev);
-  const complete = ev.title.trim() !== '' && (ev.name.trim() !== '' || ev.address.trim() !== '');
+  const complete = eventComplete(ev);
   const status = !ev.enabled ? 'Oculta' : complete ? 'Completa' : hasEventDetails(ev) ? 'Falta completar' : 'Sin cargar';
   return (
     <Block id={ev.key as SectionId} title={ev.title.trim() || `Evento ${SLOT[ev.key]}`} help="Un momento del día, con el nombre que quieras: ceremonia, brindis, fiesta…" status={status} tone={!ev.enabled ? 'off' : complete ? 'ok' : 'todo'} enabled={ev.enabled} onToggle={v => set({ enabled: v })} {...shared}>
@@ -122,7 +132,8 @@ function EventBlock({ ev, shared }: { ev: SiteEvent; shared: Shared }) {
 function SiteEditor() {
   const s = useAppState();
   const toast = useToast();
-  const [view, setView] = useState<'edit' | 'preview'>('edit');
+  // En el celular la página es la protagonista: se abre la vista previa y se edita desde un botón. En desktop se ven las dos a la vez.
+  const [view, setView] = useState<'edit' | 'preview'>('preview');
   const [active, setActive] = useState<SectionId | null>('portada');
   const [anchor, setAnchor] = useState<string | undefined>(undefined);
   const [track, setTrack] = useState({ title: '', artist: '' });
@@ -159,12 +170,12 @@ function SiteEditor() {
     patchSite(x => ({ ...x, playlist: { ...x.playlist, tracks: [...x.playlist.tracks, { title: track.title.trim(), artist: track.artist.trim() || 'Artista a confirmar' }] } }));
     setTrack({ title: '', artist: '' });
   };
-  // Lo que falta, de forma discreta y con acceso directo a cada sección.
+  // Lo que falta, de forma discreta y con acceso directo a cada sección (misma regla que el Inicio: sectionGaps).
   const missing: { id: SectionId; label: string }[] = [
     ...(s.date ? [] : [{ id: 'portada' as SectionId, label: 'la fecha' }]),
-    ...site.events.filter(e => e.enabled && !(e.title.trim() && (e.name.trim() || e.address.trim()))).map(e => ({ id: e.key as SectionId, label: e.title.trim() || `el evento ${SLOT[e.key]}` })),
-    ...(site.dressCode.enabled && !site.dressCode.title.trim() ? [{ id: 'dress' as SectionId, label: 'el dress code' }] : []),
+    ...sectionGaps(s).map(g => ({ id: g.id as SectionId, label: g.label })),
   ];
+  const dressOk = site.dressCode.title.trim() !== '' || site.dressCode.text.trim() !== '';
   const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, can(s.planId, 'gallery') && site.gallery.enabled, can(s.planId, 'message') && site.message.enabled, premium && site.playlist.enabled].filter(Boolean).length;
 
   return (
@@ -176,13 +187,9 @@ function SiteEditor() {
         </div>
       </header>
 
-      <div className="pn-switch pn-editor-switch" role="group" aria-label="Qué querés ver">
-        <button type="button" className={view === 'edit' ? 'on' : ''} aria-pressed={view === 'edit'} onClick={() => setView('edit')}>Editar</button>
-        <button type="button" className={view === 'preview' ? 'on' : ''} aria-pressed={view === 'preview'} onClick={() => setView('preview')}>Ver como invitado</button>
-      </div>
-
       <div className="pn-editor-grid">
         <div className={`pn-editor-pane${view === 'preview' ? ' is-hidden' : ''}`}>
+          <div className="pn-mobile-only pn-editor-back"><button type="button" className="pn-btn is-ghost is-small" onClick={() => setView('preview')}><Eye size={15} aria-hidden="true" />Ver cómo queda</button></div>
           {missing.length > 0 && (
             <p className="pn-missing">Falta completar:{' '}
               {missing.map((m, i) => <span key={m.id}>{i > 0 && ', '}<button type="button" className="pn-link" onClick={() => onActive(m.id)}>{m.label}</button></span>)}
@@ -200,13 +207,13 @@ function SiteEditor() {
             <p className="pn-muted">Tus invitados confirman desde la página y las respuestas se suman solas a la solapa Invitados. No hace falta cargar nada.</p>
           </Block>
 
-          <Block id="dress" title="Dress code" help="Cómo sugerís que se vistan." status={!site.dressCode.enabled ? 'Oculta' : site.dressCode.title.trim() ? 'Completa' : 'Falta el título'} tone={!site.dressCode.enabled ? 'off' : site.dressCode.title.trim() ? 'ok' : 'todo'} enabled={site.dressCode.enabled} onToggle={v => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, enabled: v } }))} {...shared}>
+          <Block id="dress" title="Dress code" help="Cómo sugerís que se vistan." status={!site.dressCode.enabled ? 'Oculta' : dressOk ? 'Completa' : 'Falta completar'} tone={!site.dressCode.enabled ? 'off' : dressOk ? 'ok' : 'todo'} enabled={site.dressCode.enabled} onToggle={v => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, enabled: v } }))} {...shared}>
             <Field label="Título">{a => <input id={a.id} type="text" value={site.dressCode.title} placeholder="Elegante sport" onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, title: e.target.value } }))} />}</Field>
             <Field label="Texto" optional>{a => <textarea id={a.id} rows={3} value={site.dressCode.text} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, text: e.target.value } }))} />}</Field>
           </Block>
 
           {can(s.planId, 'gallery') ? (
-          <Block id="fotos" title="Fotos" help="Una galería con las fotos que quieran compartir." status={!site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? `${site.gallery.photos.length} ${site.gallery.photos.length === 1 ? 'foto' : 'fotos'}` : 'Sin fotos'} tone={!site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo'} enabled={site.gallery.enabled} onToggle={v => patchSite(x => ({ ...x, gallery: { ...x.gallery, enabled: v } }))} {...shared}>
+          <Block id="fotos" planTag={tagFor('gallery')} title="Fotos" help="Una galería con las fotos que quieran compartir." status={!site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? `${site.gallery.photos.length} ${site.gallery.photos.length === 1 ? 'foto' : 'fotos'}` : 'Sin fotos'} tone={!site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo'} enabled={site.gallery.enabled} onToggle={v => patchSite(x => ({ ...x, gallery: { ...x.gallery, enabled: v } }))} {...shared}>
             {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
             {site.gallery.photos.length > 0 && (
               <ul className="pn-photos">
@@ -230,14 +237,14 @@ function SiteEditor() {
           ) : <LockedBlock id="fotos" title="Fotos" feature="gallery" />}
 
           {can(s.planId, 'message') ? (
-          <Block id="mensaje" title="Mensaje final" help="Unas palabras de cierre para tus invitados." status={site.message.enabled ? 'Visible' : 'Oculta'} tone={site.message.enabled ? 'ok' : 'off'} enabled={site.message.enabled} onToggle={v => patchSite(x => ({ ...x, message: { ...x.message, enabled: v } }))} {...shared}>
+          <Block id="mensaje" planTag={tagFor('message')} title="Mensaje final" help="Unas palabras de cierre para tus invitados." status={site.message.enabled ? 'Visible' : 'Oculta'} tone={site.message.enabled ? 'ok' : 'off'} enabled={site.message.enabled} onToggle={v => patchSite(x => ({ ...x, message: { ...x.message, enabled: v } }))} {...shared}>
             <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
             <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
           </Block>
           ) : <LockedBlock id="mensaje" title="Mensaje final" feature="message" />}
 
           {premium ? (
-            <Block id="musica" title="Música de la fiesta" help="Tus invitados suman las canciones que no pueden faltar." status={site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta'} tone={site.playlist.enabled ? 'ok' : 'off'} enabled={site.playlist.enabled} onToggle={v => patchSite(x => ({ ...x, playlist: { ...x.playlist, enabled: v } }))} {...shared}>
+            <Block id="musica" planTag={tagFor('playlist')} title="Música de la fiesta" help="Tus invitados suman las canciones que no pueden faltar." status={site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta'} tone={site.playlist.enabled ? 'ok' : 'off'} enabled={site.playlist.enabled} onToggle={v => patchSite(x => ({ ...x, playlist: { ...x.playlist, enabled: v } }))} {...shared}>
               <p className="pn-note">Es una lista armada acá, solo para la vista previa: no está conectada a Spotify ni a otro servicio de música.</p>
               <Field label="Nombre de la playlist" optional>{a => <input id={a.id} type="text" value={site.playlist.name} placeholder="Nuestra fiesta" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, name: e.target.value } }))} />}</Field>
               <form onSubmit={addTrack} noValidate className="pn-inline-form is-tracks">
@@ -262,8 +269,8 @@ function SiteEditor() {
 
         <div className={`pn-preview-pane${view === 'edit' ? ' is-hidden' : ''}`}>
           <div className="pn-preview-bar">
-            <button type="button" className="pn-btn is-ghost is-small pn-back-edit" onClick={() => setView('edit')}>Volver a editar</button>
-            <a className="pn-btn is-ghost is-small" href={path} target="_blank" rel="noopener noreferrer">Ver como invitado en otra pestaña <ExternalLink size={13} aria-hidden="true" /></a>
+            <button type="button" className="pn-btn is-small pn-mobile-only" onClick={() => setView('edit')}><Pencil size={15} aria-hidden="true" />Editar mi página</button>
+            <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
           </div>
           <PreviewFrame path={path} device="mobile" anchor={anchor} />
         </div>

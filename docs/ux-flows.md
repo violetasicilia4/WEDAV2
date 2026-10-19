@@ -44,17 +44,21 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 
 ## 4. Inicio (`/panel`)
 
-- Aviso corto y ocultable con tres ideas (orden libre, ver el resultado cuando quieras, se guarda solo en el dispositivo).
-- Barra de avance con pasos según el plan. Cada paso tiene estado **Sin empezar / En progreso / Completo**, calculado desde los datos reales (`tasks()` en `src/lib/weda/logic.ts`): datos del casamiento (completo con fecha), lista de regalos (completa con regalos y alias), tu página web (completa con un evento con nombre y dirección), invitados (completo con al menos uno), mesas y grupos (opcional; completo cuando todos tienen lugar).
-- Se marca el paso recomendado y cada paso lleva al lugar donde se resuelve. «Datos del casamiento» abre un diálogo de nombres, fecha y foto.
-- «Ver como invitado» y «Cambiar de plan» (o «Elegir plan») están a un clic; «Reiniciar la demo» pide confirmación.
+- Bienvenida personalizada («¡Empecemos a crear su casamiento!» al empezar; después, un titular según el avance) con un único CTA contextual: «Continuar creando mi casamiento» o el siguiente paso recomendado.
+- **Un solo progreso general** (0–100 %) sobre tres etapas de armado. «Revisá y publicá» no suma: la publicación todavía no existe.
+- Cuatro etapas: **Prepará tu lista de regalos**, **Diseñá tu invitación**, **Organizá a tus invitados**, **Revisá y publicá**. Estado **Sin empezar / En progreso / Lista para revisar / Completada**, derivado de los datos reales (`stages()` en `src/lib/weda/journey.ts`; `tasks()` de `logic.ts` sigue alimentando el resto del panel). Acción principal: Empezar / Continuar / Revisar / Editar. Se navega libremente.
+- Supuestos (definición propia, a confirmar): regalos queda «Lista para revisar» con regalos pero sin alias (el cobro **no bloquea**) y «Completada» con alias; la invitación queda «Lista para revisar» si hay una sección prendida sin datos mínimos (`incompleteSections`); invitados queda «Completada» con al menos una persona; mesas y grupos no entran en el progreso.
+- Siguiente paso recomendado (`nextAction`): primeros regalos → configurar cobro → terminar la invitación → cargar invitados → revisar cómo lo verán.
+- Etapas fuera del plan elegido: se avisa «Se publica desde el plan X» y el contenido se conserva.
+- «Publicar mi casamiento» abre la elección de plan; dice que la publicación y el pago **no están conectados**. «Editar datos» abre nombres, fecha y foto. «Reiniciar la demo» pide confirmación.
 
 ## 5. Lista de regalos (`/panel/regalos`)
 
-- **Mi lista:** regalos con foto, monto y categoría; editar, quitar (con «Deshacer») y ordenar arrastrando. Estado vacío con acciones para empezar.
-- **Agregar regalos:** sets con foto (tocar agrega o quita todo el set; el ícono de lista abre una ventana para elegir de a uno), catálogo con búsqueda y categoría, y «Crear un regalo propio» (imagen, monto, nombre y categoría opcional; sin descripción).
+- Título «Armá tu lista de regalos». Tres bloques en orden de uso, más «Recibidos». Se abre en «Elegí tus regalos» si la lista está vacía y en «Revisá tu lista» si ya hay regalos.
+- **Elegí tus regalos:** sets con foto (tocar agrega o quita todo el set; el ícono de lista abre una ventana para elegir de a uno), catálogo con búsqueda y categoría, y «Crear un regalo propio». El **resumen de la selección** (cantidad real, total y cada regalo con «Quitar») queda siempre a mano: panel lateral fijo desde 1024 px y barra inferior que abre un diálogo en el celular.
+- **Cómo vas a recibirlos:** alias bancario (se guarda solo) con vista de cómo lo ven los invitados, con estado «Sin configurar» / «Configurado» (aviso «Pendiente» en la solapa). **No bloquea** nada: se explica que para activar los regalos reales al publicar hará falta completarlo. Mercado Pago figura como «Próximamente» (no hay integración); preferencia de mostrar tarjeta. No se mueve dinero. CBU/CVU no está implementado (solo alias).
+- **Revisá tu lista:** cantidad y total, regalos con foto, monto y categoría; editar, quitar (con «Deshacer») y ordenar arrastrando; «Volver al catálogo».
 - **Recibidos:** tablero (regalos, total, personas, último regalo) y lista con quién, cuándo, medio y mensaje. Es local: se registra cuando se regala desde la vista de invitado.
-- **Cobro:** alias bancario (se guarda solo) con vista de cómo lo ven los invitados; Mercado Pago figura como «Próximamente»; preferencia de mostrar la opción de tarjeta. No se mueve dinero.
 - Todo lo que se cambia aparece en la página pública (`/sitio/$slug/regalos`) porque usa el mismo estado.
 
 ## 6. Tu página web (`/panel/sitio`)
@@ -62,22 +66,25 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 - Una lista de secciones: Portada, Evento 1, 2 y 3 (opcionales, con nombre que elige la pareja; sin nombre se llaman «Evento 1/2/3»), Confirmación de asistencia, Dress code, Fotos, Mensaje final y Música (plan Completo). Cada una muestra su estado y tiene «Mostrar». Ocultar no borra lo cargado. Solo hay una sección abierta a la vez.
 - Portada: foto, nombres, fecha y «texto sobre los nombres» (puede quedar vacío).
 - Confirmación de asistencia: solo mostrar u ocultar.
-- La vista previa es la página pública real, en formato celular, a la derecha en pantallas anchas; al abrir una sección se desplaza hasta ella. Hay «Ver como invitado en otra pestaña». En pantallas angostas se alterna con «Ver como invitado».
-- Cambios guardados al instante y aviso «Cambios guardados en este dispositivo». Si falta algo (fecha, un evento sin completar, dress code sin título), un renglón discreto «Falta completar: …» lleva a cada sección.
+- Desktop (≥1100 px): dos áreas, edición al 45 % y vista previa al 55 %, con la página pública real en formato celular y scroll propio; al abrir una sección la vista previa se desplaza hasta ella y cada cambio se ve al instante (mismo estado). Celular: la página es la protagonista; «Editar mi página» abre los controles en pantalla dedicada y «Ver cómo queda» vuelve sin perder cambios. Un solo acceso a la **vista limpia** («Abrir vista limpia», pestaña nueva, sin controles). «Ver como invitado» (arriba) abre la vista previa a pantalla completa; el cambio celular/compu es una herramienta secundaria ahí.
+- Cada sección muestra su descripción, estado y «Mostrar». Etiqueta discreta «Incluido en Completo» solo en Fotos, Mensaje final y Música (lo que diferencia los planes, derivado de `planFor`).
+- Cambios guardados al instante y aviso «Cambios guardados en este dispositivo». Si falta algo, un renglón discreto «Falta completar: …» lleva a cada sección. Una sección «lista» no es solo «Mostrar» prendido: la regla vive en `sectionGaps` (`journey.ts`) y la usan el editor y el Inicio: un momento necesita nombre propio y lugar o dirección; dress code, título o texto; fotos, al menos una; música, al menos un tema. El mensaje final vacío no es pendiente (usa el cierre por defecto).
 - Contenido incompleto en la página pública: sin fecha, «Fecha a confirmar» aparece solo en la portada; sin regalos no se muestran «Regalá» ni «Ver lista de regalos» y la lista pública muestra «Esta lista todavía se está armando».
 
 ## 7. Invitados, mesas y planillas (`/panel/invitados`)
 
-- Lista con filtros por asistencia con cantidades (Todos, Confirmaron, Sin responder, No asisten), búsqueda, edición, eliminación y asignación de grupo. Columna «Origen»: «Cargado por ustedes» o «Respondió en el sitio».
-- Mesas y grupos (misma pantalla): crear, renombrar, eliminar, asignar y mover con un selector; primero aparecen las personas sin lugar. Sin límites de capacidad.
-- **Exportar a Excel** (.xlsx, con grupo y origen). **Importar** .xlsx o .csv con las columnas Nombre, Apellido, Asistencia y Restricción alimentaria; hay un modelo descargable y una vista previa con duplicados y filas con error antes de confirmar.
+- **Confirmaciones:** cuatro totales reales (Total de invitados, Confirmados, Rechazados, Sin responder) que además filtran la lista; búsqueda, edición, eliminación y asignación de grupo. Columna «Origen»: «Cargado por ustedes» o «Respondió en el sitio»; un aviso cuenta cuántas personas respondieron desde el sitio y permite verlas.
+- **Cargar:** «Agregar invitado» (a mano), «Importar desde Excel» y «Exportar a Excel».
+- **Mesas y grupos** (misma pantalla, solapa aparte; no es obligatoria ni bloquea nada): crear, renombrar, eliminar, asignar y mover con un selector; primero aparecen las personas sin lugar y cada mesa muestra cuántas personas tiene. Sin límites de capacidad.
+- **Exportar a Excel** (.xlsx, con grupo y origen). **Importar** .xlsx o .csv con las columnas Nombre, Apellido, Asistencia y Restricción alimentaria; hay un modelo descargable y, antes de confirmar, una vista previa de lo que se va a importar (primeras filas), las filas con error con su motivo y los duplicados nombrados (ya estaban en la lista o están repetidos en la planilla: se saltean y **nunca se pisan** datos existentes). Nada cambia hasta tocar «Importar».
 - Eliminar un invitado y importar una planilla no piden confirmación: se pueden deshacer desde el aviso.
 - Las respuestas del formulario público se suman solas a la lista (sin duplicar al enviar dos veces).
 
 ## 8. Vista previa y publicación
 
 - `/panel/vista-previa`: la página pública real, con alternancia Invitación / Lista de regalos y Celular / Compu, y vuelta directa al editor. Sin banners de estado: el subtítulo dice «Todavía no está publicada» y el botón de la cabecera no se repite en esa pantalla.
-- «Publicar» abre un aviso que dice que todavía no se puede publicar ni cobrar. No simula contratación, pago ni publicación.
+- «Publicar mi casamiento» abre el diálogo de planes y, al elegir uno, un **resumen de publicación** (`publishSummary` en `src/lib/weda/publish.ts`): qué se publica con ese plan, qué está incluido pero vacío y qué queda como borrador (con el plan que lo habilita), más avisos sin bloqueo (falta el cobro, falta la fecha). Cambiar de plan no borra nada. «Pagar y publicar» está **deshabilitado y rotulado «sin conexión»**: no simula contratación, pago ni publicación.
+- Pendiente (necesita backend): borrador privado, vista previa compartible protegida, versión pública con URL estable, verificación real del pago antes de publicar y «publicar cambios» explícito.
 
 ## 9. Persistencia y comportamiento sin backend
 

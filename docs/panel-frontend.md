@@ -45,6 +45,7 @@ src/lib/weda/
   plans.ts       planes y matriz de funciones
   catalog.ts     sets de regalos (salen del catálogo existente)
   logic.ts       lógica pura: validaciones, regalos, invitados, RSVP, grupos, avance
+  journey.ts     recorrido del Inicio: etapas, progreso único y siguiente paso recomendado
   store.ts       almacén local (localStorage), sincronización entre pestañas/iframes, saneado de datos viejos
   images.ts      carga local de imágenes
   seed.ts        escenario Tomás y Martina
@@ -93,7 +94,7 @@ El RSVP público y el regalo público **actualizan el estado local**; no avisan 
 
 ## 8. Mejoras de UX (auditoría de uso)
 
-- **Inicio** (`/panel`): guía breve y ocultable («¿Cómo funciona?» la vuelve a abrir), barra de avance y pasos con estado **Sin empezar / En progreso / Completo** derivado de los datos reales (`tasks()` en `logic.ts`); el paso recomendado se marca. Los pasos dependen del plan. Se quitaron las métricas sueltas y la sección «Publicación» del resumen (queda en «Ver como invitado»).
+- **Inicio** (`/panel`): bienvenida, progreso único y cuatro etapas con estado Sin empezar / En progreso / Lista para revisar / Completada (`src/lib/weda/journey.ts`: `stages`, `progress`, `nextAction`), derivado de los datos reales. Detalle y supuestos en `ux-flows.md` §4.
 - **Guardado:** aviso «Cambios guardados en este dispositivo» (o «No se pudieron guardar…»); no hay botón guardar y no se dice que haya nube ni cuenta.
 - **Tu página web** (`/panel/sitio`): cada sección dice qué ve el invitado, su estado y tiene «Mostrar»; una sola abierta a la vez; al abrirla la vista previa se lleva a esa sección; «Ver cómo queda»; ocultar no borra lo cargado.
 - **Vista previa:** vuelta directa al editor o a los regalos.
@@ -102,6 +103,6 @@ El RSVP público y el regalo público **actualizan el estado local**; no avisan 
 
 ## 9. Segunda ronda de UX
 
-- **Tu página:** la vista previa del editor siempre es el celular, con «Ver como invitado en otra pestaña». Los momentos del día son hasta tres eventos opcionales con **nombre propio** («Evento 1, 2, 3» si no le ponen nombre). La portada tiene foto, nombres, fecha y un texto sobre los nombres que puede quedar vacío. La confirmación de asistencia es solo mostrar/ocultar. Corregido: sin ningún evento visible, «Save the date» salía con otra tipografía (las reglas serif dependían de que existiera la sección de eventos).
+- **Tu página:** la vista previa del editor siempre es el celular (45/55 en desktop; en celular se abre la vista previa y se edita desde «Editar mi página»), con «Abrir vista limpia». Los momentos del día son hasta tres eventos opcionales con **nombre propio** («Evento 1, 2, 3» si no le ponen nombre). La portada tiene foto, nombres, fecha y un texto sobre los nombres que puede quedar vacío. La confirmación de asistencia es solo mostrar/ocultar. Corregido: sin ningún evento visible, «Save the date» salía con otra tipografía (las reglas serif dependían de que existiera la sección de eventos).
 - **Invitados y mesas** son una sola pantalla (`/panel/invitados`, solapas «Invitados» y «Mesas y grupos»); `/panel/mesas` redirige. **Exportar** a .xlsx (todo, con grupo y origen) e **importar** .xlsx o .csv con las columnas Nombre, Apellido, Asistencia y Restricción alimentaria, con modelo descargable y vista previa de lo que se va a importar (sin dependencias nuevas: `lib/weda/xlsx.ts`, `guests-io.ts`).
-- **Regalos:** solapas Mi lista / Agregar regalos / Recibidos / Cobro. Los sets son fichas con foto: tocarlas agrega o quita todo el set, y el ícono de lista abre una ventana para elegir de a uno. La lista se ordena arrastrando (mantener apretado en el celular; Alt + flechas con teclado). «Cobro» separa el alias bancario de Mercado Pago (marcado «Próximamente», sin conexión). La portada de la lista usa la foto del casamiento.
+- **Regalos:** solapas Elegí tus regalos / Cómo vas a recibirlos / Revisá tu lista / Recibidos (con resumen de la selección: `SelectionSummary`). Los sets son fichas con foto: tocarlas agrega o quita todo el set, y el ícono de lista abre una ventana para elegir de a uno. La lista se ordena arrastrando (mantener apretado en el celular; Alt + flechas con teclado). «Cobro» separa el alias bancario de Mercado Pago (marcado «Próximamente», sin conexión). La portada de la lista usa la foto del casamiento.
