@@ -655,3 +655,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* Pantallas táctiles: los botones chicos también llegan a 44 px. */
 @media (pointer: coarse) { .pn-btn.is-small { min-height: 44px; } }
+
+/* Las fotos de los regalos no se abren ni se pueden guardar al mantenerlas apretadas (menú de imagen de iOS/Android). */
+.pn-gphoto img, .pn-gthumb img, .pn-ownphoto-btn img, .pn-photos img { pointer-events: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
+.pn-settile, .pn-gphoto, .pn-gthumb { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }

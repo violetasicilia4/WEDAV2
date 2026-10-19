@@ -1042,3 +1042,7 @@
 .rg-cart-bar span { font-size: 15px; color: var(--ej-muted); display: inline-flex; align-items: center; gap: 12px; }
 .rg-cart-bar span::before { content: ""; width: 1px; height: 16px; background: rgb(59 60 58 / .22); }
 @media (max-width: 380px) { .rg-cart-bar p { font-size: 14px; gap: 8px; } .rg-cart-bar span { font-size: 14px; gap: 8px; } }
+
+/* Las fotos de los regalos no se abren ni se guardan al mantenerlas apretadas (menú de imagen de iOS/Android). */
+.dm-root .rg-photo, .dm-root .rg-thumb { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.dm-root .rg-photo img, .dm-root .rg-thumb img { pointer-events: none; -webkit-user-drag: none; }

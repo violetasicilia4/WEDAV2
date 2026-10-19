@@ -423,7 +423,8 @@ html { scroll-padding-top: 80px; }
   .seed-hero { height: calc(100svh - 38px - 24px); min-height: 500px; max-height: 900px; }
 }
 @supports (height: 100lvh) {
-  @media(max-width:640px) { .seed-hero { height: calc(100lvh - 38px - 24px); } }
+  /* Celular: la altura visible (svh, sin la barra del navegador) menos un margen, para que asome el título «Todo para compartir su casamiento.». */
+  @media(max-width:640px) { .seed-hero { height: calc(100svh - 132px); min-height: 460px; } }
 }
 
 /* Web: bloque de regalos más compacto (menos aire arriba y abajo y foto grande más baja); las fotos de abajo no cambian de tamaño */
@@ -1538,7 +1539,7 @@ a:not([href]) { cursor: default; }
 
 /* 2 · sitio del casamiento: maqueta fiel al micrositio actual (portada con foto, save the date, momentos y confirmación) */
 .fd-page { gap: 0; padding-bottom: 0; }
-.fd-hero { position: relative; height: calc(98 * var(--px)); display: grid; place-content: center; justify-items: center; gap: calc(4 * var(--px)); text-align: center; color: #fff; background: linear-gradient(rgb(0 0 0 / .3), rgb(0 0 0 / .3)), url('/pareja-portada-8.webp') 50% 40% / cover; font-family: 'Cormorant Garamond', Georgia, serif; }
+.fd-hero { position: relative; height: calc(98 * var(--px)); display: grid; place-content: center; justify-items: center; gap: calc(4 * var(--px)); text-align: center; color: #fff; background: linear-gradient(rgb(0 0 0 / .3), rgb(0 0 0 / .3)), url('/pareja-portada-ejemplo.webp') 50% 35% / cover; font-family: 'Cormorant Garamond', Georgia, serif; }
 .fd-hero small { font-size: calc(8 * var(--px)); }
 .fd-hero b { font-size: calc(17 * var(--px)); font-weight: 400; line-height: 1.05; }
 .fd-hero i { font-style: normal; font-size: calc(7 * var(--px)); font-weight: 600; letter-spacing: .14em; }
@@ -1932,3 +1933,11 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .tm-dots button::after { background: rgb(255 255 255 / .5); }
 .tm-dots button.on::after { background: #fff; }
 .viacap-section { padding-block: clamp(24px, 2.8vw, 40px); }
+
+/* Landing, celular: «Todo para compartir su casamiento.» en un solo renglón y centrado.
+   El texto mide ≈16 em de ancho: 5,3 vw entra en el 88 % de la pantalla desde 320 px. Va al final para ganar a las reglas anteriores. */
+@media (max-width: 640px) {
+  .feat-head h2 { font-size: clamp(16px, 5.3vw, 26px); white-space: nowrap; text-align: center; max-width: none; }
+  .products-section .feat-head { justify-items: center; text-align: center; }
+  .feat-head-side { align-items: center; }
+}
