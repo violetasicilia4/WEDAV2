@@ -39,14 +39,30 @@ function Home() {
       sub: s.guests.length === 0 ? 'Sin invitados todavía' : `${s.guests.length} · ${plural(confirmed, 'confirmó', 'confirmaron')}` },
   ];
 
+  const stats = [
+    { n: confirmed, label: 'Confirmados', sub: s.guests.length > 0 ? `de ${s.guests.length} invitados` : 'Sin invitados' },
+    { n: s.gifts.items.length, label: 'Regalos', sub: s.gifts.items.length > 0 ? formatARS(giftTotal(s.gifts.items)) : 'Sin regalos' },
+    { n: done, label: 'Pasos listos', sub: build.length > 0 ? `de ${build.length}` : 'Elegí un plan' },
+  ];
+
   return (
     <div className="pn-page pn-journey">
       <header className="pn-home-head">
-        <h1>{coupleLabel(s.couple)}</h1>
+        <h1><span>Hola,</span> {coupleLabel(s.couple)}</h1>
         <p className="pn-sub">
           {s.date ? dateLabel(s.date) : 'Fecha por definir'} · <button type="button" className="pn-link" onClick={() => setEditing(true)}><Pencil size={12} aria-hidden="true" /> Editar datos</button>
         </p>
       </header>
+
+      <ul className="pn-stats" aria-label="Resumen">
+        {stats.map(x => (
+          <li key={x.label} className="pn-stat">
+            <span className="pn-stat-label">{x.label}</span>
+            <strong className="num">{x.n}</strong>
+            <span className="pn-stat-sub">{x.sub}</span>
+          </li>
+        ))}
+      </ul>
 
       <section className="pn-next" aria-labelledby="pn-next-title">
         <p className="pn-label-s">Siguiente paso</p>
@@ -57,7 +73,7 @@ function Home() {
 
       <section className="pn-state" aria-labelledby="pn-state-title">
         <div className="pn-state-head">
-          <h2 id="pn-state-title" className="pn-label-s">Estado</h2>
+          <h2 id="pn-state-title">Tu evento</h2>
           <p role="status">{build.length === 0 ? 'Elegí un plan para empezar' : `${done} de ${build.length} ${build.length === 1 ? 'paso listo' : 'pasos listos'}`}</p>
         </div>
         <div className="pn-segs" aria-hidden="true">{build.map(x => <i key={x.id} className={`is-${x.status}`} />)}</div>
@@ -65,7 +81,7 @@ function Home() {
           {tiles.map(({ st, label, Icon, to, sub }) => (
             <li key={st.id}>
               <Link to={to as never} className={`pn-tile${st.locked ? ' is-locked' : ''}`}>
-                <span className="pn-tile-ico" aria-hidden="true"><Icon size={20} strokeWidth={1.7} /></span>
+                <span className="pn-tile-ico" aria-hidden="true"><Icon size={20} strokeWidth={1.5} /></span>
                 <span className="pn-tile-text">
                   <strong>{label}</strong>
                   <span>{st.locked ? <><Lock size={12} aria-hidden="true" /> Desde el plan {planFor(featureOf[st.id]!)?.name}</> : sub}</span>

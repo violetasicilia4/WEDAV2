@@ -19,11 +19,17 @@ export const Route = createFileRoute('/panel')({
   component: PanelLayout,
 });
 
-const NAV: { to: string; label: string; icon: typeof House; feature?: Feature; end?: boolean }[] = [
+type NavItem = { to: string; label: string; icon: typeof House; feature?: Feature; end?: boolean };
+const NAV: NavItem[] = [
   { to: '/panel', label: 'Inicio', icon: House, end: true },
   { to: '/panel/regalos', label: 'Regalos', icon: Gift, feature: 'gifts' },
   { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
   { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
+];
+/* En escritorio la barra lateral agrupa las secciones con una etiqueta; en el celular es la barra inferior, en el mismo orden. */
+const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+  { label: 'General', items: NAV.slice(0, 1) },
+  { label: 'Tu casamiento', items: NAV.slice(1) },
 ];
 
 /** Plan elegido, o «prueba gratuita» mientras no se eligió: el plan se elige al publicar. */
@@ -31,7 +37,25 @@ function SidePlan() {
   const state = useAppState();
   const plans = usePlans();
   const plan = planById(state.planId);
-  return <p className="pn-side-plan">{plan ? `Plan ${plan.name}` : 'Prueba gratuita'} · <button type="button" className="pn-link" onClick={plans.open}>{plan ? 'Cambiar' : 'Elegir plan'}</button></p>;
+  return (
+    <div className="pn-side-plan">
+      <p><span className="pn-label-s">Tu plan</span><strong>{plan ? plan.name : 'Prueba gratuita'}</strong></p>
+      <button type="button" className="pn-btn is-small" onClick={plans.open}>{plan ? 'Cambiar plan' : 'Elegir plan'}</button>
+    </div>
+  );
+}
+
+/* Migas de pan de la barra superior (solo escritorio): la pareja con su plan y la sección actual. */
+function Crumbs({ names, section }: { names: string; section: string }) {
+  const state = useAppState();
+  const plan = planById(state.planId);
+  return (
+    <nav className="pn-crumbs" aria-label="Ubicación">
+      <span className="pn-crumb"><span className="pn-crumb-ico" aria-hidden="true">{names.trim().charAt(0)}</span>{names}<em className="pn-badge">{plan ? plan.name : 'Prueba'}</em></span>
+      <span className="pn-crumb-sep" aria-hidden="true">/</span>
+      <span className="pn-crumb is-current" aria-current="page">{section}</span>
+    </nav>
+  );
 }
 
 /* Avance real del armado (misma regla que el Inicio): cuántos pasos están completos, sin porcentajes. Solo en la barra lateral de escritorio. */
@@ -54,7 +78,9 @@ function PanelLayout() {
   const hydrated = useHydrated();
   const full = useStorageFull();
   const [confirmReset, setConfirmReset] = useState(false);
-  const onPreview = useRouterState({ select: s => s.location.pathname }) === '/panel/vista-previa';
+  const pathname = useRouterState({ select: s => s.location.pathname });
+  const onPreview = pathname === '/panel/vista-previa';
+  const section = onPreview ? 'Vista previa' : [...NAV].reverse().find(n => pathname === n.to || pathname.startsWith(`${n.to}/`))?.label ?? 'Inicio';
 
   // Sin evento no hay panel: se vuelve a crearlo. El plan no hace falta para entrar: se elige al publicar.
   useEffect(() => {
@@ -73,29 +99,34 @@ function PanelLayout() {
         <a className="skip-link" href="#main">Ir al contenido</a>
         <header className="pn-top">
           <Link to="/panel" className="seed-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
+          <Crumbs names={names} section={section} />
           <SaveStatus />
           {!onPreview && <Link to="/panel/vista-previa" className="pn-btn pn-preview-btn"><Eye size={16} aria-hidden="true" /><span>Ver como invitado</span></Link>}
         </header>
 
         <aside className="pn-side">
-          <div className="pn-side-head">
-            <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
-            <p className="pn-side-names">{names}</p>
-            <SidePlan />
-          </div>
+          <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
           <nav aria-label="Secciones del panel" className="pn-nav">
-            {NAV.map(n => {
-              const locked = !!n.feature && !can(state.planId, n.feature);
-              return (
-                <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
-                  <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
-                  <span>{n.label}</span>
-                  {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
-                </Link>
-              );
-            })}
+            {NAV_GROUPS.map(g => (
+              <div key={g.label} className="pn-nav-group">
+                <p className="pn-nav-label" aria-hidden="true">{g.label}</p>
+                {g.items.map(n => {
+                  const locked = !!n.feature && !can(state.planId, n.feature);
+                  return (
+                    <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
+                      <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
+                      <span>{n.label}</span>
+                      {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
-          <SideProgress />
+          <div className="pn-side-bottom">
+            <SidePlan />
+            <SideProgress />
+          </div>
           <div className="pn-side-foot">
             <p>Demostración: tus datos se guardan solo en este navegador.</p>
             <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button>
