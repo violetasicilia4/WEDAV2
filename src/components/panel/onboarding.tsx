@@ -35,6 +35,7 @@ export function OnboardingShell({ step, title, sub, back, formId, onNext, nextLa
 }
 
 /** Imagen de la derecha: decorativa (el contenido va a la izquierda). */
-export function OnboardingPhoto({ src, square = false, alt = '' }: { src: string; square?: boolean; alt?: string }) {
-  return <figure className={`ob-photo${square ? ' is-square' : ''}`} aria-hidden={alt ? undefined : true}><img src={src} alt={alt} /></figure>;
+/** `trimLeft` agranda apenas la foto desde la derecha para recortar un borde izquierdo con restos de captura. */
+export function OnboardingPhoto({ src, square = false, alt = '', trimLeft = false }: { src: string; square?: boolean; alt?: string; trimLeft?: boolean }) {
+  return <figure className={`ob-photo${square ? ' is-square' : ''}`} aria-hidden={alt ? undefined : true}><img src={src} alt={alt} style={trimLeft ? { transform: 'scale(1.04)', transformOrigin: '100% 50%' } : undefined} /></figure>;
 }

@@ -49,7 +49,7 @@ function DateAndPlace() {
   };
 
   return (
-    <OnboardingShell step={2} back="/crear" formId="ob-date" title="¿Cuándo y dónde?" sub="Si todavía no lo saben, no pasa nada: lo completan cuando quieran." side={<OnboardingPhoto src="/ejemplo-foto-3.webp" />}>
+    <OnboardingShell step={2} back="/crear" formId="ob-date" title="¿Cuándo y dónde?" sub="Si todavía no lo saben, no pasa nada: lo completan cuando quieran." side={<OnboardingPhoto src="/onboarding-fecha.webp" />}>
       <form id="ob-date" onSubmit={submit} noValidate className="pn-form">
         <Field label="Fecha del casamiento" error={errors.date}>
           {a => <input id="on-date" type="date" min={todayIso()} value={noDate ? '' : date} disabled={noDate} onChange={e => { setDate(e.target.value); setErrors(x => ({ ...x, date: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}

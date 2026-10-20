@@ -1160,3 +1160,8 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .ob-form { justify-self: start; }
   .ob-photo { justify-self: end; }
 }
+
+/* La barra de progreso va por fuera (más ancha); el texto y la foto quedan juntos y centrados en un bloque más angosto. El avance usa el azul de Weda. */
+.pn-flow.is-onboarding .pn-flow-main { width: min(calc(100% - 48px), 1400px); }
+.ob-body { width: min(100%, 1040px); margin-inline: auto; }
+.ob-bar i { background: var(--pn-slate); }
