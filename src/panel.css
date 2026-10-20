@@ -1178,3 +1178,78 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .ob-body.is-big { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
   .ob-body.is-big .ob-photo.is-square { width: min(100%, 560px, 66svh); max-height: none; }
 }
+
+/* Editar datos del casamiento: un solo bloque compacto. Los campos van a la izquierda y la foto, tocable, ocupa a la derecha exactamente el mismo alto: no queda espacio vacío. */
+.pn-dialog.is-couple { max-width: 860px !important; }
+.pn-couple { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px 32px; align-items: stretch; margin-top: 18px; }
+.pn-couple-fields { display: grid; gap: 14px; align-content: start; }
+.pn-couple-fields .pn-two { gap: 14px; }
+.pn-when { display: grid; gap: 4px; align-content: start; }
+.pn-when .pn-check { min-height: 36px; font-size: 14px; }
+.pn-couple .pn-actions { grid-column: 1 / -1; margin-top: 0; }
+.pn-couple-photo { display: flex; flex-direction: column; gap: 6px; min-height: 0; } /* gap igual al de .pn-field */
+/* La etiqueta de la foto es idéntica a la de los campos (mismo tamaño, color y alto de línea): así todo arranca en la misma línea. */
+.pn-couple-photo .pn-label { display: block; margin: 0; font-size: 14px; line-height: 1.5; font-weight: var(--w-medium); color: var(--pn-ink); }
+.pn-tile-wrap { position: relative; flex: 1; min-height: 200px; }
+.pn-tile-photo { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 22px; overflow: hidden; background: #eceeef; cursor: pointer; }
+.pn-tile-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pn-tile-photo:hover .ob-photo-hint { background: #fff; }
+.pn-tile-remove { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgb(255 255 255 / .92); color: var(--pn-ink); cursor: pointer; box-shadow: 0 2px 10px rgb(0 0 0 / .12); }
+.pn-tile-remove:hover { background: #fff; }
+@media (max-width: 760px) {
+  .pn-couple { grid-template-columns: 1fr; }
+  .pn-couple-photo { order: -1; }
+  /* En celular todo entra sin scroll: la foto es una franja baja con su propio botón, sin etiqueta ni texto de ayuda. */
+  .pn-dialog.is-couple { max-height: 96dvh; padding-top: 14px; }
+  .pn-couple-desc { display: none; }
+  .pn-couple { margin-top: 12px; gap: 12px; }
+  .pn-couple-fields, .pn-couple-fields .pn-two { gap: 10px; }
+  .pn-couple-photo { align-items: stretch; }
+  .pn-couple-photo .pn-label { display: none; }
+  .pn-tile-wrap { flex: none; width: 100%; min-height: 0; height: clamp(84px, 15dvh, 120px); }
+  .pn-when .pn-check { min-height: 32px; }
+  .pn-tile-photo img { object-position: 50% 33%; } /* la franja recorta la foto: se centra donde suelen estar las caras */
+  /* Nombre y apellido de a dos por renglón (como en los primeros pasos); fecha y lugar, uno debajo del otro. */
+  .pn-couple-fields .pn-two { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pn-couple-fields .pn-when-row { grid-template-columns: 1fr; }
+  /* En celular el pop-up puede desplazarse, pero Cancelar y Guardar quedan siempre a la vista. */
+  .pn-couple .pn-actions { position: sticky; bottom: 0; display: flex; gap: 12px; padding: 12px 0 4px; background: #fff; }
+  .pn-couple .pn-actions .pn-btn { flex: 1; min-height: 52px; }
+}
+/* «Guardar» del pop-up de datos: azul de Weda. */
+.pn-dialog.is-couple .pn-actions .pn-btn:not(.is-ghost) { background: var(--pn-slate); color: #fff; border-color: transparent; }
+.pn-dialog.is-couple .pn-actions .pn-btn:not(.is-ghost):hover:not(:disabled) { background: var(--pn-slate-d); }
+
+/* ===== Primeros pasos en celular (iPhone 16: 393 × 852) =====
+   Un solo margen lateral (20 px) para la barra, los campos y los botones, así todo arranca y termina en las mismas líneas.
+   Nombre y apellido van de a dos por renglón; el pie con «Volver» y «Continuar» queda fijo abajo, con el ancho del contenido. */
+@media (max-width: 599px) {
+  .pn-flow.is-onboarding .pn-flow-main { width: calc(100% - 40px); }
+  .ob { min-height: 100dvh; }
+  .ob-top { gap: 16px; padding-top: max(14px, env(safe-area-inset-top)); }
+  .ob-top .seed-logo { font-size: 24px; }
+  .ob-body { align-items: start; align-content: center; gap: 0; padding-block: 24px 24px; }
+  .ob-form { width: 100%; }
+  .ob-form h1 { font-size: 28px; line-height: 1.12; }
+  .ob-form .ob-sub { margin: 10px 0 24px; font-size: 16px; line-height: 1.45; }
+  .ob-form .pn-form { gap: 14px; }
+  .ob-form .pn-two { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ob-form .pn-field > label { font-size: 14px; }
+  .ob-amp { margin: 0; font-size: 32px; text-align: center; }
+  .ob-form .pn-toggle { min-height: 44px; }
+  .ob-form .pn-toggle + .pn-field { margin-top: 12px; }
+  .ob-foot { position: sticky; bottom: 0; z-index: 3; gap: 12px; padding: 12px 0 max(16px, env(safe-area-inset-bottom)); background: #fff; }
+  .ob-foot .pn-btn { flex: 1.2; width: auto; min-height: 52px; font-size: 16px; }
+  .ob-foot .pn-btn.is-ghost { flex: 0.8; }
+
+  /* Pantalla de la foto: título, foto grande al medio (se toca para subirla o cambiarla) y «Omitir por ahora». Un solo control para cambiar la foto: el de la imagen. */
+  .ob-body.is-big { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ob-body.is-big .ob-form { display: contents; }
+  .ob-body.is-big h1, .ob-body.is-big .ob-sub { align-self: stretch; text-align: center; order: 1; }
+  .ob-body.is-big .ob-sub { order: 2; margin-bottom: 20px; }
+  /* La foto ocupa todo el ancho; en pantallas bajas (iPhone SE) se achica para que «Omitir» y los botones entren sin scroll. */
+  .ob-body.is-big .ob-photo { order: 3; width: min(100%, max(220px, calc(100dvh - 410px))); margin-inline: auto; }
+  .ob-body.is-big .ob-photo-hint { min-height: 44px; padding: 0 18px; font-size: 15px; right: 12px; bottom: 12px; }
+  .ob-body.is-big .ob-upload, .ob-body.is-big .ob-hint { display: none; }
+  .ob-body.is-big .ob-skip { order: 4; margin-top: 14px; min-height: 44px; font-size: 16px; }
+}

@@ -1,6 +1,6 @@
 // Foto de portada y datos de la pareja: se usan en el onboarding y para editar después (diálogo del resumen).
 import { useRef, useState } from 'react';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
 import { Field, useToast } from './ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { readImage } from '@/lib/weda/images';
@@ -45,6 +45,35 @@ export function PhotoPicker({ value, onChange, legend = 'Foto de portada' }: { v
   );
 }
 
+/** Foto de portada grande y tocable: muestra la foto (o las dos siluetas si todavía no hay) y al tocarla se elige o se cambia. */
+function PhotoTile({ value, onChange }: { value: PhotoChoice; onChange: (p: PhotoChoice) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const uploaded = value.kind === 'upload';
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setError(''); setLoading(true);
+    try { const img = await readImage(file); onChange({ kind: 'upload', ...img }); }
+    catch (e) { setError(e instanceof Error ? e.message : 'No pudimos cargar la foto.'); }
+    finally { setLoading(false); if (fileRef.current) fileRef.current.value = ''; }
+  };
+  return (
+    <div className="pn-couple-photo">
+      <span className="pn-label" id="pn-photo-label">Foto de portada</span>
+      <div className="pn-tile-wrap">
+        <button type="button" className="pn-tile-photo" onClick={() => fileRef.current?.click()} disabled={loading} aria-label={`${uploaded ? 'Cambiar' : 'Subir'} la foto de portada. Es lo primero que ven tus invitados (JPG, PNG o WebP de hasta 8 MB)`}>
+          <img src={uploaded ? value.src : '/foto-por-defecto.svg'} alt="" />
+          <span className="ob-photo-hint"><ImagePlus size={16} strokeWidth={1.5} aria-hidden="true" />{loading ? 'Cargando…' : uploaded ? 'Cambiar foto' : 'Subir foto'}</span>
+        </button>
+        {uploaded && <button type="button" className="pn-tile-remove" onClick={() => onChange({ kind: 'none' })} aria-label="Quitar la foto"><X size={16} strokeWidth={1.6} aria-hidden="true" /></button>}
+      </div>
+      <input ref={fileRef} className="pn-sr" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void pick(e.target.files?.[0])} aria-label="Elegir una foto de tu dispositivo" />
+      {error && <p className="pn-error" role="alert">{error}</p>}
+    </div>
+  );
+}
+
 /** Diálogo para editar los datos básicos (nombres y apellidos, fecha, lugar y foto) una vez creado el evento. En el resumen solo se muestran los nombres. */
 export function CoupleDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const state = useAppState();
@@ -82,23 +111,31 @@ export function CoupleDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent className="pn-dialog">
+      <DialogContent className="pn-dialog is-couple">
         <DialogTitle>Datos del casamiento</DialogTitle>
-        <DialogDescription>Los cambios se ven al instante en la vista previa.</DialogDescription>
-        <form onSubmit={save} noValidate className="pn-form">
-          <div className="pn-two">
-            <Field label="Tu nombre" error={errors.first}>{a => <input type="text" id={a.id} autoComplete="given-name" value={first} onChange={e => setFirst(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-            <Field label="Tu apellido">{a => <input type="text" id={a.id} autoComplete="family-name" value={firstLast} onChange={e => setFirstLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
+        <DialogDescription className="pn-couple-desc">Los cambios se ven al instante en la vista previa.</DialogDescription>
+        <form onSubmit={save} noValidate className="pn-form pn-couple">
+          <div className="pn-couple-fields">
+            <div className="pn-two">
+              <Field label="Tu nombre" error={errors.first}>{a => <input type="text" id={a.id} autoComplete="given-name" value={first} onChange={e => setFirst(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+              <Field label="Tu apellido">{a => <input type="text" id={a.id} autoComplete="family-name" value={firstLast} onChange={e => setFirstLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
+            </div>
+            <div className="pn-two">
+              <Field label="Nombre de tu pareja" error={errors.second}>{a => <input type="text" id={a.id} autoComplete="off" value={second} onChange={e => setSecond(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+              <Field label="Apellido de tu pareja">{a => <input type="text" id={a.id} autoComplete="off" value={secondLast} onChange={e => setSecondLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
+            </div>
+            <div className="pn-two pn-when-row">
+              <div className="pn-when">
+                <Field label="Fecha del casamiento" error={errors.date}>{a => <input type="date" id={a.id} value={noDate ? '' : date} disabled={noDate} onChange={e => setDate(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+                <label className="pn-check"><input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} /><span>Todavía no tenemos fecha</span></label>
+              </div>
+              <div className="pn-when">
+                <Field label="Lugar del casamiento" error={placeError}>{a => <input type="text" id={a.id} autoComplete="off" placeholder="Salón, jardín o ciudad" value={noPlace ? '' : place} disabled={noPlace} onChange={e => { setPlace(e.target.value); setPlaceError(undefined); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+                <label className="pn-check"><input type="checkbox" checked={noPlace} onChange={e => { setNoPlace(e.target.checked); setPlaceError(undefined); }} /><span>Todavía no tenemos lugar</span></label>
+              </div>
+            </div>
           </div>
-          <div className="pn-two">
-            <Field label="Nombre de tu pareja" error={errors.second}>{a => <input type="text" id={a.id} autoComplete="off" value={second} onChange={e => setSecond(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-            <Field label="Apellido de tu pareja">{a => <input type="text" id={a.id} autoComplete="off" value={secondLast} onChange={e => setSecondLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
-          </div>
-          <Field label="Fecha del casamiento" error={errors.date}>{a => <input type="date" id={a.id} value={noDate ? '' : date} disabled={noDate} onChange={e => setDate(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-          <label className="pn-check"><input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} /><span>Todavía no tenemos fecha</span></label>
-          <Field label="Lugar del casamiento" error={placeError}>{a => <input type="text" id={a.id} autoComplete="off" placeholder="Salón, jardín o ciudad" value={noPlace ? '' : place} disabled={noPlace} onChange={e => { setPlace(e.target.value); setPlaceError(undefined); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-          <label className="pn-check"><input type="checkbox" checked={noPlace} onChange={e => { setNoPlace(e.target.checked); setPlaceError(undefined); }} /><span>Todavía no tenemos lugar</span></label>
-          <PhotoPicker value={photo} onChange={setPhoto} />
+          <PhotoTile value={photo} onChange={setPhoto} />
           <div className="pn-actions is-end">
             <button type="button" className="pn-btn is-ghost" onClick={onClose}>Cancelar</button>
             <button type="submit" className="pn-btn">Guardar</button>
