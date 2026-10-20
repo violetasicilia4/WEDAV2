@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Acá va la foto de ustedes">
+  <rect width="800" height="800" fill="#eceeef"/>
+  <!-- persona de atrás -->
+  <circle cx="300" cy="300" r="104" fill="#d3d6d9"/>
+  <path d="M104 800V692C104 560 190 470 300 470s196 90 196 222v108z" fill="#d3d6d9"/>
+  <!-- persona de adelante: un borde del color del fondo la separa de la otra -->
+  <g stroke="#eceeef" stroke-width="14" stroke-linejoin="round">
+    <circle cx="505" cy="335" r="116" fill="#c3c7cb"/>
+    <path d="M285 800V706C285 572 384 482 505 482s220 90 220 224v94z" fill="#c3c7cb"/>
+  </g>
+</svg>

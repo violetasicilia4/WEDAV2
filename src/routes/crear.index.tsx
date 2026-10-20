@@ -9,7 +9,7 @@ export const Route = createFileRoute('/crear/')({
   component: Names,
 });
 
-/* Pantalla 1 de 3: quiénes se casan. Nombre y apellido de cada uno, con el «&» en el medio. Los apellidos son opcionales.
+/* Pantalla 1 de 3: quiénes se casan. Nombre y apellido de cada uno, con el «&» en el medio. Los apellidos son opcionales (no se muestra el aviso, pero no se exigen).
    Después vienen la fecha y el lugar (/crear/fecha) y la foto (/crear/foto); al terminar se entra al panel. */
 function Names() {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ function Names() {
           <Field label="Tu nombre" error={errors.first}>
             {a => <input id="on-first" type="text" autoComplete="given-name" value={first} onChange={text(setFirst, 'first')} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
           </Field>
-          <Field label="Tu apellido" optional>
+          <Field label="Tu apellido">
             {a => <input id="on-first-last" type="text" autoComplete="family-name" value={firstLast} onChange={text(setFirstLast)} aria-describedby={a.describedBy} />}
           </Field>
         </div>
@@ -57,7 +57,7 @@ function Names() {
           <Field label="Nombre de tu pareja" error={errors.second}>
             {a => <input id="on-second" type="text" autoComplete="off" value={second} onChange={text(setSecond, 'second')} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
           </Field>
-          <Field label="Apellido de tu pareja" optional>
+          <Field label="Apellido de tu pareja">
             {a => <input id="on-second-last" type="text" autoComplete="off" value={secondLast} onChange={text(setSecondLast)} aria-describedby={a.describedBy} />}
           </Field>
         </div>

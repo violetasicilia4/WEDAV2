@@ -1127,8 +1127,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-flow.is-onboarding .pn-flow-main { width: min(calc(100% - 40px), 1200px); padding: 0; }
 .ob { display: flex; flex-direction: column; min-height: 100svh; }
 .ob-top { display: grid; gap: 22px; justify-items: center; padding: 28px 0 0; }
-.ob-top .seed-logo { font-size: 30px; font-weight: var(--w-semibold); gap: 4px; }
-.ob-top .seed-logo i { width: 24px; height: 22px; }
+.ob-top .seed-logo { font-size: 26px; }
 .ob-bar { width: 100%; height: 6px; border-radius: 999px; background: rgb(59 60 58 / .1); overflow: hidden; }
 .ob-bar i { display: block; width: 66%; height: 100%; border-radius: 999px; background: var(--pn-slate-d); }
 .ob-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 7vw, 112px); padding-block: clamp(28px, 5svh, 64px); }
@@ -1166,3 +1165,5 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-flow.is-onboarding .pn-flow-main { width: min(calc(100% - 48px), 1400px); }
 .ob-body { width: min(100%, 1040px); margin-inline: auto; }
 .ob-bar i { background: var(--pn-slate); }
+
+.ob-skip { margin-top: 6px; color: var(--pn-ink); }
