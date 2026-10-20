@@ -5,8 +5,8 @@ import { Link } from '@tanstack/react-router';
 
 export type OnboardingStep = 1 | 2 | 3;
 
-export function OnboardingShell({ step, title, sub, back, formId, onNext, nextLabel = 'Continuar', side, children }: {
-  step: OnboardingStep; title: string; sub: string; back: '/crear/cuenta' | '/crear' | '/crear/fecha';
+export function OnboardingShell({ step, title, sub, subOneLine = false, back, formId, onNext, nextLabel = 'Continuar', side, children }: {
+  step: OnboardingStep; title: string; sub: string; /** El subtítulo intenta quedar en un solo renglón (en pantallas anchas). */ subOneLine?: boolean; back: '/crear/cuenta' | '/crear' | '/crear/fecha';
   /** Si hay formulario, el botón principal lo envía; si no, usa onNext. */
   formId?: string; onNext?: () => void; nextLabel?: string; side: ReactNode; children: ReactNode;
 }) {
@@ -19,7 +19,7 @@ export function OnboardingShell({ step, title, sub, back, formId, onNext, nextLa
       <div className="ob-body">
         <section className="ob-form" aria-labelledby="ob-title">
           <h1 id="ob-title">{title}</h1>
-          <p className="ob-sub">{sub}</p>
+          <p className={`ob-sub${subOneLine ? ' is-line' : ''}`}>{sub}</p>
           {children}
         </section>
         {side}

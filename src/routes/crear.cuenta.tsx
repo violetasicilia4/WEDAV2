@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field, FlowClose } from '@/components/panel/ui';
+import { reset } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/crear/cuenta')({
   // «?modo=ingresar» abre la pantalla en «Ingresá a Weda» (el botón «Iniciar sesión» de la landing).
@@ -39,7 +40,8 @@ function Account() {
   const [errors, setErrors] = useState<{ email?: string | undefined; password?: string | undefined }>({});
   const signup = mode === 'signup';
 
-  const next = () => void navigate({ to: '/crear' });
+  // Registrarse crea una cuenta nueva: el evento arranca vacío (sin nombres, fecha ni foto de pruebas anteriores). Ingresar conserva lo guardado.
+  const next = () => { if (signup) reset(); void navigate({ to: '/crear' }); };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

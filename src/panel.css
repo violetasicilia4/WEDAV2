@@ -1167,3 +1167,9 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .ob-bar i { background: var(--pn-slate); }
 
 .ob-skip { margin-top: 6px; color: var(--pn-ink); }
+
+/* Más ancho para el texto (el subtítulo de la foto entra en un renglón); la foto no cambia de tamaño. */
+@media (min-width: 900px) {
+  .ob-body { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+  .ob-form .ob-sub.is-line { white-space: nowrap; font-size: 16px; }
+}
