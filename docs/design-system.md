@@ -12,7 +12,7 @@ Este documento describe **lo que está implementado**. No es una propuesta. Dond
 
 ## 1. Tipografía
 
-**Geist (variable)** en landing, onboarding y panel (decisión de 2026-10; reemplaza a Arial). **Excepción: el micrositio mantiene su tipografía anterior** — Cormorant Garamond en la portada y en las secciones de la invitación posteriores a la portada, y Arial en la barra superior, el pie, los pop-ups y la lista de regalos — y lo mismo en todo lo que lo reproduce: `/ejemplo*`, `/sitio/*`, la tarjeta de demostración «Sitio del casamiento» de la landing (`fd-*`, incluida su portada) y la portada de `/crear/foto`. Esos archivos (`invitacion.css`, `ejemplo.css`, `demo.css`) y los `<link>` de Google Fonts de Cormorant en `index`, `ejemplo`, `sitio.$slug` y `crear.foto` volvieron a su estado anterior. Se sirve desde `public/fonts/geist/` (`latin` y `latin-ext`, licencia SIL OFL 1.1 en `OFL.txt`), con `@font-face` y los tokens en `src/typography.css` (cargado desde `__root.tsx`, con `preload` del subconjunto latino). Pila de respaldo: `ui-sans-serif, system-ui, …, Arial`. No hay otras familias ni Google Fonts.
+**Geist (variable)** en landing, onboarding y panel (decisión de 2026-10; reemplaza a Arial). **Excepción: el micrositio mantiene su tipografía anterior** — Cormorant Garamond en la portada y en las secciones de la invitación posteriores a la portada, y Arial en la barra superior, el pie, los pop-ups y la lista de regalos — y lo mismo en todo lo que lo reproduce: `/ejemplo*`, `/sitio/*` y la tarjeta de demostración «Sitio del casamiento» de la landing (`fd-*`, incluida su portada). Esos archivos (`invitacion.css`, `ejemplo.css`, `demo.css`) y los `<link>` de Google Fonts de Cormorant en `index`, `ejemplo` y `sitio.$slug` volvieron a su estado anterior. Se sirve desde `public/fonts/geist/` (`latin` y `latin-ext`, licencia SIL OFL 1.1 en `OFL.txt`), con `@font-face` y los tokens en `src/typography.css` (cargado desde `__root.tsx`, con `preload` del subconjunto latino). Pila de respaldo: `ui-sans-serif, system-ui, …, Arial`. No hay otras familias ni Google Fonts.
 
 | Token | Celular | ≥ 768 px | Uso |
 |---|---|---|---|
@@ -90,7 +90,7 @@ Detalle y causas en [auditoria-landing-mobile-2026-10-19.md](auditoria-landing-m
 
 Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigentes en `src/panel.css` (se agregaron como tokens `--pn-r-*` en `.pn-root`/`.pn-dialog`):
 
-- **Radios:** controles 12 px (`--pn-r-ctl`), tarjetas y fotos 16 px (`--pn-r-card`), diálogos y hojas 20 px (`--pn-r-sheet`), píldoras 999 px, círculos 50 %. Excepciones deliberadas: el marco del celular de la vista previa y la portada de `/crear/foto` (copian la invitación).
+- **Radios:** controles 12 px (`--pn-r-ctl`), tarjetas y fotos 16 px (`--pn-r-card`), diálogos y hojas 20 px (`--pn-r-sheet`), píldoras 999 px, círculos 50 %. Excepciones deliberadas: el marco del celular de la vista previa  (copia la invitación).
 - **Tipografía (panel):** 12 · 13 · 14 · 15 · 16 · 18 · 20 · 26 px. Se unificaron 11.5/12.5/14.5/17/19/22.
 - **Estado «seleccionado» en regalos:** tilde circular arriba a la izquierda de la foto (pizarra en tarjetas, blanco sobre las fotos de los sets) + aro interior de 3 px. Se reemplazan los halos dobles y las sombras.
 - **Tarjeta de regalo** (`.pn-gcard`): sin caja ni sombra; foto cuadrada, nombre (2 renglones), monto en negrita pizarra y una sola acción. En «Tu lista» las acciones son íconos de 44 px (`Editar`, `Quitar`), sin borde.

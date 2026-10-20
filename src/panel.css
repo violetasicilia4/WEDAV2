@@ -653,35 +653,16 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* Onboarding · paso de la foto: portada a la vista con los nombres, subir foto como acción principal y «Ahora no» discreto. */
 .pn-photo-step { gap: 16px; }
-.pn-cover-preview { position: relative; width: 100%; aspect-ratio: 4 / 5; max-height: min(46dvh, 420px); margin: 0; border-radius: 22px; overflow: hidden; background: var(--pn-slate-d); }
+.pn-cover-preview { position: relative; height: min(36dvh, 280px); width: auto; aspect-ratio: 4 / 5; max-width: 100%; margin: 0 auto; border-radius: var(--pn-r-card); overflow: hidden; background: var(--pn-surface-2); }
 .pn-cover-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.pn-cover-preview::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(0 0 0 / .28), rgb(0 0 0 / 0) 24%), radial-gradient(ellipse 70% 30% at 50% 50%, rgb(0 0 0 / .34), rgb(0 0 0 / 0) 100%); }
-/* La vista de la portada reproduce la de la página pública (medidas de invitacion.css para un celular de 390 px, escaladas al ancho de la tarjeta). */
-.pn-cover-preview { container-type: inline-size; }
-.pn-cover-copy { position: absolute; z-index: 1; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 6%; text-align: center; color: #fff; font-family: 'Cormorant Garamond', Garamond, Georgia, serif; }
-.pn-cover-copy > span { display: block; max-width: 100%; }
-.pn-cover-eyebrow { font-size: calc(18 * 100cqw / 390); font-weight: 500; line-height: 1.3; text-shadow: 0 1px 14px rgb(0 0 0 / .45); margin-bottom: calc(18 * 100cqw / 390); }
-.pn-cover-names { font-size: calc(40 * 100cqw / 390); font-weight: 400; line-height: 1.02; text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 1px 14px rgb(0 0 0 / .3); }
-.pn-cover-date { font-size: calc(16 * 100cqw / 390); font-weight: 600; line-height: 1.4; letter-spacing: .14em; margin-top: calc(18 * 100cqw / 390); text-shadow: 0 1px 12px rgb(0 0 0 / .3); }
 .pn-photo-ok { text-align: center; font-size: 15px; color: #34502c; }
 .pn-skip { justify-self: center; min-height: 44px; color: var(--pn-muted); }
 .pn-center { text-align: center; }
 .pn-cover-preview img, .pn-gphoto img, .pn-gthumb img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
-/* Paso de la foto en el celular: título en un solo renglón (≈12,45 em de ancho) y la portada con el mismo ancho que el botón. */
+/* Paso de la foto: título en un solo renglón (≈12,45 em de ancho); la foto va sola, chica y centrada, sin texto encima. */
 .pn-photo-step .pn-account-head h1 { font-size: min(var(--t-page), calc((100vw - 84px) / 12.8)); white-space: nowrap; }
-@media (max-height: 640px) { .pn-cover-preview { max-height: 34dvh; } }
-
-/* Paso de la foto en el celular: todo en una sola pantalla, sin scroll. La portada ocupa el alto que sobra entre el título y los botones. */
-@media (max-width: 640px) {
-  .pn-flow:has(.pn-photo-step) { height: 100svh; min-height: 0; }
-  .pn-flow:has(.pn-photo-step) .pn-flow-main { min-height: 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-  .pn-photo-step { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; width: 100%; max-width: none; margin: 0; transform: none; gap: 12px; }
-  .pn-photo-step .pn-account-head { flex: none; padding: 0; }
-  .pn-photo-step .pn-cover-preview { flex: 1 1 0; min-height: 120px; max-height: none; aspect-ratio: auto; }
-  .pn-photo-step .pn-btn, .pn-photo-step .pn-skip { flex: none; }
-  .pn-photo-step .pn-skip { align-self: center; }
-}
+@media (max-height: 640px) { .pn-cover-preview { height: 32dvh; } }
 
 /* Regalos en pantallas muy angostas (320 px): la barra de selección y las solapas no se cortan ni parten. */
 @media (max-width: 360px) {
