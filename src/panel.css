@@ -1155,3 +1155,8 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .ob-form .pn-error { margin-top: 12px; }
 /* En celular las fotos decorativas se ocultan, pero en la pantalla de la foto la vista previa es el contenido: se queda, cuadrada. */
 @media (max-width: 899px) { .ob-photo.is-square { display: block; width: min(100%, 340px); } }
+/* Alineado con la barra de progreso: el texto arranca donde empieza la barra y la foto termina donde termina. */
+@media (min-width: 900px) {
+  .ob-form { justify-self: start; }
+  .ob-photo { justify-self: end; }
+}

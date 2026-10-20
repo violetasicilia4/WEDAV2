@@ -42,7 +42,7 @@ function Names() {
   const text = (set: (v: string) => void, key?: 'first' | 'second') => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.value); if (key) setErrors(x => ({ ...x, [key]: undefined })); };
 
   return (
-    <OnboardingShell step={1} back="/crear/cuenta" formId="ob-names" title="Conozcámonos. ¿Cómo se llaman?" sub="Con estos datos armamos tu panel y tu sitio. Lo demás lo completás después." side={<OnboardingPhoto src="/ejemplo-foto-4.webp" />}>
+    <OnboardingShell step={1} back="/crear/cuenta" formId="ob-names" title="Conozcámonos. ¿Cómo se llaman?" sub="Con estos datos armamos tu panel y tu sitio. Lo demás lo completás después." side={<OnboardingPhoto src="/onboarding-nombres.webp" />}>
       <form id="ob-names" onSubmit={submit} noValidate className="pn-form">
         <div className="pn-two">
           <Field label="Tu nombre" error={errors.first}>
