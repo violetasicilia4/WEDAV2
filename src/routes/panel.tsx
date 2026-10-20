@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
-import { ConfirmDialog, PlansProvider, SaveStatus, ToastProvider, usePlans } from '@/components/panel/ui';
-import { stages } from '@/lib/weda/journey';
+import { PlansProvider, SaveStatus, ToastProvider } from '@/components/panel/ui';
 import { coupleLabel } from '@/lib/weda/logic';
 import { can, planById, type Feature } from '@/lib/weda/plans';
-import { reset, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
+import { useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import '@/panel.css';
 
 export const Route = createFileRoute('/panel')({
@@ -32,19 +31,6 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   { label: 'Tu casamiento', items: NAV.slice(1) },
 ];
 
-/** Plan elegido, o «prueba gratuita» mientras no se eligió: el plan se elige al publicar. */
-function SidePlan() {
-  const state = useAppState();
-  const plans = usePlans();
-  const plan = planById(state.planId);
-  return (
-    <div className="pn-side-plan">
-      <p><span className="pn-label-s">Tu plan</span><strong>{plan ? plan.name : 'Prueba gratuita'}</strong></p>
-      <button type="button" className="pn-btn is-small" onClick={plans.open}>{plan ? 'Cambiar plan' : 'Elegir plan'}</button>
-    </div>
-  );
-}
-
 /* Migas de pan de la barra superior (solo escritorio): la pareja con su plan y la sección actual. */
 function Crumbs({ names, section }: { names: string; section: string }) {
   const state = useAppState();
@@ -58,26 +44,11 @@ function Crumbs({ names, section }: { names: string; section: string }) {
   );
 }
 
-/* Avance real del armado (misma regla que el Inicio): cuántos pasos están completos, sin porcentajes. Solo en la barra lateral de escritorio. */
-function SideProgress() {
-  const state = useAppState();
-  const build = stages(state).filter(x => x.id !== 'publicar' && !x.locked);
-  if (build.length === 0) return null;
-  const done = build.filter(x => x.status === 'done').length;
-  return (
-    <Link to="/panel" className="pn-side-prog">
-      <span>{done} de {build.length} {build.length === 1 ? 'paso listo' : 'pasos listos'}</span>
-      <span className="pn-segs" aria-hidden="true">{build.map(x => <i key={x.id} className={`is-${x.status}`} />)}</span>
-    </Link>
-  );
-}
-
 function PanelLayout() {
   const navigate = useNavigate();
   const state = useAppState();
   const hydrated = useHydrated();
   const full = useStorageFull();
-  const [confirmReset, setConfirmReset] = useState(false);
   const pathname = useRouterState({ select: s => s.location.pathname });
   const onPreview = pathname === '/panel/vista-previa';
   const section = onPreview ? 'Vista previa' : [...NAV].reverse().find(n => pathname === n.to || pathname.startsWith(`${n.to}/`))?.label ?? 'Inicio';
@@ -90,7 +61,6 @@ function PanelLayout() {
   if (!hydrated || !state.onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
 
   const names = coupleLabel(state.couple);
-  const doReset = () => { setConfirmReset(false); reset(); void navigate({ to: '/crear', replace: true }); };
 
   return (
     <ToastProvider>
@@ -123,29 +93,12 @@ function PanelLayout() {
               </div>
             ))}
           </nav>
-          <div className="pn-side-bottom">
-            <SidePlan />
-            <SideProgress />
-          </div>
-          <div className="pn-side-foot">
-            <p>Demostración: tus datos se guardan solo en este navegador.</p>
-            <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button>
-          </div>
         </aside>
 
         <main id="main" className="pn-main">
           {full && <p className="pn-banner" role="alert">No hay más lugar para guardar fotos en este navegador. Quitá alguna foto: los últimos cambios no se guardaron.</p>}
           <Outlet />
         </main>
-
-        <ConfirmDialog
-          open={confirmReset}
-          title="¿Reiniciar la demo?"
-          text="Se borran tu evento, la lista de regalos, los invitados y todo lo que cargaste en este navegador. No se puede deshacer."
-          confirmLabel="Sí, reiniciar"
-          onConfirm={doReset}
-          onCancel={() => setConfirmReset(false)}
-        />
       </div>
       </PlansProvider>
     </ToastProvider>
