@@ -1168,8 +1168,13 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 .ob-skip { margin-top: 6px; color: var(--pn-ink); }
 
-/* Más ancho para el texto (el subtítulo de la foto entra en un renglón); la foto no cambia de tamaño. */
+/* Pantalla de la foto: la foto lleva el protagonismo (más grande) y se puede tocar para elegirla o cambiarla; el botón es compacto. */
+.ob-photo.is-action { position: relative; display: block; padding: 0; border: 0; cursor: pointer; font: inherit; color: #fff; }
+.ob-photo-hint { position: absolute; right: 14px; bottom: 14px; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 999px; background: rgb(255 255 255 / .92); color: var(--pn-ink); font-size: 14px; font-weight: var(--w-medium); box-shadow: 0 2px 10px rgb(0 0 0 / .12); transition: background .2s; }
+.ob-photo.is-action:hover .ob-photo-hint { background: #fff; }
+.ob-photo.is-action:focus-visible { outline: 3px solid var(--pn-slate); outline-offset: 4px; }
+.ob-form .ob-upload { width: auto; align-self: flex-start; min-height: 44px; padding: 0 22px; }
 @media (min-width: 900px) {
-  .ob-body { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
-  .ob-form .ob-sub.is-line { white-space: nowrap; font-size: 16px; }
+  .ob-body.is-big { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); }
+  .ob-body.is-big .ob-photo.is-square { width: min(100%, 560px, 66svh); max-height: none; }
 }

@@ -40,7 +40,7 @@ function PhotoStep() {
   if (!hydrated || !state.onboarded) return <p className="pn-loading" role="status">Cargando…</p>;
 
   return (
-    <OnboardingShell step={3} back="/crear/fecha" onNext={goPanel} title="Sumá una foto de ustedes" subOneLine sub="Es lo primero que ven tus invitados. Podés cambiarla cuando quieras." side={<OnboardingPhoto src={state.photo.kind === 'upload' ? state.photo.src : DEFAULT_PHOTO} square alt={uploaded ? 'Tu foto de portada' : ''} />}>
+    <OnboardingShell step={3} big back="/crear/fecha" onNext={goPanel} title="Sumá una foto de ustedes" sub={<>Es lo primero que ven tus invitados.<br />Podés cambiarla cuando quieras.</>} side={<OnboardingPhoto src={state.photo.kind === 'upload' ? state.photo.src : DEFAULT_PHOTO} square alt={uploaded ? 'Tu foto de portada' : ''} onPick={() => fileRef.current?.click()} actionLabel={uploaded ? 'Cambiar foto' : 'Subir foto'} />}>
       <input ref={fileRef} className="pn-sr" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void pick(e.target.files?.[0])} aria-label="Elegir una foto de tu dispositivo" />
       <button type="button" className="pn-btn is-ghost ob-upload" onClick={() => fileRef.current?.click()} disabled={loading}><ImagePlus size={18} strokeWidth={1.4} aria-hidden="true" />{loading ? 'Cargando…' : uploaded ? 'Cambiar la foto' : 'Subir una foto de ustedes'}</button>
       {uploaded && <p className="pn-sr" role="status">Listo, así se ve tu portada.</p>}
