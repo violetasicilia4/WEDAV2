@@ -138,7 +138,7 @@ export const gifts: Gift[] = [
   { id: 'vinos', name: 'Cata en Mendoza', text: 'Una tarde de cata de vinos en una bodega del Valle de Uco.', amount: 95000, category: 'Experiencias', icon: 'wine', image: '/regalo-cata-mendoza.webp', pos: 'center 52%' },
   { id: 'globo', name: 'Paseo en globo', text: 'Un amanecer en el aire, solo para los dos.', amount: 360000, category: 'Experiencias', destination: 'Cualquiera', icon: 'compass', image: '/lm-globo.webp?v=2', pos: 'center 55%' },
   { id: 'sup', name: 'Alquiler tabla SUP', text: 'Una mañana de remo suave sobre agua transparente, para los dos.', amount: 190000, category: 'Experiencias', destination: 'Cualquiera', icon: 'compass', image: '/lm-sup.webp' },
-  { id: 'vuelo-interno', name: 'Pasaje luna de miel', text: 'Entre todos nos acercan los pasajes. Cada aporte suma.', amount: 1500000, category: 'Luna de miel', destination: 'Cualquiera', icon: 'plane', image: '/lm-avion.png', pos: 'center 45%' },
+  { id: 'vuelo-interno', name: 'Pasaje luna de miel', text: 'Entre todos nos acercan los pasajes. Cada aporte suma.', amount: 1500000, category: 'Luna de miel', destination: 'Cualquiera', icon: 'plane', image: '/lm-avion.jpg', pos: 'center 45%' },
   { id: 'boutique', name: 'Noche en hotel boutique', text: 'Un hotel chico y con encanto, para una noche especial.', amount: 380000, category: 'Luna de miel', destination: 'Cualquiera', icon: 'bed', image: '/lm-boutique.webp?v=2', pos: 'center 45%' },
   { id: 'isla', name: 'Estadía en una isla', text: 'Unos días de playa, mar y desconexión.', amount: 305000, category: 'Luna de miel', destination: 'Cualquiera', icon: 'bed', image: '/lm-isla.webp' },
   { id: 'santorini', name: 'Día en Santorini', text: 'Un día para recorrer la isla, sus pueblos blancos y sus atardeceres.', amount: 305000, category: 'Luna de miel', destination: 'Europa', icon: 'compass', image: '/lm-santorini.webp' },
@@ -147,7 +147,7 @@ export const gifts: Gift[] = [
   { id: 'marruecos', name: 'Viaje a Marruecos', text: 'Medinas, té de menta y noches en el desierto.', amount: 345000, category: 'Luna de miel', destination: 'África', icon: 'bed', image: '/lm-marruecos.webp' },
   { id: 'nueva-york', name: 'Viaje a Nueva York', text: 'Una escapada a la ciudad que nunca duerme.', amount: 300000, category: 'Luna de miel', destination: 'Estados Unidos', icon: 'bed', image: '/lm-nueva-york.webp' },
   { id: 'ollas', name: 'Juego de ollas', text: 'Tres piezas esmaltadas para las primeras cenas en casa.', amount: 120000, category: 'Hogar', icon: 'chef', image: '/lista-de-regalos-olla.jpg' },
-  { id: 'vajilla', name: 'Set de vajilla', text: 'Platos y bowls en blanco mate para la mesa de todos los días.', amount: 130000, category: 'Hogar', icon: 'utensils', image: '/regalo-vajilla.png', pos: 'center 55%' },
+  { id: 'vajilla', name: 'Set de vajilla', text: 'Platos y bowls en blanco mate para la mesa de todos los días.', amount: 130000, category: 'Hogar', icon: 'utensils', image: '/regalo-vajilla.jpg', pos: 'center 55%' },
   { id: 'cafetera', name: 'Cafetera Nespresso', text: 'Para los cafés de todas las mañanas en casa.', amount: 150000, category: 'Hogar', icon: 'coffee', image: '/regalo-cafetera.webp', pos: 'center 55%' },
   { id: 'sabanas', name: 'Juego de sábanas', text: 'Sábanas de lino y algodón para estrenar la cama de casa.', amount: 90000, category: 'Hogar', icon: 'sheets', image: '/regalo-sabanas.webp', pos: 'center 50%' },
   { id: 'horno', name: 'Horno de empotrar', text: 'Un horno de vidrio negro para la cocina nueva, de esos que dan ganas de invitar gente.', amount: 650000, category: 'Hogar', icon: 'chef', image: '/regalo-horno.webp', pos: 'center 55%' },
@@ -156,7 +156,7 @@ export const gifts: Gift[] = [
   { id: 'heladera', name: 'Heladera dos puertas', text: 'Una heladera grande, de acero y de dos puertas, para la cocina de casa.', amount: 1400000, category: 'Hogar', icon: 'chef', image: '/regalo-heladera-2.webp', pos: 'center 36%', zoom: { scale: 1.06, origin: '18% 50%' } },
   { id: 'casa', name: 'Fondo para la casa', text: 'Para terminar de armar nuestro primer hogar, de a poco.', amount: 500000, category: 'Proyectos futuros', icon: 'home', image: '/regalo-casa.jpg' },
   { id: 'remodelacion', name: 'Remodelar la casa', text: 'Para las obras de la casa: paredes, instalaciones y terminaciones.', amount: 550000, category: 'Proyectos futuros', icon: 'home', image: '/regalo-remodelacion.webp', pos: 'center 40%' },
-  { id: 'parrilla', name: 'Parrilla', text: 'Para los asados con amigos, los domingos en casa.', amount: 320000, category: 'Proyectos futuros', icon: 'home', image: '/regalo-parrilla-2.png', fit: 'white' },
+  { id: 'parrilla', name: 'Parrilla', text: 'Para los asados con amigos, los domingos en casa.', amount: 320000, category: 'Proyectos futuros', icon: 'home', image: '/regalo-parrilla-2.jpg', fit: 'white' },
   { id: 'fogonero', name: 'Fogonero de jardín', text: 'Para las noches de fuego y charla bajo las estrellas.', amount: 140000, category: 'Proyectos futuros', icon: 'trees', image: '/regalo-fogonero.webp', pos: 'center 50%' },
 ];
 

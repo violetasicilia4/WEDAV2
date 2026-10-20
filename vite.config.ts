@@ -15,7 +15,18 @@ export default defineConfig(({ command }) => ({
     viteReact(),
     tailwindcss(),
     // Nitro solo hace falta al compilar para producción.
-    ...(command === "build" ? [nitro()] : []),
+    ...(command === "build"
+      ? [nitro({
+          // Los JS/CSS ya vienen con hash; se sirven comprimidos (gzip y brotli) y con caché larga.
+          compressPublicAssets: { gzip: true, brotli: true },
+          routeRules: {
+            "/assets/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+            // Fuentes y fotos de parejas no cambian de nombre al cambiar de contenido: caché larga pero revalidable.
+            "/fonts/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
+            "/parejas/**": { headers: { "cache-control": "public, max-age=604800, stale-while-revalidate=86400" } },
+          },
+        })]
+      : []),
   ],
   resolve: {
     alias: { "@": `${process.cwd()}/src` },

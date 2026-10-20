@@ -27,10 +27,6 @@ export const Route = createFileRoute('/')({
     ],
     links: [
       ...(SITE_URL ? [{ rel: 'canonical', href: `${SITE_URL}/` }] : []),
-      // Tipografía del micrositio, solo para la maqueta del bloque "Sitio del casamiento".
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' as const },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap' },
     ],
   }),
   component: Index,
@@ -125,15 +121,44 @@ function Testimonials() {
   );
 }
 function Index() {
-  const heroVideo = useRef<HTMLVideoElement>(null);
-  // Respeta prefers-reduced-motion: el video de fondo queda en pausa.
+  // Tipografía del micrositio (solo para la maqueta del bloque «Sitio del casamiento», más abajo): se pide con la página ya cargada,
+  // en vez de bloquear el primer render con una hoja de estilos externa.
   useEffect(() => {
+    if (document.getElementById('cormorant-font')) return;
+    const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    const add = () => {
+      const l = document.createElement('link');
+      l.id = 'cormorant-font'; l.rel = 'stylesheet';
+      l.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap';
+      document.head.appendChild(l);
+    };
+    const go = () => { if (ric) ric.call(window, add, { timeout: 4000 }); else window.setTimeout(add, 1500); };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+    return () => window.removeEventListener('load', go);
+  }, []);
+  const heroVideo = useRef<HTMLVideoElement>(null);
+  // El video (3,6 MB) se pide recién cuando la página terminó de cargar y el navegador está libre: la portada (póster) es lo primero que se ve
+  // y no compite con el resto. Con movimiento reducido, ahorro de datos o conexión lenta no se descarga: queda el póster.
+  useEffect(() => {
+    const v = heroVideo.current;
+    if (!v) return;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    // Movimiento reducido o ahorro de datos: el video queda en pausa y se ve el poster.
-    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
-    const sync = () => { const v = heroVideo.current; if (!v) return; if (mq.matches || saveData) v.pause(); else v.play().catch(() => {}); };
-    sync(); mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const lean = () => mq.matches || conn?.saveData === true || /^(slow-2g|2g|3g)$/.test(conn?.effectiveType ?? '');
+    let started = false;
+    const start = () => {
+      if (started || lean()) return;
+      started = true;
+      v.src = '/hero.mp4';
+      v.play().catch(() => {});
+    };
+    const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    const idle = () => { if (ric) ric.call(window, start, { timeout: 2500 }); else window.setTimeout(start, 800); };
+    if (document.readyState === 'complete') idle(); else window.addEventListener('load', idle, { once: true });
+    // Si el usuario activa movimiento reducido con la página abierta, se pausa.
+    const onChange = () => { if (mq.matches) v.pause(); else if (started) v.play().catch(() => {}); };
+    mq.addEventListener('change', onChange);
+    return () => { window.removeEventListener('load', idle); mq.removeEventListener('change', onChange); };
   }, []);
   return <>
     <a className="skip-link" href="#main">Ir al contenido</a>
@@ -141,7 +166,7 @@ function Index() {
     <FloatNav onLanding />
     <main id="main">
     <section className="seed-hero" id="top">
-      <video className="hero-image" src="/hero.mp4" poster="/hero-poster.jpg" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" ref={heroVideo}/>
+      <video className="hero-image" poster="/hero-poster.jpg" muted loop playsInline preload="none" aria-hidden="true" ref={heroVideo}/>
       <div className="hero-inner"><div className="hero-copy"><h1>Tu lista de regalos y tu invitación, en un solo lugar.</h1><p>Creá el sitio de tu casamiento, recibí regalos y organizá las confirmaciones de tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">

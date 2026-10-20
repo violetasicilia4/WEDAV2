@@ -2,7 +2,7 @@
 // - Hidrata después de montar (seguro con SSR).
 // - Se sincroniza entre pestañas y iframes (evento "storage"): así la vista previa del editor se actualiza sola.
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
-import { useSyncExternalStore } from 'react';
+import { useRef, useSyncExternalStore } from 'react';
 import { defaultSite, emptyState } from './logic';
 import { isPlanId } from './plans';
 import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
@@ -130,23 +130,47 @@ function ensureLoaded() {
   if (loaded || typeof window === 'undefined') return;
   loaded = true;
   state = read();
+  window.addEventListener('pagehide', flushPersist);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPersist(); });
   window.addEventListener('storage', e => {
     if (e.key !== STORAGE_KEY && e.key !== null) return;
     state = read(); emit();
   });
 }
 
-function persist(next: AppState) {
+/* Guardado diferido: cada tecla cambia el estado en memoria al instante, pero serializar todo (con las fotos en base64) en cada cambio
+   trababa la escritura. Los cambios seguidos se juntan en un solo guardado (150 ms) y se fuerza al ocultar o cerrar la pestaña. */
+const PERSIST_DELAY = 150;
+let persistTimer: ReturnType<typeof setTimeout> | undefined;
+let persistPending = false;
+
+function writeNow() {
+  persistPending = false;
+  const wasFull = storageFull;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    if (storageFull) { storageFull = false; }
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    storageFull = false;
   } catch {
     // Sin lugar (suele pasar con muchas fotos) o sin almacenamiento: la demo sigue en memoria, pero avisamos.
     storageFull = true;
   }
+  if (wasFull !== storageFull) emit();
+}
+
+function flushPersist() {
+  if (persistTimer !== undefined) { clearTimeout(persistTimer); persistTimer = undefined; }
+  if (persistPending) writeNow();
+}
+
+function persist() {
+  persistPending = true;
+  if (persistTimer !== undefined) return;
+  persistTimer = setTimeout(() => { persistTimer = undefined; if (persistPending) writeNow(); }, PERSIST_DELAY);
 }
 
 export const getState = (): AppState => { ensureLoaded(); return state; };
+/** Fuerza el guardado pendiente (útil antes de leer el almacenamiento desde otra pantalla o en pruebas). */
+export const flushStorage = flushPersist;
 export const isStorageFull = () => storageFull;
 
 /** Cambia el estado, lo guarda y avisa a los componentes. */
@@ -155,7 +179,7 @@ export function update(fn: (s: AppState) => AppState) {
   const next = fn(state);
   if (next === state) return;
   state = next;
-  persist(state);
+  persist();
   emit();
 }
 
@@ -163,6 +187,8 @@ export function replace(next: AppState) { update(() => next); }
 export function reset() {
   ensureLoaded();
   state = emptyState();
+  if (persistTimer !== undefined) { clearTimeout(persistTimer); persistTimer = undefined; }
+  persistPending = false;
   try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* nada que borrar */ }
   storageFull = false;
   emit();
@@ -173,6 +199,23 @@ const subscribe = (l: () => void) => { ensureLoaded(); listeners.add(l); return 
 /** Estado de la aplicación. En el servidor (y durante la hidratación) devuelve el estado vacío. */
 export function useAppState(): AppState {
   return useSyncExternalStore(subscribe, getState, () => SERVER_STATE);
+}
+
+/** Como useAppState, pero el componente solo se vuelve a renderizar si cambia lo que elige (por defecto, por identidad). */
+export function useAppSelector<T>(select: (s: AppState) => T, equal: (a: T, b: T) => boolean = Object.is): T {
+  const last = useRef<{ s: AppState; v: T } | null>(null);
+  const server = useRef<{ v: T } | null>(null);
+  const getSnapshot = () => {
+    const s = getState();
+    const prev = last.current;
+    if (prev && prev.s === s) return prev.v;
+    const v = select(s);
+    if (prev && equal(prev.v, v)) { last.current = { s, v: prev.v }; return prev.v; }
+    last.current = { s, v };
+    return v;
+  };
+  const getServerSnapshot = () => (server.current ??= { v: select(SERVER_STATE) }).v;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /** false en el servidor y en el primer render del cliente; true una vez que el estado local ya se leyó. */

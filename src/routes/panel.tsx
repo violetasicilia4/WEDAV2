@@ -4,7 +4,7 @@ import { Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
 import { PlansProvider, SaveStatus, ToastProvider } from '@/components/panel/ui';
 import { coupleLabel } from '@/lib/weda/logic';
 import { can, planById, type Feature } from '@/lib/weda/plans';
-import { useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
+import { useAppSelector, useHydrated, useStorageFull } from '@/lib/weda/store';
 import '@/panel.css';
 
 export const Route = createFileRoute('/panel')({
@@ -33,8 +33,8 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 
 /* Migas de pan de la barra superior (solo escritorio): la pareja con su plan y la sección actual. */
 function Crumbs({ names, section }: { names: string; section: string }) {
-  const state = useAppState();
-  const plan = planById(state.planId);
+  const planId = useAppSelector(s => s.planId);
+  const plan = planById(planId);
   return (
     <nav className="pn-crumbs" aria-label="Ubicación">
       <span className="pn-crumb"><span className="pn-crumb-ico" aria-hidden="true">{names.trim().charAt(0)}</span>{names}<em className="pn-badge">{plan ? plan.name : 'Prueba'}</em></span>
@@ -46,7 +46,10 @@ function Crumbs({ names, section }: { names: string; section: string }) {
 
 function PanelLayout() {
   const navigate = useNavigate();
-  const state = useAppState();
+  // Solo lo que usa el contenedor: así escribir en el editor o los invitados no lo vuelve a dibujar.
+  const onboarded = useAppSelector(s => s.onboarded);
+  const couple = useAppSelector(s => s.couple);
+  const planId = useAppSelector(s => s.planId);
   const hydrated = useHydrated();
   const full = useStorageFull();
   const pathname = useRouterState({ select: s => s.location.pathname });
@@ -55,12 +58,12 @@ function PanelLayout() {
 
   // Sin evento no hay panel: se vuelve a crearlo. El plan no hace falta para entrar: se elige al publicar.
   useEffect(() => {
-    if (hydrated && !state.onboarded) void navigate({ to: '/crear', replace: true });
-  }, [hydrated, state.onboarded, navigate]);
+    if (hydrated && !onboarded) void navigate({ to: '/crear', replace: true });
+  }, [hydrated, onboarded, navigate]);
 
-  if (!hydrated || !state.onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
+  if (!hydrated || !onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
 
-  const names = coupleLabel(state.couple);
+  const names = coupleLabel(couple);
 
   return (
     <ToastProvider>
@@ -81,7 +84,7 @@ function PanelLayout() {
               <div key={g.label} className="pn-nav-group">
                 <p className="pn-nav-label" aria-hidden="true">{g.label}</p>
                 {g.items.map(n => {
-                  const locked = !!n.feature && !can(state.planId, n.feature);
+                  const locked = !!n.feature && !can(planId, n.feature);
                   return (
                     <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
                       <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
