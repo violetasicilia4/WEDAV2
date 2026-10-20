@@ -121,3 +121,8 @@ Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila
 - Editor de la página: ya no hay acordeón con todas las secciones; se elige una sección y se editan solo sus campos. La vista previa del celular es una pantalla completa que se abre y se cierra a pedido.
 - Regalos: «Cobro» se llama «Aportes». Se puede entrar directo a esa solapa con `/panel/regalos?tab=cobro`.
 - **Pendientes (no implementados, requieren definición):** capacidad por mesa, acciones masivas en Invitados, un ítem «Regalos» dentro del editor de la página (hoy la lista de regalos se edita en su propia sección del panel).
+
+## Publicación: pendientes y estado (2026-10-20)
+- **Inicio** muestra un bloque «Publicación»: siempre «Borrador», el plan elegido con su precio (de `plans.ts`) o «probás todo gratis», y la aclaración de que hoy no se publica ni se cobra nada.
+- **Resumen de publicación** (diálogo de planes) suma «Antes de publicar»: pendientes reales con acceso directo (`publishSummary(...).todo`: sin regalos, falta alias de cobro, sin fecha, secciones activadas incompletas), solo de lo que el plan elegido incluye.
+- **Supuesto:** no hay reglas de publicación definidas, así que ningún pendiente bloquea; son recomendaciones. Cuando la publicación real exista, habrá que decidir cuáles pasan a ser obligatorios.

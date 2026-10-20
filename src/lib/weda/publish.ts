@@ -1,12 +1,14 @@
 // Resumen de publicación: qué se publicaría con cada plan y qué queda como borrador. Función pura sobre el AppState y la matriz de planes.
 // La publicación y el pago NO están conectados (no hay servidor): esto solo informa, no publica ni cobra nada.
+import { sectionGaps } from './journey';
 import { hasEventDetails } from './logic';
 import { can, planById, planFor, type Feature } from './plans';
 import type { AppState, PlanId } from './types';
 
 export type PublishState = 'published' | 'empty' | 'draft';
 export type PublishItem = { feature: Feature; label: string; state: PublishState; detail: string; /** Plan que la habilita (solo si queda como borrador). */ plan?: string };
-export type PublishSummary = { items: PublishItem[]; published: PublishItem[]; drafts: PublishItem[]; empty: PublishItem[]; warnings: string[] };
+export type PublishTodo = { text: string; to: string; cta: string; search?: { tab: 'cobro' } };
+export type PublishSummary = { items: PublishItem[]; published: PublishItem[]; drafts: PublishItem[]; empty: PublishItem[]; warnings: string[]; /** Pendientes con acceso directo para resolverlos. Ninguno frena nada: la publicación todavía no está conectada y no hay reglas definidas que la bloqueen. */ todo: PublishTodo[] };
 
 /** Funciones que ven los invitados en la versión pública (invitados y mesas son de gestión: no se publican). */
 const PUBLIC: { feature: Feature; label: string; content: (s: AppState) => string | null }[] = [
@@ -29,7 +31,12 @@ export function publishSummary(s: AppState, planId: PlanId): PublishSummary {
   const warnings: string[] = [];
   if (can(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') warnings.push('Falta configurar cómo vas a recibir los regalos: sin eso no se pueden activar los regalos reales.');
   if (can(planId, 'site') && !s.date) warnings.push('Todavía no definiste la fecha: la portada va a decir «Fecha a confirmar».');
-  return { items, published: items.filter(i => i.state === 'published'), drafts: items.filter(i => i.state === 'draft'), empty: items.filter(i => i.state === 'empty'), warnings };
+  const todo: PublishTodo[] = [];
+  if (can(planId, 'gifts') && s.gifts.items.length === 0) todo.push({ text: 'Elegí al menos un regalo para tu lista.', to: '/panel/regalos', cta: 'Elegir regalos' });
+  if (can(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') todo.push({ text: 'Configurá cómo vas a recibir los regalos (alias).', to: '/panel/regalos', cta: 'Configurar cobro', search: { tab: 'cobro' } });
+  if (can(planId, 'site') && !s.date) todo.push({ text: 'Definí la fecha del casamiento.', to: '/panel', cta: 'Ir al inicio' });
+  if (can(planId, 'site')) for (const g of sectionGaps(s)) todo.push({ text: `Completá «${g.label}»: está activada pero le faltan datos.`, to: '/panel/sitio', cta: 'Completar' });
+  return { items, todo, published: items.filter(i => i.state === 'published'), drafts: items.filter(i => i.state === 'draft'), empty: items.filter(i => i.state === 'empty'), warnings };
 }
 
 export const planName = (id: PlanId | null) => planById(id)?.name ?? '';

@@ -6,7 +6,7 @@ import { ConfirmDialog, CoupleCover, usePlans } from '@/components/panel/ui';
 import { formatARS } from '@/lib/demo-wedding';
 import { eventComplete, nextAction, sectionGaps, stages, type Stage, type StageStatus } from '@/lib/weda/journey';
 import { giftTotal } from '@/lib/weda/logic';
-import { planFor } from '@/lib/weda/plans';
+import { formatPrice, planById, planFor, PRICE_UNIT } from '@/lib/weda/plans';
 import { reset, useAppState } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/panel/')({ component: Home });
@@ -32,7 +32,7 @@ function Home() {
   const confirmed = s.guests.filter(g => g.status === 'confirmed').length;
   const tiles = [
     { st: stage('sitio'), label: 'Invitación', Icon: Globe, to: '/panel/sitio',
-      sub: gaps.length > 0 ? `Falta: ${gaps[0]!.label}${gaps.length > 1 ? ` y ${gaps.length - 1} más` : ''}` : eventsDone > 0 ? plural(eventsDone, 'evento listo', 'eventos listos') : 'Sin empezar' },
+      sub: eventsDone === 0 && gaps.length > 0 ? 'Cargá la ceremonia y el lugar' : gaps.length > 0 ? `Falta: ${gaps[0]!.label}${gaps.length > 1 ? ` y ${gaps.length - 1} más` : ''}` : eventsDone > 0 ? plural(eventsDone, 'evento listo', 'eventos listos') : 'Sin empezar' },
     { st: stage('regalos'), label: 'Regalos', Icon: Gift, to: '/panel/regalos',
       sub: s.gifts.items.length === 0 ? 'Sin regalos todavía' : `${plural(s.gifts.items.length, 'regalo', 'regalos')} · ${formatARS(giftTotal(s.gifts.items))}` },
     { st: stage('invitados'), label: 'Invitados', Icon: Users, to: '/panel/invitados',
@@ -89,9 +89,13 @@ function Home() {
             </li>
           ))}
         </ul>
-        <div className="pn-actions is-tight">
+        <div className="pn-pubstate">
+          <div>
+            <p className="pn-label-s">Publicación</p>
+            <p><strong>Borrador</strong> · {s.planId ? `Plan ${planById(s.planId)?.name}, ${formatPrice(planById(s.planId)!.price)} ${PRICE_UNIT}` : 'Todavía no elegiste plan: probás todo gratis'}</p>
+            <p className="pn-hint">El plan se elige al publicar. Hoy es una demo: no se publica ni se cobra nada.</p>
+          </div>
           <button type="button" className="pn-btn is-ghost" onClick={plans.open}>Ver planes y publicar</button>
-          <span className="pn-hint">Hoy es una demo: no se publica ni se cobra nada.</span>
         </div>
       </section>
 

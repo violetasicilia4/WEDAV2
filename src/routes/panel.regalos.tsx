@@ -15,6 +15,17 @@ import { getState, update, useAppState } from '@/lib/weda/store';
 import type { Category } from '@/lib/demo-wedding';
 import type { ListGift } from '@/lib/weda/types';
 
+/* Regalos de un pack: abiertos en pantallas anchas; en el celular quedan plegados para que cada pack no ocupe una pantalla entera. El panel solo se dibuja ya hidratado, así que mirar el ancho acá es seguro. */
+function PackGifts({ gifts }: { gifts: { id: string; name: string; amount: number }[] }) {
+  const [open, setOpen] = useState(() => window.matchMedia('(min-width: 641px)').matches);
+  return (
+    <details className="rg-pack-more" open={open} onToggle={e => setOpen(e.currentTarget.open)}>
+      <summary>{open ? 'Regalos incluidos en este pack' : `Ver los ${gifts.length} regalos incluidos`}</summary>
+      <ul className="rg-pack-list">{gifts.map(g => <li key={g.id}><span>{g.name}</span><b>{formatARS(g.amount)}</b></li>)}</ul>
+    </details>
+  );
+}
+
 export const Route = createFileRoute('/panel/regalos')({
   validateSearch: (q: Record<string, unknown>): { tab?: 'cobro' } => (q['tab'] === 'cobro' ? { tab: 'cobro' } : {}),
   component: GiftsModule,
@@ -443,8 +454,7 @@ function GiftsModule() {
                       </div>
                       <div className="rg-pack-body">
                         <p className="rg-text">{set.description}</p>
-                        <p className="rg-label">Regalos incluidos en este pack</p>
-                        <ul className="rg-pack-list">{gs.map(g => <li key={g.id}><span>{g.name}</span><b>{formatARS(g.amount)}</b></li>)}</ul>
+                        <PackGifts gifts={gs} />
                         <div className="rg-foot">
                           <div><span className="rg-label">Total sugerido</span><strong>{formatARS(total)}</strong></div>
                           <button type="button" className={`pn-btn${all ? ' is-ghost' : ''}`} onClick={toggle}>{all ? 'Quitar pack' : <><Plus size={15} aria-hidden="true" />Agregar pack ({gs.length} regalos)</>}</button>

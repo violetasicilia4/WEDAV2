@@ -437,4 +437,12 @@ describe('resumen de publicación', () => {
     const s = seedState();
     expect(publishSummary({ ...s, gifts: { ...s.gifts, alias: '' } }, 'invitacion').warnings.join(' ')).toContain('cómo vas a recibir');
   });
+  it('lista pendientes con acceso directo y solo de lo que el plan incluye', () => {
+    const s = seedState();
+    const t = publishSummary({ ...s, date: '', gifts: { ...s.gifts, alias: '' } }, 'invitacion').todo;
+    expect(t.map(x => x.to)).toEqual(expect.arrayContaining(['/panel/regalos', '/panel']));
+    expect(t.find(x => x.search)?.search).toEqual({ tab: 'cobro' });
+    // El plan Regalos no incluye el sitio: no se le pide la fecha.
+    expect(publishSummary({ ...s, date: '' }, 'regalos').todo.some(x => x.to === '/panel')).toBe(false);
+  });
 });

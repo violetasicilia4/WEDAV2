@@ -39,7 +39,7 @@
 
 /* ---------- formularios ---------- */
 .pn-form { display: grid; gap: 20px; }
-.pn-two { display: grid; gap: 20px; grid-template-columns: 1fr; }
+.pn-two { display: grid; gap: 20px; grid-template-columns: 1fr; align-items: start; } /* start: el error de un campo no estira al vecino */
 @media (min-width: 560px) { .pn-two { grid-template-columns: 1fr 1fr; } }
 .pn-field { display: grid; gap: 6px; }
 .pn-field > label, .pn-photo legend, .pn-label { font-size: 14px; color: var(--pn-ink); }
@@ -1368,3 +1368,20 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .pn-dialog .pn-actions.is-end > .pn-link { grid-column: 1 / -1; justify-self: start; order: -1; }
   .pn-dialog .pn-actions.is-end > .pn-btn { width: 100%; }
 }
+
+/* Resumen de publicación: cada pendiente trae su acceso directo. */
+.pn-todo li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pn-todo .pn-link { flex: none; min-height: 32px; }
+
+/* Inicio: estado de publicación (borrador / plan / precio). */
+.pn-pubstate { display: grid; gap: 12px; padding: 16px 18px; border-radius: var(--pn-r-card); background: var(--pn-surface); }
+.pn-pubstate p { margin: 0; }
+.pn-pubstate .pn-btn { justify-self: start; }
+@media (min-width: 640px) { .pn-pubstate { grid-template-columns: minmax(0, 1fr) auto; align-items: center; } }
+
+/* Packs: la lista de regalos se pliega con un resumen táctil. */
+.rg-pack-more > summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; cursor: pointer; list-style: none; font-size: 12.5px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: var(--pn-muted); }
+.rg-pack-more > summary::-webkit-details-marker { display: none; }
+.rg-pack-more > summary::after { content: '+'; font-size: 20px; letter-spacing: 0; }
+.rg-pack-more[open] > summary::after { content: '–'; }
+.rg-pack-more > .rg-pack-list { margin-top: 4px; }

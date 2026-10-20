@@ -116,12 +116,16 @@ const FEATURE_NAMES: Record<Feature, string> = {
 export function Locked({ feature, children }: { feature: Feature; children?: ReactNode }) {
   const plan = planFor(feature);
   const plans = usePlans();
+  const planId = useAppState().planId;
   return (
     <div className="pn-locked">
       <span className="pn-locked-icon" aria-hidden="true"><Lock size={22} strokeWidth={1.5} /></span>
-      <h2>{FEATURE_NAMES[feature]} no está incluida en tu plan</h2>
-      <p>{children ?? `Está en el plan ${plan?.name ?? 'Completo'}. Lo que ya cargaste se conserva como borrador y podés cambiar de plan cuando quieras: no se cobra nada al elegirlo.`}</p>
-      <button type="button" className="pn-btn" onClick={plans.open}>Ver los planes</button>
+      <h2>{FEATURE_NAMES[feature]} se activa con el plan {plan?.name ?? 'Completo'}</h2>
+      <p>{children ?? 'Lo que ya cargaste se conserva como borrador. Podés cambiar de plan cuando quieras: no se cobra nada al elegirlo.'}</p>
+      <div className="pn-actions is-tight">
+        <button type="button" className="pn-btn" onClick={plans.open}>Ver los planes</button>
+        {planId && <button type="button" className="pn-link" onClick={() => update(x => ({ ...x, planId: null }))}>Volver a probar todo</button>}
+      </div>
     </div>
   );
 }
@@ -216,7 +220,11 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
                 {summary.published.length > 0 && (<><p className="pn-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
                 {summary.empty.length > 0 && (<><p className="pn-label">Incluido, pero vacío</p><ul className="pn-plan-items is-plain">{summary.empty.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
                 {summary.drafts.length > 0 && (<><p className="pn-label">Queda como borrador</p><ul className="pn-plan-items is-plain">{summary.drafts.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail} Se publica desde el plan {i.plan}.</span></li>)}</ul></>)}
-                {summary.warnings.map(w => <p key={w} className="pn-note">{w}</p>)}
+                <p className="pn-label">Antes de publicar</p>
+                {summary.todo.length === 0
+                  ? <p className="pn-note">No te falta nada de lo que Weda puede verificar. Los detalles de estilo (fotos, galería, mensaje) son opcionales.</p>
+                  : <ul className="pn-plan-items is-plain pn-todo">{summary.todo.map(t => <li key={t.text}><span>{t.text}</span><Link to={t.to as never} {...(t.search ? { search: t.search as never } : {})} className="pn-link" onClick={close}>{t.cta}</Link></li>)}</ul>}
+                {summary.todo.length > 0 && <p className="pn-hint">Son recomendaciones: hoy ninguna impide publicar y podés resolverlas cuando quieras.</p>}
               </div>
             )}
             <p className="pn-note" role="status"><strong>La publicación y el pago todavía no están conectados.</strong> Hoy no se cobra ni se publica nada en Internet: el sitio sigue viéndose solo en este navegador.</p>
