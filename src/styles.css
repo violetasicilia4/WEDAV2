@@ -2034,39 +2034,35 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 
 /* Regalos: pantalla dividida. A la izquierda una foto; a la derecha el título y los pasos en vertical. */
 .duo-section { overflow: hidden; padding: 0; }
-.duo-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: max(100svh, 720px); }
+.duo-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; padding-block: clamp(72px, 12svh, 132px); }
 .duo-photo { position: relative; min-height: 320px; background: #5d6a73; }
 .duo-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; }
-.duo-panel { display: flex; flex-direction: column; justify-content: center; padding: clamp(56px, 9svh, 112px) clamp(28px, 6vw, 112px); }
+.duo-panel { display: flex; flex-direction: column; justify-content: center; padding: 0 clamp(28px, 6vw, 112px); }
 .duo-panel .eyebrow { margin: 0 0 16px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
 .duo-panel h2 { margin: 0; max-width: 16ch; font-size: clamp(30px, 3.8vw, 54px); line-height: 1.08; text-wrap: balance; }
 .duo-steps { list-style: none; margin: clamp(28px, 4.5svh, 52px) 0 0; padding: 0; display: grid; max-width: 560px; }
-.duo-steps li { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 20px; align-items: center; padding: 20px 0; border-top: 1px solid rgb(255 255 255 / .28); }
-.duo-steps li:last-child { border-bottom: 1px solid rgb(255 255 255 / .28); }
-.duo-step-ico { grid-row: 1 / 4; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--paper); color: var(--slate); }
-.duo-step-n { font-size: 12px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: rgb(255 255 255 / .7); }
-.duo-steps b { font-size: clamp(18px, 1.5vw, 21px); font-weight: var(--w-medium); line-height: 1.25; }
-.duo-step-text { font-size: 15px; line-height: 1.45; color: rgb(255 255 255 / .82); }
+.duo-steps li { display: grid; grid-template-columns: 24px 44px minmax(0, 1fr); align-items: center; padding: 20px 0; border-top: 1px solid rgb(255 255 255 / .18); }
+.duo-steps li:last-child { border-bottom: 1px solid rgb(255 255 255 / .18); }
+.duo-step-ico { color: rgb(255 255 255 / .85); }
+.duo-step-n { font-size: 14px; font-variant-numeric: tabular-nums; color: rgb(255 255 255 / .55); }
+.duo-steps b { font-size: clamp(19px, 1.7vw, 24px); font-weight: var(--w-regular); line-height: 1.25; }
 .duo-panel .duo-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: clamp(28px, 4.5svh, 44px); }
 .duo-panel .duo-cta .seed-link-button { color: #fff; height: auto; }
-.duo-panel .duo-cta .seed-button { margin: 0; }
-/* Escritorio: texto a la izquierda y la foto a la derecha, con bordes redondeados y aire alrededor (no ocupa todo el bloque). */
+.duo-panel .duo-cta .seed-button { margin: 0; }/* Escritorio: texto a la izquierda y la foto a la derecha, con bordes redondeados y aire alrededor (no ocupa todo el bloque). */
 @media (min-width: 901px) {
-  .duo-photo { order: 2; --pv: clamp(40px, 7svh, 80px); --ph: clamp(28px, 5vw, 96px); background: transparent; }
-  .duo-photo img { top: var(--pv); left: 0; width: calc(100% - var(--ph)); height: calc(100% - 2 * var(--pv)); inset: var(--pv) auto auto 0; border-radius: 28px; box-shadow: 0 24px 60px rgb(0 0 0 / .18); }
+  .duo-photo { order: 2; --pv: 0px; --ph: clamp(28px, 5vw, 96px); background: transparent; }
+  .duo-photo img { top: var(--pv); left: 0; width: calc(100% - var(--ph)); height: calc(100% - 2 * var(--pv)); inset: var(--pv) auto auto 0; border-radius: 28px; }
   .duo-panel { order: 1; padding-right: clamp(24px, 3vw, 56px); }
 }
 @media (max-width: 900px) {
-  .duo-split { grid-template-columns: 1fr; min-height: 0; }
+  .duo-split { grid-template-columns: 1fr; padding-block: 0; }
   .duo-photo { min-height: 0; height: clamp(280px, 82vw, 480px); }
   .duo-photo img { object-position: 50% 24%; }
   .duo-panel { padding: 40px 20px 56px; }
   .duo-panel h2 { max-width: none; }
   .duo-steps { max-width: none; }
-  .duo-steps li { padding: 16px 0; column-gap: 16px; grid-template-columns: 48px minmax(0, 1fr); }
-  .duo-step-ico { width: 48px; height: 48px; }
-  .duo-step-ico svg { width: 22px; height: 22px; }
-}
+  .duo-steps li { padding: 16px 0; grid-template-columns: 20px 40px minmax(0, 1fr); }
+  }
 
 /* Testimonios: la sección gana jerarquía; alta como la pantalla, título grande y tarjetas con aire. */
 .viacap-section { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; min-height: max(100svh, 720px); padding-block: clamp(80px, 14svh, 160px); }
@@ -2089,6 +2085,10 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .seed-hero .hero-copy h1 { white-space: normal !important; text-wrap: balance; max-width: 15em; margin-inline: auto; }
 @media (min-width: 768px) { .seed-hero .hero-copy { max-width: 980px; } .seed-hero .hero-copy h1 { font-size: min(var(--t-display-xl), 5.6vw); } }
 @media (max-width: 767px) { .seed-hero .hero-copy h1 { margin-inline: 0; font-size: min(8.4vw, 36px); } }
+
+/* Funciones: las tres vistas previas llenan su recuadro con el mismo borde mínimo y parejo en los cuatro lados. */
+.fd-stage { --box-y: 4.5cqw; --box-x: 4.5cqw; }
+.fd-rsvp .fd-form { align-content: space-evenly; height: calc(100cqh - 2 * var(--box-y)); }
 
 /* Funciones: las tres cards tienen el mismo tamaño. */
 

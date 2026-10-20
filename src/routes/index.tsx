@@ -41,10 +41,10 @@ const features = [
   { title: 'Confirmación de asistencia', note: 'Reciban las respuestas de sus invitados y organicen quiénes los acompañarán.', icon: <RsvpDemo /> },
 ];
 const giftSteps = [
-  { title: 'Creá tu cuenta y armá tu sitio', text: 'Gratis y sin tarjeta. Cargá la fecha, los lugares y tu foto.', Icon: UserPlus },
-  { title: 'Armá tu lista de regalos', text: 'Elegí entre ideas listas o sumá los regalos que quieras.', Icon: Gift },
-  { title: 'Sumá tu alias y tu tarjeta', text: 'Elegí cómo reciben los aportes de tus invitados.', Icon: Wallet },
-  { title: 'Seguí los regalos de tus invitados', text: 'Mirá quién regaló qué y no te olvides de agradecer.', Icon: BellRing },
+  { title: 'Creá tu cuenta y armá tu sitio', Icon: UserPlus },
+  { title: 'Armá tu lista de regalos', Icon: Gift },
+  { title: 'Sumá tu alias y tu tarjeta', Icon: Wallet },
+  { title: 'Seguí los regalos de tus invitados', Icon: BellRing },
 ];
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
 // CTA de la landing. Cada uno tiene un destino real (una sección de esta página o una ruta existente);
@@ -148,7 +148,7 @@ function Index() {
       <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear/cuenta">Crear mi evento</SeedLink></div></div></div>
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
-    <section className="duo-section" id="regalos"><div className="duo-split"><div className="duo-photo"><img src="/ejemplo-foto-1.webp" alt="Una pareja caminando abrazada en un campo" loading="lazy" decoding="async"/></div><div className="duo-panel"><p className="eyebrow">Regalos</p><h2>Una lista de regalos hecha para ustedes.</h2><ol className="duo-steps">{giftSteps.map(({ title, text, Icon }, i) => <li key={title}><span className="duo-step-ico" aria-hidden="true"><Icon size={30} strokeWidth={1.4} /></span><span className="duo-step-n">Paso {i + 1}</span><b>{title}</b><span className="duo-step-text">{text}</span></li>)}</ol><div className="duo-cta"><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink><SeedLink to="/ejemplo/regalos">Ver cómo la ven tus invitados</SeedLink></div></div></div></section>
+    <section className="duo-section" id="regalos"><div className="duo-split"><div className="duo-photo"><img src="/ejemplo-foto-1.webp" alt="Una pareja caminando abrazada en un campo" loading="lazy" decoding="async"/></div><div className="duo-panel"><p className="eyebrow">Regalos</p><h2>Una lista de regalos hecha para ustedes.</h2><ol className="duo-steps">{giftSteps.map(({ title, Icon }, i) => <li key={title}><span className="duo-step-n" aria-hidden="true">{i + 1}</span><Icon className="duo-step-ico" size={22} strokeWidth={1.4} aria-hidden="true" /><b>{title}</b></li>)}</ol><div className="duo-cta"><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink><SeedLink to="/ejemplo/regalos">Ver cómo la ven tus invitados</SeedLink></div></div></div></section>
     <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
     <LandingPlans />
     </main>

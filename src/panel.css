@@ -653,7 +653,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* Onboarding · paso de la foto: portada a la vista con los nombres, subir foto como acción principal y «Ahora no» discreto. */
 .pn-photo-step { gap: 16px; }
-.pn-cover-preview { position: relative; height: min(36dvh, 280px); width: auto; aspect-ratio: 4 / 5; max-width: 100%; margin: 0 auto; border-radius: var(--pn-r-card); overflow: hidden; background: var(--pn-surface-2); }
+.pn-cover-preview { position: relative; height: auto; width: 100%; aspect-ratio: 1 / 1; max-width: 100%; margin: 0 auto; border-radius: var(--pn-r-card); overflow: hidden; background: var(--pn-surface-2); }
 .pn-cover-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .pn-photo-ok { text-align: center; font-size: 15px; color: #34502c; }
 .pn-skip { justify-self: center; min-height: 44px; color: var(--pn-muted); }
@@ -662,7 +662,8 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* Paso de la foto: título en un solo renglón (≈12,45 em de ancho); la foto va sola, chica y centrada, sin texto encima. */
 .pn-photo-step .pn-account-head h1 { font-size: min(var(--t-page), calc((100vw - 84px) / 12.8)); white-space: nowrap; }
-@media (max-height: 640px) { .pn-cover-preview { height: 32dvh; } }
+/* Pantallas bajas: la foto sigue cuadrada pero un poco más chica para que los botones queden a la vista. */
+@media (max-height: 700px) { .pn-cover-preview { width: min(100%, 40dvh); } }
 
 /* Regalos en pantallas muy angostas (320 px): la barra de selección y las solapas no se cortan ni parten. */
 @media (max-width: 360px) {
