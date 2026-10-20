@@ -2028,3 +2028,27 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   /* Cierre: el footer sube con la misma curva que la sección de regalos y respira menos. */
   .seed-footer { border-radius: 24px 24px 0 0; padding-top: 36px; }
 }
+
+/* "Todo para compartir su casamiento": más aire arriba y abajo en la misma medida, para que el contenido quede centrado en el bloque. */
+.products-section { padding-top: clamp(72px, 12svh, 140px); padding-bottom: calc(clamp(72px, 12svh, 140px) + var(--curve)); }
+
+/* Regalos: sección más grande, con el paso a paso en tarjetas con ícono. */
+.duo-section { padding: clamp(80px, 13svh, 150px) 0; }
+.duo-section .duo-layout { grid-template-columns: 1fr; gap: clamp(40px, 7vw, 72px); justify-items: center; align-items: start; }
+.duo-section .duo-copy { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0; margin: 0; top: 0; }
+.duo-section .duo-copy h2 { max-width: 640px; }
+.duo-section .duo-copy > p:not(.eyebrow) { max-width: 52ch; margin: 20px auto 28px; }
+.duo-steps { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 1180px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; counter-reset: none; }
+.duo-steps li { position: relative; display: grid; align-content: start; gap: 8px; padding: 28px 24px 30px; border-radius: 24px; background: rgb(255 255 255 / .1); border: 1px solid rgb(255 255 255 / .18); }
+.duo-steps li::before { content: none; }
+.duo-steps li + li::after { content: ''; position: absolute; left: -17px; top: 58px; width: 16px; border-top: 1px dashed rgb(255 255 255 / .55); }
+.duo-step-ico { display: grid; place-items: center; width: 68px; height: 68px; margin-bottom: 14px; border-radius: 50%; background: var(--paper); color: var(--slate); }
+.duo-step-n { font-size: 12px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: rgb(255 255 255 / .75); }
+.duo-steps b { font-size: 19px; font-weight: var(--w-medium); line-height: 1.25; text-wrap: balance; }
+.duo-step-text { font-size: 14.5px; line-height: 1.5; color: rgb(255 255 255 / .82); }
+@media (max-width: 1000px) { .duo-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } .duo-steps li + li::after { display: none; } }
+@media (max-width: 560px) {
+  .duo-steps { grid-template-columns: 1fr; gap: 12px; }
+  .duo-steps li { grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; row-gap: 2px; padding: 20px; }
+  .duo-step-ico { grid-row: 1 / 4; width: 56px; height: 56px; margin: 0; }
+}
