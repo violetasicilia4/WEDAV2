@@ -1346,3 +1346,25 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .rg-foot { flex-wrap: wrap; }
   .rg-pack .rg-foot .pn-btn { flex: 1; }
 }
+
+/* ===== Celular: Regalos ===== */
+/* Encabezado: título y descripción a lo ancho; los dos botones debajo, lado a lado. */
+@media (max-width: 640px) {
+  .pn-page-head.is-compact.rg-head { flex-wrap: wrap; align-items: stretch; gap: 14px; }
+  .pn-page-head.is-compact.rg-head > div:first-child { flex: 1 1 100%; }
+  .pn-page-head.is-compact.rg-head .rg-head-actions { flex: 1 1 100%; flex-wrap: nowrap; }
+  .pn-page-head.is-compact.rg-head .rg-head-actions .pn-btn { flex: 1 1 0; min-width: 0; padding: 0 10px; }
+}
+/* Solapas: una sola línea cada una, con desplazamiento si no entran (nunca se parten en dos renglones). */
+@media (max-width: 560px) {
+  .pn-tabs { display: flex; overflow-x: auto; scroll-snap-type: x proximity; }
+  .pn-tabs button { flex: 1 0 auto; white-space: nowrap; padding: 0 14px; scroll-snap-align: center; }
+}
+.pn-btn > svg { flex: none; }
+
+/* Celular: pie de los diálogos con formulario. Cancelar y Guardar comparten fila (el principal, a la derecha); la acción destructiva queda aparte arriba, lejos de Guardar. */
+@media (max-width: 560px) {
+  .pn-dialog .pn-actions.is-end { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+  .pn-dialog .pn-actions.is-end > .pn-link { grid-column: 1 / -1; justify-self: start; order: -1; }
+  .pn-dialog .pn-actions.is-end > .pn-btn { width: 100%; }
+}
