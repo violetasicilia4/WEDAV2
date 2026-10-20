@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { CalendarDays, Check, ChevronUp, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, List, Pencil, Plus, Users, Wallet, X } from 'lucide-react';
-import { Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
+import { CoupleCover, Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/catalog';
 import { formatARS, type Gift } from '@/lib/demo-wedding';
@@ -281,6 +281,7 @@ function GiftsModule() {
 
   return (
     <div className="pn-page">
+      <CoupleCover variant="gifts" eyebrow="Lista de regalos de" />
       <header className="pn-page-head is-compact">
         <div>
           <h1>Tu lista de regalos</h1>

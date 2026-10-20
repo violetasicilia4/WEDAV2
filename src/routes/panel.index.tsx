@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Gift, Globe, Lock, Pencil, Users } from 'lucide-react';
 import { CoupleDialog } from '@/components/panel/couple-form';
-import { ConfirmDialog, usePlans } from '@/components/panel/ui';
+import { ConfirmDialog, CoupleCover, usePlans } from '@/components/panel/ui';
 import { formatARS } from '@/lib/demo-wedding';
 import { eventComplete, nextAction, sectionGaps, stages, type Stage, type StageStatus } from '@/lib/weda/journey';
-import { coupleLabel, dateLabel, giftTotal } from '@/lib/weda/logic';
+import { giftTotal } from '@/lib/weda/logic';
 import { planFor } from '@/lib/weda/plans';
 import { reset, useAppState } from '@/lib/weda/store';
 
@@ -47,19 +47,16 @@ function Home() {
 
   return (
     <div className="pn-page pn-journey">
-      <header className="pn-home-head">
-        <h1><span>Hola,</span> {coupleLabel(s.couple)}</h1>
-        <p className="pn-sub">
-          {s.date ? dateLabel(s.date) : 'Fecha por definir'} · <button type="button" className="pn-link" onClick={() => setEditing(true)}><Pencil size={12} aria-hidden="true" /> Editar datos</button>
-        </p>
-      </header>
+      <CoupleCover eyebrow="Tu casamiento">
+        <button type="button" className="pn-btn is-small" onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> Editar datos</button>
+      </CoupleCover>
 
-      <ul className="pn-stats" aria-label="Resumen">
+      <ul className="pn-kpis" aria-label="Resumen">
         {stats.map(x => (
-          <li key={x.label} className="pn-stat">
-            <span className="pn-stat-label">{x.label}</span>
+          <li key={x.label} className="pn-kpi">
+            <span className="pn-kpi-label">{x.label}</span>
             <strong className="num">{x.n}</strong>
-            <span className="pn-stat-sub">{x.sub}</span>
+            <span className="pn-kpi-sub">{x.sub}</span>
           </li>
         ))}
       </ul>

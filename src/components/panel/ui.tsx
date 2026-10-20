@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useId, useRef, useSt
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Check, Lock } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { draftsFor, setPlan } from '@/lib/weda/logic';
+import { coupleLabel, dateLabel, draftsFor, isSamplePhoto, photoPosition, resolvePhoto, setPlan } from '@/lib/weda/logic';
 import { publishSummary } from '@/lib/weda/publish';
 import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, type Feature } from '@/lib/weda/plans';
 import { update, useAppState, useStorageFull } from '@/lib/weda/store';
@@ -24,6 +24,26 @@ export function Field({ label, error, hint, optional, children }: FieldProps) {
       {hint && !error && <p className="pn-hint" id={`${id}-h`}>{hint}</p>}
       {error && <p className="pn-error" id={`${id}-e`} role="alert">{error}</p>}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ portada de la pareja */
+
+/** Bloque con la foto elegida, los nombres y la fecha: hace que el panel y la lista de regalos se sientan propios. */
+export function CoupleCover({ eyebrow, variant = 'home', children }: { eyebrow?: string; variant?: 'home' | 'gifts'; children?: ReactNode }) {
+  const s = useAppState();
+  const src = resolvePhoto(s.photo);
+  const pos = isSamplePhoto(s.photo) ? photoPosition(s.photo) : undefined;
+  return (
+    <section className={`pn-cover is-${variant}`} aria-label={`Portada de ${coupleLabel(s.couple)}`}>
+      <img className="pn-cover-img" src={src} alt="" style={pos ? { objectPosition: pos } : undefined} />
+      <div className="pn-cover-text">
+        {eyebrow && <p className="pn-cover-eyebrow">{eyebrow}</p>}
+        <h2>{coupleLabel(s.couple)}</h2>
+        <p className="pn-cover-date">{s.date ? dateLabel(s.date) : 'Fecha por definir'}</p>
+      </div>
+      {children && <div className="pn-cover-actions">{children}</div>}
+    </section>
   );
 }
 
