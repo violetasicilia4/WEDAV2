@@ -11,7 +11,8 @@ export type PhotoChoice =
   | { kind: 'weda'; id: string }
   | { kind: 'none' };
 
-export type Couple = { first: string; second: string };
+/** Nombres de la pareja. Los apellidos son opcionales: se piden al empezar y por ahora no se muestran en ningún lado. */
+export type Couple = { first: string; second: string; firstLast?: string; secondLast?: string };
 
 /** Regalo simbólico dentro de la lista de la pareja. `fromSet` recuerda de qué colección vino (si vino de una). */
 export type ListGift = {

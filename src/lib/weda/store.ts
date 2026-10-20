@@ -84,7 +84,7 @@ export function sanitize(raw: unknown): AppState {
   const c = isObj(raw['couple']) ? raw['couple'] : {}, g = isObj(raw['gifts']) ? raw['gifts'] : {};
   return {
     version: 2, onboarded: bool(raw['onboarded'], false),
-    couple: { first: str(c['first']), second: str(c['second']) },
+    couple: { first: str(c['first']), second: str(c['second']), ...(str(c['firstLast']) ? { firstLast: str(c['firstLast']) } : {}), ...(str(c['secondLast']) ? { secondLast: str(c['secondLast']) } : {}) },
     date: typeof raw['date'] === 'string' ? raw['date'] : null,
     photo: photo(raw['photo']),
     preferredPlan: planOf(raw['preferredPlan'], from),

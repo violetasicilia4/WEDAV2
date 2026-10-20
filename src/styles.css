@@ -1723,65 +1723,46 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 16px !important; }
 }
 
-/* ---------- Encontrá un casamiento (pantalla de invitados): portada con foto, buscador y parejas ---------- */
-/* ---------- Encontrá tu casamiento: portada con foto, buscador debajo ---------- */
+/* ---------- Encontrá un casamiento (invitados): franja con foto, buscador sobre su borde y parejas en círculos ---------- */
 .find { min-height: 100svh; background: #fff; color: var(--foreground); }
-.find-hero { position: relative; display: grid; place-items: center; height: clamp(520px, calc(100svh - 24px), 900px); color: #fff; overflow: hidden; background: #3b3c3a; isolation: isolate; border-radius: 0 0 25px 25px; }
-.find-hero-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
-.find-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / .4), rgb(0 0 0 / .12) 30%, rgb(0 0 0 / .12) 62%, rgb(0 0 0 / .34)), radial-gradient(ellipse 60% 30% at 50% 52%, rgb(0 0 0 / .32), rgb(0 0 0 / 0) 100%); }
+.find-hero { position: relative; display: grid; place-items: center; height: clamp(340px, 46svh, 460px); color: #fff; overflow: hidden; background: #3b3c3a; isolation: isolate; border-radius: 0 0 25px 25px; }
+.find-hero-img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
+.find-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / .45), rgb(0 0 0 / .22) 45%, rgb(0 0 0 / .42)); }
 .find-hero .float-nav { position: absolute; top: calc(8px + env(safe-area-inset-top)); left: 0; right: 0; height: auto; margin: 0; }
-.find-hero-copy { display: grid; justify-items: center; gap: clamp(22px, 3.4vh, 32px); width: 92%; text-align: center; padding-top: 24px; }
-.find-hero-copy h1 { margin: 0; font-size: clamp(34px, 4.6vw, 68px); line-height: 1.05; font-weight: 400; letter-spacing: -.01em; text-shadow: 0 2px 22px rgb(0 0 0 / .4); text-wrap: balance; }
-.find-hero-btn { min-height: 44px; padding: 0 30px; border: 0; border-radius: 999px; background: #fff; color: var(--foreground); font: inherit; font-size: 15px; cursor: pointer; transition: background .2s; }
-.find-hero-btn:hover { background: #f4f4f2; }
-.find-hero-btn:focus-visible, .find-submit:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
-.find-main { width: min(92%, 620px); margin: 0 auto; padding: clamp(56px, 9vh, 96px) 0 clamp(72px, 12vh, 140px); scroll-margin-top: 24px; }
-.find-form label { display: block; margin: 0 0 12px 4px; font-size: 15px; color: var(--foreground); }
+.find-hero-copy { display: grid; justify-items: center; gap: 10px; width: 92%; padding: 44px 0 40px; text-align: center; }
+.find-hero-copy h1 { margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: var(--w-medium); letter-spacing: var(--ls-display); text-wrap: balance; text-shadow: 0 2px 22px rgb(0 0 0 / .35); }
+.find-hero-copy p { margin: 0; max-width: 34ch; font-size: clamp(15px, 1.3vw, 18px); line-height: 1.4; text-wrap: balance; opacity: .92; }
+.find .float-close { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; line-height: 1; }
+.find-main { position: relative; width: min(92%, 1080px); margin: 0 auto; padding: 0 0 clamp(64px, 10svh, 112px); }
+.find-form { position: relative; z-index: 2; width: min(100%, 640px); margin: -30px auto 0; }
 .find-field { position: relative; display: flex; align-items: center; }
-.find-field input { width: 100%; height: 56px; padding: 0 76px 0 26px; border: 1px solid rgb(59 60 58 / .2); border-radius: 999px; background: #fbfaf7; color: var(--foreground); font: inherit; font-size: 17px; }
+.find-icon { position: absolute; left: 22px; color: var(--muted-foreground); pointer-events: none; }
+.find-field input { width: 100%; height: 60px; padding: 0 58px; border: 1px solid rgb(59 60 58 / .14); border-radius: 999px; background: #fff; color: inherit; font: inherit; font-size: 17px; box-shadow: 0 10px 30px rgb(59 60 58 / .14), 0 1px 2px rgb(59 60 58 / .08); }
 .find-field input::placeholder { color: var(--muted-foreground); }
-.find-field input:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
-.find-submit { position: absolute; right: 7px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #4f5b66; color: #fff; cursor: pointer; transition: background .2s; }
-.find-submit:hover { background: #3f4a54; }
-.find-results { margin-top: 28px; }
-.find-results ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.find-card { display: grid; gap: 4px; padding: 20px 22px; border-radius: 18px; background: #f4f4f2; color: inherit; text-decoration: none; transition: background .2s; }
-.find-card:hover { background: #ecece9; }
-.find-card:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
-.find-names { font-size: 21px; line-height: 1.2; }
-.find-meta { font-size: 14px; color: var(--muted-foreground); }
-.find-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 14px; text-decoration: underline; text-underline-offset: 5px; }
-.find-empty { margin: 0; font-size: 15px; line-height: 1.5; color: var(--muted-foreground); }
-.find .float-link { display: inline-flex; align-items: center; gap: 8px; }
-/* portada recortada: tres cuartos de la pantalla, para que el buscador se vea en la primera pantalla */
-.find-hero { height: clamp(380px, 72svh, 720px); }
-.find-main { padding-top: clamp(28px, 5svh, 52px); padding-bottom: clamp(56px, 10vh, 120px); }
-/* resultados: parejas en círculos, con su nombre y el botón "Regalá" */
-.find-main { width: min(92%, 1100px); }
-.find-form { width: min(100%, 620px); margin: 0 auto; }
-.find-results { margin-top: clamp(36px, 6svh, 64px); }
-.find-circles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px clamp(16px, 2.4vw, 40px); }
-.find-circles li { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.find-photo { display: block; width: 100%; max-width: 190px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #f4f4f2; }
-.find-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); }
-.find-names { margin: 20px 0 0; font-size: clamp(16px, 1.5vw, 20px); font-weight: 400; line-height: 1.2; }
-.find-btn { display: inline-flex; align-items: center; justify-content: center; width: min(100%, 172px); min-height: 44px; margin-top: 16px; border: 1px solid rgb(59 60 58 / .2); border-radius: 999px; background: #fbfaf7; color: var(--foreground); font-size: 15px; text-decoration: none; transition: background .2s, border-color .2s; }
-.find-btn:hover { background: #fff; border-color: var(--foreground); }
-.find-btn:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.find-field input:focus, .find-field input:focus-visible { outline: none; border-color: rgb(59 60 58 / .45); box-shadow: 0 10px 30px rgb(59 60 58 / .14), 0 0 0 4px rgb(59 60 58 / .08); }
+.find-field input[type="search"]::-webkit-search-cancel-button { display: none; }
+.find-clear { position: absolute; right: 10px; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.find-clear:hover { background: rgb(59 60 58 / .08); color: var(--foreground); }
+.find-clear:focus-visible, .find-couple:focus-visible, .find-reset:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.find-results { margin-top: clamp(40px, 7svh, 72px); }
+.find-count { margin: 0 0 28px; text-align: center; font-size: 14px; color: var(--muted-foreground); }
+.find-circles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 44px clamp(16px, 2.4vw, 40px); }
+.find-circles li { display: flex; justify-content: center; }
+.find-couple { display: flex; flex-direction: column; align-items: center; width: 100%; color: inherit; text-decoration: none; text-align: center; }
+.find-couple:focus-visible { outline-offset: 8px; border-radius: 24px; }
+.find-photo { display: block; width: 100%; max-width: 184px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #f4f4f2; box-shadow: 0 0 0 1px rgb(59 60 58 / .08); transition: transform .25s ease, box-shadow .25s ease; }
+.find-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.find-couple:hover .find-photo { transform: translateY(-3px); box-shadow: 0 12px 28px rgb(59 60 58 / .18); }
+.find-names { margin: 18px 0 0; font-size: clamp(16px, 1.4vw, 19px); font-weight: var(--w-medium); line-height: 1.2; }
+.find-cta { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 13.5px; color: var(--muted-foreground); transition: color .2s; }
+.find-couple:hover .find-cta { color: var(--foreground); }
+.find-empty { display: grid; justify-items: center; gap: 14px; text-align: center; }
+.find-empty p { margin: 0; max-width: 44ch; font-size: 15px; line-height: 1.5; color: var(--muted-foreground); }
+.find-reset { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--foreground); font: inherit; font-size: 15px; text-decoration: underline; text-underline-offset: 5px; cursor: pointer; }
+.find-note { margin: 56px 0 0; text-align: center; font-size: 13px; color: var(--muted-foreground); }
 .find-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.find-note { margin: 32px 0 0; text-align: center; font-size: 12px; color: var(--muted-foreground); }
-.find-empty { text-align: center; }
-@media (max-width: 900px) { .find-circles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* buscador: sin el contorno negro al enfocar; el foco se nota con el borde y un halo suave */
-.find-field input:focus, .find-field input:focus-visible { outline: none; border-color: rgb(59 60 58 / .45); box-shadow: 0 0 0 4px rgb(59 60 58 / .08); }
-.find-field input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
-/* cada pareja es un único bloque clickeable: la foto y el nombre (sin botón "Regalá") */
-.find-couple { display: flex; flex-direction: column; align-items: center; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: center; cursor: pointer; }
-.find-couple .find-names { display: block; margin: 20px 0 0; }
-.find-couple .find-photo { transition: transform .25s ease, box-shadow .25s ease; }
-.find-couple:hover .find-photo { transform: scale(1.03); box-shadow: 0 10px 28px rgb(0 0 0 / .14); }
-.find-couple:focus-visible { outline: 2px solid var(--foreground); outline-offset: 8px; border-radius: 24px; }
-@media (prefers-reduced-motion: reduce) { .find-couple .find-photo { transition: none; } .find-couple:hover .find-photo { transform: none; } }
+@media (max-width: 900px) { .find-circles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 16px; } .find-photo { max-width: 160px; } }
+@media (max-width: 640px) { .find-hero { height: clamp(300px, 42svh, 380px); } .find-hero-copy { padding: 52px 0 36px; } .find-field input { height: 56px; font-size: 16px; } .find-form { margin-top: -28px; } }
 
 /* el subtítulo del hero ahora es más largo: en pantallas medianas pasa a dos renglones en vez de salirse del ancho */
 @media (min-width: 960px) and (max-width: 1199px) { .seed-hero .hero-copy p { white-space: normal; max-width: 620px; margin-inline: auto; } }

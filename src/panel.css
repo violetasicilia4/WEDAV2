@@ -964,7 +964,10 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* ===== Alta (registro, datos y foto): foto de fondo y tarjeta clara =====
    Fondo fotográfico a pantalla completa y, encima, una tarjeta blanca casi opaca con los campos. Sin sombras ni colores nuevos. */
-.pn-flow { min-height: 100svh; background: #e9ece6 url('/fondo-registro.webp') center / cover no-repeat; }
+.pn-flow { min-height: 100svh; background: #e9ece6; isolation: isolate; }
+/* Fondo del registro: la landing de Weda en un iframe, vista a través de un velo claro y desenfocado. */
+.pn-flow-bg { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.pn-flow-veil { position: fixed; inset: 0; z-index: -1; background: rgb(0 0 0 / .55); pointer-events: none; }
 .pn-flow-head.is-account .pn-close { margin-top: 4px; background: rgb(255 255 255 / .92); }
 .pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: #fff; transform: none; }
 @media (max-width: 640px) {
@@ -1107,3 +1110,48 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-app .pn-cover-actions .pn-btn { background: rgb(255 255 255 / .88); border-color: transparent; backdrop-filter: blur(6px); }
 .pn-app .pn-cover-actions .pn-btn:hover:not(:disabled) { background: #fff; }
 @media (min-width: 768px) { .pn-cover { min-height: 260px; } .pn-cover.is-gifts { min-height: 170px; } .pn-cover-text { padding: 28px 32px; } .pn-cover-actions { top: 18px; right: 18px; } }
+
+/* Cruz de cierre dentro de la tarjeta del flujo de creación: arriba a la derecha, discreta. */
+.pn-flow .pn-account { position: relative; }
+.pn-flow-close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--pn-muted); }
+.pn-flow-close:hover { background: rgb(59 60 58 / .08); color: var(--pn-ink); }
+.pn-flow-close::after { content: ""; position: absolute; inset: -6px; }
+
+/* Flujo de creación: la tarjeta queda centrada en la pantalla (mismo aire arriba y abajo). */
+.pn-flow-main { padding-block: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-bottom)); }
+@media (min-width: 768px) { .pn-flow-main { padding-block: 32px; } }
+.pn-flow .pn-account { margin-block: auto; }
+
+/* ---------- Datos del casamiento (/crear): página completa con progreso, formulario a la izquierda y foto a la derecha ---------- */
+.pn-flow.is-onboarding { background: #fff; }
+.pn-flow.is-onboarding .pn-flow-main { width: min(calc(100% - 40px), 1200px); padding: 0; }
+.ob { display: flex; flex-direction: column; min-height: 100svh; }
+.ob-top { display: grid; gap: 22px; justify-items: center; padding: 28px 0 0; }
+.ob-top .seed-logo { font-size: 26px; }
+.ob-bar { width: 100%; height: 6px; border-radius: 999px; background: rgb(59 60 58 / .1); overflow: hidden; }
+.ob-bar i { display: block; width: 66%; height: 100%; border-radius: 999px; background: var(--pn-slate-d); }
+.ob-body { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 7vw, 112px); padding-block: clamp(28px, 5svh, 64px); }
+.ob-form { width: min(100%, 540px); justify-self: center; }
+.ob-form h1 { font-size: clamp(28px, 3vw, 40px); line-height: 1.1; font-weight: var(--w-semibold); letter-spacing: var(--ls-title); text-wrap: balance; }
+.ob-form .ob-sub { margin: 12px 0 clamp(24px, 4svh, 40px); font-size: 17px; line-height: 1.45; color: var(--pn-muted); }
+.ob-photo { justify-self: center; width: min(100%, 440px); aspect-ratio: 4 / 5; max-height: 64svh; margin: 0; border-radius: 28px; overflow: hidden; background: var(--pn-surface-2); }
+.ob-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ob-foot { display: flex; justify-content: center; gap: 12px; padding: 12px 0 max(36px, env(safe-area-inset-bottom)); }
+.ob-foot .pn-btn { width: min(240px, 46%); min-height: 52px; }
+.pn-flow.is-onboarding .ob-foot .pn-btn.ob-next { background: var(--pn-slate-d); color: #fff; border-color: transparent; }
+.pn-flow.is-onboarding .ob-foot .pn-btn.ob-next:hover { background: color-mix(in srgb, var(--pn-slate-d) 85%, #000); }
+@media (max-width: 899px) {
+  .ob-body { grid-template-columns: 1fr; align-items: start; }
+  .ob-photo { display: none; }
+  .ob-form { justify-self: stretch; }
+  .ob-form .ob-sub { font-size: 16px; }
+}
+
+/* Pantallas de inicio: «&» entre las dos personas, foto cuadrada y subida de foto. */
+.ob-amp { margin: 0; font-size: 44px; line-height: 1; font-weight: var(--w-semibold); color: var(--pn-ink); }
+.ob-photo.is-square { aspect-ratio: 1 / 1; width: min(100%, 460px); }
+.ob-upload { width: 100%; justify-content: center; }
+.ob-form .ob-hint { margin: 14px 0 0; font-size: 14px; color: var(--pn-muted); }
+.ob-form .pn-error { margin-top: 12px; }
+/* En celular las fotos decorativas se ocultan, pero en la pantalla de la foto la vista previa es el contenido: se queda, cuadrada. */
+@media (max-width: 899px) { .ob-photo.is-square { display: block; width: min(100%, 340px); } }

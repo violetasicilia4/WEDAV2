@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ArrowLeft, Menu, X, Gift, CalendarHeart, LogIn } from 'lucide-react';
+import { Menu, X, Gift, CalendarHeart, LogIn } from 'lucide-react';
 
 /** Barra flotante de la landing. Se reutiliza tal cual en las demás pantallas para que el logo quede siempre en el mismo lugar. */
 export function FloatNav({ onLanding = false, back = false }: { onLanding?: boolean; back?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [loginHint, setLoginHint] = useState(false);
   const ref = useRef<HTMLElement>(null);
   // Una sola barra, como en Seed: sube con la página hasta pegarse arriba y sus píldoras se van "rellenando" (--p de 0 a 1).
   useEffect(() => {
@@ -38,7 +37,7 @@ export function FloatNav({ onLanding = false, back = false }: { onLanding?: bool
     document.documentElement.style.overflow = 'hidden';
     return () => { document.documentElement.style.overflow = prev; };
   }, [open]);
-  const close = () => { setOpen(false); setLoginHint(false); };
+  const close = () => setOpen(false);
   return (
     <header className="float-nav" ref={ref}>
       <nav className="float-bar" aria-label="Principal">
@@ -49,11 +48,11 @@ export function FloatNav({ onLanding = false, back = false }: { onLanding?: bool
         </div>
         {back ? (
           <div className="float-pill float-right">
-            <Link to="/" className="float-link"><ArrowLeft size={15} aria-hidden="true" /><span>Volver</span></Link>
+            <Link to="/" className="float-link float-close" aria-label="Cerrar y volver al inicio"><X size={20} strokeWidth={1.6} aria-hidden="true" /></Link>
           </div>
         ) : (
           <div className="float-pill float-right">
-            <Link to="/encontrar" className="float-link float-desktop">Hacé un regalo</Link>
+            <Link to="/crear/cuenta" search={{ modo: 'ingresar' }} className="float-link float-desktop">Iniciar sesión</Link>
             <Link to="/crear/cuenta" className="float-cta">Crear mi evento</Link>
             <button type="button" className="float-burger" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} aria-controls="float-menu" onClick={() => setOpen(o => !o)}>{open ? <X size={20} /> : <Menu size={20} />}</button>
           </div>
@@ -62,7 +61,7 @@ export function FloatNav({ onLanding = false, back = false }: { onLanding?: bool
       <div id="float-menu" ref={panelRef} className="float-menu" hidden={!open}>
         <Link to="/encontrar" className="menu-row" onClick={close}><span className="menu-tile"><Gift size={30} strokeWidth={1.4} /></span><span><small>Para invitados</small><strong>Hacé un regalo</strong></span></Link>
         <Link to="/crear/cuenta" className="menu-row" onClick={close}><span className="menu-tile"><CalendarHeart size={30} strokeWidth={1.4} /></span><span><small>Para novios</small><strong>Crear mi evento</strong></span></Link>
-        <button type="button" className="menu-row menu-row-btn" onClick={() => setLoginHint(true)}><span className="menu-tile"><LogIn size={30} strokeWidth={1.4} /></span><span><small aria-live="polite">{loginHint ? 'Próximamente' : 'Ya tengo cuenta'}</small><strong>Iniciar sesión</strong></span></button>
+        <Link to="/crear/cuenta" search={{ modo: 'ingresar' }} className="menu-row" onClick={close}><span className="menu-tile"><LogIn size={30} strokeWidth={1.4} /></span><span><small>Ya tengo cuenta</small><strong>Iniciar sesión</strong></span></Link>
       </div>
     </header>
   );

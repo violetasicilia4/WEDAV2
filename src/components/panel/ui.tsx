@@ -1,7 +1,7 @@
 // Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, módulos bloqueados y vista previa.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { coupleLabel, dateLabel, draftsFor, isSamplePhoto, photoPosition, resolvePhoto, setPlan } from '@/lib/weda/logic';
 import { publishSummary } from '@/lib/weda/publish';
@@ -25,6 +25,11 @@ export function Field({ label, error, hint, optional, children }: FieldProps) {
       {error && <p className="pn-error" id={`${id}-e`} role="alert">{error}</p>}
     </div>
   );
+}
+
+/** Cruz discreta dentro de la tarjeta del flujo de creación: cierra y vuelve al inicio. */
+export function FlowClose() {
+  return <Link to="/" className="pn-flow-close" aria-label="Cerrar y volver al inicio"><X size={18} strokeWidth={1.6} aria-hidden="true" /></Link>;
 }
 
 /* ------------------------------------------------------------------ portada de la pareja */

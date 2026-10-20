@@ -1,76 +1,67 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Field } from '@/components/panel/ui';
-import { todayIso, validateOnboarding } from '@/lib/weda/logic';
+import { OnboardingPhoto, OnboardingShell } from '@/components/panel/onboarding';
+import { validateOnboarding } from '@/lib/weda/logic';
 import { update, useAppState, useHydrated } from '@/lib/weda/store';
-import type { PhotoChoice } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/crear/')({
-  component: Onboarding,
+  component: Names,
 });
 
-/* Paso 2: datos del casamiento. La fecha es opcional: nadie queda bloqueado por no tenerla todavía. La foto se pide en el paso siguiente (/crear/foto). */
-function Onboarding() {
+/* Pantalla 1 de 3: quiénes se casan. Nombre y apellido de cada uno, con el «&» en el medio. Los apellidos son opcionales.
+   Después vienen la fecha y el lugar (/crear/fecha) y la foto (/crear/foto); al terminar se entra al panel. */
+function Names() {
   const navigate = useNavigate();
   const state = useAppState();
   const hydrated = useHydrated();
   const filled = useRef(false);
   const [first, setFirst] = useState('');
+  const [firstLast, setFirstLast] = useState('');
   const [second, setSecond] = useState('');
-  const [date, setDate] = useState('');
-  const [noDate, setNoDate] = useState(false);
-  // La foto se pide en el paso siguiente: acá se conserva la que hubiera (o la imagen de muestra).
-  const [photo, setPhoto] = useState<PhotoChoice>({ kind: 'none' });
+  const [secondLast, setSecondLast] = useState('');
   const [errors, setErrors] = useState<ReturnType<typeof validateOnboarding>>({});
 
-  // Si ya había datos guardados (por ejemplo, la pareja volvió desde el paso 2), se recuperan: no se pierde nada.
+  // Si ya había datos guardados (por ejemplo, la pareja volvió desde la pantalla siguiente), se recuperan: no se pierde nada.
   useEffect(() => {
     if (!hydrated || filled.current) return;
     filled.current = true;
-    if (state.couple.first || state.couple.second || state.onboarded) {
-      setFirst(state.couple.first); setSecond(state.couple.second);
-      setDate(state.date ?? ''); setNoDate(state.onboarded && !state.date);
-      setPhoto(state.photo);
-    }
+    setFirst(state.couple.first); setSecond(state.couple.second);
+    setFirstLast(state.couple.firstLast ?? ''); setSecondLast(state.couple.secondLast ?? '');
   }, [hydrated, state]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const found = validateOnboarding({ first, second, date, noDate });
+    const found = validateOnboarding({ first, second, date: '', noDate: true });
     setErrors(found);
-    if (Object.keys(found).length) {
-      document.getElementById(found.first ? 'on-first' : found.second ? 'on-second' : 'on-date')?.focus();
-      return;
-    }
-    update(s => ({ ...s, onboarded: true, couple: { first: first.trim(), second: second.trim() }, date: noDate ? null : date, photo }));
-    void navigate({ to: '/crear/foto' });
+    if (found.first || found.second) { document.getElementById(found.first ? 'on-first' : 'on-second')?.focus(); return; }
+    const couple = { first: first.trim(), second: second.trim(), ...(firstLast.trim() ? { firstLast: firstLast.trim() } : {}), ...(secondLast.trim() ? { secondLast: secondLast.trim() } : {}) };
+    update(s => ({ ...s, onboarded: true, couple }));
+    void navigate({ to: '/crear/fecha' });
   };
+  const text = (set: (v: string) => void, key?: 'first' | 'second') => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.value); if (key) setErrors(x => ({ ...x, [key]: undefined })); };
 
   return (
-    <div className="pn-account">
-      <header className="pn-account-head">
-        <h1>Creá tu evento</h1>
-        <p className="is-soft">Contanos lo básico. Lo demás lo completás después.</p>
-      </header>
-
-      <form onSubmit={submit} noValidate className="pn-form">
-        <Field label="Tu nombre" error={errors.first}>
-          {a => <input id="on-first" type="text" autoComplete="given-name" value={first} onChange={e => { setFirst(e.target.value); setErrors(x => ({ ...x, first: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-        </Field>
-        <Field label="El nombre de tu pareja" error={errors.second}>
-          {a => <input id="on-second" type="text" autoComplete="off" value={second} onChange={e => { setSecond(e.target.value); setErrors(x => ({ ...x, second: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-        </Field>
-        <Field label="Fecha del casamiento" error={errors.date}>
-          {a => <input id="on-date" type="date" min={todayIso()} value={noDate ? '' : date} disabled={noDate} onChange={e => { setDate(e.target.value); setErrors(x => ({ ...x, date: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-        </Field>
-        <label className="pn-toggle">
-          <input type="checkbox" role="switch" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} />
-          <span className="pn-toggle-track" aria-hidden="true" />
-          <span>Todavía no tenemos fecha</span>
-        </label>
-        <button type="submit" className="pn-btn pn-block">Continuar</button>
+    <OnboardingShell step={1} back="/crear/cuenta" formId="ob-names" title="Conozcámonos. ¿Cómo se llaman?" sub="Con estos datos armamos tu panel y tu sitio. Lo demás lo completás después." side={<OnboardingPhoto src="/ejemplo-foto-4.webp" />}>
+      <form id="ob-names" onSubmit={submit} noValidate className="pn-form">
+        <div className="pn-two">
+          <Field label="Tu nombre" error={errors.first}>
+            {a => <input id="on-first" type="text" autoComplete="given-name" value={first} onChange={text(setFirst, 'first')} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+          </Field>
+          <Field label="Tu apellido" optional>
+            {a => <input id="on-first-last" type="text" autoComplete="family-name" value={firstLast} onChange={text(setFirstLast)} aria-describedby={a.describedBy} />}
+          </Field>
+        </div>
+        <p className="ob-amp" aria-hidden="true">&amp;</p>
+        <div className="pn-two">
+          <Field label="Nombre de tu pareja" error={errors.second}>
+            {a => <input id="on-second" type="text" autoComplete="off" value={second} onChange={text(setSecond, 'second')} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+          </Field>
+          <Field label="Apellido de tu pareja" optional>
+            {a => <input id="on-second-last" type="text" autoComplete="off" value={secondLast} onChange={text(setSecondLast)} aria-describedby={a.describedBy} />}
+          </Field>
+        </div>
       </form>
-
-    </div>
+    </OnboardingShell>
   );
 }

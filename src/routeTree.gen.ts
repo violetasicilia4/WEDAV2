@@ -16,6 +16,7 @@ import { Route as EncontrarRouteImport } from './routes/encontrar'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as CrearIndexRouteImport } from './routes/crear.index'
 import { Route as CrearCuentaRouteImport } from './routes/crear.cuenta'
+import { Route as CrearFechaRouteImport } from './routes/crear.fecha'
 import { Route as CrearFotoRouteImport } from './routes/crear.foto'
 import { Route as CrearPlanRouteImport } from './routes/crear.plan'
 import { Route as EjemploIndexRouteImport } from './routes/ejemplo.index'
@@ -63,6 +64,11 @@ const CrearIndexRoute = CrearIndexRouteImport.update({
 const CrearCuentaRoute = CrearCuentaRouteImport.update({
   id: '/cuenta',
   path: '/cuenta',
+  getParentRoute: () => CrearRoute,
+} as any)
+const CrearFechaRoute = CrearFechaRouteImport.update({
+  id: '/fecha',
+  path: '/fecha',
   getParentRoute: () => CrearRoute,
 } as any)
 const CrearFotoRoute = CrearFotoRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/encontrar': typeof EncontrarRoute
   '/panel': typeof PanelRouteWithChildren
   '/crear/cuenta': typeof CrearCuentaRoute
+  '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
   '/crear/plan': typeof CrearPlanRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/encontrar': typeof EncontrarRoute
   '/crear/cuenta': typeof CrearCuentaRoute
+  '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
   '/crear/plan': typeof CrearPlanRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/encontrar': typeof EncontrarRoute
   '/panel': typeof PanelRouteWithChildren
   '/crear/cuenta': typeof CrearCuentaRoute
+  '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
   '/crear/plan': typeof CrearPlanRoute
   '/ejemplo/regalos': typeof EjemploRegalosRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/encontrar'
     | '/panel'
     | '/crear/cuenta'
+    | '/crear/fecha'
     | '/crear/foto'
     | '/crear/plan'
     | '/ejemplo/regalos'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/'
     | '/encontrar'
     | '/crear/cuenta'
+    | '/crear/fecha'
     | '/crear/foto'
     | '/crear/plan'
     | '/ejemplo/regalos'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/encontrar'
     | '/panel'
     | '/crear/cuenta'
+    | '/crear/fecha'
     | '/crear/foto'
     | '/crear/plan'
     | '/ejemplo/regalos'
@@ -317,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/cuenta'
       fullPath: '/crear/cuenta'
       preLoaderRoute: typeof CrearCuentaRouteImport
+      parentRoute: typeof CrearRoute
+    }
+    '/crear/fecha': {
+      id: '/crear/fecha'
+      path: '/fecha'
+      fullPath: '/crear/fecha'
+      preLoaderRoute: typeof CrearFechaRouteImport
       parentRoute: typeof CrearRoute
     }
     '/crear/foto': {
@@ -415,6 +434,7 @@ declare module '@tanstack/react-router' {
 
 interface CrearRouteChildren {
   CrearCuentaRoute: typeof CrearCuentaRoute
+  CrearFechaRoute: typeof CrearFechaRoute
   CrearFotoRoute: typeof CrearFotoRoute
   CrearPlanRoute: typeof CrearPlanRoute
   CrearIndexRoute: typeof CrearIndexRoute
@@ -422,6 +442,7 @@ interface CrearRouteChildren {
 
 const CrearRouteChildren: CrearRouteChildren = {
   CrearCuentaRoute: CrearCuentaRoute,
+  CrearFechaRoute: CrearFechaRoute,
   CrearFotoRoute: CrearFotoRoute,
   CrearPlanRoute: CrearPlanRoute,
   CrearIndexRoute: CrearIndexRoute,

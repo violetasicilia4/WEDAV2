@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
-import { Field } from '@/components/panel/ui';
+import { Field, FlowClose } from '@/components/panel/ui';
 
 export const Route = createFileRoute('/crear/cuenta')({
+  // «?modo=ingresar» abre la pantalla en «Ingresá a Weda» (el botón «Iniciar sesión» de la landing).
+  validateSearch: (q: Record<string, unknown>): { modo?: 'ingresar' } => (q['modo'] === 'ingresar' ? { modo: 'ingresar' } : {}),
   component: Account,
 });
 
@@ -29,7 +31,8 @@ const AppleMark = () => (
    solo da paso al armado del evento. */
 function Account() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('signup');
+  const { modo } = Route.useSearch();
+  const [mode, setMode] = useState<Mode>(modo === 'ingresar' ? 'login' : 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -50,6 +53,7 @@ function Account() {
 
   return (
     <div className="pn-account">
+      <FlowClose />
       <header className="pn-account-head">
         <h1>¡Bienvenidos!</h1>
         <p>{signup ? 'Registrate en Weda' : 'Ingresá a Weda'}</p>
