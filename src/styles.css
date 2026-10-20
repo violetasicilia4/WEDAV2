@@ -2052,7 +2052,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .duo-steps li { grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; row-gap: 2px; padding: 20px; }
   .duo-step-ico { grid-row: 1 / 4; width: 56px; height: 56px; margin: 0; }
 }
-.duo-section .duo-cta { display: flex; justify-content: center; }
+.duo-section .duo-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 28px; }
+.duo-section .duo-cta .seed-link-button { color: #fff; height: auto; }
+.duo-section .duo-cta .seed-button { margin: 0; }
 
 /* Testimonios: la sección gana jerarquía; alta como la pantalla, título grande y tarjetas con aire. */
 .viacap-section { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; min-height: max(100svh, 720px); padding-block: clamp(80px, 14svh, 160px); }
@@ -2070,6 +2072,20 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .viacap-section .tm-slide blockquote { font-size: clamp(18px, 1.6vw, 23px); line-height: 1.5; }
 }
 @media (max-width: 640px) { .viacap-section { min-height: 0; padding-block: clamp(56px, 9svh, 80px); } }
+
+/* Primera pantalla: el título explica qué es Weda y puede ocupar dos líneas. */
+.seed-hero .hero-copy h1 { white-space: normal !important; text-wrap: balance; max-width: 15em; margin-inline: auto; }
+@media (min-width: 768px) { .seed-hero .hero-copy { max-width: 980px; } .seed-hero .hero-copy h1 { font-size: min(var(--t-display-xl), 5.6vw); } }
+@media (max-width: 767px) { .seed-hero .hero-copy h1 { margin-inline: 0; font-size: min(8.4vw, 36px); } }
+
+/* Funciones: la lista de regalos, que es el diferencial, ocupa más ancho que las otras dos. */
+@media (min-width: 1001px) {
+  .feat-grid { grid-template-columns: 1.45fr 1fr 1fr; }
+  .feat-grid .fd-stage { aspect-ratio: auto; height: clamp(300px, 26vw, 380px); }
+}
+
+/* Planes: para quién es cada uno, visible antes de abrir el detalle. */
+.plan-for-line { margin: 12px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted-foreground); }
 .duo-section .duo-copy .eyebrow { text-transform: uppercase; letter-spacing: .08em; }
 .duo-section .duo-copy h2 { max-width: none; }
 @media (min-width: 640px) { .duo-section .duo-copy h2 { white-space: nowrap; font-size: clamp(26px, 4.4vw, var(--t-display-l)); } }

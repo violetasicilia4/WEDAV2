@@ -13,13 +13,13 @@ function PlanCard({ plan }: { plan: Plan }) {
       <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
       <p className="plan-sub">{plan.tagline}</p>
       <p className="plan-price"><strong>{formatPrice(plan.price)}</strong><span>{PRICE_UNIT}</span></p>
+      <p className="plan-for-line">{plan.summary}</p>
       <ul>
         {base && <li className="plan-inherit"><Check size={18} strokeWidth={1.6} aria-hidden="true" /><span><strong>Todo lo de {base.name}</strong>, y además:</span></li>}
         {plan.items.slice(0, HIGHLIGHTS).map(it => <li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true" /><span>{it}</span></li>)}
       </ul>
       <details className="plan-more">
         <summary>Ver todo lo que incluye</summary>
-        <p className="plan-for">{plan.summary}</p>
         {chain(plan).map(p => (
           <div key={p.id}>
             <h4>{p.name}</h4>
@@ -42,7 +42,7 @@ export function LandingPlans() {
           <p>Creá tu evento, personalizá tu micrositio y probá las herramientas de Weda. Sin tarjeta y sin elegir un plan por adelantado.</p>
         </div>
         <div className="plans-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
-        <p className="plans-note">Precios de referencia en pesos argentinos, de pago único. Elegís tu plan y pagás recién cuando querés publicar; hasta entonces no se cobra nada. La publicación y el pago se habilitan cuando el servicio esté conectado.</p>
+        <p className="plans-note">Precios de referencia en pesos, de pago único. Elegís tu plan y pagás recién cuando querés publicar; hasta entonces no se cobra nada. La publicación y el pago se habilitan cuando el servicio esté conectado.</p>
       </div>
     </section>
   );
