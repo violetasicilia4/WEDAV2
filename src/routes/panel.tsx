@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
-import { PlansProvider, SaveStatus, ToastProvider } from '@/components/panel/ui';
-import { coupleLabel } from '@/lib/weda/logic';
+import { PlansProvider, ToastProvider } from '@/components/panel/ui';
+import { coupleLabel, resolvePhoto } from '@/lib/weda/logic';
 import { can, planById, type Feature } from '@/lib/weda/plans';
 import { useAppSelector, useHydrated, useStorageFull } from '@/lib/weda/store';
 import '@/panel.css';
+
+/** Evento con el que el botón de arriba le pide a «Regalos» que abra la vista previa de la lista. */
+export const OPEN_GIFTS_PREVIEW = 'weda:open-gifts-preview';
 
 export const Route = createFileRoute('/panel')({
   head: () => ({
@@ -25,22 +28,18 @@ const NAV: NavItem[] = [
   { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
   { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
 ];
-/* En escritorio la barra lateral agrupa las secciones con una etiqueta; en el celular es la barra inferior, en el mismo orden. */
-const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: 'General', items: NAV.slice(0, 1) },
-  { label: 'Tu casamiento', items: NAV.slice(1) },
-];
-
-/* Migas de pan de la barra superior (solo escritorio): la pareja con su plan y la sección actual. */
-function Crumbs({ names, section }: { names: string; section: string }) {
-  const planId = useAppSelector(s => s.planId);
-  const plan = planById(planId);
+/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado (por ahora siempre borrador: publicar todavía no está conectado). Solo en escritorio. */
+function Profile() {
+  const photo = useAppSelector(s => s.photo);
+  const couple = useAppSelector(s => s.couple);
   return (
-    <nav className="pn-crumbs" aria-label="Ubicación">
-      <span className="pn-crumb"><span className="pn-crumb-ico" aria-hidden="true">{names.trim().charAt(0)}</span>{names}<em className="pn-badge">{plan ? plan.name : 'Prueba'}</em></span>
-      <span className="pn-crumb-sep" aria-hidden="true">/</span>
-      <span className="pn-crumb is-current" aria-current="page">{section}</span>
-    </nav>
+    <div className="pn-profile">
+      <img className="pn-profile-img" src={resolvePhoto(photo)} alt="" />
+      <div className="pn-profile-text">
+        <p className="pn-profile-names">{coupleLabel(couple)}</p>
+        <p className="pn-profile-meta"><span>Casamiento</span><i aria-hidden="true" /><span>Borrador</span></p>
+      </div>
+    </div>
   );
 }
 
@@ -54,7 +53,7 @@ function PanelLayout() {
   const full = useStorageFull();
   const pathname = useRouterState({ select: s => s.location.pathname });
   const onPreview = pathname === '/panel/vista-previa';
-  const section = onPreview ? 'Vista previa' : [...NAV].reverse().find(n => pathname === n.to || pathname.startsWith(`${n.to}/`))?.label ?? 'Inicio';
+  const onGifts = pathname === '/panel/regalos';
 
   // Sin evento no hay panel: se vuelve a crearlo. El plan no hace falta para entrar: se elige al publicar.
   useEffect(() => {
@@ -63,8 +62,6 @@ function PanelLayout() {
 
   if (!hydrated || !onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
 
-  const names = coupleLabel(couple);
-
   return (
     <ToastProvider>
       <PlansProvider>
@@ -72,29 +69,28 @@ function PanelLayout() {
         <a className="skip-link" href="#main">Ir al contenido</a>
         <header className="pn-top">
           <Link to="/panel" className="seed-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
-          <Crumbs names={names} section={section} />
-          <SaveStatus />
-          {!onPreview && <Link to="/panel/vista-previa" className="pn-btn pn-preview-btn"><Eye size={16} aria-hidden="true" /><span>Ver como invitado</span></Link>}
+          {/* Un solo botón arriba: en «Regalos» abre la vista previa de la lista; en el resto, la vista de invitado. */}
+          {!onPreview && (onGifts
+            ? <button type="button" className="pn-btn pn-preview-btn" onClick={() => window.dispatchEvent(new Event(OPEN_GIFTS_PREVIEW))}><Eye size={16} aria-hidden="true" /><span>Vista previa de la lista</span></button>
+            : <Link to="/panel/vista-previa" className="pn-btn pn-preview-btn"><Eye size={16} aria-hidden="true" /><span>Ver como invitado</span></Link>)}
         </header>
 
         <aside className="pn-side">
           <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
+          <Profile />
           <nav aria-label="Secciones del panel" className="pn-nav">
-            {NAV_GROUPS.map(g => (
-              <div key={g.label} className="pn-nav-group">
-                <p className="pn-nav-label" aria-hidden="true">{g.label}</p>
-                {g.items.map(n => {
-                  const locked = !!n.feature && !can(planId, n.feature);
-                  return (
-                    <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
-                      <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
-                      <span>{n.label}</span>
-                      {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
+            <div className="pn-nav-group">
+              {NAV.map(n => {
+                const locked = !!n.feature && !can(planId, n.feature);
+                return (
+                  <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
+                    <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
+                    <span>{n.label}</span>
+                    {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
         </aside>
 

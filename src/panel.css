@@ -1098,7 +1098,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* ===== Portada de la pareja: la foto elegida con los nombres y la fecha, en Inicio y en Regalos ===== */
 .pn-cover { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 200px; border-radius: var(--pn-r-sheet); overflow: hidden; background: var(--pn-soft-2); color: #fff; }
-.pn-cover.is-gifts { min-height: 150px; }
+.pn-cover.is-gifts { min-height: 180px; }
 .pn-cover-img { object-position: 50% 30%; position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
 .pn-cover::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(20 20 18 / 0) 35%, rgb(20 20 18 / .5) 100%); }
 .pn-cover-text { display: grid; gap: 2px; padding: 20px; min-width: 0; }
@@ -1109,7 +1109,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-cover-actions { position: absolute; top: 14px; right: 14px; }
 .pn-app .pn-cover-actions .pn-btn { background: rgb(255 255 255 / .88); border-color: transparent; backdrop-filter: blur(6px); }
 .pn-app .pn-cover-actions .pn-btn:hover:not(:disabled) { background: #fff; }
-@media (min-width: 768px) { .pn-cover { min-height: 260px; } .pn-cover.is-gifts { min-height: 170px; } .pn-cover-text { padding: 28px 32px; } .pn-cover-actions { top: 18px; right: 18px; } }
+@media (min-width: 768px) { .pn-cover { min-height: 260px; } .pn-cover.is-gifts { min-height: 230px; } .pn-cover-text { padding: 28px 32px; } .pn-cover-actions { top: 18px; right: 18px; } }
 
 /* Cruz de cierre dentro de la tarjeta del flujo de creación: arriba a la derecha, discreta. */
 .pn-flow .pn-account { position: relative; }
@@ -1252,4 +1252,97 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .ob-body.is-big .ob-photo-hint { min-height: 44px; padding: 0 18px; font-size: 15px; right: 12px; bottom: 12px; }
   .ob-body.is-big .ob-upload, .ob-body.is-big .ob-hint { display: none; }
   .ob-body.is-big .ob-skip { order: 4; margin-top: 14px; min-height: 44px; font-size: 16px; }
+}
+
+/* Barra lateral: menú plano (sin grupos) y bloque de perfil de la pareja arriba. */
+.pn-profile { display: none; }
+@media (min-width: 1024px) {
+  .pn-profile { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; padding: 10px 12px; border: 1px solid var(--pn-hair); border-radius: 16px; background: #fff; }
+  .pn-profile-img { flex: none; width: 44px; height: 44px; border-radius: 12px; object-fit: cover; background: var(--pn-soft-2); box-shadow: 0 0 0 1px var(--pn-hair); }
+  .pn-profile-text { min-width: 0; }
+  .pn-root .pn-profile-names { margin: 0; font-size: 15px; font-weight: var(--w-semibold); line-height: 1.25; letter-spacing: var(--ls-section); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pn-root .pn-profile-meta { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 12.5px; color: var(--pn-muted); }
+  .pn-profile-meta i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
+  .pn-side-logo { margin-bottom: 22px; }
+}
+
+/* ===== Lista de regalos: solapas Cómo funciona · Mis regalos · Catálogo y packs · Aportes recibidos · Datos de cobro ===== */
+.rg-head { align-items: flex-end; }
+.rg-head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rg-section-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+.rg-section-head > div:first-child { flex: 1 1 340px; min-width: 0; }
+.rg-section-head > .rg-head-actions, .rg-section-head > .rg-total, .rg-section-head > .pn-switch { flex: none; }
+.rg-section-head h2 { font-size: 20px; line-height: 1.2; letter-spacing: var(--ls-section); }
+.rg-section-head .pn-muted { margin-top: 4px; font-size: 14.5px; }
+.rg-label { display: block; font-size: 11.5px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: var(--pn-muted); }
+.rg-text { margin: 0; font-size: 14px; line-height: 1.45; color: var(--pn-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rg-chip { position: absolute; left: 12px; top: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px; background: rgb(255 255 255 / .94); color: var(--pn-ink); font-size: 12.5px; font-weight: var(--w-medium); }
+.rg-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--pn-hair); }
+.rg-foot strong { display: block; margin-top: 2px; font-size: 18px; font-weight: var(--w-semibold); font-variant-numeric: tabular-nums; }
+
+/* Cómo funciona */
+.rg-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.rg-kpi { display: grid; gap: 2px; padding: 20px 22px; border: 1px solid var(--pn-hair); border-radius: 20px; background: #fff; }
+.rg-kpi span { font-size: 14px; color: var(--pn-muted); }
+.rg-kpi strong { font-size: 32px; line-height: 1.15; font-weight: var(--w-semibold); letter-spacing: var(--ls-title); font-variant-numeric: tabular-nums; }
+.rg-kpi small { font-size: 13px; color: var(--pn-muted); }
+.pn-root .rg-eyebrow { margin: 30px 0 12px; font-size: 12.5px; font-weight: var(--w-medium); letter-spacing: .08em; text-transform: uppercase; color: var(--pn-muted); }
+.rg-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.rg-step { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 18px 22px; border: 1px solid var(--pn-hair); border-radius: 20px; background: #fff; }
+.rg-step-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--pn-soft); color: var(--pn-muted); }
+.rg-step.is-done .rg-step-ico { background: var(--pn-slate); color: #fff; }
+.rg-step h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 17px; line-height: 1.25; letter-spacing: var(--ls-section); }
+.rg-step p { margin: 4px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--pn-muted); }
+
+/* Mis regalos */
+.rg-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.rg-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--pn-hair); border-radius: 22px; background: #fff; }
+.rg-photo { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; background: var(--pn-soft); color: var(--pn-muted); overflow: hidden; }
+.rg-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rg-arrows { position: absolute; right: 10px; top: 10px; z-index: 2; display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgb(255 255 255 / .94); }
+.rg-arrows .pn-icon:disabled { opacity: .35; cursor: default; }
+.rg-body { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 16px 18px 18px; }
+.rg-body h3 { font-size: 17px; line-height: 1.25; letter-spacing: var(--ls-section); }
+.rg-actions { display: flex; gap: 2px; }
+
+/* Catálogo y packs */
+.rg-packs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.rg-pack { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--pn-hair); border-radius: 24px; background: #fff; }
+.rg-pack.is-on { border-color: var(--pn-slate); }
+.rg-pack-cover { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 190px; padding: 18px 20px; background: var(--pn-slate) center / cover no-repeat; color: #fff; }
+.rg-pack-cover::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(20 20 18 / 0) 35%, rgb(20 20 18 / .6) 100%); }
+.rg-pack-cover small { display: block; font-size: 12.5px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+.rg-pack-cover h3 { font-size: 22px; line-height: 1.15; letter-spacing: var(--ls-title); }
+.rg-pack-body { display: grid; flex: 1; align-content: start; gap: 12px; padding: 20px; }
+.rg-pack-body .rg-foot { align-self: end; }
+.rg-pack-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rg-pack-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 12px; background: var(--pn-soft); font-size: 14.5px; }
+.rg-pack-list b { font-weight: var(--w-medium); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Aportes recibidos */
+.rg-total { padding: 8px 16px; border-radius: 999px; background: var(--pn-soft); font-size: 15px; font-weight: var(--w-medium); font-variant-numeric: tabular-nums; }
+.rg-recs { list-style: none; margin: 0; padding: 0; overflow: hidden; border: 1px solid var(--pn-hair); border-radius: 22px; background: #fff; }
+.rg-rec { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 20px 24px; }
+.rg-rec + .rg-rec { border-top: 1px solid var(--pn-hair); }
+.rg-rec-main { display: grid; gap: 4px; min-width: 0; }
+.pn-root .rg-rec-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; font-size: 16px; font-weight: var(--w-semibold); }
+.rg-rec-gift { margin: 0; font-size: 14px; color: var(--pn-muted); }
+.rg-rec-gift b { font-weight: var(--w-medium); color: var(--pn-ink); }
+.pn-root .rg-quote { margin: 6px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--pn-soft); font-size: 14px; line-height: 1.45; font-style: italic; color: var(--pn-muted); }
+.rg-rec-amount { flex: none; font-size: 20px; font-weight: var(--w-semibold); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 900px) { .rg-packs { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .rg-kpis { grid-template-columns: 1fr; gap: 10px; }
+  .rg-kpi { padding: 16px 18px; }
+  .rg-step { grid-template-columns: 40px minmax(0, 1fr); padding: 16px; gap: 12px 14px; }
+  .rg-step-ico { width: 40px; height: 40px; }
+  .rg-step .pn-btn { grid-column: 2; justify-self: start; }
+  .rg-grid { grid-template-columns: 1fr; }
+  .rg-head-actions { width: 100%; }
+  .rg-head-actions .pn-btn { flex: 1; }
+  .rg-rec { flex-direction: column; gap: 10px; padding: 16px 18px; }
+  .rg-pack-body, .rg-pack-cover { padding-inline: 16px; }
+  .rg-foot { flex-wrap: wrap; }
+  .rg-pack .rg-foot .pn-btn { flex: 1; }
 }

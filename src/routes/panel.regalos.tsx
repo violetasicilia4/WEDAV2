@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { CalendarDays, Check, ChevronUp, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, List, Pencil, Plus, Users, Wallet, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronRight, ChevronUp, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
 import { CoupleCover, Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/catalog';
@@ -20,12 +20,13 @@ export const Route = createFileRoute('/panel/regalos')({
   component: GiftsModule,
 });
 
-type Tab = 'lista' | 'agregar' | 'recibidos' | 'cobro';
-/* Orden de uso: elegir → revisar la lista → cobro (opcional) y, aparte, lo ya recibido. Se puede entrar a cualquiera.
-   En pantallas angostas se muestra la etiqueta corta para que las cuatro solapas entren sin scroll lateral. */
+type Tab = 'como' | 'lista' | 'agregar' | 'recibidos' | 'cobro';
+/* Orden de la pantalla: cómo funciona → mis regalos → catálogo y packs → aportes recibidos → datos de cobro. Se puede entrar a cualquiera.
+   En pantallas angostas se muestra la etiqueta corta para que las cinco solapas entren sin scroll lateral. */
 const TABS: { id: Tab; label: string; short: string }[] = [
-  { id: 'agregar', label: 'Elegir regalos', short: 'Elegir' }, { id: 'lista', label: 'Mi lista', short: 'Mi lista' },
-  { id: 'cobro', label: 'Aportes', short: 'Aportes' }, { id: 'recibidos', label: 'Recibidos', short: 'Recibidos' },
+  { id: 'como', label: 'Cómo funciona', short: 'Guía' }, { id: 'lista', label: 'Mis regalos', short: 'Mis regalos' },
+  { id: 'agregar', label: 'Catálogo y packs', short: 'Catálogo' }, { id: 'recibidos', label: 'Aportes recibidos', short: 'Aportes' },
+  { id: 'cobro', label: 'Datos de cobro', short: 'Cobro' },
 ];
 
 const Thumb = ({ src, name }: { src?: string | undefined; name: string }) => (
@@ -243,11 +244,17 @@ function GiftsModule() {
   const s = useAppState();
   const toast = useToast();
   const search = Route.useSearch();
-  const [tab, setTab] = useState<Tab>(() => search.tab ?? (getState().gifts.items.length > 0 ? 'lista' : 'agregar'));
-  const [viewSet, setViewSet] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>(() => search.tab ?? 'como');
+  const [catView, setCatView] = useState<'packs' | 'singles'>('packs');
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ListGift | null>(null);
   const [preview, setPreview] = useState(false);
+  // El botón de la barra superior (panel.tsx) pide abrir la vista previa de la lista.
+  useEffect(() => {
+    const open = () => setPreview(true);
+    window.addEventListener('weda:open-gifts-preview', open);
+    return () => window.removeEventListener('weda:open-gifts-preview', open);
+  }, []);
   const [listView, setListView] = useState<'cards' | 'order'>('cards');
   const [showPage, setShowPage] = useState(false);
   const [query, setQuery] = useState('');
@@ -275,26 +282,29 @@ function GiftsModule() {
   const rmCatalog = (catalogId: string) => { const g = items.find(x => x.catalogId === catalogId); if (g) rm(g); };
 
 
-  const viewing = SETS.find(x => x.id === viewSet) ?? null;
   const shownCatalog = catalog.filter(g => (cat === 'Todas' || g.category === cat) && (!query.trim() || norm(g.name).includes(norm(query))));
   const alias = s.gifts.alias.trim();
+  const copyLink = () => { void navigator.clipboard?.writeText(`${window.location.origin}${sitePath(s)}/regalos`).catch(() => undefined); toast('Enlace de la lista copiado.'); };
 
   return (
     <div className="pn-page">
       <CoupleCover variant="gifts" eyebrow="Lista de regalos de" />
-      <header className="pn-page-head is-compact">
+      <header className="pn-page-head is-compact rg-head">
         <div>
-          <h1>Tu lista de regalos</h1>
-          <p className="pn-sub" role="status" aria-live="polite">{items.length === 0 ? 'Todavía no elegiste regalos' : `${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} · ${formatARS(giftTotal(items))}`}</p>
+          <h1>Lista de regalos</h1>
+          <p className="pn-sub" role="status" aria-live="polite">Tus invitados eligen un regalo de tu lista y te lo regalan por alias.</p>
         </div>
-        {tab !== 'agregar' && <button type="button" className="pn-btn" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Agregar regalos</button>}
+        <div className="rg-head-actions">
+          <button type="button" className="pn-btn is-ghost" onClick={copyLink}><Copy size={16} aria-hidden="true" />Copiar enlace de lista</button>
+          <button type="button" className="pn-btn" onClick={() => setCreating(true)}><Plus size={16} aria-hidden="true" />Crear regalo</button>
+        </div>
       </header>
 
-      <div className="pn-tabs" role="tablist" aria-label="Armar la lista">
-        {TABS.map(t => (
+      <div className="pn-tabs" role="tablist" aria-label="Lista de regalos">
+        {TABS.map((t, i) => (
           <button key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls="pn-tabpanel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}
-            onKeyDown={e => { const i = TABS.findIndex(x => x.id === t.id); if (e.key === 'ArrowRight') { e.preventDefault(); setTab(TABS[(i + 1) % TABS.length]!.id); } if (e.key === 'ArrowLeft') { e.preventDefault(); setTab(TABS[(i + TABS.length - 1) % TABS.length]!.id); } }}>
-            <span className="pn-tab-long">{t.label}</span><span className="pn-tab-short">{t.short}</span>
+            onKeyDown={e => { if (e.key === 'ArrowRight') { e.preventDefault(); setTab(TABS[(i + 1) % TABS.length]!.id); } if (e.key === 'ArrowLeft') { e.preventDefault(); setTab(TABS[(i + TABS.length - 1) % TABS.length]!.id); } }}>
+            <span className="pn-tab-long">{i + 1}. {t.label}</span><span className="pn-tab-short">{t.short}</span>
             {t.id === 'lista' && items.length > 0 && <span className="pn-count">{items.length}</span>}
             {t.id === 'cobro' && !alias && <><span className="pn-dot-todo" aria-hidden="true" /><span className="pn-sr">(pendiente, opcional por ahora)</span></>}
             {t.id === 'recibidos' && received.length > 0 && <span className="pn-count">{received.length}</span>}
@@ -303,6 +313,31 @@ function GiftsModule() {
       </div>
 
       <div id="pn-tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="pn-tabpanel">
+        {tab === 'como' && (
+          <div className="rg-how">
+            <section className="rg-kpis" aria-label="Resumen de tu lista">
+              <div className="rg-kpi"><span>Total recibido</span><strong>{formatARS(receivedTotal(received))}</strong><small>Registrado en este navegador</small></div>
+              <div className="rg-kpi"><span>Aportes recibidos</span><strong>{received.length}</strong><small>{received.length === 0 ? 'Todavía no hay aportes' : 'Los ves en «Aportes recibidos»'}</small></div>
+              <div className="rg-kpi"><span>Regalos en lista</span><strong>{items.length}</strong><small>Activos para aportes</small></div>
+            </section>
+            <p className="rg-eyebrow">Pasos del funcionamiento</p>
+            <ol className="rg-steps">
+              {[
+                { done: items.length > 0, title: 'Elegí o creá los regalos de tu lista', text: items.length > 0 ? `Tenés ${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} en tu lista. Podés sumar packs completos o armar regalos individuales.` : 'Sumá un pack completo o elegí regalos de a uno. También podés crear los tuyos.', cta: items.length > 0 ? `Ver mis regalos (${items.length})` : 'Elegir regalos', go: () => setTab(items.length > 0 ? 'lista' : 'agregar') },
+                { done: !!alias, title: 'Sumá tu alias', text: alias ? `Alias cargado (${alias}). Tus invitados ven a dónde mandar su aporte.` : 'Cargá el alias donde querés recibir los aportes de tus invitados.', cta: alias ? 'Ver datos de cobro' : 'Cargar alias', go: () => setTab('cobro') },
+                { done: false, title: 'Compartí el enlace de tu lista', text: 'Tus invitados entran desde el celular, eligen un regalo y te lo regalan. Hoy es una demo: el enlace real se activa al publicar.', cta: 'Copiar enlace', go: copyLink },
+                { done: received.length > 0, title: 'Recibí los aportes y agradecé', text: received.length > 0 ? 'Revisá quién te regaló qué y con qué mensaje, para agradecerles.' : 'Cuando un invitado te regale algo, lo ves acá con su nombre y su mensaje.', cta: received.length > 0 ? `${received.length} ${received.length === 1 ? 'aporte' : 'aportes'}` : 'Ver aportes', go: () => setTab('recibidos') },
+              ].map(st => (
+                <li key={st.title} className={`rg-step${st.done ? ' is-done' : ''}`}>
+                  <span className="rg-step-ico" aria-hidden="true">{st.done ? <Check size={18} strokeWidth={2} /> : <GiftIcon size={18} strokeWidth={1.5} />}</span>
+                  <div className="rg-step-text"><h3>{st.title}{st.done && <span className="pn-chip is-ok">Listo</span>}</h3><p>{st.text}</p></div>
+                  <button type="button" className="pn-btn is-ghost is-small" onClick={st.go}>{st.cta}<ChevronRight size={15} aria-hidden="true" /></button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
         {tab === 'lista' && (
           items.length === 0 ? (
             <div className="pn-empty">
@@ -312,23 +347,37 @@ function GiftsModule() {
             </div>
           ) : (
             <>
-              <div className="pn-switch is-small pn-views" role="group" aria-label="Cómo ver tu lista">
-                <button type="button" className={listView === 'cards' ? 'on' : ''} aria-pressed={listView === 'cards'} onClick={() => setListView('cards')}>Tarjetas</button>
-                <button type="button" className={listView === 'order' ? 'on' : ''} aria-pressed={listView === 'order'} onClick={() => setListView('order')}>Ordenar</button>
+              <div className="rg-section-head">
+                <div><h2>Mis regalos ({items.length})</h2><p className="pn-muted">Podés reordenar los regalos con las flechas, modificarlos o sumar más desde el catálogo.</p></div>
+                <div className="rg-head-actions">
+                  <div className="pn-switch is-small pn-views" role="group" aria-label="Cómo ver tu lista">
+                    <button type="button" className={listView === 'cards' ? 'on' : ''} aria-pressed={listView === 'cards'} onClick={() => setListView('cards')}>Tarjetas</button>
+                    <button type="button" className={listView === 'order' ? 'on' : ''} aria-pressed={listView === 'order'} onClick={() => setListView('order')}>Ordenar</button>
+                  </div>
+                  <button type="button" className="pn-btn is-ghost" onClick={() => { setCatView('packs'); setTab('agregar'); }}><Package size={16} aria-hidden="true" />Explorar packs sugeridos</button>
+                </div>
               </div>
               {listView === 'cards' ? (
-                <ul className="pn-ggrid is-list" aria-label="Regalos de tu lista">
-                  {items.map(g => (
-                    <li key={g.id} className="pn-gcard">
-                      <div className="pn-gphoto">
+                <ul className="rg-grid" aria-label="Regalos de tu lista">
+                  {items.map((g, i) => (
+                    <li key={g.id} className="rg-card">
+                      <div className="rg-photo">
                         {g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
+                        <span className="rg-chip">{g.category}</span>
+                        <div className="rg-arrows">
+                          <button type="button" className="pn-icon" onClick={() => update(x => moveGiftTo(x, g.id, i - 1))} disabled={i === 0} aria-label={`Subir ${g.name}`}><ArrowUp size={16} aria-hidden="true" /></button>
+                          <button type="button" className="pn-icon" onClick={() => update(x => moveGiftTo(x, g.id, i + 1))} disabled={i === items.length - 1} aria-label={`Bajar ${g.name}`}><ArrowDown size={16} aria-hidden="true" /></button>
+                        </div>
                       </div>
-                      <h3>{g.name}</h3>
-                      <div className="pn-gcard-foot">
-                        <p className="pn-gprice">{formatARS(g.amount)}</p>
-                        <div className="pn-gcard-actions">
-                          <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
-                          <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
+                      <div className="rg-body">
+                        <h3>{g.name}</h3>
+                        {g.text && <p className="rg-text">{g.text}</p>}
+                        <div className="rg-foot">
+                          <div><span className="rg-label">Valor sugerido</span><strong>{formatARS(g.amount)}</strong></div>
+                          <div className="rg-actions">
+                            <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
+                            <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -363,66 +412,74 @@ function GiftsModule() {
                   </div>
                 )}
               </section>
-              <div className="pn-actions">
-                <button type="button" className="pn-btn is-ghost" onClick={() => setTab('agregar')}><Plus size={16} aria-hidden="true" />Agregar más regalos</button>
-                <button type="button" className="pn-btn is-ghost" onClick={() => setTab('cobro')}>Cómo vas a recibirlos · opcional</button>
-              </div>
             </>
           )
         )}
 
         {tab === 'agregar' && (
-          <div className="pn-pick">
-          <div className="pn-catalog">
-            <div className="pn-block-head">
-              <h2>Sets completos</h2>
-              <p className="pn-muted">Tocá un set para sumar todos sus regalos. El ícono de lista los muestra de a uno.</p>
-            </div>
-            <ul className="pn-settiles" aria-label="Sets de regalos">
-              {SETS.map(set => {
-                const gs = setGifts(set);
-                const inList = gs.filter(g => hasCatalogGift(s, g.id)).length;
-                const all = inList === gs.length;
-                const cover = SET_COVER[set.id];
-                const toggle = () => (all ? withUndo(`Quitaste los regalos de «${set.name}».`, () => update(x => removeSetGifts(x, set.giftIds))) : doAddSet(set));
-                return (
-                  <li key={set.id} className={`pn-settile${all ? ' is-on' : ''}`} style={cover ? { backgroundImage: `url(${cover})` } : undefined}>
-                    <button type="button" className="pn-settile-main" aria-pressed={all} onClick={toggle} aria-label={`${set.name}, ${gs.length} regalos. ${all ? 'Tocá para quitarlos todos' : 'Tocá para agregarlos todos'}`}>
-                      {all && <span className="pn-gcheck" aria-hidden="true"><Check size={16} strokeWidth={2.5} /></span>}
-                      <span className="pn-settile-name">{set.name}</span>
-                      <span className="pn-settile-meta">{all ? `${gs.length} agregados` : inList ? `${inList} de ${gs.length} agregados` : `${gs.length} regalos`}</span>
-                    </button>
-                    <button type="button" className="pn-settile-view" onClick={() => setViewSet(set.id)} aria-label={`Ver los regalos de ${set.name}`}><List size={16} aria-hidden="true" /></button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="pn-block-head">
-              <h2>Regalos de a uno</h2>
-            </div>
-            <div className="pn-filters is-chips">
-              <label className="pn-sr" htmlFor="pn-q">Buscar un regalo</label>
-              <input id="pn-q" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar un regalo" autoComplete="off" />
-              <div className="pn-chips" role="group" aria-label="Categoría">
-                {['Todas', ...categories].map(c => <button key={c} type="button" className={`pn-chipbtn${cat === c ? ' on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>{c}</button>)}
+          <div className="rg-catalog">
+            <div className="rg-section-head">
+              <div><h2>Catálogo sugerido y packs</h2><p className="pn-muted">Elegí packs curados completos o agregá regalos individuales a tu lista.</p></div>
+              <div className="pn-switch is-small" role="group" aria-label="Qué querés ver">
+                <button type="button" className={catView === 'packs' ? 'on' : ''} aria-pressed={catView === 'packs'} onClick={() => setCatView('packs')}>Packs armados ({SETS.length})</button>
+                <button type="button" className={catView === 'singles' ? 'on' : ''} aria-pressed={catView === 'singles'} onClick={() => setCatView('singles')}>Regalos individuales</button>
               </div>
             </div>
 
-            <ul className="pn-ggrid">
-              <li className="pn-gown">
-                <button type="button" onClick={() => setCreating(true)}>
-                  <span className="pn-owndot" aria-hidden="true"><Plus size={28} strokeWidth={1.6} /></span>
-                  <strong>Crear un regalo propio</strong>
-                  <span>Con tu nombre, tu monto y tu imagen</span>
-                </button>
-              </li>
-              {shownCatalog.map(g => <CatalogCard key={g.id} gift={g} inList={hasCatalogGift(s, g.id)} onAdd={() => addOne(g.id)} onRemove={() => rmCatalog(g.id)} />)}
-            </ul>
-            {shownCatalog.length === 0 && <p className="pn-note">No encontramos regalos con esa búsqueda.</p>}
-            <p className="pn-status-line" aria-live="polite" role="status">{shownCatalog.length} {shownCatalog.length === 1 ? 'regalo' : 'regalos'}</p>
-          </div>
-          <SelectionSummary items={items} onRemove={rm} onReview={() => setTab('lista')} />
+            {catView === 'packs' ? (
+              <ul className="rg-packs" aria-label="Packs de regalos">
+                {SETS.map(set => {
+                  const gs = setGifts(set);
+                  const inList = gs.filter(g => hasCatalogGift(s, g.id)).length;
+                  const all = inList === gs.length;
+                  const total = gs.reduce((n, g) => n + g.amount, 0);
+                  const cover = SET_COVER[set.id];
+                  const toggle = () => (all ? withUndo(`Quitaste los regalos de «${set.name}».`, () => update(x => removeSetGifts(x, set.giftIds))) : doAddSet(set));
+                  return (
+                    <li key={set.id} className={`rg-pack${all ? ' is-on' : ''}`}>
+                      <div className="rg-pack-cover" style={cover ? { backgroundImage: `url(${cover})` } : undefined}>
+                        {all && <span className="rg-chip"><Check size={13} strokeWidth={2.5} aria-hidden="true" />En tu lista</span>}
+                        <div><small>{gs.length} regalos</small><h3>{set.name}</h3></div>
+                      </div>
+                      <div className="rg-pack-body">
+                        <p className="rg-text">{set.description}</p>
+                        <p className="rg-label">Regalos incluidos en este pack</p>
+                        <ul className="rg-pack-list">{gs.map(g => <li key={g.id}><span>{g.name}</span><b>{formatARS(g.amount)}</b></li>)}</ul>
+                        <div className="rg-foot">
+                          <div><span className="rg-label">Total sugerido</span><strong>{formatARS(total)}</strong></div>
+                          <button type="button" className={`pn-btn${all ? ' is-ghost' : ''}`} onClick={toggle}>{all ? 'Quitar pack' : <><Plus size={15} aria-hidden="true" />Agregar pack ({gs.length} regalos)</>}</button>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="pn-pick">
+                <div className="pn-catalog">
+                  <div className="pn-filters is-chips">
+                    <label className="pn-sr" htmlFor="pn-q">Buscar un regalo</label>
+                    <input id="pn-q" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar un regalo" autoComplete="off" />
+                    <div className="pn-chips" role="group" aria-label="Categoría">
+                      {['Todas', ...categories].map(c => <button key={c} type="button" className={`pn-chipbtn${cat === c ? ' on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>{c}</button>)}
+                    </div>
+                  </div>
+                  <ul className="pn-ggrid">
+                    <li className="pn-gown">
+                      <button type="button" onClick={() => setCreating(true)}>
+                        <span className="pn-owndot" aria-hidden="true"><Plus size={28} strokeWidth={1.6} /></span>
+                        <strong>Crear un regalo propio</strong>
+                        <span>Con tu nombre, tu monto y tu imagen</span>
+                      </button>
+                    </li>
+                    {shownCatalog.map(g => <CatalogCard key={g.id} gift={g} inList={hasCatalogGift(s, g.id)} onAdd={() => addOne(g.id)} onRemove={() => rmCatalog(g.id)} />)}
+                  </ul>
+                  {shownCatalog.length === 0 && <p className="pn-note">No encontramos regalos con esa búsqueda.</p>}
+                  <p className="pn-status-line" aria-live="polite" role="status">{shownCatalog.length} {shownCatalog.length === 1 ? 'regalo' : 'regalos'}</p>
+                </div>
+                <SelectionSummary items={items} onRemove={rm} onReview={() => setTab('lista')} />
+              </div>
+            )}
           </div>
         )}
 
@@ -435,28 +492,22 @@ function GiftsModule() {
             </div>
           ) : (
             <>
-              <section className="pn-stats" aria-label="Resumen de regalos recibidos">
-                <div className="pn-stat"><span className="pn-stat-ico" aria-hidden="true"><GiftIcon size={18} /></span><span className="pn-stat-label">Regalos recibidos</span><strong>{received.length}</strong></div>
-                <div className="pn-stat"><span className="pn-stat-ico" aria-hidden="true"><Wallet size={18} /></span><span className="pn-stat-label">Total recibido</span><strong>{formatARS(receivedTotal(received))}</strong></div>
-                <div className="pn-stat"><span className="pn-stat-ico" aria-hidden="true"><Users size={18} /></span><span className="pn-stat-label">Personas que regalaron</span><strong>{new Set(received.map(r => r.giver.toLowerCase())).size}</strong></div>
-                <div className="pn-stat"><span className="pn-stat-ico" aria-hidden="true"><CalendarDays size={18} /></span><span className="pn-stat-label">Último regalo</span><strong className="is-text">{received.find(r => r.at)?.at ? fmtDate(received.find(r => r.at)!.at!) : 'Sin fecha'}</strong></div>
-              </section>
-              <ol className="pn-glist" aria-label="Regalos recibidos">
-                {received.map(r => {
-                  const g = items.find(x => x.id === r.id);
-                  return (
-                    <li key={r.id} className="pn-grow is-rec">
-                      <Thumb src={g?.image} name={r.giftName} />
-                      <div className="pn-gmeta">
-                        <strong>{r.giftName}</strong>
-                        <span>De {r.giver}{r.how ? ` · ${HOW_LABEL[r.how]}` : ''}{r.at ? ` · ${fmtDate(r.at)}` : ''}</span>
-                        {r.message && <p className="pn-quote">«{r.message}»</p>}
-                      </div>
-                      <span className="pn-rec-amount">{formatARS(r.amount)}</span>
-                    </li>
-                  );
-                })}
-              </ol>
+              <div className="rg-section-head">
+                <div><h2>Aportes recibidos ({received.length})</h2><p className="pn-muted">Quién te regaló qué, con su mensaje.</p></div>
+                <span className="rg-total">Total: {formatARS(receivedTotal(received))}</span>
+              </div>
+              <ul className="rg-recs" aria-label="Aportes recibidos">
+                {received.map(r => (
+                  <li key={r.id} className="rg-rec">
+                    <div className="rg-rec-main">
+                      <p className="rg-rec-name">{r.giver}{r.how && <span className="pn-chip">{HOW_LABEL[r.how]}</span>}</p>
+                      <p className="rg-rec-gift">Regaló: <b>{r.giftName}</b>{r.at ? ` · ${fmtDate(r.at)}` : ''}</p>
+                      {r.message && <p className="rg-quote">«{r.message}»</p>}
+                    </div>
+                    <strong className="rg-rec-amount">{formatARS(r.amount)}</strong>
+                  </li>
+                ))}
+              </ul>
               <p className="pn-hint">En esta demo los regalos se registran en este navegador cuando se hacen desde la vista de invitado. No hay verificación de pagos.</p>
             </>
           )
@@ -465,7 +516,7 @@ function GiftsModule() {
         {tab === 'cobro' && (
           <div className="pn-config">
             <div className="pn-block-head">
-              <h2>Cómo vas a recibir tus regalos</h2>
+              <h2>Datos para recibir tus regalos</h2>
               <p className="pn-muted">Acá configurás cómo recibís vos los aportes. No es obligatorio para seguir armando tu casamiento, pero para activar los regalos reales al publicar vas a necesitar completarlo.</p>
               <p className="pn-muted" role="status">{alias ? 'Estado: configurado.' : 'Estado: sin configurar. Podés dejarlo para después.'}</p>
             </div>
@@ -490,19 +541,6 @@ function GiftsModule() {
           </div>
         )}
       </div>
-
-      {viewing && (
-        <Dialog open onOpenChange={o => { if (!o) setViewSet(null); }}>
-          <DialogContent className="pn-dialog is-wide">
-            <DialogTitle>{viewing.name}</DialogTitle>
-            <DialogDescription>Agregá o quitá los regalos de este set de a uno.</DialogDescription>
-            <ul className="pn-ggrid is-dialog">
-              {setGifts(viewing).map(g => <CatalogCard key={g.id} gift={g} inList={hasCatalogGift(s, g.id)} onAdd={() => addOne(g.id, viewing.id)} onRemove={() => rmCatalog(g.id)} />)}
-            </ul>
-            <div className="pn-actions is-end"><button type="button" className="pn-btn" onClick={() => setViewSet(null)}>Listo</button></div>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {creating && (
         <Dialog open onOpenChange={o => { if (!o) setCreating(false); }}>
