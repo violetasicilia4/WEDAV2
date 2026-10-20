@@ -28,7 +28,7 @@ describe('Planes en la landing', () => {
       const card = within(cards[i]!);
       expect(card.getByRole('heading', { level: 3, name: plan.name })).toBeTruthy();
       expect(card.getByText(formatPrice(plan.price))).toBeTruthy();
-      expect(card.getByText('por evento')).toBeTruthy();
+      expect(card.getByText('pago único')).toBeTruthy();
       expect(card.getByText(plan.tagline)).toBeTruthy();
     });
     expect(screen.getByText(/Armá tu casamiento gratis/)).toBeTruthy();
@@ -50,8 +50,8 @@ describe('Planes en la landing', () => {
     expect(completo!.getByText('Todo lo de Invitación')).toBeTruthy();
   });
 
-  it('no promete pago único, suscripción ni duración', async () => {
+  it('no promete ausencia de suscripción ni duración', async () => {
     await renderPlans();
-    expect(document.body.textContent).not.toMatch(/pago único|sin suscripci|suscripción|meses|años/i);
+    expect(document.body.textContent).not.toMatch(/sin suscripci|suscripción|meses|años/i);
   });
 });

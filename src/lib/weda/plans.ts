@@ -3,7 +3,7 @@
 //   Regalos    → lista de regalos
 //   Invitación → + micrositio, confirmación de asistencia (RSVP), invitados y mesas
 //   Completo   → + música de la fiesta, galería de fotos con hashtag y mensaje final
-// Precios de referencia en pesos argentinos POR EVENTO (definición comercial). No se afirma pago único, ausencia de suscripción
+// Precios de referencia en pesos argentinos, de PAGO ÚNICO (definición comercial). No se afirma ausencia de suscripción
 // ni duración de la publicación: esas condiciones no están definidas. Se cobra al publicar, y la publicación todavía no está conectada.
 // Mientras no se elige plan (planId null) la pareja prueba todo: el plan se elige al publicar. Cambiar de plan nunca borra datos:
 // lo que el plan no incluye se conserva como borrador y solo se oculta al mostrar (editor, navegación, página pública).
@@ -19,7 +19,7 @@ export type Plan = {
   tagline: string;
   /** Para quién es, en una línea. */
   summary: string;
-  /** Precio de referencia en ARS, por evento. Cambiarlo acá lo cambia en toda la aplicación. */
+  /** Precio de referencia en ARS, de pago único. Cambiarlo acá lo cambia en toda la aplicación. */
   price: number;
   /** Plan del que hereda todo. */
   inherits: PlanId | null;
@@ -29,7 +29,7 @@ export type Plan = {
 };
 
 export const CURRENCY = 'ARS';
-export const PRICE_UNIT = 'por evento';
+export const PRICE_UNIT = 'pago único';
 export const HIGHLIGHTS = 4;
 
 export const PLANS: Plan[] = [

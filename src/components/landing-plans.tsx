@@ -42,7 +42,7 @@ export function LandingPlans() {
           <p>Creá tu evento, personalizá tu micrositio y probá las herramientas de Weda. Sin tarjeta y sin elegir un plan por adelantado.</p>
         </div>
         <div className="plans-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
-        <p className="plans-note">Precios de referencia en pesos argentinos, por evento. Elegís tu plan y pagás recién cuando querés publicar; hasta entonces no se cobra nada. La publicación y el pago se habilitan cuando el servicio esté conectado.</p>
+        <p className="plans-note">Precios de referencia en pesos argentinos, de pago único. Elegís tu plan y pagás recién cuando querés publicar; hasta entonces no se cobra nada. La publicación y el pago se habilitan cuando el servicio esté conectado.</p>
       </div>
     </section>
   );
