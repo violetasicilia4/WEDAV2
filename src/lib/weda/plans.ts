@@ -30,7 +30,7 @@ export type Plan = {
 
 export const CURRENCY = 'ARS';
 export const PRICE_UNIT = 'pago único';
-export const HIGHLIGHTS = 4;
+export const HIGHLIGHTS = 3;
 
 export const PLANS: Plan[] = [
   {

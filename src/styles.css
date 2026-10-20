@@ -2032,29 +2032,41 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 /* "Todo para compartir su casamiento": más aire arriba y abajo en la misma medida, para que el contenido quede centrado en el bloque. */
 .products-section { padding-top: clamp(72px, 12svh, 140px); padding-bottom: calc(clamp(72px, 12svh, 140px) + var(--curve)); }
 
-/* Regalos: sección más grande, con el paso a paso en tarjetas con ícono. */
-.duo-section { padding: clamp(80px, 13svh, 150px) 0; }
-.duo-section .duo-layout { grid-template-columns: 1fr; gap: clamp(40px, 7vw, 72px); justify-items: center; align-items: start; }
-.duo-section .duo-copy { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0; margin: 0; top: 0; }
-.duo-section .duo-copy h2 { max-width: 640px; }
-.duo-section .duo-copy > p:not(.eyebrow) { max-width: 52ch; margin: 20px auto 28px; }
-.duo-steps { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 1180px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; counter-reset: none; }
-.duo-steps li { position: relative; display: grid; align-content: start; gap: 8px; padding: 28px 24px 30px; border-radius: 24px; background: #fff; color: var(--foreground); border: 0; }
-.duo-steps li::before { content: none; }
-.duo-steps li + li::after { content: ''; position: absolute; left: -17px; top: 58px; width: 16px; border-top: 1px dashed rgb(255 255 255 / .55); }
-.duo-step-ico { display: grid; place-items: center; width: 68px; height: 68px; margin-bottom: 14px; border-radius: 50%; background: var(--section); color: var(--slate); }
-.duo-step-n { font-size: 12px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: #8a8b88; }
-.duo-steps b { font-size: 19px; font-weight: var(--w-medium); line-height: 1.25; text-wrap: balance; }
-.duo-step-text { font-size: 14.5px; line-height: 1.5; color: #6b6c69; }
-@media (max-width: 1000px) { .duo-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } .duo-steps li + li::after { display: none; } }
-@media (max-width: 560px) {
-  .duo-steps { grid-template-columns: 1fr; gap: 12px; }
-  .duo-steps li { grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; row-gap: 2px; padding: 20px; }
-  .duo-step-ico { grid-row: 1 / 4; width: 56px; height: 56px; margin: 0; }
+/* Regalos: pantalla dividida. A la izquierda una foto; a la derecha el título y los pasos en vertical. */
+.duo-section { overflow: hidden; padding: 0; }
+.duo-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: max(100svh, 720px); }
+.duo-photo { position: relative; min-height: 320px; background: #5d6a73; }
+.duo-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; }
+.duo-panel { display: flex; flex-direction: column; justify-content: center; padding: clamp(56px, 9svh, 112px) clamp(28px, 6vw, 112px); }
+.duo-panel .eyebrow { margin: 0 0 16px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+.duo-panel h2 { margin: 0; max-width: 16ch; font-size: clamp(30px, 3.8vw, 54px); line-height: 1.08; text-wrap: balance; }
+.duo-steps { list-style: none; margin: clamp(28px, 4.5svh, 52px) 0 0; padding: 0; display: grid; max-width: 560px; }
+.duo-steps li { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 20px; align-items: center; padding: 20px 0; border-top: 1px solid rgb(255 255 255 / .28); }
+.duo-steps li:last-child { border-bottom: 1px solid rgb(255 255 255 / .28); }
+.duo-step-ico { grid-row: 1 / 4; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--paper); color: var(--slate); }
+.duo-step-n { font-size: 12px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: rgb(255 255 255 / .7); }
+.duo-steps b { font-size: clamp(18px, 1.5vw, 21px); font-weight: var(--w-medium); line-height: 1.25; }
+.duo-step-text { font-size: 15px; line-height: 1.45; color: rgb(255 255 255 / .82); }
+.duo-panel .duo-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; margin-top: clamp(28px, 4.5svh, 44px); }
+.duo-panel .duo-cta .seed-link-button { color: #fff; height: auto; }
+.duo-panel .duo-cta .seed-button { margin: 0; }
+/* Escritorio: texto a la izquierda y la foto a la derecha, con bordes redondeados y aire alrededor (no ocupa todo el bloque). */
+@media (min-width: 901px) {
+  .duo-photo { order: 2; --pv: clamp(40px, 7svh, 80px); --ph: clamp(28px, 5vw, 96px); background: transparent; }
+  .duo-photo img { top: var(--pv); left: 0; width: calc(100% - var(--ph)); height: calc(100% - 2 * var(--pv)); inset: var(--pv) auto auto 0; border-radius: 28px; box-shadow: 0 24px 60px rgb(0 0 0 / .18); }
+  .duo-panel { order: 1; padding-right: clamp(24px, 3vw, 56px); }
 }
-.duo-section .duo-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px 28px; }
-.duo-section .duo-cta .seed-link-button { color: #fff; height: auto; }
-.duo-section .duo-cta .seed-button { margin: 0; }
+@media (max-width: 900px) {
+  .duo-split { grid-template-columns: 1fr; min-height: 0; }
+  .duo-photo { min-height: 0; height: clamp(280px, 82vw, 480px); }
+  .duo-photo img { object-position: 50% 24%; }
+  .duo-panel { padding: 40px 20px 56px; }
+  .duo-panel h2 { max-width: none; }
+  .duo-steps { max-width: none; }
+  .duo-steps li { padding: 16px 0; column-gap: 16px; grid-template-columns: 48px minmax(0, 1fr); }
+  .duo-step-ico { width: 48px; height: 48px; }
+  .duo-step-ico svg { width: 22px; height: 22px; }
+}
 
 /* Testimonios: la sección gana jerarquía; alta como la pantalla, título grande y tarjetas con aire. */
 .viacap-section { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; min-height: max(100svh, 720px); padding-block: clamp(80px, 14svh, 160px); }
@@ -2078,14 +2090,14 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (min-width: 768px) { .seed-hero .hero-copy { max-width: 980px; } .seed-hero .hero-copy h1 { font-size: min(var(--t-display-xl), 5.6vw); } }
 @media (max-width: 767px) { .seed-hero .hero-copy h1 { margin-inline: 0; font-size: min(8.4vw, 36px); } }
 
-/* Funciones: la lista de regalos, que es el diferencial, ocupa más ancho que las otras dos. */
-@media (min-width: 1001px) {
-  .feat-grid { grid-template-columns: 1.45fr 1fr 1fr; }
-  .feat-grid .fd-stage { aspect-ratio: auto; height: clamp(300px, 26vw, 380px); }
-}
+/* Funciones: las tres cards tienen el mismo tamaño. */
+
+/* Celular y tablet: las tres vistas previas tienen el mismo tamaño (cuadradas) y no se recortan. */
+@media (max-width: 1000px) { .feat-grid { grid-auto-rows: 1fr; } .feat-grid .feat-card .fd-stage { height: auto; aspect-ratio: 1 / 1; min-height: 0; } }
 
 /* Planes: para quién es cada uno, visible antes de abrir el detalle. */
-.plan-for-line { margin: 12px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted-foreground); }
-.duo-section .duo-copy .eyebrow { text-transform: uppercase; letter-spacing: .08em; }
-.duo-section .duo-copy h2 { max-width: none; }
-@media (min-width: 640px) { .duo-section .duo-copy h2 { white-space: nowrap; font-size: clamp(26px, 4.4vw, var(--t-display-l)); } }
+.plan-for-line { margin: 12px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted-foreground); min-height: 2.9em; }
+/* Los tres planes tienen el mismo tamaño, con el botón siempre abajo. */
+.plans-grid { grid-auto-rows: 1fr; }
+.plan-card { height: 100%; }
+@media (max-width: 900px) { .plan-for-line { min-height: 0; } }
