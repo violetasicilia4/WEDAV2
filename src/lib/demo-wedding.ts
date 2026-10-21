@@ -41,8 +41,6 @@ export const eventOffset = weddingStart.slice(-6);
 export const rsvpDeadline = '20 de enero';
 
 /** Enlaces de Google Maps derivados de una dirección real del evento (no se inventan lugares). */
-export const directionsUrl = (address: string) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-export const lodgingUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('alojamiento cerca de ' + address)}`;
 export const calendar = {
   title: 'Casamiento de Ignacio & Martina',
   start: '20270320T200000Z',
@@ -108,7 +106,6 @@ export type IconKey =
   | 'palette' | 'ticket' | 'sprout' | 'dog' | 'trees' | 'coffee' | 'sheets' | 'compass' | 'home';
 
 export type Destination = 'Europa' | 'África' | 'Estados Unidos' | 'Asia' | 'Sudamérica';
-export const destinations: Destination[] = ['Europa', 'África', 'Estados Unidos', 'Asia', 'Sudamérica'];
 
 export type Gift = {
   id: string;

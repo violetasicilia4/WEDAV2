@@ -3,7 +3,7 @@
 // - Se sincroniza entre pestañas y iframes (evento "storage"): así la vista previa del editor se actualiza sola.
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
 import { useRef, useSyncExternalStore } from 'react';
-import { defaultSite, emptyState } from './logic';
+import { defaultGroup, defaultSite, emptyState } from './logic';
 import { isPlanId } from './plans';
 import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
@@ -81,9 +81,13 @@ export function sanitize(raw: unknown): AppState {
   const e = emptyState();
   if (!isObj(raw) || (raw['version'] !== STORAGE_VERSION && raw['version'] !== 1)) return e;
   const from = raw['version'] as number;
+  return withDefaultTable(build(raw, from));
+}
+
+function build(raw: Record<string, unknown>, from: number): AppState {
   const c = isObj(raw['couple']) ? raw['couple'] : {}, g = isObj(raw['gifts']) ? raw['gifts'] : {};
   return {
-    version: 2, onboarded: bool(raw['onboarded'], false),
+    version: 2, onboarded: bool(raw['onboarded'], false), email: str(raw['email']),
     couple: { first: str(c['first']), second: str(c['second']), ...(str(c['firstLast']) ? { firstLast: str(c['firstLast']) } : {}), ...(str(c['secondLast']) ? { secondLast: str(c['secondLast']) } : {}) },
     date: typeof raw['date'] === 'string' ? raw['date'] : null,
     photo: photo(raw['photo']),
@@ -105,6 +109,10 @@ export function sanitize(raw: unknown): AppState {
     site: site(raw['site']),
     seeded: bool(raw['seeded'], false),
   };
+}
+
+function withDefaultTable(s: AppState): AppState {
+  return s.groups.length ? s : { ...s, groups: [defaultGroup()] };
 }
 
 /** Lee y sanea el valor guardado. Nunca lanza. */

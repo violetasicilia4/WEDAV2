@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { coupleLabel, dateLabel, draftsFor, isSamplePhoto, photoPosition, resolvePhoto, setPlan, sitePath } from '@/lib/weda/logic';
 import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
 import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, PUBLICATION_TERM, type Feature, type HighlightIcon } from '@/lib/weda/plans';
-import { update, useAppState, useStorageFull } from '@/lib/weda/store';
+import { update, useAppState } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
 
 /* ------------------------------------------------------------------ campos */
@@ -180,7 +180,6 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
   const [chosen, setChosen] = useState(false);
   const plan = planById(picked);
   const summary = picked ? publishSummary(state, picked) : null;
-  const drafts = picked ? draftsFor(state, picked) : [];
   const close = () => { setChosen(false); onClose(); };
   // Elegir un cuadrado lleva al resumen. Mirar el resumen no cambia nada: el sitio solo se ajusta al plan si la pareja lo pide («Ver mi sitio con este plan»).
   const choose = (id: PlanId) => { setPicked(id); setChosen(true); };
@@ -289,18 +288,3 @@ export function PlansProvider({ children }: { children: ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ estado de guardado */
-
-/** Los cambios se guardan solos en este dispositivo (no hay cuenta ni nube): el aviso lo dice así. */
-export function SaveStatus() {
-  const s = useAppState();
-  const full = useStorageFull();
-  const [saving, setSaving] = useState(false);
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) { first.current = false; return; }
-    setSaving(true);
-    const t = window.setTimeout(() => setSaving(false), 700);
-    return () => window.clearTimeout(t);
-  }, [s]);
-  return <p className={`pn-save${full ? ' is-error' : ''}`} role="status" aria-live="polite">{full ? 'No se pudieron guardar los últimos cambios' : saving ? 'Guardando…' : 'Cambios guardados en este dispositivo'}</p>;
-}

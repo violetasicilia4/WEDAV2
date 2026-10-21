@@ -24,3 +24,6 @@ Recorridos comprobados con datos de prueba: 1 (registro → panel vacío), 2 (ed
 - Mesas con toque, y 320/360/430/768/1024/1440 px en cada pantalla: no se recorrieron una por una.
 - Instalar el navegador de Playwright para poder correr `e2e/`.
 - Próximo objetivo: pasada de accesibilidad (foco, lectores) y revisión de contraste con el detector sobre el servidor en marcha.
+
+## Limpieza del repositorio (2026-10-21)
+Auditoría técnica y limpieza de código, dependencias, recursos y documentación. Decisiones y pendientes en [decisiones-tecnicas.md](decisiones-tecnicas.md).

@@ -85,7 +85,6 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
     onSent(items, { name: `${name.trim()} ${surname.trim()}`, message: message.trim(), how });
   };
   const remove = (g: Gift) => { onRemove(g); if (items.length <= 1) { onClose(); window.setTimeout(() => setView('cart'), 200); } };
-  const count = sent ? sent.gifts.length : items.length;
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
       <DialogContent className="rg-dialog" onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }} onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>

@@ -101,7 +101,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 5: invitados → alta manual → importar (duplicados y errores) → exportar', async ({ page }) => {
     await nav(page, 'Invitados').click();
-    await page.getByRole('button', { name: 'Con más datos' }).click();
+    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
     await page.getByLabel('Apellido').fill('Pérez');
     await page.getByRole('button', { name: 'Agregar', exact: true }).click();
@@ -132,7 +132,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 6: mesas y grupos → crear y asignar sin ser obligatorio', async ({ page }) => {
     await nav(page, 'Invitados').click();
-    await page.getByRole('button', { name: 'Con más datos' }).click();
+    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
     await page.getByLabel('Apellido').fill('Sosa');
     await page.getByRole('button', { name: 'Agregar', exact: true }).click();

@@ -12,9 +12,6 @@ export type KeyboardState = 'off' | 'compact' | 'tight';
    recortado y alineado a la sección que se edita. No se redibuja nada a mano: cada cambio llega por el evento `storage` (~150 ms).
    Es solo para mirar (no recibe toques: el scroll de la pantalla sigue siendo del panel); la página completa se abre con «Ver completa». */
 
-/** Alto con el que la página real se arma dentro de la ventana (como un celular); lo que se ve es un recorte de ese alto. */
-const FRAME_H = 640;
-
 /** Qué elemento de la página real corresponde a cada sección (el evento abierto tiene su propia ancla). */
 const targetOf = (doc: Document, section: LiveSection, openEvent: SiteEvent['key'] | null): Element | null => {
   switch (section) {

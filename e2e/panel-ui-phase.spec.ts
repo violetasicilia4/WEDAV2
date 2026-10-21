@@ -42,7 +42,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Invitados: filas compactas, edición en hoja inferior y la hoja entra en pantalla', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Con más datos' }).click();
+    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
     await page.getByLabel('Apellido').fill('Sosa');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
@@ -64,7 +64,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Mesas: conteos por mesa, quién queda sin lugar y asignación desde el selector compacto', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Con más datos' }).click();
+    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
     await page.getByLabel('Apellido').fill('Paz');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
@@ -127,7 +127,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Invitados: se elimina desde la hoja de edición y se puede deshacer', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Con más datos' }).click();
+    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Lola');
     await page.getByLabel('Apellido').fill('Mora');
     await page.getByRole('button', { name: 'Agregar' }).last().click();

@@ -182,9 +182,21 @@ export const defaultSite = (): SiteConfig => ({
   message: { enabled: true, title: 'Que vengas ya es un regalo.', text: '' },
 });
 
+/** Validaciones de la cuenta (las usan el registro y el perfil). */
+export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+export const strongPassword = (p: string) => p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p);
+
+/** Todo evento nuevo arranca con una mesa creada y vacía, para que se entienda cómo funciona; después se renombra, se borra o se suman más. */
+export const DEFAULT_GROUP_NAME = 'Mesa 1';
+export const defaultGroup = (): Group => ({ id: 'grp-inicial', name: DEFAULT_GROUP_NAME });
+/** ¿La pareja ya usó las mesas? Una sola «Mesa 1» vacía y sin datos es la que viene de fábrica y no cuenta como contenido cargado. */
+export const tablesInUse = (s: AppState): boolean =>
+  s.groups.length > 1 || s.groups.some(g => g.name !== DEFAULT_GROUP_NAME || !!g.capacity || !!g.note?.trim() || s.guests.some(x => x.groupId === g.id));
+
 export const emptyState = (): AppState => ({
   version: 2,
   onboarded: false,
+  email: '',
   couple: { first: '', second: '' },
   date: null,
   photo: { kind: 'none' },
@@ -192,7 +204,7 @@ export const emptyState = (): AppState => ({
   planId: null,
   gifts: { cover: null, alias: '', bank: '', cbu: '', acceptCard: false, items: [], given: [] },
   guests: [],
-  groups: [],
+  groups: [defaultGroup()],
   site: defaultSite(),
   seeded: false,
 });
@@ -264,7 +276,6 @@ export function moveGiftTo(s: AppState, id: string, to: number): AppState {
   return { ...s, gifts: { ...s.gifts, items } };
 }
 
-export const giftTotal = (items: ListGift[]) => items.reduce((n, g) => n + g.amount, 0);
 
 /* ------------------------------------------------------------------ invitados */
 
@@ -331,7 +342,6 @@ const withExtras = (g: Group, e: GroupExtras): Group => {
   return { ...rest, ...(e.capacity && e.capacity > 0 ? { capacity: Math.floor(e.capacity) } : {}), ...(e.note?.trim() ? { note: e.note.trim() } : {}) };
 };
 export const addGroup = (s: AppState, name: string, extras: GroupExtras = {}): AppState => ({ ...s, groups: [...s.groups, withExtras({ id: uid('grp'), name: name.trim() }, extras)] });
-export const renameGroup = (s: AppState, id: string, name: string): AppState => ({ ...s, groups: s.groups.map(g => (g.id === id ? { ...g, name: name.trim() } : g)) });
 /** Cambia nombre, descripción y lugares de una mesa (vacío = sin dato). */
 export const updateGroup = (s: AppState, id: string, name: string, extras: GroupExtras): AppState => ({ ...s, groups: s.groups.map(g => (g.id === id ? withExtras({ ...g, name: name.trim() }, extras) : g)) });
 /** Lugares de una mesa: número entero positivo o vacío. */
@@ -356,7 +366,7 @@ export function draftsFor(s: AppState, planId: PlanId): { feature: Feature; labe
   const found: [Feature, string, boolean][] = [
     ['site', 'La página del casamiento', s.site.events.some(hasEventDetails)],
     ['guests', 'Los invitados', s.guests.length > 0],
-    ['groups', 'Las mesas y grupos', s.groups.length > 0],
+    ['groups', 'Las mesas y grupos', tablesInUse(s)],
     ['playlist', 'La música de la fiesta', s.site.playlist.tracks.length > 0],
     ['gallery', 'La galería de fotos', s.site.gallery.photos.length > 0],
     ['message', 'El mensaje final', s.site.message.text.trim() !== ''],
@@ -370,7 +380,6 @@ export function setPlan(s: AppState, planId: PlanId): AppState {
 }
 
 export type TaskStatus = 'todo' | 'doing' | 'done';
-export const STATUS_LABEL_TASK: Record<TaskStatus, string> = { todo: 'Sin empezar', doing: 'En progreso', done: 'Completo' };
 /** `to` es la pantalla donde se hace; la tarea «datos» se resuelve en un diálogo del resumen. */
 export type Task = { id: 'datos' | 'regalos' | 'sitio' | 'invitados' | 'mesas'; label: string; help: string; status: TaskStatus; done: boolean; to: string; optional?: boolean };
 
@@ -394,7 +403,7 @@ export function tasks(s: AppState): Task[] {
   if (can(s.planId, 'guests')) t.push(mk({ id: 'invitados', label: 'Invitados', help: 'Cargá a las personas y seguí sus confirmaciones.', status: s.guests.length ? 'done' : 'todo', to: '/panel/invitados' }));
   if (can(s.planId, 'groups')) {
     const loose = s.guests.filter(g => g.status !== 'declined' && !g.groupId).length;
-    t.push(mk({ id: 'mesas', label: 'Mesas y grupos', help: 'Organizá dónde se sienta cada persona.', status: s.groups.length === 0 ? 'todo' : loose === 0 && s.guests.length > 0 ? 'done' : 'doing', to: '/panel/mesas', optional: true }));
+    t.push(mk({ id: 'mesas', label: 'Mesas y grupos', help: 'Organizá dónde se sienta cada persona.', status: !tablesInUse(s) ? 'todo' : loose === 0 && s.guests.length > 0 ? 'done' : 'doing', to: '/panel/mesas', optional: true }));
   }
   return t;
 }

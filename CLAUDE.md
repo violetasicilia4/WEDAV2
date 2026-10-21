@@ -1,11 +1,11 @@
 # Weda · instrucciones permanentes para Claude Code
 
-Weda crea y gestiona la experiencia digital de un casamiento (página web, lista de regalos simbólicos, invitados, mesas, vista previa). Este archivo es un **índice de reglas**: el detalle vive en `docs/`. Si algo de `AGENTS.md` (heredado del clon original «Seed») contradice este archivo, prevalece este.
+Weda crea y gestiona la experiencia digital de un casamiento (página web, lista de regalos simbólicos, invitados, mesas, vista previa). Este archivo es un **índice de reglas**: el detalle vive en `docs/`.
 
 ## Antes de cualquier tarea de UX/UI, navegación, formularios, onboarding, interacción, responsive o conversión
 1. Leé [docs/product-principles.md](docs/product-principles.md): criterio de producto, proceso de decisión, prioridades, checklist y límites. Es obligatorio.
 2. Consultá [docs/design-system.md](docs/design-system.md) (tokens, componentes, patrones de interacción y vacíos) y [docs/ux-flows.md](docs/ux-flows.md) (recorridos, planes, supuestos).
-3. Detalle técnico (rutas, estado local, arquitectura): [docs/panel-frontend.md](docs/panel-frontend.md). Auditorías previas: `docs/auditoria-*.md`, `docs/auditoria-micrositio/`.
+3. Detalle técnico (rutas, estado local, arquitectura): [docs/panel-frontend.md](docs/panel-frontend.md). Auditorías previas (históricas, con fecha): `docs/auditorias/`.
 4. Inspeccioná el código existente y reutilizá componentes antes de crear otros.
 
 ## Autonomía

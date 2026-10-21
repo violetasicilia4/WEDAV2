@@ -1,3 +1,3 @@
-- Rebuild the public Seed homepage in the index route; retain original Seed destinations for commerce, accounts and editorial pages because no independent service export is available.
-- Images are placeholders in `src/assets/images.ts`; replace them with your own files from `public/`.
-- Define Seed-specific presentation and control variants in the global design system so page code remains token-driven.
+# Instrucciones para agentes de IA
+
+Las reglas permanentes del proyecto están en [CLAUDE.md](CLAUDE.md) (producto, UX, identidad visual, validación y límites de trabajo). Leelo antes de modificar el código; el detalle vive en [docs/](docs/).

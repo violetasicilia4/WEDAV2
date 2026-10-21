@@ -27,18 +27,6 @@ export function RingsIcon(props: Props) {
   );
 }
 
-/** Recepción: dos copas brindando. */
-export function ToastIcon(props: Props) {
-  return (
-    <Base {...props}>
-      <path d="M12.2 11.4C12 18.2 13.6 22.8 17.4 24.2C21.1 22.8 21.7 17.6 21.4 11.2" />
-      <path d="M17.4 24.4L17.3 36.6M13.4 37C15.4 36.4 19.2 36.6 21.4 37.2" />
-      <path d="M35.8 11C36 17.8 34.4 22.6 30.6 24C26.9 22.6 26.3 17.4 26.6 10.8" />
-      <path d="M30.6 24.2L30.7 36.4M26.6 37C28.6 36.4 32.4 36.6 34.6 37.2" />
-    </Base>
-  );
-}
-
 /** Recepción (invitación): dos copas chocando, con rayitas de brindis. */
 export function ClinkIcon(props: Props) {
   return (

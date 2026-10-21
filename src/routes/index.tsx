@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, ArrowLeft, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
+import { ArrowRight, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
@@ -115,7 +115,7 @@ function Testimonials() {
         ))}
       </div>
       <div className="tm-dots" role="group" aria-label="Elegir testimonio">
-        {testimonials.map((t, k) => <button type="button" key={k} className={k === i ? 'on' : ''} aria-label={`Ir al testimonio ${k + 1}`} aria-current={k === i} onClick={() => scrollToAbs(n + k, true)} />)}
+        {testimonials.map((_, k) => <button type="button" key={k} className={k === i ? 'on' : ''} aria-label={`Ir al testimonio ${k + 1}`} aria-current={k === i} onClick={() => scrollToAbs(n + k, true)} />)}
       </div>
     </div>
   );

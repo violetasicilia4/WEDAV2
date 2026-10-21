@@ -34,3 +34,5 @@ Inicio (decisión explícita de la autora), menú de cuatro destinos, el modelo 
 
 ## Verificación
 `tsc` sin errores, 95 de 95 tests de unidad, build correcto. Navegador integrado: alta rápida (Enter, error de apellido faltante, pegado de 4 líneas con una inválida, foco conservado, deshacer), Regalos con y sin alias (aviso visible/oculto), cuatro solapas sin scroll a 375 px, sin desborde a 320 y 375 px. Playwright: no ejecutable (sin navegador instalado). Tipografía: sin cambios en el diff (ver informe).
+
+> **Actualización:** la alta rápida de invitados (`QuickAdd`, campo «Nombre y apellido» con Enter y pegado de listas) se retiró a pedido: el alta es un botón que abre el formulario completo, más «Importar desde Excel».

@@ -24,6 +24,7 @@ import { Route as EjemploRegalosRouteImport } from './routes/ejemplo.regalos'
 import { Route as PanelIndexRouteImport } from './routes/panel.index'
 import { Route as PanelInvitadosRouteImport } from './routes/panel.invitados'
 import { Route as PanelMesasRouteImport } from './routes/panel.mesas'
+import { Route as PanelPerfilRouteImport } from './routes/panel.perfil'
 import { Route as PanelRegalosRouteImport } from './routes/panel.regalos'
 import { Route as PanelSitioRouteImport } from './routes/panel.sitio'
 import { Route as PanelVistaPreviaRouteImport } from './routes/panel.vista-previa'
@@ -106,6 +107,11 @@ const PanelMesasRoute = PanelMesasRouteImport.update({
   path: '/mesas',
   getParentRoute: () => PanelRoute,
 } as any)
+const PanelPerfilRoute = PanelPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => PanelRoute,
+} as any)
 const PanelRegalosRoute = PanelRegalosRouteImport.update({
   id: '/regalos',
   path: '/regalos',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/panel/invitados': typeof PanelInvitadosRoute
   '/panel/mesas': typeof PanelMesasRoute
+  '/panel/perfil': typeof PanelPerfilRoute
   '/panel/regalos': typeof PanelRegalosRoute
   '/panel/sitio': typeof PanelSitioRoute
   '/panel/vista-previa': typeof PanelVistaPreviaRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/panel/invitados': typeof PanelInvitadosRoute
   '/panel/mesas': typeof PanelMesasRoute
+  '/panel/perfil': typeof PanelPerfilRoute
   '/panel/regalos': typeof PanelRegalosRoute
   '/panel/sitio': typeof PanelSitioRoute
   '/panel/vista-previa': typeof PanelVistaPreviaRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/panel/invitados': typeof PanelInvitadosRoute
   '/panel/mesas': typeof PanelMesasRoute
+  '/panel/perfil': typeof PanelPerfilRoute
   '/panel/regalos': typeof PanelRegalosRoute
   '/panel/sitio': typeof PanelSitioRoute
   '/panel/vista-previa': typeof PanelVistaPreviaRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/ejemplo/regalos'
     | '/panel/invitados'
     | '/panel/mesas'
+    | '/panel/perfil'
     | '/panel/regalos'
     | '/panel/sitio'
     | '/panel/vista-previa'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/ejemplo/regalos'
     | '/panel/invitados'
     | '/panel/mesas'
+    | '/panel/perfil'
     | '/panel/regalos'
     | '/panel/sitio'
     | '/panel/vista-previa'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/ejemplo/regalos'
     | '/panel/invitados'
     | '/panel/mesas'
+    | '/panel/perfil'
     | '/panel/regalos'
     | '/panel/sitio'
     | '/panel/vista-previa'
@@ -387,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PanelMesasRouteImport
       parentRoute: typeof PanelRoute
     }
+    '/panel/perfil': {
+      id: '/panel/perfil'
+      path: '/perfil'
+      fullPath: '/panel/perfil'
+      preLoaderRoute: typeof PanelPerfilRouteImport
+      parentRoute: typeof PanelRoute
+    }
     '/panel/regalos': {
       id: '/panel/regalos'
       path: '/regalos'
@@ -466,6 +485,7 @@ const EjemploRouteWithChildren =
 interface PanelRouteChildren {
   PanelInvitadosRoute: typeof PanelInvitadosRoute
   PanelMesasRoute: typeof PanelMesasRoute
+  PanelPerfilRoute: typeof PanelPerfilRoute
   PanelRegalosRoute: typeof PanelRegalosRoute
   PanelSitioRoute: typeof PanelSitioRoute
   PanelVistaPreviaRoute: typeof PanelVistaPreviaRoute
@@ -475,6 +495,7 @@ interface PanelRouteChildren {
 const PanelRouteChildren: PanelRouteChildren = {
   PanelInvitadosRoute: PanelInvitadosRoute,
   PanelMesasRoute: PanelMesasRoute,
+  PanelPerfilRoute: PanelPerfilRoute,
   PanelRegalosRoute: PanelRegalosRoute,
   PanelSitioRoute: PanelSitioRoute,
   PanelVistaPreviaRoute: PanelVistaPreviaRoute,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { ArrowDown, ArrowUp, Check, ChevronRight, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
-import { CoupleCover, Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
+import { Field, Locked, useToast } from '@/components/panel/ui';
 import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/catalog';
@@ -13,7 +13,7 @@ import {
 } from '@/lib/weda/logic';
 import { can } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
-import { getState, update, useAppState } from '@/lib/weda/store';
+import { update, useAppState } from '@/lib/weda/store';
 import type { Category } from '@/lib/demo-wedding';
 import type { ListGift } from '@/lib/weda/types';
 
@@ -31,7 +31,7 @@ const TABS: { id: Tab; label: string; short: string }[] = [
   { id: 'cobro', label: 'Datos de cobro', short: 'Cobro' },
 ];
 
-const Thumb = ({ src, name }: { src?: string | undefined; name: string }) => (
+const Thumb = ({ src }: { src?: string | undefined }) => (
   <span className="pn-gthumb" aria-hidden="true">{src ? <img src={src} alt="" loading="lazy" /> : <GiftIcon size={30} strokeWidth={1.3} />}</span>
 );
 
@@ -255,7 +255,6 @@ function GiftsModule() {
 
   return (
     <div className="pn-page">
-      <CoupleCover variant="gifts" eyebrow="Lista de regalos de" />
       <header className="pn-page-head is-compact rg-head">
         <div>
           <h1>Lista de regalos</h1>
@@ -289,10 +288,11 @@ function GiftsModule() {
             </div>
           )}
           {items.length === 0 ? (
-            <div className="pn-empty">
-              <h2>Armá tu lista en un minuto</h2>
-              <p>Sumá un set completo de regalos y después sacá los que no quieras. También podés elegir de a uno o crear uno propio.</p>
-              <div className="pn-actions"><button type="button" className="pn-btn" onClick={() => setTab('agregar')}>Agregar regalos</button><button type="button" className="pn-btn is-ghost" onClick={() => setCreating(true)}>Crear un regalo propio</button></div>
+            <div className="pn-empty is-centered">
+              <span className="pn-empty-ico" aria-hidden="true"><GiftIcon size={22} strokeWidth={1.6} /></span>
+              <h2>Todavía no hay regalos en tu lista</h2>
+              <p>Agregá de nuestro catálogo un montón de regalos o creá tus propios regalos para tu lista.</p>
+              <div className="pn-actions is-center"><button type="button" className="pn-btn" onClick={() => setTab('agregar')}>Agregar del catálogo</button><button type="button" className="pn-btn is-ghost" onClick={() => setCreating(true)}>Crear un regalo propio</button></div>
             </div>
           ) : (
             <>
@@ -335,7 +335,7 @@ function GiftsModule() {
                 <>
                   <SortableGifts items={items} onMove={(id, to) => update(x => moveGiftTo(x, id, to))} renderRow={g => (
                     <>
-                      <Thumb src={g.image} name={g.name} />
+                      <Thumb src={g.image} />
                       <div className="pn-gmeta">
                         <strong>{g.name}</strong>
                         <span>{formatARS(g.amount)} · {g.category}</span>
@@ -420,33 +420,41 @@ function GiftsModule() {
         )}
 
         {tab === 'recibidos' && (
-          received.length === 0 ? (
-            <div className="pn-empty">
-              <h2>Todavía no recibiste regalos</h2>
-              <p>Cuando un invitado regale desde la página de tu lista, lo vas a ver acá con su nombre, el monto y su mensaje. Para probarlo, regalá algo desde la vista de invitado.</p>
-              <div className="pn-actions"><button type="button" className="pn-btn" onClick={() => openPreview('gifts')}><Eye size={16} aria-hidden="true" />Ver la lista como invitado</button></div>
+          <>
+            <div className="rg-section-head">
+              <div><h2>Aportes recibidos</h2><p className="pn-muted">Quién te regaló qué, con su mensaje.</p></div>
             </div>
-          ) : (
-            <>
-              <div className="rg-section-head">
-                <div><h2>Aportes recibidos ({received.length})</h2><p className="pn-muted">Quién te regaló qué, con su mensaje.</p></div>
-                <span className="rg-total">Total: {formatARS(receivedTotal(received))}</span>
+            {/* Los tres totales están siempre, también antes del primer regalo (en cero). Los regalos se cargan en pesos y no hay cotización conectada: el total en dólares queda en «—». */}
+            <ul className="gl-stats is-three" aria-label="Resumen de aportes recibidos">
+              <li><span>Regalos recibidos</span><strong>{received.length}</strong><small>{received.length === 1 ? 'Regalo' : 'Regalos'}</small></li>
+              <li><span>Total en pesos</span><strong>{formatARS(receivedTotal(received))}</strong><small>Pesos argentinos</small></li>
+              <li><span>Total en dólares</span><strong aria-label="Sin dato">—</strong><small>Sin cotización conectada</small></li>
+            </ul>
+            {received.length === 0 ? (
+              <div className="pn-empty is-centered">
+                <span className="pn-empty-ico" aria-hidden="true"><GiftIcon size={22} strokeWidth={1.6} /></span>
+                <h2>Todavía no recibiste regalos</h2>
+                <p>Cuando un invitado regale desde la página de tu lista, lo vas a ver acá con su nombre, el monto y su mensaje. Para probarlo, regalá algo desde la vista de invitado.</p>
+                <div className="pn-actions is-center"><button type="button" className="pn-btn" onClick={() => openPreview('gifts')}><Eye size={16} aria-hidden="true" />Ver la lista como invitado</button></div>
               </div>
-              <ul className="rg-recs" aria-label="Aportes recibidos">
-                {received.map(r => (
-                  <li key={r.id} className="rg-rec">
-                    <div className="rg-rec-main">
-                      <p className="rg-rec-name">{r.giver}{r.how && <span className="pn-chip">{HOW_LABEL[r.how]}</span>}</p>
-                      <p className="rg-rec-gift">Regaló: <b>{r.giftName}</b>{r.at ? ` · ${fmtDate(r.at)}` : ''}</p>
-                      {r.message && <p className="rg-quote">«{r.message}»</p>}
-                    </div>
-                    <strong className="rg-rec-amount">{formatARS(r.amount)}</strong>
-                  </li>
-                ))}
-              </ul>
-              <p className="pn-hint">En esta demo los regalos se registran en este navegador cuando se hacen desde la vista de invitado. No hay verificación de pagos.</p>
-            </>
-          )
+            ) : (
+              <>
+                <ul className="rg-recs" aria-label="Aportes recibidos">
+                  {received.map(r => (
+                    <li key={r.id} className="rg-rec">
+                      <div className="rg-rec-main">
+                        <p className="rg-rec-name">{r.giver}{r.how && <span className="pn-chip">{HOW_LABEL[r.how]}</span>}</p>
+                        <p className="rg-rec-gift">Regaló: <b>{r.giftName}</b>{r.at ? ` · ${fmtDate(r.at)}` : ''}</p>
+                        {r.message && <p className="rg-quote">«{r.message}»</p>}
+                      </div>
+                      <strong className="rg-rec-amount">{formatARS(r.amount)}</strong>
+                    </li>
+                  ))}
+                </ul>
+                <p className="pn-hint">En esta demo los regalos se registran en este navegador cuando se hacen desde la vista de invitado. No hay verificación de pagos.</p>
+              </>
+            )}
+          </>
         )}
 
         {tab === 'cobro' && (
@@ -463,7 +471,7 @@ function GiftsModule() {
                     {s.gifts.bank.trim() && <div><dt>Banco</dt><dd>{s.gifts.bank.trim()}</dd></div>}
                     {s.gifts.cbu.trim() && <div><dt>CBU</dt><dd>{s.gifts.cbu.trim()}</dd></div>}
                   </dl>
-                ) : <p className="pn-muted">Cargá tu banco, tu CBU y tu alias. Tus invitados te transfieren y te mandan el comprobante.</p>}
+                ) : <p className="pn-muted">Configurá los datos de tu cuenta para que tus invitados puedan transferirte a esta cuenta.</p>}
                 <div className="pn-cfg-actions">
                   <button type="button" className="pn-btn" onClick={() => setCfg('bank')}>{alias ? 'Editar' : 'Configurar'}</button>
                   {alias && <button type="button" className="pn-link" onClick={() => { void navigator.clipboard?.writeText(alias).catch(() => undefined); toast('Alias copiado.'); }}><Copy size={14} aria-hidden="true" />Copiar alias</button>}
@@ -530,7 +538,6 @@ function GiftsModule() {
         const set = packOpen;
         const gs = setGifts(set);
         const all = gs.every(g => hasCatalogGift(s, g.id));
-        const total = gs.reduce((n, g) => n + g.amount, 0);
         const toggle = () => { setPackOpen(null); if (all) withUndo(`Quitaste los regalos de «${set.name}».`, () => update(x => removeSetGifts(x, set.giftIds))); else doAddSet(set); };
         return (
           <Dialog open onOpenChange={o => { if (!o) setPackOpen(null); }}>
@@ -538,8 +545,14 @@ function GiftsModule() {
               <DialogTitle>{set.name}</DialogTitle>
               <DialogDescription>{set.description}</DialogDescription>
               <p className="rg-label">{gs.length} regalos incluidos</p>
-              <ul className="rg-pack-list">{gs.map(g => <li key={g.id}><span>{g.name}</span><b>{formatARS(g.amount)}</b></li>)}</ul>
-              <p className="rg-pack-total"><span>Total</span><strong>{formatARS(total)}</strong></p>
+              <ul className="rg-pack-minis" aria-label={`Regalos del pack ${set.name}`}>
+                {gs.map(g => (
+                  <li key={g.id} className="rg-mini">
+                    <span className="rg-mini-photo">{g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={24} strokeWidth={1.3} aria-hidden="true" />}</span>
+                    <span className="rg-mini-name">{g.name}</span>
+                  </li>
+                ))}
+              </ul>
               <div className="pn-actions is-end">
                 <button type="button" className="pn-btn is-ghost" onClick={() => setPackOpen(null)}>Cerrar</button>
                 <button type="button" className={`pn-btn${all ? ' is-ghost' : ''}`} onClick={toggle}>{all ? 'Quitar pack' : <><Plus size={15} aria-hidden="true" />Agregar pack</>}</button>

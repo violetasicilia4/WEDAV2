@@ -37,3 +37,14 @@ dist-ssr
 # Playwright
 test-results/
 playwright-report/
+
+# Entorno local
+.env
+.env.*
+!.env.example
+
+# Herramientas de IA y capturas locales (no se suben; ver CLAUDE.md)
+.claude/
+.impeccable/*.local.json
+.impeccable/hook.*
+capturas/

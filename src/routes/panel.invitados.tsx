@@ -58,50 +58,6 @@ function GuestForm({ initial, groups, submitLabel, onSubmit, onCancel, onDelete 
   );
 }
 
-/* Alta rápida: escribir «Nombre Apellido» y Enter suma a la persona y deja el cursor listo para la siguiente (cargar 80 invitados en el diálogo eran 80 aperturas).
-   Pegar una lista (una persona por línea, por ejemplo desde WhatsApp o una planilla) las suma todas. El último término es el apellido; se corrige al editar.
-   El diálogo completo (asistencia, restricción, grupo) sigue a un toque en «Con más datos». */
-const splitName = (line: string) => {
-  const parts = line.trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
-  return parts.length < 2 ? null : { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1]! };
-};
-function QuickAdd({ inputRef, onAdd, onMore }: { inputRef: React.RefObject<HTMLInputElement | null>; onAdd: (people: { first: string; last: string }[]) => void; onMore: () => void }) {
-  const [value, setValue] = useState('');
-  const [error, setError] = useState('');
-  const one = (line: string) => {
-    const n = splitName(line);
-    if (!n) return { error: 'Escribí nombre y apellido.' } as const;
-    const found = validateGuest(n);
-    return found.first || found.last ? ({ error: found.first ?? found.last ?? '' } as const) : ({ person: n } as const);
-  };
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const r = one(value);
-    if ('error' in r) { setError(r.error); return; }
-    onAdd([r.person]); setValue(''); setError('');
-    inputRef.current?.focus();
-  };
-  const paste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const text = e.clipboardData.getData('text');
-    if (!/\r?\n/.test(text.trim())) return;
-    e.preventDefault();
-    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    const ok = lines.map(one).flatMap(r => ('person' in r ? [r.person] : []));
-    if (ok.length) onAdd(ok);
-    setError(ok.length < lines.length ? `${lines.length - ok.length} ${lines.length - ok.length === 1 ? 'línea no tenía' : 'líneas no tenían'} nombre y apellido y no se ${lines.length - ok.length === 1 ? 'sumó' : 'sumaron'}.` : '');
-  };
-  return (
-    <form className="gl-quick" onSubmit={submit} noValidate>
-      <div className="gl-quick-row">
-        <label className="pn-sr" htmlFor="g-quick">Nombre y apellido del invitado</label>
-        <input ref={inputRef} id="g-quick" type="text" autoComplete="off" enterKeyHint="done" placeholder="Nombre y apellido" value={value} aria-invalid={!!error} aria-describedby="g-quick-hint" onChange={e => { setValue(e.target.value); setError(''); }} onPaste={paste} />
-        <button type="submit" className="pn-btn"><Plus size={16} aria-hidden="true" />Agregar</button>
-      </div>
-      <p id="g-quick-hint" className={error ? 'pn-error' : 'pn-muted'} role={error ? 'alert' : undefined}>{error || <>Enter suma y sigue con el próximo. Podés pegar una lista, una persona por línea. <button type="button" className="pn-link" onClick={onMore}>Con más datos</button></>}</p>
-    </form>
-  );
-}
-
 function GuestsModule() {
   const s = useAppState();
   const toast = useToast();
@@ -116,7 +72,6 @@ function GuestsModule() {
   const [imported, setImported] = useState<{ name: string; result: ImportResult } | null>(null);
   const [importError, setImportError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-  const quickRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const vista = Route.useSearch().vista === 'mesas' && can(s.planId, 'groups') ? 'mesas' : 'lista';
 
@@ -128,13 +83,6 @@ function GuestsModule() {
     const before = s.guests;
     update(x => removeGuest(x, g.id));
     toast(`Eliminaste a ${guestName(g)}.`, 'ok', { label: 'Deshacer', onClick: () => update(x => ({ ...x, guests: before })) });
-  };
-  const quickAdd = (people: { first: string; last: string }[]) => {
-    const before = s.guests;
-    update(x => addGuests(x, people.map(p => ({ ...p, status: 'pending' as const, menu: '' }))));
-    toast(people.length === 1 ? `Agregaste a ${people[0]!.first} ${people[0]!.last}.` : `Agregaste ${people.length} invitados.`, 'ok', { label: 'Deshacer', onClick: () => update(x => ({ ...x, guests: before })) });
-    // Al sumar al primero, el estado vacío se reemplaza por la lista y el campo se vuelve a dibujar: se devuelve el cursor para seguir cargando.
-    window.setTimeout(() => quickRef.current?.focus(), 60);
   };
   const closeImport = () => { setImporting(false); setImported(null); setImportError(''); };
   const pickFile = async (f: File | undefined) => {
@@ -175,7 +123,7 @@ function GuestsModule() {
           <div className="pn-head-actions gl-actions">
             <button type="button" className="pn-btn is-ghost" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={16} aria-hidden="true" />Exportar</button>
             <button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={16} aria-hidden="true" />Importar</button>
-            <button type="button" className="pn-btn" onClick={() => { quickRef.current?.scrollIntoView({ block: 'center' }); quickRef.current?.focus(); }}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
+            <button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
           </div>
         )}
       </header>
@@ -190,25 +138,27 @@ function GuestsModule() {
       {vista === 'mesas' ? <GroupsView /> : null}
       {vista === 'mesas' ? null : (
         <>
+      {/* Los cuatro totales están siempre, también sin invitados (en cero). */}
+      <ul className="gl-stats" aria-label="Resumen de invitados">
+        <li><span>Total en lista</span><strong>{st.total}</strong><small>{st.total === 1 ? 'Invitado' : 'Invitados'}</small></li>
+        <li><span>Confirmados</span><strong>{st.confirmed}</strong><small>de {st.total} {st.total === 1 ? 'invitado' : 'invitados'}</small></li>
+        <li><span>Sin responder</span><strong>{st.pending}</strong><small>{st.declined > 0 ? `${st.declined} no ${st.declined === 1 ? 'asiste' : 'asisten'}` : 'Todavía sin respuesta'}</small></li>
+        <li><span>Con restricción</span><strong>{withRestr}</strong><small>Menú especial</small></li>
+      </ul>
+
       {st.total === 0 ? (
-        <div className="pn-empty is-compact">
+        <div className="pn-empty is-centered">
           <span className="pn-empty-ico" aria-hidden="true"><Users size={22} strokeWidth={1.6} /></span>
           <h2>Todavía no hay invitados</h2>
-          <p>Cargalos de a uno o importá tu planilla. Las respuestas de la página también llegan acá.</p>
-          <QuickAdd inputRef={quickRef} onAdd={quickAdd} onMore={() => setAdding(true)} />
-          <div className="pn-actions is-center"><button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button></div>
+          <p>Podés agregar invitados de a uno, con todos sus datos, o importar tu planilla de Excel. Las respuestas de la página también llegan acá.</p>
+          <div className="pn-actions is-center">
+            <button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
+            <button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button>
+          </div>
           {can(s.planId, 'rsvp') && <Link to="/panel/vista-previa" className="pn-link">Probar el formulario de confirmación</Link>}
         </div>
       ) : (
         <>
-          <QuickAdd inputRef={quickRef} onAdd={quickAdd} onMore={() => setAdding(true)} />
-          <ul className="gl-stats" aria-label="Resumen de invitados">
-            <li><span>Total en lista</span><strong>{st.total}</strong><small>{st.total === 1 ? 'Invitado' : 'Invitados'}</small></li>
-            <li><span>Confirmados</span><strong>{st.confirmed}</strong><small>de {st.total} {st.total === 1 ? 'invitado' : 'invitados'}</small></li>
-            <li><span>Sin responder</span><strong>{st.pending}</strong><small>{st.declined > 0 ? `${st.declined} no ${st.declined === 1 ? 'asiste' : 'asisten'}` : 'Todavía sin respuesta'}</small></li>
-            <li><span>Con restricción</span><strong>{withRestr}</strong><small>Menú especial</small></li>
-          </ul>
-
           <div className="gl-tools">
             <div className="gl-search">
               <label className="pn-sr" htmlFor="g-q">Buscar un invitado</label>

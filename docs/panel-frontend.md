@@ -5,7 +5,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 
 ## 1. Arquitectura que ya existía (auditoría)
 
-- TanStack Start/Router (rutas por archivo) + React 19 + Vite + Tailwind 4 + Radix/shadcn (`src/components/ui`).
+- TanStack Start/Router (rutas por archivo) + React 19 + Vite + Tailwind 4 + Radix Dialog + shadcn (`src/components/ui` conserva solo `button` y `dialog`, que son los que se usan; el resto se puede volver a agregar con `npx shadcn add`).
 - `/` landing; `/ejemplo`, `/ejemplo/regalos` casamiento ficticio (Ignacio & Martina); `/encontrar` buscador de invitados.
 - Datos de la demo en `src/lib/demo-wedding.ts` (catálogo de 26 regalos, 4 categorías, menús, eventos, dress code…).
 - Planes (`src/lib/weda/plans.ts`, única fuente; la landing los muestra en `src/components/landing-plans.tsx`): **Regalos** ARS 95.000, **Invitación** ARS 180.000, **Completo** ARS 320.000, por evento y acumulativos.
@@ -24,6 +24,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 | `/panel/invitados` | Invitados (tabla en la compu, tarjetas en el celular), búsqueda, filtros, alta manual. |
 | `/panel/mesas` | Grupos y mesas. |
 | `/panel/sitio` | Editor del sitio por bloques con vista previa en vivo. |
+| `/panel/perfil` | Perfil: «Datos del casamiento» (nombres, fecha, lugar y foto; mismo formulario `CoupleForm` que el diálogo del inicio) y «Tu cuenta» (correo, clave, cerrar sesión). No está en el menú: se entra por el bloque de la pareja arriba del menú (web) o el avatar arriba a la derecha (celular). |
 | `/panel/vista-previa` | «Ver como invitado»: la página pública real en celular o compu. |
 | `/sitio/$slug`, `/sitio/$slug/regalos` | Página pública **simulada** de la pareja (ej.: `/sitio/tomas-y-martina`). Mismos componentes que `/ejemplo`. |
 

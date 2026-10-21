@@ -83,6 +83,8 @@ export type AppState = {
   version: 2;
   /** true cuando la pareja terminó el onboarding. */
   onboarded: boolean;
+  /** Correo de la cuenta, tal como se escribió al ingresar. Solo se guarda en este navegador; la clave nunca se guarda. */
+  email: string;
   couple: Couple;
   /** AAAA-MM-DD, o null si todavía no tienen fecha. */
   date: string | null;

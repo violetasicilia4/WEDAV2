@@ -6,7 +6,7 @@ import {
   alias as demoAlias, calendar, categories as demoCategories, dressCode as demoDress, eventDate as demoEventDate, eventOffset as demoOffset,
   events as demoEvents, gallery as demoGallery, gifts as demoGifts, menus as demoMenus, playlist as demoPlaylist, rsvpDeadline as demoDeadline,
   social as demoSocial, wedding as demoWedding, weddingStart as demoStart,
-  type Category, type EventKey, type Gift, type WeddingEvent,
+  type Category, type Gift, type WeddingEvent,
 } from '@/lib/demo-wedding';
 import { can } from './plans';
 import { coupleLabel, dateLabel, dateShort, dayMonth, hasEventDetails, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath } from './logic';
@@ -56,7 +56,6 @@ export type SiteActions = {
   recordRsvp: (people: RsvpEntry[]) => void;
 };
 
-const LABELS: Record<EventKey, string> = { ceremonia: 'Ceremonia', recepcion: 'Recepción', fiesta: 'Fiesta', civil: 'Civil', brunch: 'Brunch' };
 const SLOT: Record<string, number> = { ceremonia: 1, recepcion: 2, fiesta: 3, civil: 4, brunch: 5 };
 const PALETTE = demoDress.palette;
 

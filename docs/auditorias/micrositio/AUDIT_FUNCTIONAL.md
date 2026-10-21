@@ -99,7 +99,7 @@ Formato: **Nombre** · estado · evidencia · archivo · prueba · problema · d
 | F-60 | Carga de comprobante | Simulada [V] | `<input type=file>`; "Enviar" se habilita al cargar; **no** se sube a ningún lado (sin red) | `ejemplo.regalos.tsx` | Validación solo de presencia, sin tipo/tamaño visibles | P1 |
 | F-61 | Validación de datos | Simulada [V] | "Para enviar falta: nombre, apellido, comprobante" | `ejemplo.regalos.tsx` | — | — |
 | F-62 | Confirmación del flujo | Simulada [V] | "¡Gracias, Ana!" | `ejemplo.regalos.tsx` | No indica que es demostración | P1 |
-| F-63 | Método "Tarjeta" | Parcial [V, auditoría previa `docs/auditoria-ux-weda.md`] | Permite "Enviar" sin pagar ni cargar nada | `ejemplo.regalos.tsx` | Parece un pago real que no existe | P1 |
+| F-63 | Método "Tarjeta" | Parcial [V, auditoría previa `docs/auditorias/auditoria-ux-weda.md`] | Permite "Enviar" sin pagar ni cargar nada | `ejemplo.regalos.tsx` | Parece un pago real que no existe | P1 |
 | F-64 | Errores y estados vacíos | Parcial [I] | No hay "sin resultados" verificado ni error de carga de imagen | — | Falta estado vacío de búsqueda/filtro | P1 |
 | F-65 | Destinos de luna de miel | Solo datos [V] | `destination` existe en cada regalo, **no** hay UI que lo use | `demo-wedding.ts` | Pedido explícito: "solo datos" | P3 |
 | F-66 | Diferencia demo vs operación real | **Ausente** [V] | Sin red real; sin aviso | — | Un usuario podría creer que pagó | P1 |

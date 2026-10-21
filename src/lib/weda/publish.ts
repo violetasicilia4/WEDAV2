@@ -2,7 +2,7 @@
 // La publicación y el pago NO están conectados (no hay servidor): esto solo informa, no publica ni cobra nada.
 import { sectionGaps } from './journey';
 import { hasEventDetails, publicPages } from './logic';
-import { can, planById, planFor, type Feature } from './plans';
+import { can, planFor, type Feature } from './plans';
 import type { AppState, PlanId } from './types';
 
 export type PublishState = 'published' | 'empty' | 'draft';
@@ -39,7 +39,6 @@ export function publishSummary(s: AppState, planId: PlanId): PublishSummary {
   return { items, todo, published: items.filter(i => i.state === 'published'), drafts: items.filter(i => i.state === 'draft'), empty: items.filter(i => i.state === 'empty'), warnings };
 }
 
-export const planName = (id: PlanId | null) => planById(id)?.name ?? '';
 
 /** En una frase, qué páginas ve el invitado con cada plan. Sale de la matriz de planes: nada se afirma que `plans.ts` no incluya. */
 export function publishedPagesText(planId: PlanId): string {

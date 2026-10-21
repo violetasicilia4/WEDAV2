@@ -8,7 +8,6 @@ import type { AppState, SiteEvent } from './types';
 export type StageId = 'regalos' | 'sitio' | 'invitados' | 'publicar';
 export type StageStatus = 'todo' | 'doing' | 'review' | 'done';
 
-export const STAGE_STATUS_LABEL: Record<StageStatus, string> = { todo: 'Sin empezar', doing: 'En progreso', review: 'Lista para revisar', done: 'Completada' };
 
 export type Stage = {
   id: StageId;
@@ -90,7 +89,7 @@ export function guestsStage(s: AppState): Stage {
 }
 
 /** «Revisá y publicá» nunca bloquea: es el cierre del recorrido. La publicación real todavía no está conectada. */
-export function publishStage(s: AppState, before: Stage[]): Stage {
+export function publishStage(before: Stage[]): Stage {
   // Invitados y mesas son gestión, no se publican: no cuentan para estar lista la página.
   const build = before.filter(x => x.id !== 'invitados');
   const started = build.filter(x => !x.locked && x.status !== 'todo').length;
@@ -106,7 +105,7 @@ export function publishStage(s: AppState, before: Stage[]): Stage {
 
 export function stages(s: AppState): Stage[] {
   const first = [giftsStage(s), siteStage(s), guestsStage(s)];
-  return [...first, publishStage(s, first)];
+  return [...first, publishStage(first)];
 }
 
 const SCORE: Record<StageStatus, number> = { todo: 0, doing: 0.35, review: 0.75, done: 1 };

@@ -74,8 +74,9 @@ function PhotoTile({ value, onChange }: { value: PhotoChoice; onChange: (p: Phot
   );
 }
 
-/** Diálogo para editar los datos básicos (nombres y apellidos, fecha, lugar y foto) una vez creado el evento. En el resumen solo se muestran los nombres. */
-export function CoupleDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** Formulario para editar los datos básicos (nombres y apellidos, fecha, lugar y foto) una vez creado el evento. Lo usan el diálogo del inicio y la página de perfil.
+ *  `onDone` se llama después de guardar; `onCancel` (si hay) agrega el botón «Cancelar». */
+export function CoupleForm({ onDone, onCancel }: { onDone?: () => void; onCancel?: () => void }) {
   const state = useAppState();
   const toast = useToast();
   const [first, setFirst] = useState(state.couple.first);
@@ -106,41 +107,48 @@ export function CoupleDialog({ open, onClose }: { open: boolean; onClose: () => 
       site: { ...s.site, events: s.site.events.map((ev, i) => (i === 0 ? { ...ev, name: noPlace ? '' : place.trim() } : ev)) },
     }));
     toast('Datos guardados.');
-    onClose();
+    onDone?.();
   };
 
+  return (
+    <form onSubmit={save} noValidate className="pn-form pn-couple">
+      <div className="pn-couple-fields">
+        <div className="pn-two">
+          <Field label="Tu nombre" error={errors.first}>{a => <input type="text" id={a.id} autoComplete="given-name" value={first} onChange={e => setFirst(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+          <Field label="Tu apellido">{a => <input type="text" id={a.id} autoComplete="family-name" value={firstLast} onChange={e => setFirstLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
+        </div>
+        <div className="pn-two">
+          <Field label="Nombre de tu pareja" error={errors.second}>{a => <input type="text" id={a.id} autoComplete="off" value={second} onChange={e => setSecond(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+          <Field label="Apellido de tu pareja">{a => <input type="text" id={a.id} autoComplete="off" value={secondLast} onChange={e => setSecondLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
+        </div>
+        <div className="pn-two pn-when-row">
+          <div className="pn-when">
+            <Field label="Fecha del casamiento" error={errors.date}>{a => <input type="date" id={a.id} value={noDate ? '' : date} disabled={noDate} onChange={e => setDate(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+            <label className="pn-check"><input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} /><span>Todavía no tenemos fecha</span></label>
+          </div>
+          <div className="pn-when">
+            <Field label="Lugar del casamiento" error={placeError}>{a => <input type="text" id={a.id} autoComplete="off" placeholder="Salón, jardín o ciudad" value={noPlace ? '' : place} disabled={noPlace} onChange={e => { setPlace(e.target.value); setPlaceError(undefined); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+            <label className="pn-check"><input type="checkbox" checked={noPlace} onChange={e => { setNoPlace(e.target.checked); setPlaceError(undefined); }} /><span>Todavía no tenemos lugar</span></label>
+          </div>
+        </div>
+      </div>
+      <PhotoTile value={photo} onChange={setPhoto} />
+      <div className="pn-actions is-end">
+        {onCancel && <button type="button" className="pn-btn is-ghost" onClick={onCancel}>Cancelar</button>}
+        <button type="submit" className="pn-btn">Guardar</button>
+      </div>
+    </form>
+  );
+}
+
+/** Diálogo con el formulario de datos del casamiento (se abre desde el inicio). */
+export function CoupleDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) onClose(); }}>
       <DialogContent className="pn-dialog is-couple">
         <DialogTitle>Datos del casamiento</DialogTitle>
         <DialogDescription className="pn-couple-desc">Los cambios se ven al instante en la vista previa.</DialogDescription>
-        <form onSubmit={save} noValidate className="pn-form pn-couple">
-          <div className="pn-couple-fields">
-            <div className="pn-two">
-              <Field label="Tu nombre" error={errors.first}>{a => <input type="text" id={a.id} autoComplete="given-name" value={first} onChange={e => setFirst(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-              <Field label="Tu apellido">{a => <input type="text" id={a.id} autoComplete="family-name" value={firstLast} onChange={e => setFirstLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
-            </div>
-            <div className="pn-two">
-              <Field label="Nombre de tu pareja" error={errors.second}>{a => <input type="text" id={a.id} autoComplete="off" value={second} onChange={e => setSecond(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-              <Field label="Apellido de tu pareja">{a => <input type="text" id={a.id} autoComplete="off" value={secondLast} onChange={e => setSecondLast(e.target.value)} aria-describedby={a.describedBy} />}</Field>
-            </div>
-            <div className="pn-two pn-when-row">
-              <div className="pn-when">
-                <Field label="Fecha del casamiento" error={errors.date}>{a => <input type="date" id={a.id} value={noDate ? '' : date} disabled={noDate} onChange={e => setDate(e.target.value)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-                <label className="pn-check"><input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); setErrors(x => ({ ...x, date: undefined })); }} /><span>Todavía no tenemos fecha</span></label>
-              </div>
-              <div className="pn-when">
-                <Field label="Lugar del casamiento" error={placeError}>{a => <input type="text" id={a.id} autoComplete="off" placeholder="Salón, jardín o ciudad" value={noPlace ? '' : place} disabled={noPlace} onChange={e => { setPlace(e.target.value); setPlaceError(undefined); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-                <label className="pn-check"><input type="checkbox" checked={noPlace} onChange={e => { setNoPlace(e.target.checked); setPlaceError(undefined); }} /><span>Todavía no tenemos lugar</span></label>
-              </div>
-            </div>
-          </div>
-          <PhotoTile value={photo} onChange={setPhoto} />
-          <div className="pn-actions is-end">
-            <button type="button" className="pn-btn is-ghost" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="pn-btn">Guardar</button>
-          </div>
-        </form>
+        <CoupleForm onDone={onClose} onCancel={onClose} />
       </DialogContent>
     </Dialog>
   );

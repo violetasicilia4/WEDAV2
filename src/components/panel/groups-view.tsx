@@ -61,11 +61,12 @@ export function GroupsView() {
   return (
     <div className="pn-groups-view mg">
       <div className="mg-head">
-        <p className="pn-muted">{s.groups.length ? 'Armá la distribución, controlá los lugares y ubicá a cada invitado.' : 'Creá una mesa o un grupo y sentá a tus invitados.'}</p>
+        <p className="pn-muted">{s.groups.length ? 'Armá la distribución, controlá los lugares y ubicá a cada invitado. Ya tenés una mesa de ejemplo: renombrala, borrala o sumá las que necesites.' : 'Creá una mesa o un grupo y sentá a tus invitados.'}</p>
         <button type="button" className="pn-btn" onClick={openNew}><Plus size={16} aria-hidden="true" />Crear mesa</button>
       </div>
 
-      {s.groups.length > 0 && (
+      {/* Los cuatro totales están siempre, también sin mesas (en cero): así se entiende qué se va a controlar. */}
+      {(
         <ul className="gl-stats" aria-label="Resumen de mesas">
           <li><span>Total de mesas</span><strong>{s.groups.length}</strong><small>Mesas y grupos</small></li>
           <li><span>Lugares</span><strong>{totalCapacity}</strong><small>{totalCapacity ? 'Lugares configurados' : 'Sin lugares cargados'}</small></li>

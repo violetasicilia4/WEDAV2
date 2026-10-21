@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field, FlowClose } from '@/components/panel/ui';
-import { reset } from '@/lib/weda/store';
+import { isEmail, strongPassword } from '@/lib/weda/logic';
+import { reset, update } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/crear/cuenta')({
   // «?modo=ingresar» abre la pantalla en «Ingresá a Weda» (el botón «Iniciar sesión» de la landing).
@@ -11,8 +12,6 @@ export const Route = createFileRoute('/crear/cuenta')({
 });
 
 type Mode = 'signup' | 'login';
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const strongPassword = (p: string) => p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p);
 
 const GoogleMark = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -28,8 +27,8 @@ const AppleMark = () => (
   </svg>
 );
 
-/* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda el mail o la clave; la pantalla
-   solo da paso al armado del evento. */
+/* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda la clave. El correo se recuerda solo en este navegador
+   (se muestra en el perfil); la pantalla da paso al armado del evento. */
 function Account() {
   const navigate = useNavigate();
   const { modo } = Route.useSearch();
@@ -46,11 +45,12 @@ function Account() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const found: typeof errors = {};
-    if (!EMAIL.test(email.trim())) found.email = 'Ingresá un correo válido, por ejemplo nombre@correo.com.';
+    if (!isEmail(email)) found.email = 'Ingresá un correo válido, por ejemplo nombre@correo.com.';
     if (signup ? !strongPassword(password) : !password) found.password = signup ? 'Usá 8 o más caracteres, con mayúsculas, minúsculas y un número.' : 'Ingresá tu clave.';
     setErrors(found);
     if (found.email || found.password) { document.getElementById(found.email ? 'ac-email' : 'ac-pass')?.focus(); return; }
     next();
+    update(s => ({ ...s, email: email.trim() }));
   };
 
   return (

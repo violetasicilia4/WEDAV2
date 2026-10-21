@@ -7,7 +7,7 @@ import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
 import { Field, Locked, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
 import { hasEventDetails, isSafeMapsUrl, mapsLink, uid, validateOnboarding } from '@/lib/weda/logic';
-import { eventComplete, sectionGaps } from '@/lib/weda/journey';
+import { eventComplete } from '@/lib/weda/journey';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';

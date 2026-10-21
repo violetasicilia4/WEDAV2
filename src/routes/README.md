@@ -1,21 +1,14 @@
-# Routes
+# Rutas
 
-TanStack Start uses **file-based routing**. Every `.tsx` file in this directory
-defines a route. Do **not** create `src/pages/`, `src/routes/_app/index.tsx`, or
-`app/layout.tsx` — those are Next.js / Remix conventions. The only root layout
-is `src/routes/__root.tsx`.
+TanStack Start usa **rutas por archivo**: cada `.tsx` de esta carpeta es una ruta. `src/routeTree.gen.ts` se genera solo (no se edita a mano; se versiona). El layout raíz es `__root.tsx`.
 
-## Conventions
+| Archivo | URL | Qué es |
+| --- | --- | --- |
+| `index.tsx` | `/` | Landing. |
+| `crear.tsx` + `crear.*.tsx` | `/crear`, `/crear/cuenta`, `/crear/fecha`, `/crear/foto`, `/crear/plan` | Alta: registro, nombres, fecha y lugar, foto, plan. |
+| `panel.tsx` + `panel.*.tsx` | `/panel`, `/panel/regalos`, `/panel/sitio`, `/panel/invitados`, `/panel/vista-previa`, `/panel/perfil` | Panel de la pareja (`panel.mesas.tsx` redirige a Invitados > Mesas). |
+| `sitio.$slug*.tsx` | `/sitio/:slug`, `/sitio/:slug/regalos` | Página pública de cada pareja. |
+| `ejemplo*.tsx` | `/ejemplo`, `/ejemplo/regalos` | Página pública de muestra. |
+| `encontrar.tsx` | `/encontrar` | Buscador de invitados (demo). |
 
-| File | URL |
-| --- | --- |
-| `index.tsx` | `/` |
-| `about.tsx` | `/about` |
-| `users/index.tsx` | `/users` |
-| `users/$id.tsx` | `/users/:id` (dynamic — bare `$`, no curly braces) |
-| `posts/{-$category}.tsx` | `/posts/:category?` (optional segment) |
-| `files/$.tsx` | `/files/*` (splat — read via `_splat` param, never `*`) |
-| `_layout.tsx` | layout route (renders children via `<Outlet />`) |
-| `__root.tsx` | app shell — wraps every page; preserve `<Outlet />` |
-
-`routeTree.gen.ts` is auto-generated. Don't edit it by hand.
+Convención de nombres: `padre.hijo.tsx` anida la ruta bajo `padre.tsx` (que renderiza un `<Outlet />`); `$param` es un segmento dinámico.

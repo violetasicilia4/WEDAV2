@@ -109,7 +109,7 @@ export async function readXlsx(data: ArrayBuffer): Promise<string[][]> {
 
 /** CSV simple (coma o punto y coma, comillas dobles). */
 export function parseCsv(text: string): string[][] {
-  const t = text.replace(/^﻿/, '');
+  const t = text.replace(/^\uFEFF/, '');
   const delim = (t.split('\n')[0] ?? '').split(';').length > (t.split('\n')[0] ?? '').split(',').length ? ';' : ',';
   const rows: string[][] = []; let row: string[] = []; let cur = ''; let q = false;
   for (let i = 0; i < t.length; i++) {

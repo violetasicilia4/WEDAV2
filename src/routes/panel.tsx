@@ -6,7 +6,7 @@ import { SideMenuIcon } from '@/components/panel/side-menu-icon';
 import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
-import { can, planById, type Feature } from '@/lib/weda/plans';
+import { can, type Feature } from '@/lib/weda/plans';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import '@/panel.css';
 
@@ -28,18 +28,21 @@ const NAV: NavItem[] = [
   { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
   { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
 ];
-/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado (por ahora siempre borrador: publicar todavía no está conectado). Solo en escritorio. */
-function Profile() {
+/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado (por ahora siempre borrador: publicar todavía no está conectado).
+   Es un enlace a /panel/perfil (datos del casamiento y cuenta). En escritorio va en el menú; en celular, como avatar arriba (`compact`). */
+function Profile({ compact = false }: { compact?: boolean }) {
   const photo = useAppSelector(s => s.photo);
   const couple = useAppSelector(s => s.couple);
+  const img = <img className="pn-profile-img" src={resolvePhoto(photo)} alt="" />;
+  if (compact) return <Link to="/panel/perfil" className="pn-top-avatar" activeProps={{ 'aria-current': 'page' }} aria-label={`Perfil de ${coupleLabel(couple)}`}>{img}</Link>;
   return (
-    <div className="pn-profile">
-      <img className="pn-profile-img" src={resolvePhoto(photo)} alt="" />
-      <div className="pn-profile-text">
-        <p className="pn-profile-names">{coupleLabel(couple)}</p>
-        <p className="pn-profile-meta"><span>Casamiento</span><i aria-hidden="true" /><span>Borrador</span></p>
-      </div>
-    </div>
+    <Link to="/panel/perfil" className="pn-profile" activeProps={{ 'aria-current': 'page' }} title="Perfil" aria-label={`Perfil de ${coupleLabel(couple)}`}>
+      {img}
+      <span className="pn-profile-text">
+        <span className="pn-profile-names">{coupleLabel(couple)}</span>
+        <span className="pn-profile-meta"><span>Casamiento</span><i aria-hidden="true" /><span>Borrador</span></span>
+      </span>
+    </Link>
   );
 }
 
@@ -103,7 +106,6 @@ function PanelLayout() {
   const navigate = useNavigate();
   // Solo lo que usa el contenedor: así escribir en el editor o los invitados no lo vuelve a dibujar.
   const onboarded = useAppSelector(s => s.onboarded);
-  const couple = useAppSelector(s => s.couple);
   const planId = useAppSelector(s => s.planId);
   const hydrated = useHydrated();
   const full = useStorageFull();
@@ -139,6 +141,7 @@ function PanelLayout() {
           <div className="pn-top-actions">
             {!onPreview && <button type="button" className="pn-btn is-ghost pn-preview-btn" onClick={() => openPreview(onGifts ? 'gifts' : 'home')}><Eye size={16} aria-hidden="true" /><span>Vista previa</span></button>}
             <PublishButton className="pn-btn pn-publish-btn"><Heart size={16} aria-hidden="true" /><span>Publicar</span></PublishButton>
+            <Profile compact />
           </div>
         </header>
 
