@@ -66,10 +66,10 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 | Chips de estado | `is-ok`, `is-todo`, `is-off`, `is-doing`, `is-done`. |
 | Selector segmentado `.pn-switch` | Alternar vistas (Invitados / Mesas y grupos, Editar / Ver como invitado, filtros de asistencia). |
 | Solapas `.pn-tabs` | Módulo de regalos. Hasta 560 px ocupan todo el ancho en columnas iguales y usan la etiqueta corta (`pn-tab-short`); el título largo va dentro de cada panel. Nunca deben necesitar scroll lateral. |
-| Lista ordenable (`SortableGifts`) | Orden por arrastre (mantener apretado en el celular), Alt + flechas con teclado. |
+| Lista ordenable (`SortableGrid`, Mis regalos) | Las tarjetas se arrastran para ordenarse (mouse: agarrar y llevar; celular: mantener apretado un instante y llevar), Alt + flechas con teclado; tocar una tarjeta abre su edición. Sin flechas de subir/bajar. |
 
 | Editor de «Tu página» | Edición con resultado a la vista: la **ventana en vivo** (`LiveCard`, clases `lc-*`, `src/components/panel/live-card.tsx`) es la página pública real en un iframe (`?ventana`) alineado a la sección que se edita; se actualiza por `storage` (~150 ms). ≥ 1280 px: sección · formulario · ventana fija a la derecha. Menos: chips de sección (con ícono de estado) y ventana fijas arriba (se pueden ocultar), formulario debajo; con teclado abierto se achica. «Ver completa» abre el pop-up de vista previa anclado en esa sección. |
-| Tarjetas de la lista | `.pn-ggrid.is-list`: mismas tarjetas `.pn-gcard` que el catálogo, con «Editar» y «Quitar». |
+| Tarjetas de la lista | `.rg-grid` / `.rg-card`: foto, monto sobre la foto y nombre, con «Editar» y «Quitar»; toda la tarjeta abre la edición. |
 | Más opciones `.pn-more` | `<details>` para campos opcionales de un formulario corto. |
 
 **Patrones de interacción vigentes (obligatorios al agregar pantallas):**

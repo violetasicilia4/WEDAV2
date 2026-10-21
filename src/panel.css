@@ -201,11 +201,6 @@
 .pn-empty { display: grid; gap: 10px; padding: 32px 0; max-width: 520px; }
 .pn-empty h2 { font-size: 20px; }
 .pn-empty p { color: var(--pn-muted); }
-.pn-glist { list-style: none; margin: 0; padding: 0; display: grid; }
-.pn-glist.is-inset { margin: 6px 0 12px; }
-.pn-grow { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 14px; align-items: center; min-height: 72px; padding: 10px 0; border-bottom: 1px solid var(--pn-line); }
-.pn-gthumb { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 12px; overflow: hidden; background: rgb(60 60 60 / .16); color: var(--pn-slate-d); font-size: 20px; }
-.pn-gthumb img { width: 100%; height: 100%; object-fit: cover; }
 .pn-gmeta { display: grid; gap: 2px; min-width: 0; }
 .pn-gmeta strong { font-weight: 400; font-size: 15.5px; overflow-wrap: anywhere; }
 .pn-gmeta span { font-size: 13px; color: var(--pn-muted); }
@@ -214,9 +209,7 @@
 .pn-icon:hover:not(:disabled) { background: rgb(59 60 58 / .07); }
 .pn-icon:disabled { opacity: .3; cursor: not-allowed; }
 @media (max-width: 560px) {
-  .pn-grow { grid-template-columns: 48px minmax(0, 1fr); }
-  .pn-gthumb { width: 48px; height: 48px; }
-  .pn-gactions, .pn-grow > .pn-btn { grid-column: 2; justify-self: start; }
+  .pn-gactions { grid-column: 2; justify-self: start; }
 }
 .pn-catalog { display: grid; gap: 14px; }
 .pn-status-line { font-size: 13px; color: var(--pn-muted); }
@@ -283,13 +276,6 @@
 .pn-root select.pn-select { width: auto; min-height: 40px; padding: 0 30px 0 14px; border-radius: 999px; font-size: 14px; }
 
 /* ---------- regalos: lista, agregar y recibidos (unificado) ---------- */
-.pn-grow { grid-template-columns: 84px minmax(0, 1fr) auto; min-height: 96px; }
-.pn-gthumb { width: 84px; height: 84px; border-radius: 12px; font-size: 28px; }
-@media (max-width: 560px) {
-  .pn-grow { grid-template-columns: 72px minmax(0, 1fr); }
-  .pn-gthumb { width: 72px; height: 72px; }
-}
-@media (max-width: 560px) { .pn-grow.is-rec { grid-template-columns: 1fr; } }
 .pn-btn.is-light { background: rgb(255 255 255 / .92); color: var(--pn-ink); border-color: transparent; }
 .pn-btn.is-light:hover:not(:disabled) { background: #fff; }
 
@@ -351,18 +337,9 @@ body:has(.pn-root) { background: #fff; }
 .pn-settile .pn-gcheck { background: #fff; color: var(--pn-slate-d); }
 .pn-dialog.is-wide { max-width: 760px !important; }
 .pn-ggrid.is-dialog { padding: 12px 0 16px; }
-
-.pn-sortable .pn-grow { position: relative; background: #fff; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.pn-sortable .pn-grow:focus-visible { outline: 2px solid var(--pn-slate-d); outline-offset: -2px; border-radius: 12px; }
-.pn-sortable.is-dragging { cursor: grabbing; }
-.pn-sortable .pn-grow.is-drag { z-index: 5; cursor: grabbing; box-shadow: 0 10px 28px rgb(59 60 58 / .22); border-radius: 12px; border-bottom-color: transparent; padding-inline: 8px; }
-.pn-sortable .pn-grow img { pointer-events: none; -webkit-user-drag: none; }
-.pn-grip { color: var(--pn-muted); opacity: .6; margin-right: 4px; flex: none; }
 .pn-gactions { align-items: center; }
 .pn-cfg-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .pn-cfg-block.is-soon { background: rgb(59 60 58 / .03); }
-
-.pn-views { margin-bottom: 4px; }
 .pn-import-result { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--pn-line); border-radius: 12px; font-size: 14px; }
 .pn-import-result ul { margin: 0; padding-left: 18px; color: var(--pn-muted); }
 
@@ -372,7 +349,6 @@ body:has(.pn-root) { background: #fff; }
 .pn-sec-status.is-ok { color: #34502c; }
 .pn-sec-status.is-todo { color: #8a5a00; }
 @media (max-width: 560px) { .pn-sec-toggle { margin-left: 0; } }
-.pn-sortable { position: relative; }
 
 @media (max-width: 899px) { .pn-switch.is-small button { min-height: 44px; } }
 
@@ -452,14 +428,14 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 @media (pointer: coarse) { .pn-btn.is-small { min-height: 44px; } }
 
 /* Las fotos de los regalos no se abren ni se pueden guardar al mantenerlas apretadas (menú de imagen de iOS/Android). */
-.pn-gphoto img, .pn-gthumb img, .pn-ownphoto-btn img, .pn-photos img { pointer-events: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
-.pn-settile, .pn-gphoto, .pn-gthumb { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.pn-gphoto img, .pn-ownphoto-btn img, .pn-photos img { pointer-events: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
+.pn-settile, .pn-gphoto { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* Onboarding · paso de la foto: portada a la vista con los nombres, subir foto como acción principal y «Ahora no» discreto. */
 .pn-photo-step { gap: 16px; }
 .pn-cover-preview { position: relative; height: auto; width: 100%; aspect-ratio: 1 / 1; max-width: 100%; margin: 0 auto; border-radius: var(--pn-r-card); overflow: hidden; background: var(--pn-surface-2); }
 .pn-cover-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.pn-cover-preview img, .pn-gphoto img, .pn-gthumb img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.pn-cover-preview img, .pn-gphoto img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* Paso de la foto: título en un solo renglón (≈12,45 em de ancho); la foto va sola, chica y centrada, sin texto encima. */
 .pn-photo-step .pn-account-head h1 { font-size: min(var(--t-page), calc((100vw - 84px) / 12.8)); white-space: nowrap; }
@@ -496,7 +472,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .pn-member .pn-select { width: 100%; }
   .pn-inline-form .pn-btn { justify-self: start; }
 }
-@media (max-width: 360px) { .pn-views button { white-space: nowrap; padding-inline: 10px; gap: 6px; } }
 /* Consistencia en el celular: cabecera más baja, bajadas de dos renglones y botones de los diálogos siempre a la vista. */
 @media (max-width: 560px) {
   .pn-top { padding-top: 8px; padding-bottom: 8px; }
@@ -966,8 +941,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .rg-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--pn-hair); border-radius: 22px; background: #fff; }
 .rg-photo { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; background: var(--pn-soft); color: var(--pn-muted); overflow: hidden; }
 .rg-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.rg-arrows { position: absolute; right: 10px; top: 10px; z-index: 2; display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgb(255 255 255 / .94); }
-.rg-arrows .pn-icon:disabled { opacity: .35; cursor: default; }
 .rg-body { display: flex; flex: 1; flex-direction: column; gap: 8px; padding: 16px 18px 18px; }
 .rg-body h3 { font-size: 17px; line-height: 1.25; letter-spacing: var(--ls-section); }
 .rg-actions { display: flex; gap: 2px; }
@@ -1204,8 +1177,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .rg-grid .rg-card { padding: 6px; border-radius: 22px; background: #fff; }
 .rg-grid .rg-photo { aspect-ratio: 1; border-radius: 17px; }
 .rg-grid .rg-price { position: absolute; left: 10px; bottom: 10px; z-index: 2; padding: 5px 12px; border-radius: 999px; background: rgb(255 255 255 / .95); font-size: 13px; font-weight: var(--w-medium); font-variant-numeric: tabular-nums; }
-.rg-grid .rg-arrows { right: 8px; top: 8px; }
-.rg-grid .rg-arrows .pn-icon { width: 36px; height: 36px; }
 .rg-grid .rg-body { gap: 6px; padding: 12px 10px 4px; }
 .rg-grid .rg-body h3 { font-size: 16px; line-height: 1.25; font-weight: var(--w-medium); }
 .rg-grid .rg-foot { padding-top: 6px; border-top: 0; }
@@ -1218,8 +1189,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .rg-grid .rg-photo { border-radius: 13px; }
   .rg-grid .rg-text { display: none; }
   .rg-grid .rg-body h3 { font-size: 14.5px; }
-  .rg-grid .rg-arrows { right: 4px; top: 4px; padding: 1px; }
-  .rg-grid .rg-arrows .pn-icon { width: 32px; height: 32px; }
 }
 
 /* Regalos individuales: la misma tarjeta que «Mis regalos» y la lista del invitado (foto cuadrada, valor sobre la foto, nombre y botón). */
@@ -1585,3 +1554,15 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .rg-mini-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .rg-mini-name { font-size: 13px; line-height: 1.3; color: var(--pn-ink); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @media (max-width: 560px) { .rg-pack-minis { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 8px; } .rg-mini-photo { border-radius: 12px; } .rg-mini-name { font-size: 12px; } }
+
+/* ===== Mis regalos: tarjetas que se arrastran para ordenarse (mouse o dedo) y se tocan para editar ===== */
+.rg-sortable { position: relative; }
+.rg-sortable .rg-card { position: relative; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.rg-sortable .rg-card:focus-visible { outline: 2px solid var(--pn-slate-d); outline-offset: 2px; }
+.rg-sortable .rg-card img { pointer-events: none; -webkit-user-drag: none; }
+.rg-sortable.is-dragging, .rg-sortable.is-dragging .rg-card { cursor: grabbing; }
+/* La tarjeta que se lleva se levanta por encima de las demás. */
+.rg-sortable .rg-card.is-drag { z-index: 5; box-shadow: 0 14px 34px rgb(59 60 58 / .25); }
+
+/* Aportes recibidos: el bloque de abajo (vacío o con la lista) se separa de los tres totales. */
+.pn-tabpanel .gl-stats + * { margin-top: 24px; }

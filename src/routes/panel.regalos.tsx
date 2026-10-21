@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, Check, ChevronRight, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
+import { Check, ChevronRight, Copy, Eye, Gift as GiftIcon, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
 import { Field, Locked, useToast } from '@/components/panel/ui';
 import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -30,10 +30,6 @@ const TABS: { id: Tab; label: string; short: string }[] = [
   { id: 'agregar', label: 'Catálogo y packs', short: 'Catálogo' }, { id: 'recibidos', label: 'Aportes recibidos', short: 'Aportes' },
   { id: 'cobro', label: 'Datos de cobro', short: 'Cobro' },
 ];
-
-const Thumb = ({ src }: { src?: string | undefined }) => (
-  <span className="pn-gthumb" aria-hidden="true">{src ? <img src={src} alt="" loading="lazy" /> : <GiftIcon size={30} strokeWidth={1.3} />}</span>
-);
 
 /* Formulario de un regalo (para crear uno propio y para editar cualquiera de la lista): foto, monto, nombre y categoría. */
 type GiftValues = { name: string; amount: number; category: Category; image: string | undefined };
@@ -132,55 +128,65 @@ function BankFields({ bank, cbu, alias }: { bank: string; cbu: string; alias: st
   );
 }
 
-/* Ordenar arrastrando: se mantiene apretado el bloque (en el celular) o se arrastra con el mouse. También con Alt + flechas. */
-function SortableGifts({ items, onMove, renderRow }: { items: ListGift[]; onMove: (id: string, to: number) => void; renderRow: (g: ListGift, dragging: boolean) => React.ReactNode }) {
-  const listRef = useRef<HTMLOListElement>(null);
-  const [drag, setDrag] = useState<{ id: string; dy: number } | null>(null);
+/* Ordenar las tarjetas arrastrándolas: con el mouse se agarran y se llevan; con el dedo, se mantienen apretadas un instante y se llevan (así el scroll de la página sigue andando).
+   Tocar una tarjeta (sin arrastrar) abre su edición. Con el teclado: Alt + flechas mueven la tarjeta enfocada. */
+function SortableGrid({ items, onMove, onOpen, renderCard }: { items: ListGift[]; onMove: (id: string, to: number) => void; onOpen: (g: ListGift) => void; renderCard: (g: ListGift, i: number) => React.ReactNode }) {
+  const listRef = useRef<HTMLUListElement>(null);
+  const [drag, setDrag] = useState<{ id: string; dx: number; dy: number } | null>(null);
   const [order, setOrder] = useState<string[] | null>(null);
-  const st = useRef<{ id: string; pointerId: number; startX: number; startY: number; grab: number; timer: number | null; active: boolean; touch: boolean; order: string[] } | null>(null);
+  const justDragged = useRef(false);
+  const st = useRef<{ id: string; pointerId: number; startX: number; startY: number; grabX: number; grabY: number; timer: number | null; active: boolean; touch: boolean; order: string[] } | null>(null);
 
   const shown = order ? order.map(id => items.find(g => g.id === id)).filter((g): g is ListGift => !!g) : items;
 
   const finish = (commit: boolean) => {
     const cur = st.current;
     if (cur?.timer) window.clearTimeout(cur.timer);
-    if (cur?.active && commit) { const to = cur.order.indexOf(cur.id); onMove(cur.id, to); }
+    if (cur?.active) {
+      if (commit) onMove(cur.id, cur.order.indexOf(cur.id));
+      // El «click» que sigue al soltar no tiene que abrir la edición.
+      justDragged.current = true; window.setTimeout(() => { justDragged.current = false; }, 0);
+    }
     st.current = null; setDrag(null); setOrder(null);
   };
 
   const begin = (id: string) => {
     const cur = st.current; if (!cur) return;
     cur.active = true; cur.order = items.map(g => g.id);
-    setOrder(cur.order); setDrag({ id, dy: 0 });
+    setOrder(cur.order); setDrag({ id, dx: 0, dy: 0 });
     try { (listRef.current?.querySelector(`[data-id="${id}"]`) as HTMLElement | null)?.setPointerCapture(cur.pointerId); } catch { /* sin captura */ }
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLLIElement>, id: string) => {
-    if ((e.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+    if ((e.target as HTMLElement).closest('.rg-actions')) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const li = e.currentTarget;
+    const li = e.currentTarget; const r = li.getBoundingClientRect();
     const touch = e.pointerType !== 'mouse';
-    st.current = { id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, grab: e.clientY - li.getBoundingClientRect().top, timer: null, active: false, touch, order: items.map(g => g.id) };
+    st.current = { id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, grabX: e.clientX - r.left, grabY: e.clientY - r.top, timer: null, active: false, touch, order: items.map(g => g.id) };
     if (touch) st.current.timer = window.setTimeout(() => begin(id), 280);
   };
   const onPointerMove = (e: React.PointerEvent<HTMLLIElement>) => {
     const cur = st.current; if (!cur || cur.pointerId !== e.pointerId) return;
     if (!cur.active) {
       const moved = Math.hypot(e.clientX - cur.startX, e.clientY - cur.startY);
+      // Con el dedo, moverse antes de tiempo es un scroll: se cancela el arrastre.
       if (cur.touch) { if (moved > 8 && cur.timer) { window.clearTimeout(cur.timer); st.current = null; } return; }
       if (moved > 5) begin(cur.id); else return;
     }
     const list = listRef.current; if (!list) return;
     const li = list.querySelector(`[data-id="${cur.id}"]`) as HTMLElement | null; if (!li) return;
-    const listTop = list.getBoundingClientRect().top;
-    const y = e.clientY - listTop - cur.grab;
-    setDrag({ id: cur.id, dy: y - li.offsetTop });
-    const center = y + li.offsetHeight / 2;
-    const rows = [...list.children] as HTMLElement[];
-    let target = cur.order.indexOf(cur.id);
-    rows.forEach((r, idx) => { if (r === li) return; const mid = r.offsetTop + r.offsetHeight / 2; if (idx < target && center < mid) target = idx; else if (idx > target && center > mid) target = idx; });
-    const from = cur.order.indexOf(cur.id);
-    if (target !== from) { const next = [...cur.order]; next.splice(from, 1); next.splice(target, 0, cur.id); cur.order = next; setOrder(next); }
+    const box = list.getBoundingClientRect();
+    // La tarjeta sigue al puntero: su desplazamiento es la diferencia con el lugar que le toca en la grilla.
+    setDrag({ id: cur.id, dx: e.clientX - box.left - cur.grabX - li.offsetLeft, dy: e.clientY - box.top - cur.grabY - li.offsetTop });
+    // El lugar nuevo es el de la tarjeta sobre la que está el puntero.
+    const cards = [...list.children] as HTMLElement[];
+    const over = cards.find(c => { if (c === li) return false; const r = c.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; });
+    if (over) {
+      const target = cur.order.indexOf(over.dataset['id'] ?? ''); const from = cur.order.indexOf(cur.id);
+      if (target >= 0 && target !== from) { const next = [...cur.order]; next.splice(from, 1); next.splice(target, 0, cur.id); cur.order = next; setOrder(next); }
+    }
+    // Cerca del borde de la pantalla, la página acompaña.
+    if (e.clientY < 90) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
   };
   // Mientras se arrastra con el dedo no tiene que scrollear la página.
   useEffect(() => {
@@ -190,22 +196,33 @@ function SortableGifts({ items, onMove, renderRow }: { items: ListGift[]; onMove
     return () => el.removeEventListener('touchmove', stop);
   }, []);
 
+  const keyMove = (e: React.KeyboardEvent<HTMLLIElement>, id: string) => {
+    if (!e.altKey || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+    e.preventDefault();
+    const i = items.findIndex(x => x.id === id);
+    onMove(id, i + (e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1));
+    // Después de reordenar el foco sigue en la misma tarjeta.
+    window.requestAnimationFrame(() => (listRef.current?.querySelector(`[data-id="${id}"]`) as HTMLElement | null)?.focus());
+  };
+
   return (
     <>
-    <p id="pn-sort-help" className="pn-sr">Para cambiar el orden con el teclado, mantené Alt y usá las flechas hacia arriba o abajo.</p>
-    <ol ref={listRef} className={`pn-glist pn-sortable${drag ? ' is-dragging' : ''}`} aria-label="Regalos de tu lista (podés ordenarlos arrastrando)">
-      {shown.map(g => {
-        const dragging = drag?.id === g.id;
-        return (
-          <li key={g.id} data-id={g.id} className={`pn-grow${dragging ? ' is-drag' : ''}`} style={dragging ? { transform: `translateY(${drag!.dy}px)` } : undefined} tabIndex={0}
-            aria-roledescription="elemento ordenable" aria-describedby="pn-sort-help"
-            onPointerDown={e => onPointerDown(e, g.id)} onPointerMove={onPointerMove} onPointerUp={() => finish(true)} onPointerCancel={() => finish(false)} onContextMenu={e => { if (st.current?.touch) e.preventDefault(); }}
-            onKeyDown={e => { if (!e.altKey) return; const i = items.findIndex(x => x.id === g.id); if (e.key === 'ArrowUp') { e.preventDefault(); onMove(g.id, i - 1); } if (e.key === 'ArrowDown') { e.preventDefault(); onMove(g.id, i + 1); } }}>
-            {renderRow(g, dragging)}
-          </li>
-        );
-      })}
-    </ol>
+      <p id="pn-sort-help" className="pn-sr">Para cambiar el orden con el teclado, mantené Alt y usá las flechas.</p>
+      <ul ref={listRef} className={`rg-grid rg-sortable${drag ? ' is-dragging' : ''}`} aria-label="Regalos de tu lista (podés ordenarlos arrastrando)">
+        {shown.map((g, i) => {
+          const dragging = drag?.id === g.id;
+          return (
+            <li key={g.id} data-id={g.id} className={`rg-card${dragging ? ' is-drag' : ''}`} style={dragging ? { transform: `translate(${drag!.dx}px, ${drag!.dy}px)` } : undefined} tabIndex={0}
+              aria-roledescription="elemento ordenable" aria-describedby="pn-sort-help"
+              onPointerDown={e => onPointerDown(e, g.id)} onPointerMove={onPointerMove} onPointerUp={() => finish(true)} onPointerCancel={() => finish(false)}
+              onContextMenu={e => { if (st.current?.touch) e.preventDefault(); }}
+              onClick={e => { if (justDragged.current || (e.target as HTMLElement).closest('.rg-actions')) return; onOpen(g); }}
+              onKeyDown={e => { keyMove(e, g.id); if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onOpen(g); } }}>
+              {renderCard(g, i)}
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }
@@ -226,7 +243,6 @@ function GiftsModule() {
   const [cfg, setCfg] = useState<'bank' | 'mp' | null>(null);
   const [editing, setEditing] = useState<ListGift | null>(null);
   // El botón de la barra superior (panel.tsx) pide abrir la vista previa de la lista.
-  const [listView, setListView] = useState<'cards' | 'order'>('cards');
 
   if (!can(s.planId, 'gifts')) return <Locked feature="gifts" />;
   const items = s.gifts.items;
@@ -297,59 +313,29 @@ function GiftsModule() {
           ) : (
             <>
               <div className="rg-section-head">
-                <div><h2>Mis regalos ({items.length})</h2><p className="pn-muted">Podés reordenar los regalos con las flechas, modificarlos o sumar más desde el catálogo.</p></div>
+                <div><h2>Mis regalos ({items.length})</h2><p className="pn-muted">Arrastrá las tarjetas para cambiar el orden y tocá una para editarla.</p></div>
                 <div className="rg-head-actions">
-                  <div className="pn-switch is-small pn-views" role="group" aria-label="Cómo ver tu lista">
-                    <button type="button" className={listView === 'cards' ? 'on' : ''} aria-pressed={listView === 'cards'} onClick={() => setListView('cards')}>Tarjetas</button>
-                    <button type="button" className={listView === 'order' ? 'on' : ''} aria-pressed={listView === 'order'} onClick={() => setListView('order')}>Ordenar</button>
-                  </div>
                   <button type="button" className="pn-btn is-ghost" onClick={() => { setCatView('packs'); setTab('agregar'); }}><Package size={16} aria-hidden="true" />Explorar packs sugeridos</button>
                 </div>
               </div>
-              {listView === 'cards' ? (
-                <ul className="rg-grid" aria-label="Regalos de tu lista">
-                  {items.map((g, i) => (
-                    <li key={g.id} className="rg-card">
-                      <div className="rg-photo">
-                        {g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
-                        <span className="rg-price">{formatARS(g.amount)}</span>
-                        <div className="rg-arrows">
-                          <button type="button" className="pn-icon" onClick={() => update(x => moveGiftTo(x, g.id, i - 1))} disabled={i === 0} aria-label={`Subir ${g.name}`}><ArrowUp size={16} aria-hidden="true" /></button>
-                          <button type="button" className="pn-icon" onClick={() => update(x => moveGiftTo(x, g.id, i + 1))} disabled={i === items.length - 1} aria-label={`Bajar ${g.name}`}><ArrowDown size={16} aria-hidden="true" /></button>
-                        </div>
-                      </div>
-                      <div className="rg-body">
-                        <h3>{g.name}</h3>
-                        <div className="rg-foot">
-                          <span className="rg-cat">{g.category}</span>
-                          <div className="rg-actions">
-                            <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
-                            <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
+              <SortableGrid items={items} onMove={(id, to) => update(x => moveGiftTo(x, id, to))} onOpen={setEditing} renderCard={g => (
                 <>
-                  <SortableGifts items={items} onMove={(id, to) => update(x => moveGiftTo(x, id, to))} renderRow={g => (
-                    <>
-                      <Thumb src={g.image} />
-                      <div className="pn-gmeta">
-                        <strong>{g.name}</strong>
-                        <span>{formatARS(g.amount)} · {g.category}</span>
-                      </div>
-                      <div className="pn-gactions">
-                        <GripVertical size={18} className="pn-grip" aria-hidden="true" />
+                  <div className="rg-photo">
+                    {g.image ? <img src={g.image} alt="" loading="lazy" draggable={false} style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
+                    <span className="rg-price">{formatARS(g.amount)}</span>
+                  </div>
+                  <div className="rg-body">
+                    <h3>{g.name}</h3>
+                    <div className="rg-foot">
+                      <span className="rg-cat">{g.category}</span>
+                      <div className="rg-actions">
                         <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
                         <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
                       </div>
-                    </>
-                  )} />
-                  <p className="pn-hint">Para ordenar, mantené apretado un regalo y movelo.</p>
+                    </div>
+                  </div>
                 </>
-              )}
+              )} />
             </>
           )}
           <details className="rg-help">
