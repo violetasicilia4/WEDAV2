@@ -1,21 +1,16 @@
 import { useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ArrowRight, Gift, Globe, Lock, Pencil, Users } from 'lucide-react';
+import { ArrowRight, Eye, Gift, Globe, LayoutGrid, Lock, Pencil, Rocket, Users } from 'lucide-react';
 import { CoupleDialog } from '@/components/panel/couple-form';
 import { ConfirmDialog, CoupleCover, usePlans } from '@/components/panel/ui';
-import { formatARS } from '@/lib/demo-wedding';
-import { eventComplete, nextAction, sectionGaps, stages, type Stage, type StageStatus } from '@/lib/weda/journey';
-import { giftTotal } from '@/lib/weda/logic';
-import { formatPrice, planById, planFor, PRICE_UNIT } from '@/lib/weda/plans';
+import { nextAction, stages, STAGE_STATUS_LABEL, type Stage } from '@/lib/weda/journey';
+import { can, formatPrice, planById, planFor, PRICE_UNIT, type Feature } from '@/lib/weda/plans';
+import { openPreview } from '@/lib/weda/preview-event';
 import { reset, useAppState } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/panel/')({ component: Home });
 
-const featureOf: Record<Stage['id'], Parameters<typeof planFor>[0] | null> = { regalos: 'gifts', sitio: 'site', invitados: 'guests', publicar: null };
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-const TONE: Record<StageStatus, 'ok' | 'todo' | 'off'> = { done: 'ok', review: 'todo', doing: 'todo', todo: 'off' };
-
-/* Inicio: la pareja, cuántos pasos de armado están listos (se cuentan, no se estiman), UN siguiente paso y accesos directos. Se puede entrar a cualquiera, en cualquier orden. */
+/* Inicio: la pareja (foto y datos principales), UN siguiente paso y un panel de lugares a los que ir. Sin recuentos: acá se decide adónde seguir. Se puede entrar a cualquiera, en cualquier orden. */
 function Home() {
   const s = useAppState();
   const plans = usePlans();
@@ -23,26 +18,18 @@ function Home() {
   const [editing, setEditing] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const list = stages(s);
-  const build = list.filter(x => x.id !== 'publicar' && !x.locked);
-  const done = build.filter(x => x.status === 'done').length;
-  const next = nextAction(s);
   const stage = (id: Stage['id']) => list.find(x => x.id === id)!;
-  const gaps = sectionGaps(s);
-  const eventsDone = s.site.events.filter(eventComplete).length;
-  const confirmed = s.guests.filter(g => g.status === 'confirmed').length;
-  const tiles = [
-    { st: stage('sitio'), label: 'Invitación', Icon: Globe, to: '/panel/sitio',
-      sub: eventsDone === 0 && gaps.length > 0 ? 'Cargá la ceremonia y el lugar' : gaps.length > 0 ? `Falta: ${gaps[0]!.label}${gaps.length > 1 ? ` y ${gaps.length - 1} más` : ''}` : eventsDone > 0 ? plural(eventsDone, 'evento listo', 'eventos listos') : 'Sin empezar' },
-    { st: stage('regalos'), label: 'Regalos', Icon: Gift, to: '/panel/regalos',
-      sub: s.gifts.items.length === 0 ? 'Sin regalos todavía' : `${plural(s.gifts.items.length, 'regalo', 'regalos')} · ${formatARS(giftTotal(s.gifts.items))}` },
-    { st: stage('invitados'), label: 'Invitados', Icon: Users, to: '/panel/invitados',
-      sub: s.guests.length === 0 ? 'Sin invitados todavía' : `${s.guests.length} · ${plural(confirmed, 'confirmó', 'confirmaron')}` },
-  ];
+  const next = nextAction(s);
+  const plan = planById(s.planId);
 
-  const stats = [
-    { n: confirmed, label: 'Confirmados', sub: s.guests.length > 0 ? `de ${s.guests.length} invitados` : 'Sin invitados' },
-    { n: s.gifts.items.length, label: 'Regalos', sub: s.gifts.items.length > 0 ? formatARS(giftTotal(s.gifts.items)) : 'Sin regalos' },
-    { n: done, label: 'Pasos listos', sub: build.length > 0 ? `de ${build.length}` : 'Elegí un plan' },
+  type Tile = { key: string; title: string; text: string; Icon: typeof Gift; to?: string; search?: Record<string, string>; feature?: Feature; status?: Stage | undefined; onClick?: () => void; note?: string };
+  const tiles: Tile[] = [
+    { key: 'regalos', title: 'Lista de regalos', text: 'Elegí tus regalos y cómo querés recibirlos.', Icon: Gift, to: '/panel/regalos', feature: 'gifts', status: stage('regalos') },
+    { key: 'sitio', title: 'Tu página', text: 'Diseñá la invitación que ven tus invitados.', Icon: Globe, to: '/panel/sitio', feature: 'site', status: stage('sitio') },
+    { key: 'invitados', title: 'Invitados', text: 'Cargá tu lista y seguí las confirmaciones.', Icon: Users, to: '/panel/invitados', feature: 'guests', status: stage('invitados') },
+    { key: 'mesas', title: 'Mesas y grupos', text: 'Organizá dónde se sienta cada persona.', Icon: LayoutGrid, to: '/panel/invitados', search: { vista: 'mesas' }, feature: 'groups' },
+    { key: 'preview', title: 'Vista previa', text: 'Mirá cómo queda todo antes de compartirlo.', Icon: Eye, onClick: () => openPreview('home') },
+    { key: 'publicar', title: 'Publicar', text: plan ? `Plan ${plan.name} · ${formatPrice(plan.price)} ${PRICE_UNIT}. Revisá qué se publica.` : 'Elegí tu plan y mirá qué se publica. Hoy es una demo: no se cobra nada.', Icon: Rocket, onClick: plans.open },
   ];
 
   return (
@@ -51,16 +38,6 @@ function Home() {
         <button type="button" className="pn-btn is-small" onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> Editar datos</button>
       </CoupleCover>
 
-      <ul className="pn-kpis" aria-label="Resumen">
-        {stats.map(x => (
-          <li key={x.label} className="pn-kpi">
-            <span className="pn-kpi-label">{x.label}</span>
-            <strong className="num">{x.n}</strong>
-            <span className="pn-kpi-sub">{x.sub}</span>
-          </li>
-        ))}
-      </ul>
-
       <section className="pn-next" aria-labelledby="pn-next-title">
         <p className="pn-label-s">Siguiente paso</p>
         <h2 id="pn-next-title">{next.title}</h2>
@@ -68,35 +45,33 @@ function Home() {
         <Link to={next.to as never} {...(next.search ? { search: next.search as never } : {})} className="pn-btn">{next.cta}<ArrowRight size={16} aria-hidden="true" /></Link>
       </section>
 
-      <section className="pn-state" aria-labelledby="pn-state-title">
-        <div className="pn-state-head">
-          <h2 id="pn-state-title">Tu evento</h2>
-          <p role="status">{build.length === 0 ? 'Elegí un plan para empezar' : `${done} de ${build.length} ${build.length === 1 ? 'paso listo' : 'pasos listos'}`}</p>
-        </div>
-        <div className="pn-segs" aria-hidden="true">{build.map(x => <i key={x.id} className={`is-${x.status}`} />)}</div>
-        <ul className="pn-tiles">
-          {tiles.map(({ st, label, Icon, to, sub }) => (
-            <li key={st.id}>
-              <Link to={to as never} className={`pn-tile${st.locked ? ' is-locked' : ''}`}>
-                <span className="pn-tile-ico" aria-hidden="true"><Icon size={20} strokeWidth={1.5} /></span>
-                <span className="pn-tile-text">
-                  <strong>{label}</strong>
-                  <span>{st.locked ? <><Lock size={12} aria-hidden="true" /> Desde el plan {planFor(featureOf[st.id]!)?.name}</> : sub}</span>
+      <section className="hm-places" aria-labelledby="hm-places-title">
+        <h2 id="hm-places-title">Adónde querés ir</h2>
+        <ul className="hm-grid">
+          {tiles.map(({ key, title, text, Icon, to, search, feature, status, onClick }) => {
+            const locked = !!feature && !can(s.planId, feature);
+            const body = (
+              <>
+                <span className="hm-ico" aria-hidden="true"><Icon size={22} strokeWidth={1.5} /></span>
+                <span className="hm-text">
+                  <strong>{title}</strong>
+                  <span>{text}</span>
+                  {locked
+                    ? <em className="hm-tag is-lock"><Lock size={12} aria-hidden="true" /> Desde el plan {planFor(feature)?.name}</em>
+                    : status && status.status !== 'todo' ? <em className={`hm-tag${status.status === 'done' ? ' is-ok' : ''}`}>{STAGE_STATUS_LABEL[status.status]}</em> : null}
                 </span>
-                {!st.locked && <i className={`pn-sdot is-${TONE[st.status]}`} aria-hidden="true" />}
-                <span className="pn-sr">{st.locked ? '' : ` · ${st.status === 'done' ? 'Completo' : st.status === 'todo' ? 'Sin empezar' : 'En progreso'}`}</span>
-              </Link>
-            </li>
-          ))}
+                <ArrowRight size={18} className="hm-go" aria-hidden="true" />
+              </>
+            );
+            return (
+              <li key={key}>
+                {to
+                  ? <Link to={to as never} {...(search ? { search: search as never } : {})} className="hm-tile">{body}</Link>
+                  : <button type="button" className="hm-tile" onClick={onClick}>{body}</button>}
+              </li>
+            );
+          })}
         </ul>
-        <div className="pn-pubstate">
-          <div>
-            <p className="pn-label-s">Publicación</p>
-            <p><strong>Borrador</strong> · {s.planId ? `Plan ${planById(s.planId)?.name}, ${formatPrice(planById(s.planId)!.price)} ${PRICE_UNIT}` : 'Todavía no elegiste plan: probás todo gratis'}</p>
-            <p className="pn-hint">El plan se elige al publicar. Hoy es una demo: no se publica ni se cobra nada.</p>
-          </div>
-          <button type="button" className="pn-btn is-ghost" onClick={plans.open}>Ver planes y publicar</button>
-        </div>
       </section>
 
       <footer className="pn-page-foot">

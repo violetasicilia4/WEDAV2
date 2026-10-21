@@ -129,6 +129,12 @@ export function validateAlias(v: string): string | undefined {
   return /^[a-zA-Z0-9.-]{6,20}$/.test(v.trim()) ? undefined : 'El alias tiene entre 6 y 20 caracteres: letras, números, puntos o guiones.';
 }
 
+/** CBU: 22 números (se aceptan espacios y guiones al escribirlo). */
+export const cleanCbu = (v: string) => v.replace(/[\s-]/g, '');
+export function validateCbu(v: string): string | undefined {
+  return /^\d{22}$/.test(cleanCbu(v)) ? undefined : 'El CBU tiene 22 números.';
+}
+
 export function validateGroupName(v: string, groups: Group[], ignoreId?: string): string | undefined {
   const t = v.trim();
   if (t.length < 2) return 'Poné un nombre para el grupo o la mesa.';
@@ -184,7 +190,7 @@ export const emptyState = (): AppState => ({
   photo: { kind: 'none' },
   preferredPlan: null,
   planId: null,
-  gifts: { cover: null, alias: '', acceptCard: false, items: [], given: [] },
+  gifts: { cover: null, alias: '', bank: '', cbu: '', acceptCard: false, items: [], given: [] },
   guests: [],
   groups: [],
   site: defaultSite(),
@@ -319,8 +325,21 @@ export const menuName = (id: string) => menus.find(m => m.id === id)?.name ?? ''
 /* ------------------------------------------------------------------ grupos y mesas */
 
 export const nextGroupName = (groups: Group[]) => { let n = groups.length + 1; while (groups.some(g => norm(g.name) === `mesa ${n}`)) n++; return `Mesa ${n}`; };
-export const addGroup = (s: AppState, name: string): AppState => ({ ...s, groups: [...s.groups, { id: uid('grp'), name: name.trim() }] });
+export type GroupExtras = { capacity?: number | undefined; note?: string | undefined };
+const withExtras = (g: Group, e: GroupExtras): Group => {
+  const { capacity: _c, note: _n, ...rest } = g;
+  return { ...rest, ...(e.capacity && e.capacity > 0 ? { capacity: Math.floor(e.capacity) } : {}), ...(e.note?.trim() ? { note: e.note.trim() } : {}) };
+};
+export const addGroup = (s: AppState, name: string, extras: GroupExtras = {}): AppState => ({ ...s, groups: [...s.groups, withExtras({ id: uid('grp'), name: name.trim() }, extras)] });
 export const renameGroup = (s: AppState, id: string, name: string): AppState => ({ ...s, groups: s.groups.map(g => (g.id === id ? { ...g, name: name.trim() } : g)) });
+/** Cambia nombre, descripción y lugares de una mesa (vacío = sin dato). */
+export const updateGroup = (s: AppState, id: string, name: string, extras: GroupExtras): AppState => ({ ...s, groups: s.groups.map(g => (g.id === id ? withExtras({ ...g, name: name.trim() }, extras) : g)) });
+/** Lugares de una mesa: número entero positivo o vacío. */
+export function validateCapacity(v: string): string | undefined {
+  const t = v.trim();
+  if (t === '') return undefined;
+  return /^\d{1,3}$/.test(t) && Number(t) > 0 ? undefined : 'Poné un número de lugares entre 1 y 999.';
+}
 /** Al eliminar un grupo, sus invitados quedan sin grupo (no se borran). */
 export const removeGroup = (s: AppState, id: string): AppState => ({
   ...s, groups: s.groups.filter(g => g.id !== id), guests: s.guests.map(g => (g.groupId === id ? { ...g, groupId: null } : g)),

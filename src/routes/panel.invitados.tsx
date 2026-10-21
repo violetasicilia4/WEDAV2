@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ChevronRight, Download, Pencil, Plus, Trash2, Upload, Users } from 'lucide-react';
+import { CheckCircle2, Clock, Download, LayoutGrid, Pencil, Plus, Search, Trash2, Upload, UtensilsCrossed, Users, XCircle } from 'lucide-react';
 import { GroupsView } from '@/components/panel/groups-view';
 import { Field, Locked, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { menus } from '@/lib/demo-wedding';
 import { downloadXlsx, parseCsv, readXlsx } from '@/lib/weda/xlsx';
 import { exportRows, parseGuestRows, templateRows, type ImportResult } from '@/lib/weda/guests-io';
-import { addGuest, addGuests, assignGuest, guestName, guestStats, menuName, norm, removeGuest, STATUS_LABEL, updateGuest, validateGuest } from '@/lib/weda/logic';
+import { addGuest, addGuests, guestName, guestStats, menuName, norm, removeGuest, STATUS_LABEL, updateGuest, validateGuest } from '@/lib/weda/logic';
 import { can } from '@/lib/weda/plans';
 import { update, useAppState } from '@/lib/weda/store';
 import type { Group, Guest, GuestStatus } from '@/lib/weda/types';
@@ -62,7 +62,10 @@ function GuestsModule() {
   const s = useAppState();
   const toast = useToast();
   const [q, setQ] = useState('');
-  const [filter, setFilter] = useState<GuestStatus | 'all' | 'site'>('all');
+  const [fStatus, setFStatus] = useState<GuestStatus | 'all'>('all');
+  const [fRestr, setFRestr] = useState('all');
+  const [fGroup, setFGroup] = useState('all');
+  const [fOrigin, setFOrigin] = useState<'all' | 'rsvp' | 'manual'>('all');
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Guest | null>(null);
   const [importing, setImporting] = useState(false);
@@ -99,22 +102,36 @@ function GuestsModule() {
     toast(`Importaste ${list.length} ${list.length === 1 ? 'invitado' : 'invitados'}.`, 'ok', { label: 'Deshacer', onClick: () => update(x => ({ ...x, guests: before })) });
     closeImport();
   };
-  const shown = s.guests.filter(g => (filter === 'all' || (filter === 'site' ? g.source === 'rsvp' : g.status === filter)) && (!q.trim() || norm(guestName(g)).includes(norm(q))));
+  const hasRestr = (g: Guest) => g.menu !== '' && g.menu !== 'sin-restricciones';
+  const matches = (g: Guest) => (fStatus === 'all' || g.status === fStatus)
+    && (fRestr === 'all' || (fRestr === 'any' ? hasRestr(g) : fRestr === 'none' ? !hasRestr(g) : g.menu === fRestr))
+    && (fGroup === 'all' || (fGroup === 'none' ? !g.groupId : g.groupId === fGroup))
+    && (fOrigin === 'all' || g.source === fOrigin);
+  const filtering = fStatus !== 'all' || fRestr !== 'all' || fGroup !== 'all' || fOrigin !== 'all';
+  const clearFilters = () => { setQ(''); setFStatus('all'); setFRestr('all'); setFGroup('all'); setFOrigin('all'); };
+  const shown = s.guests.filter(g => matches(g) && (!q.trim() || norm(guestName(g)).includes(norm(q))));
+  const withRestr = s.guests.filter(hasRestr).length;
 
   return (
     <div className="pn-page">
       <header className="pn-page-head is-compact">
         <div>
           <h1>Invitados</h1>
-          <p className="pn-sub">{st.total === 0 ? 'Quién viene y dónde se sienta.' : `${st.total} ${st.total === 1 ? 'invitado' : 'invitados'} · ${st.confirmed} ${st.confirmed === 1 ? 'confirmó' : 'confirmaron'}`}</p>
+          <p className="pn-sub">{st.total === 0 ? 'Quién viene y dónde se sienta.' : 'Quién viene, qué come y en qué mesa se sienta.'}</p>
         </div>
-        {st.total > 0 && <div className="pn-head-actions"><button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitados</button></div>}
+        {st.total > 0 && (
+          <div className="pn-head-actions gl-actions">
+            <button type="button" className="pn-btn is-ghost" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={16} aria-hidden="true" />Exportar</button>
+            <button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={16} aria-hidden="true" />Importar</button>
+            <button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
+          </div>
+        )}
       </header>
 
       {can(s.planId, 'groups') && (
-        <div className="pn-switch pn-views" role="group" aria-label="Qué querés ver">
-          <button type="button" className={vista === 'lista' ? 'on' : ''} aria-pressed={vista === 'lista'} onClick={() => void navigate({ to: '/panel/invitados', search: {}, replace: true })}>Invitados <span className="pn-count">{st.total}</span></button>
-          <button type="button" className={vista === 'mesas' ? 'on' : ''} aria-pressed={vista === 'mesas'} onClick={() => void navigate({ to: '/panel/invitados', search: { vista: 'mesas' }, replace: true })}>Mesas y grupos{st.withoutGroup > 0 && s.groups.length > 0 && <span className="pn-count" title="Personas sin lugar">{st.withoutGroup}</span>}</button>
+        <div className="pn-tabs gl-tabs" role="group" aria-label="Qué querés ver">
+          <button type="button" className={vista === 'lista' ? 'on' : ''} aria-pressed={vista === 'lista'} onClick={() => void navigate({ to: '/panel/invitados', search: {}, replace: true })}><Users size={18} aria-hidden="true" />Lista de invitados <span className="pn-count">{st.total}</span></button>
+          <button type="button" className={vista === 'mesas' ? 'on' : ''} aria-pressed={vista === 'mesas'} onClick={() => void navigate({ to: '/panel/invitados', search: { vista: 'mesas' }, replace: true })}><LayoutGrid size={18} aria-hidden="true" />Mesas y grupos{st.withoutGroup > 0 && s.groups.length > 0 && <span className="pn-count" title="Personas sin lugar">{st.withoutGroup}</span>}</button>
         </div>
       )}
 
@@ -131,60 +148,81 @@ function GuestsModule() {
         </div>
       ) : (
         <>
-          <div className="pn-chips" role="group" aria-label="Filtrar por asistencia">
-            {([['all', 'Todos', st.total], ['confirmed', 'Confirmados', st.confirmed], ['pending', 'Sin responder', st.pending], ['declined', 'No asisten', st.declined]] as const).map(([k, label, n]) => (
-              <button key={k} type="button" className={`pn-chipbtn${filter === k ? ' on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(filter === k ? 'all' : k)}>{label} <span className="pn-chipn">{n}</span></button>
-            ))}
-          </div>
-          {st.fromSite > 0 && (
-            <p className="pn-note">{st.fromSite} {st.fromSite === 1 ? 'persona respondió' : 'personas respondieron'} desde el sitio y ya {st.fromSite === 1 ? 'figura' : 'figuran'} en tu lista. <button type="button" className="pn-link" onClick={() => setFilter(filter === 'site' ? 'all' : 'site')}>{filter === 'site' ? 'Ver todos' : 'Verlos'}</button></p>
-          )}
-          <div className="pn-sheet-actions" role="group" aria-label="Importar y exportar la lista">
-            <button type="button" className="pn-btn is-ghost is-small" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button>
-            <button type="button" className="pn-btn is-ghost is-small" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={15} aria-hidden="true" />Exportar a Excel</button>
-          </div>
-          <div className="pn-filters is-guests">
-            <label className="pn-sr" htmlFor="g-q">Buscar un invitado</label>
-            <input id="g-q" type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre" autoComplete="off" />
+          <ul className="gl-stats" aria-label="Resumen de invitados">
+            <li><span>Total en lista</span><strong>{st.total}</strong><small>{st.total === 1 ? 'Invitado' : 'Invitados'}</small></li>
+            <li><span>Confirmados</span><strong>{st.confirmed}</strong><small>de {st.total} {st.total === 1 ? 'invitado' : 'invitados'}</small></li>
+            <li><span>Sin responder</span><strong>{st.pending}</strong><small>{st.declined > 0 ? `${st.declined} no ${st.declined === 1 ? 'asiste' : 'asisten'}` : 'Todavía sin respuesta'}</small></li>
+            <li><span>Con restricción</span><strong>{withRestr}</strong><small>Menú especial</small></li>
+          </ul>
+
+          <div className="gl-tools">
+            <div className="gl-search">
+              <label className="pn-sr" htmlFor="g-q">Buscar un invitado</label>
+              <Search size={18} className="gl-search-ico" aria-hidden="true" />
+              <input id="g-q" type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre o grupo" autoComplete="off" />
+            </div>
+            <div className="gl-filters" role="group" aria-label="Filtrar invitados">
+              <label className="gl-filter"><span>Respuesta</span>
+                <select value={fStatus} onChange={e => setFStatus(e.target.value as GuestStatus | 'all')}>
+                  <option value="all">Todas ({st.total})</option>
+                  <option value="confirmed">Confirmados ({st.confirmed})</option>
+                  <option value="pending">Sin responder ({st.pending})</option>
+                  <option value="declined">No asisten ({st.declined})</option>
+                </select>
+              </label>
+              <label className="gl-filter"><span>Restricción</span>
+                <select value={fRestr} onChange={e => setFRestr(e.target.value)}>
+                  <option value="all">Todas</option>
+                  <option value="any">Con alguna restricción ({withRestr})</option>
+                  <option value="none">Sin restricción</option>
+                  {menus.filter(m => m.id !== 'sin-restricciones').map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </label>
+              {s.groups.length > 0 && (
+                <label className="gl-filter"><span>Grupo o mesa</span>
+                  <select value={fGroup} onChange={e => setFGroup(e.target.value)}>
+                    <option value="all">Todos</option>
+                    <option value="none">Sin grupo ({st.withoutGroup})</option>
+                    {s.groups.map(gr => <option key={gr.id} value={gr.id}>{gr.name}</option>)}
+                  </select>
+                </label>
+              )}
+              <label className="gl-filter"><span>Origen</span>
+                <select value={fOrigin} onChange={e => setFOrigin(e.target.value as 'all' | 'rsvp' | 'manual')}>
+                  <option value="all">Todos</option>
+                  <option value="rsvp">Respondió en el sitio ({st.fromSite})</option>
+                  <option value="manual">Cargado por ustedes ({st.total - st.fromSite})</option>
+                </select>
+              </label>
+              {filtering && <button type="button" className="pn-link gl-clear" onClick={clearFilters}>Limpiar filtros</button>}
+            </div>
           </div>
 
-          {shown.length === 0 ? <p className="pn-note">No hay invitados con ese filtro. <button type="button" className="pn-link" onClick={() => { setQ(''); setFilter('all'); }}>Limpiar filtros</button></p> : (
-            <table className="pn-table">
-              <caption className="pn-sr">Lista de invitados</caption>
-              <thead><tr><th scope="col">Nombre</th><th scope="col">Asistencia</th><th scope="col">Restricción alimentaria</th><th scope="col">Grupo o mesa</th><th scope="col">Origen</th><th scope="col"><span className="pn-sr">Acciones</span></th></tr></thead>
-              <tbody>
-                {shown.map(g => (
-                  <tr key={g.id}>
-                    <th scope="row" data-label="Nombre">{guestName(g)}</th>
-                    <td className="pn-g-sum">
-                      <button type="button" onClick={() => setEditing(g)} aria-label={`Editar a ${guestName(g)}`}>
-                        <span className="pn-avatar" aria-hidden="true">{(g.first.trim()[0] ?? '?').toUpperCase()}</span>
-                        <span className="pn-g-name">{guestName(g)}</span>
-                        <span className="pn-g-sub">{[s.groups.length > 0 ? groupName(g.groupId) || 'Sin grupo' : '', g.status === 'confirmed' ? menuName(g.menu) : ''].filter(Boolean).join(' · ') || (g.source === 'rsvp' ? 'Respondió en el sitio' : 'Cargado por ustedes')}</span>
-                        <span className={`pn-gchip is-${g.status}`}>{STATUS_LABEL[g.status]}</span>
-                        <ChevronRight size={16} className="pn-g-go" aria-hidden="true" />
-                      </button>
-                    </td>
-                    <td data-label="Asistencia">
-                      <select className={`pn-select is-${g.status}`} value={g.status} aria-label={`Asistencia de ${guestName(g)}`} onChange={e => update(x => updateGuest(x, g.id, { status: e.target.value as GuestStatus }))}>
-                        {(Object.keys(STATUS_LABEL) as GuestStatus[]).map(k => <option key={k} value={k}>{STATUS_LABEL[k]}</option>)}
-                      </select>
-                    </td>
-                    <td data-label="Restricción">{g.status === 'confirmed' ? (menuName(g.menu) || <span className="pn-muted">Sin dato</span>) : <span className="pn-muted">—</span>}</td>
-                    <td data-label="Grupo o mesa">
-                      {s.groups.length
-                        ? <select className="pn-select" value={g.groupId ?? ''} aria-label={`Grupo de ${guestName(g)}`} onChange={e => update(x => assignGuest(x, g.id, e.target.value || null))}><option value="">Sin grupo</option>{s.groups.map(gr => <option key={gr.id} value={gr.id}>{gr.name}</option>)}</select>
-                        : <span className="pn-muted">{groupName(g.groupId) || 'Sin grupo'}</span>}
-                    </td>
-                    <td data-label="Origen"><span className="pn-muted">{g.source === 'rsvp' ? 'Respondió en el sitio' : 'Cargado por ustedes'}</span></td>
-                    <td className="pn-row-actions">
-                      <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar a ${guestName(g)}`}><Pencil size={16} aria-hidden="true" /></button>
-                      <button type="button" className="pn-icon" onClick={() => removeNow(g)} aria-label={`Eliminar a ${guestName(g)}`}><Trash2 size={16} aria-hidden="true" /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {shown.length === 0 ? <p className="pn-note">No hay invitados con ese filtro. <button type="button" className="pn-link" onClick={clearFilters}>Limpiar filtros</button></p> : (
+            <ul className="gl-list" aria-label="Lista de invitados">
+              {shown.map(g => (
+                <li key={g.id} className="gl-row">
+                  <button type="button" className="gl-main" onClick={() => setEditing(g)} aria-label={`Editar a ${guestName(g)}`}>
+                    <span className="pn-avatar" aria-hidden="true">{(g.first.trim()[0] ?? '?').toUpperCase()}</span>
+                    <span className="gl-body">
+                      <span className="gl-top">
+                        <span className="gl-name">{guestName(g)}</span>
+                        <span className="gl-tags">
+                          <span className={`pn-gchip is-${g.status}`}>{g.status === 'confirmed' ? <CheckCircle2 size={14} aria-hidden="true" /> : g.status === 'declined' ? <XCircle size={14} aria-hidden="true" /> : <Clock size={14} aria-hidden="true" />}{STATUS_LABEL[g.status]}</span>
+                          <span className="gl-tag">{groupName(g.groupId) || 'Sin grupo'}</span>
+                          <span className={`gl-tag${hasRestr(g) ? ' is-restr' : ''}`}><UtensilsCrossed size={13} aria-hidden="true" />{g.menu ? menuName(g.menu) : 'Sin dato de menú'}</span>
+                        </span>
+                      </span>
+                      <span className="gl-sub">{g.source === 'rsvp' ? 'Respondió en el sitio' : 'Cargado por ustedes'}</span>
+                    </span>
+                  </button>
+                  <span className="gl-row-actions">
+                    <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar a ${guestName(g)}`}><Pencil size={17} aria-hidden="true" /></button>
+                    <button type="button" className="pn-icon" onClick={() => removeNow(g)} aria-label={`Eliminar a ${guestName(g)}`}><Trash2 size={17} aria-hidden="true" /></button>
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
           <p className="pn-status-line" role="status" aria-live="polite">{shown.length} de {st.total} {st.total === 1 ? 'invitado' : 'invitados'}</p>
           {can(s.planId, 'rsvp') && <p className="pn-note">Las personas que responden desde la página de tu casamiento se suman solas a esta lista. <Link to="/panel/vista-previa" className="pn-link">Probar el formulario</Link></p>}

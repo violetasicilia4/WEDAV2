@@ -42,6 +42,8 @@ export type SiteData = {
   giftCategories: Category[];
   giftsCover: string | null;
   alias: string;
+  bank: string;
+  cbu: string;
   acceptCard: boolean;
 };
 
@@ -85,6 +87,8 @@ export const demoSiteData: SiteData = {
   giftCategories: demoCategories,
   giftsCover: null,
   alias: demoAlias,
+  bank: '',
+  cbu: '',
   acceptCard: true,
 };
 
@@ -146,6 +150,8 @@ export function siteFromState(s: AppState): SiteData {
     giftCategories: present,
     giftsCover: s.gifts.cover,
     alias: s.gifts.alias.trim(),
+    bank: s.gifts.bank.trim(),
+    cbu: s.gifts.cbu.trim(),
     acceptCard: s.gifts.acceptCard,
   };
 }

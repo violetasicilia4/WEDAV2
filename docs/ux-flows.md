@@ -126,3 +126,12 @@ Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila
 - **Inicio** muestra un bloque «Publicación»: siempre «Borrador», el plan elegido con su precio (de `plans.ts`) o «probás todo gratis», y la aclaración de que hoy no se publica ni se cobra nada.
 - **Resumen de publicación** (diálogo de planes) suma «Antes de publicar»: pendientes reales con acceso directo (`publishSummary(...).todo`: sin regalos, falta alias de cobro, sin fecha, secciones activadas incompletas), solo de lo que el plan elegido incluye.
 - **Supuesto:** no hay reglas de publicación definidas, así que ningún pendiente bloquea; son recomendaciones. Cuando la publicación real exista, habrá que decidir cuáles pasan a ser obligatorios.
+
+## Inicio como panel de accesos (2026-10-21)
+- Se quitaron los recuentos (confirmados, regalos, pasos listos), la barra de segmentos y el estado de publicación en bloque. Inicio muestra: la foto «Tu casamiento» con «Editar datos», el **siguiente paso** recomendado y «Adónde querés ir», con seis accesos: Lista de regalos, Tu página, Invitados, Mesas y grupos, Ver como invitado y Publicar (abre los planes y dice el plan y el precio si ya se eligió).
+- Cada acceso lleva una frase de para qué sirve y, solo si ya hay avance, una etiqueta de estado (En progreso, Lista para revisar, Completada) calculada por `journey.ts`. Los accesos de funciones fuera del plan muestran «Desde el plan X» y siguen abriendo la pantalla explicativa.
+
+## Vista previa en pop-up desde todas las secciones (2026-10-21)
+- La cabecera del panel muestra **«Vista previa»** en todas las secciones. Abre la página pública real en un pop-up: en compu, en **formato web** (con opción de ver el celular); en el celular, en formato celular.
+- Destino: **Regalos** abre directo la lista de regalos; **Inicio, Tu página e Invitados** abren el inicio de la invitación. Si el plan no incluye una de las dos páginas, se muestra la otra. Dentro del pop-up se puede alternar entre Invitación y Lista de regalos.
+- Cualquier pantalla puede abrirla con `openPreview('home' | 'gifts')` (`src/lib/weda/preview-event.ts`). La pantalla completa `/panel/vista-previa` sigue existiendo (con el resumen de lo configurado y «Publicar»). En el editor de «Tu página» en pantallas < 1100 px se mantiene su propia vista previa, que muestra la sección que se está editando.

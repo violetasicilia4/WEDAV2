@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addCatalogGift, addCustomGift, addGroup, addGuest, addSet, applyRsvp, assignGuest, emptyState, guestStats, isSafeMapsUrl, mapsLink,
-  isSamplePhoto, isValidOptionalEmail, moveGift, moveGiftTo, resolvePhoto, parseAmount, receivedGifts, receivedTotal, removeSetGifts, readiness, tasks, removeGift, removeGroup, removeSet, setPlan, slugify, updateGuest, validateAlias, validateGift,
+  updateGroup, validateCapacity, cleanCbu, validateCbu, isSamplePhoto, isValidOptionalEmail, moveGift, moveGiftTo, resolvePhoto, parseAmount, receivedGifts, receivedTotal, removeSetGifts, readiness, tasks, removeGift, removeGroup, removeSet, setPlan, slugify, updateGuest, validateAlias, validateGift,
   validateGroupName, validateOnboarding, draftsFor,
 } from '@/lib/weda/logic';
 import { SETS } from '@/lib/weda/catalog';
@@ -198,6 +198,10 @@ describe('mapas y alias', () => {
   it('valida el alias', () => {
     expect(validateAlias('tomas.martina')).toBeUndefined();
     expect(validateAlias('a b')).toBeTruthy();
+    expect(validateCbu('0000003100012345678901')).toBeUndefined();
+    expect(validateCbu('0000 0031-0001 2345 6789 01')).toBeUndefined();
+    expect(validateCbu('123')).toBeTruthy();
+    expect(cleanCbu('0000 0031-00')).toBe('000000310' + '0');
   });
 });
 
@@ -444,5 +448,22 @@ describe('resumen de publicación', () => {
     expect(t.find(x => x.search)?.search).toEqual({ tab: 'cobro' });
     // El plan Regalos no incluye el sitio: no se le pide la fecha.
     expect(publishSummary({ ...s, date: '' }, 'regalos').todo.some(x => x.to === '/panel')).toBe(false);
+  });
+});
+
+describe('mesas con lugares', () => {
+  it('guarda lugares y descripción opcionales, y los quita al vaciarlos', () => {
+    const s = addGroup(seedState(), 'Mesa 9', { capacity: 6, note: ' Primos ' });
+    const g = s.groups.at(-1)!;
+    expect(g).toMatchObject({ name: 'Mesa 9', capacity: 6, note: 'Primos' });
+    const v = updateGroup(s, g.id, 'Mesa 9', { capacity: undefined, note: '' }).groups.at(-1)!;
+    expect('capacity' in v).toBe(false);
+    expect('note' in v).toBe(false);
+  });
+  it('valida los lugares', () => {
+    expect(validateCapacity('')).toBeUndefined();
+    expect(validateCapacity('10')).toBeUndefined();
+    expect(validateCapacity('0')).toBeTruthy();
+    expect(validateCapacity('abc')).toBeTruthy();
   });
 });

@@ -1,30 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, Check, ChevronRight, ChevronUp, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronRight, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
 import { CoupleCover, Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/catalog';
 import { formatARS, type Gift } from '@/lib/demo-wedding';
 import { readImage } from '@/lib/weda/images';
 import {
-  addCatalogGift, addCustomGift, addSet, giftTotal, hasCatalogGift, moveGiftTo, norm, parseAmount, receivedGifts, receivedTotal, removeGift, removeSetGifts, sitePath, updateGift,
-  validateAlias, validateGift,
+  addCatalogGift, addCustomGift, addSet, hasCatalogGift, moveGiftTo, parseAmount, receivedGifts, receivedTotal, removeGift, removeSetGifts, sitePath, updateGift,
+  cleanCbu, validateAlias, validateCbu, validateGift,
 } from '@/lib/weda/logic';
 import { can } from '@/lib/weda/plans';
+import { openPreview } from '@/lib/weda/preview-event';
 import { getState, update, useAppState } from '@/lib/weda/store';
 import type { Category } from '@/lib/demo-wedding';
 import type { ListGift } from '@/lib/weda/types';
-
-/* Regalos de un pack: abiertos en pantallas anchas; en el celular quedan plegados para que cada pack no ocupe una pantalla entera. El panel solo se dibuja ya hidratado, así que mirar el ancho acá es seguro. */
-function PackGifts({ gifts }: { gifts: { id: string; name: string; amount: number }[] }) {
-  const [open, setOpen] = useState(() => window.matchMedia('(min-width: 641px)').matches);
-  return (
-    <details className="rg-pack-more" open={open} onToggle={e => setOpen(e.currentTarget.open)}>
-      <summary>{open ? 'Regalos incluidos en este pack' : `Ver los ${gifts.length} regalos incluidos`}</summary>
-      <ul className="rg-pack-list">{gifts.map(g => <li key={g.id}><span>{g.name}</span><b>{formatARS(g.amount)}</b></li>)}</ul>
-    </details>
-  );
-}
 
 export const Route = createFileRoute('/panel/regalos')({
   validateSearch: (q: Record<string, unknown>): { tab?: 'cobro' } => (q['tab'] === 'cobro' ? { tab: 'cobro' } : {}),
@@ -103,10 +93,10 @@ function CatalogCard({ gift, inList, onAdd, onRemove }: { gift: Gift; inList: bo
     <li className={`pn-gcard${inList ? ' is-in' : ''}`}>
       <div className="pn-gphoto">
         {gift.image ? <img src={gift.image} alt="" loading="lazy" style={gift.pos ? { objectPosition: gift.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
+        <span className="rg-price">{formatARS(gift.amount)}</span>
         {inList && <span className="pn-gcheck" aria-hidden="true"><Check size={16} strokeWidth={2.5} /></span>}
       </div>
       <h3 title={gift.name}>{gift.name}</h3>
-      <p className="pn-gprice">{formatARS(gift.amount)}</p>
       {inList
         ? <button type="button" className="pn-btn is-small is-white" onClick={onRemove} aria-label={`Quitar ${gift.name} de tu lista`}><Check size={15} aria-hidden="true" />Quitar</button>
         : <button type="button" className="pn-btn is-small" onClick={onAdd} aria-label={`Agregar ${gift.name} a tu lista`}><Plus size={15} aria-hidden="true" />Agregar</button>}
@@ -117,19 +107,27 @@ function CatalogCard({ gift, inList, onAdd, onRemove }: { gift: Gift; inList: bo
 const HOW_LABEL = { alias: 'Por alias', tarjeta: 'Con tarjeta' } as const;
 const fmtDate = (t: number) => new Date(t).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-/* El alias se guarda solo apenas es válido; el error aparece al salir del campo. */
-function AliasField({ value }: { value: string }) {
-  const [v, setV] = useState(value);
-  const [touched, setTouched] = useState(false);
-  const err = v.trim() === '' ? undefined : validateAlias(v);
-  const change = (next: string) => {
-    setV(next);
-    if (next.trim() === '' || !validateAlias(next)) update(x => ({ ...x, gifts: { ...x.gifts, alias: next.trim() } }));
-  };
+/* Transferencia bancaria: banco, CBU y alias. Cada dato se guarda solo apenas es válido; el error aparece al salir del campo. Los tres son opcionales (el alias alcanza para cobrar); si se cargan, los invitados los ven al transferir. */
+function BankFields({ bank, cbu, alias }: { bank: string; cbu: string; alias: string }) {
+  const [b, setB] = useState(bank);
+  const [c, setC] = useState(cbu);
+  const [al, setAl] = useState(alias);
+  const [touched, setTouched] = useState<{ cbu?: boolean; alias?: boolean }>({});
+  const cbuErr = c.trim() === '' ? undefined : validateCbu(c);
+  const aliasErr = al.trim() === '' ? undefined : validateAlias(al);
+  const save = (patch: Partial<{ bank: string; cbu: string; alias: string }>) => update(x => ({ ...x, gifts: { ...x.gifts, ...patch } }));
   return (
-    <Field label="Tu alias bancario" error={touched ? err : undefined}>
-      {a => <input id={a.id} type="text" value={v} placeholder="tomas.martina" onChange={e => change(e.target.value)} onBlur={() => setTouched(true)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-    </Field>
+    <div className="pn-form">
+      <Field label="Banco" optional>
+        {a => <input id={a.id} type="text" value={b} placeholder="Nombre del banco" autoComplete="off" onChange={e => { setB(e.target.value); save({ bank: e.target.value.trim() }); }} />}
+      </Field>
+      <Field label="CBU" optional error={touched.cbu ? cbuErr : undefined}>
+        {a => <input id={a.id} type="text" inputMode="numeric" value={c} placeholder="22 números" autoComplete="off" onChange={e => { setC(e.target.value); if (e.target.value.trim() === '' || !validateCbu(e.target.value)) save({ cbu: cleanCbu(e.target.value) }); }} onBlur={() => setTouched(t => ({ ...t, cbu: true }))} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+      </Field>
+      <Field label="Alias" error={touched.alias ? aliasErr : undefined}>
+        {a => <input id={a.id} type="text" value={al} placeholder="tomas.martina" autoComplete="off" onChange={e => { setAl(e.target.value); if (e.target.value.trim() === '' || !validateAlias(e.target.value)) save({ alias: e.target.value.trim() }); }} onBlur={() => setTouched(t => ({ ...t, alias: true }))} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+      </Field>
+    </div>
   );
 }
 
@@ -212,44 +210,6 @@ function SortableGifts({ items, onMove, renderRow }: { items: ListGift[]; onMove
 }
 
 /* Resumen de la selección: panel lateral en desktop y barra inferior en el celular. Siempre a mano mientras se explora el catálogo. */
-function SelectionSummary({ items, onRemove, onReview }: { items: ListGift[]; onRemove: (g: ListGift) => void; onReview: () => void }) {
-  const [open, setOpen] = useState(false);
-  const total = giftTotal(items);
-  const body = items.length === 0
-    ? <p className="pn-muted">Todavía no elegiste ningún regalo. Tocá un set o «Agregar» en cada regalo.</p>
-    : <ul className="pn-sel-list">{items.map(g => (
-        <li key={g.id}><Thumb src={g.image} name={g.name} /><span><strong>{g.name}</strong><small>{formatARS(g.amount)}</small></span><button type="button" className="pn-icon" onClick={() => onRemove(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button></li>
-      ))}</ul>;
-  return (
-    <>
-      <aside className="pn-sel" aria-label="Resumen de tu selección">
-        <h2>Tu selección</h2>
-        <p className="pn-sel-count" role="status" aria-live="polite"><strong>{items.length}</strong> {items.length === 1 ? 'regalo elegido' : 'regalos elegidos'}{items.length > 0 && <> · {formatARS(total)}</>}</p>
-        {body}
-        <button type="button" className="pn-btn is-ghost" onClick={onReview} disabled={items.length === 0}>Revisar mi lista</button>
-      </aside>
-      <div className="pn-selbar">
-        <button type="button" className="pn-btn" onClick={() => setOpen(true)} aria-haspopup="dialog">
-          <span className="pn-selbar-text"><GiftIcon size={18} aria-hidden="true" />{items.length} {items.length === 1 ? 'regalo elegido' : 'regalos elegidos'}{items.length > 0 && <> · {formatARS(total)}</>}</span>
-          <span className="pn-selbar-go">Ver<ChevronUp size={16} aria-hidden="true" /></span>
-        </button>
-      </div>
-      {open && (
-        <Dialog open onOpenChange={o => { if (!o) setOpen(false); }}>
-          <DialogContent className="pn-dialog">
-            <DialogTitle>Tu selección</DialogTitle>
-            <DialogDescription>{items.length === 0 ? 'Todavía no elegiste regalos.' : `${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} · ${formatARS(total)}`}</DialogDescription>
-            {body}
-            <div className="pn-actions is-end">
-              <button type="button" className="pn-btn is-ghost" onClick={() => setOpen(false)}>Seguir eligiendo</button>
-              <button type="button" className="pn-btn" onClick={() => { setOpen(false); onReview(); }} disabled={items.length === 0}>Revisar mi lista</button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
-  );
-}
 
 function GiftsModule() {
   const s = useAppState();
@@ -257,19 +217,12 @@ function GiftsModule() {
   const search = Route.useSearch();
   const [tab, setTab] = useState<Tab>(() => search.tab ?? 'como');
   const [catView, setCatView] = useState<'packs' | 'singles'>('packs');
+  const [packOpen, setPackOpen] = useState<GiftSet | null>(null);
   const [creating, setCreating] = useState(false);
+  const [cfg, setCfg] = useState<'bank' | 'mp' | null>(null);
   const [editing, setEditing] = useState<ListGift | null>(null);
-  const [preview, setPreview] = useState(false);
   // El botón de la barra superior (panel.tsx) pide abrir la vista previa de la lista.
-  useEffect(() => {
-    const open = () => setPreview(true);
-    window.addEventListener('weda:open-gifts-preview', open);
-    return () => window.removeEventListener('weda:open-gifts-preview', open);
-  }, []);
   const [listView, setListView] = useState<'cards' | 'order'>('cards');
-  const [showPage, setShowPage] = useState(false);
-  const [query, setQuery] = useState('');
-  const [cat, setCat] = useState<string>('Todas');
 
   if (!can(s.planId, 'gifts')) return <Locked feature="gifts" />;
   const items = s.gifts.items;
@@ -293,7 +246,6 @@ function GiftsModule() {
   const rmCatalog = (catalogId: string) => { const g = items.find(x => x.catalogId === catalogId); if (g) rm(g); };
 
 
-  const shownCatalog = catalog.filter(g => (cat === 'Todas' || g.category === cat) && (!query.trim() || norm(g.name).includes(norm(query))));
   const alias = s.gifts.alias.trim();
   const copyLink = () => { void navigator.clipboard?.writeText(`${window.location.origin}${sitePath(s)}/regalos`).catch(() => undefined); toast('Enlace de la lista copiado.'); };
 
@@ -326,12 +278,7 @@ function GiftsModule() {
       <div id="pn-tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="pn-tabpanel">
         {tab === 'como' && (
           <div className="rg-how">
-            <section className="rg-kpis" aria-label="Resumen de tu lista">
-              <div className="rg-kpi"><span>Total recibido</span><strong>{formatARS(receivedTotal(received))}</strong><small>Registrado en este navegador</small></div>
-              <div className="rg-kpi"><span>Aportes recibidos</span><strong>{received.length}</strong><small>{received.length === 0 ? 'Todavía no hay aportes' : 'Los ves en «Aportes recibidos»'}</small></div>
-              <div className="rg-kpi"><span>Regalos en lista</span><strong>{items.length}</strong><small>Activos para aportes</small></div>
-            </section>
-            <p className="rg-eyebrow">Pasos del funcionamiento</p>
+            <p className="rg-eyebrow is-first">Pasos del funcionamiento</p>
             <ol className="rg-steps">
               {[
                 { done: items.length > 0, title: 'Elegí o creá los regalos de tu lista', text: items.length > 0 ? `Tenés ${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} en tu lista. Podés sumar packs completos o armar regalos individuales.` : 'Sumá un pack completo o elegí regalos de a uno. También podés crear los tuyos.', cta: items.length > 0 ? `Ver mis regalos (${items.length})` : 'Elegir regalos', go: () => setTab(items.length > 0 ? 'lista' : 'agregar') },
@@ -374,7 +321,7 @@ function GiftsModule() {
                     <li key={g.id} className="rg-card">
                       <div className="rg-photo">
                         {g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos ? { objectPosition: g.pos } : undefined} /> : <GiftIcon size={34} strokeWidth={1.3} aria-hidden="true" />}
-                        <span className="rg-chip">{g.category}</span>
+                        <span className="rg-price">{formatARS(g.amount)}</span>
                         <div className="rg-arrows">
                           <button type="button" className="pn-icon" onClick={() => update(x => moveGiftTo(x, g.id, i - 1))} disabled={i === 0} aria-label={`Subir ${g.name}`}><ArrowUp size={16} aria-hidden="true" /></button>
                           <button type="button" className="pn-icon" onClick={() => update(x => moveGiftTo(x, g.id, i + 1))} disabled={i === items.length - 1} aria-label={`Bajar ${g.name}`}><ArrowDown size={16} aria-hidden="true" /></button>
@@ -382,9 +329,8 @@ function GiftsModule() {
                       </div>
                       <div className="rg-body">
                         <h3>{g.name}</h3>
-                        {g.text && <p className="rg-text">{g.text}</p>}
                         <div className="rg-foot">
-                          <div><span className="rg-label">Valor sugerido</span><strong>{formatARS(g.amount)}</strong></div>
+                          <span className="rg-cat">{g.category}</span>
                           <div className="rg-actions">
                             <button type="button" className="pn-icon" onClick={() => setEditing(g)} aria-label={`Editar ${g.name}`}><Pencil size={16} aria-hidden="true" /></button>
                             <button type="button" className="pn-icon" onClick={() => rm(g)} aria-label={`Quitar ${g.name}`}><X size={16} aria-hidden="true" /></button>
@@ -413,16 +359,6 @@ function GiftsModule() {
                   <p className="pn-hint">Para ordenar, mantené apretado un regalo y movelo.</p>
                 </>
               )}
-              <section className="pn-page-view" aria-labelledby="pn-pv-title">
-                <h2 id="pn-pv-title" className="pn-sr">Página de regalos</h2>
-                <button type="button" className="pn-btn" aria-expanded={showPage} aria-controls="pn-pv-frame" onClick={() => setShowPage(v => !v)}><Eye size={16} aria-hidden="true" />{showPage ? 'Ocultar la página de regalos' : 'Ver cómo la ven tus invitados'}</button>
-                {showPage && (
-                  <div id="pn-pv-frame" className="pn-pv-frame">
-                    <p className="pn-muted">Es la página de regalos con tus datos y se actualiza sola. Todavía no está publicada.</p>
-                    <PreviewFrame path={`${sitePath(s)}/regalos`} device="mobile" />
-                  </div>
-                )}
-              </section>
             </>
           )
         )}
@@ -443,7 +379,6 @@ function GiftsModule() {
                   const gs = setGifts(set);
                   const inList = gs.filter(g => hasCatalogGift(s, g.id)).length;
                   const all = inList === gs.length;
-                  const total = gs.reduce((n, g) => n + g.amount, 0);
                   const cover = SET_COVER[set.id];
                   const toggle = () => (all ? withUndo(`Quitaste los regalos de «${set.name}».`, () => update(x => removeSetGifts(x, set.giftIds))) : doAddSet(set));
                   return (
@@ -454,10 +389,9 @@ function GiftsModule() {
                       </div>
                       <div className="rg-pack-body">
                         <p className="rg-text">{set.description}</p>
-                        <PackGifts gifts={gs} />
-                        <div className="rg-foot">
-                          <div><span className="rg-label">Total sugerido</span><strong>{formatARS(total)}</strong></div>
-                          <button type="button" className={`pn-btn${all ? ' is-ghost' : ''}`} onClick={toggle}>{all ? 'Quitar pack' : <><Plus size={15} aria-hidden="true" />Agregar pack ({gs.length} regalos)</>}</button>
+                        <div className="rg-pack-actions">
+                          <button type="button" className="pn-btn is-ghost" onClick={() => setPackOpen(set)} aria-label={`Ver qué incluye el pack ${set.name}`}>Ver qué incluye</button>
+                          <button type="button" className={`pn-btn${all ? ' is-ghost' : ''}`} onClick={toggle}>{all ? 'Quitar pack' : <><Plus size={15} aria-hidden="true" />Agregar</>}</button>
                         </div>
                       </div>
                     </li>
@@ -467,13 +401,6 @@ function GiftsModule() {
             ) : (
               <div className="pn-pick">
                 <div className="pn-catalog">
-                  <div className="pn-filters is-chips">
-                    <label className="pn-sr" htmlFor="pn-q">Buscar un regalo</label>
-                    <input id="pn-q" type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar un regalo" autoComplete="off" />
-                    <div className="pn-chips" role="group" aria-label="Categoría">
-                      {['Todas', ...categories].map(c => <button key={c} type="button" className={`pn-chipbtn${cat === c ? ' on' : ''}`} aria-pressed={cat === c} onClick={() => setCat(c)}>{c}</button>)}
-                    </div>
-                  </div>
                   <ul className="pn-ggrid">
                     <li className="pn-gown">
                       <button type="button" onClick={() => setCreating(true)}>
@@ -482,12 +409,10 @@ function GiftsModule() {
                         <span>Con tu nombre, tu monto y tu imagen</span>
                       </button>
                     </li>
-                    {shownCatalog.map(g => <CatalogCard key={g.id} gift={g} inList={hasCatalogGift(s, g.id)} onAdd={() => addOne(g.id)} onRemove={() => rmCatalog(g.id)} />)}
+                    {catalog.map(g => <CatalogCard key={g.id} gift={g} inList={hasCatalogGift(s, g.id)} onAdd={() => addOne(g.id)} onRemove={() => rmCatalog(g.id)} />)}
                   </ul>
-                  {shownCatalog.length === 0 && <p className="pn-note">No encontramos regalos con esa búsqueda.</p>}
-                  <p className="pn-status-line" aria-live="polite" role="status">{shownCatalog.length} {shownCatalog.length === 1 ? 'regalo' : 'regalos'}</p>
+                  <p className="pn-status-line" aria-live="polite" role="status">{catalog.length} {catalog.length === 1 ? 'regalo' : 'regalos'}</p>
                 </div>
-                <SelectionSummary items={items} onRemove={rm} onReview={() => setTab('lista')} />
               </div>
             )}
           </div>
@@ -498,7 +423,7 @@ function GiftsModule() {
             <div className="pn-empty">
               <h2>Todavía no recibiste regalos</h2>
               <p>Cuando un invitado regale desde la página de tu lista, lo vas a ver acá con su nombre, el monto y su mensaje. Para probarlo, regalá algo desde la vista de invitado.</p>
-              <div className="pn-actions"><button type="button" className="pn-btn" onClick={() => setPreview(true)}><Eye size={16} aria-hidden="true" />Ver la lista como invitado</button></div>
+              <div className="pn-actions"><button type="button" className="pn-btn" onClick={() => openPreview('gifts')}><Eye size={16} aria-hidden="true" />Ver la lista como invitado</button></div>
             </div>
           ) : (
             <>
@@ -527,30 +452,56 @@ function GiftsModule() {
           <div className="pn-config">
             <div className="pn-block-head">
               <h2>Datos para recibir tus regalos</h2>
-              <p className="pn-muted">Acá configurás cómo recibís vos los aportes. No es obligatorio para seguir armando tu casamiento, pero para activar los regalos reales al publicar vas a necesitar completarlo.</p>
-              <p className="pn-muted" role="status">{alias ? 'Estado: configurado.' : 'Estado: sin configurar. Podés dejarlo para después.'}</p>
             </div>
-            <section className="pn-cfg-block" aria-labelledby="cfg-alias">
-              <div className="pn-cfg-head"><h2 id="cfg-alias">Alias bancario</h2><span className={`pn-chip${alias ? ' is-ok' : ' is-todo'}`}>{alias ? 'Configurado' : 'Sin configurar'}</span></div>
-              <AliasField value={s.gifts.alias} />
-              <div className="pn-cfg-review">
-                <p className="pn-label">Así lo ven tus invitados</p>
-                <div className="pn-alias-card">
-                  <span className="pn-alias-kind">Transferencia por alias</span>
-                  <code>{alias || 'Alias a definir'}</code>
-                  {alias && <button type="button" className="pn-icon" aria-label="Copiar el alias" onClick={() => { void navigator.clipboard?.writeText(alias).catch(() => undefined); toast('Alias copiado.'); }}><Copy size={16} aria-hidden="true" /></button>}
+            <div className="pn-cfg-two">
+              <section className="pn-cfg-block" aria-labelledby="cfg-alias">
+                <div className="pn-cfg-head"><h2 id="cfg-alias">Transferencia bancaria</h2><span className={`pn-chip${alias ? ' is-ok' : ' is-todo'}`}>{alias ? 'Configurado' : 'Sin configurar'}</span></div>
+                {alias ? (
+                  <dl className="pn-cfg-sum">
+                    <div><dt>Alias</dt><dd>{alias}</dd></div>
+                    {s.gifts.bank.trim() && <div><dt>Banco</dt><dd>{s.gifts.bank.trim()}</dd></div>}
+                    {s.gifts.cbu.trim() && <div><dt>CBU</dt><dd>{s.gifts.cbu.trim()}</dd></div>}
+                  </dl>
+                ) : <p className="pn-muted">Cargá tu banco, tu CBU y tu alias. Tus invitados te transfieren y te mandan el comprobante.</p>}
+                <div className="pn-cfg-actions">
+                  <button type="button" className="pn-btn" onClick={() => setCfg('bank')}>{alias ? 'Editar' : 'Configurar'}</button>
+                  {alias && <button type="button" className="pn-link" onClick={() => { void navigator.clipboard?.writeText(alias).catch(() => undefined); toast('Alias copiado.'); }}><Copy size={14} aria-hidden="true" />Copiar alias</button>}
                 </div>
-              </div>
-            </section>
-            <section className="pn-cfg-block is-soon" aria-labelledby="cfg-mp">
-              <div className="pn-cfg-head"><h2 id="cfg-mp">Mercado Pago</h2><span className="pn-chip">Próximamente</span></div>
-              <p className="pn-muted">Vas a poder conectar tu cuenta de Mercado Pago para recibir los aportes ahí. Todavía no está disponible.</p>
-              <label className="pn-check"><input type="checkbox" checked={s.gifts.acceptCard} onChange={e => update(x => ({ ...x, gifts: { ...x.gifts, acceptCard: e.target.checked } }))} /><span>Mostrar también la opción de pagar con tarjeta</span></label>
-              <p className="pn-hint">Es solo tu preferencia: el cobro con tarjeta se habilita cuando conectemos un servicio de pagos.</p>
-            </section>
+              </section>
+              <section className="pn-cfg-block" aria-labelledby="cfg-mp">
+                <div className="pn-cfg-head"><h2 id="cfg-mp">Mercado Pago</h2><span className="pn-chip">Próximamente</span></div>
+                <p className="pn-muted">Conectá tu cuenta de Mercado Pago para recibir los aportes ahí. Todavía no está disponible.</p>
+                <div className="pn-cfg-actions">
+                  <button type="button" className="pn-btn" onClick={() => setCfg('mp')}>Configurar</button>
+                </div>
+              </section>
+            </div>
           </div>
         )}
       </div>
+
+      {cfg === 'bank' && (
+        <Dialog open onOpenChange={o => { if (!o) setCfg(null); }}>
+          <DialogContent className="pn-dialog">
+            <DialogTitle>Transferencia bancaria</DialogTitle>
+            <DialogDescription>Se guarda sola mientras escribís. El alias alcanza para cobrar; el banco y el CBU son opcionales.</DialogDescription>
+            <BankFields bank={s.gifts.bank} cbu={s.gifts.cbu} alias={s.gifts.alias} />
+            <div className="pn-actions is-end"><button type="button" className="pn-btn" onClick={() => setCfg(null)}>Listo</button></div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {cfg === 'mp' && (
+        <Dialog open onOpenChange={o => { if (!o) setCfg(null); }}>
+          <DialogContent className="pn-dialog">
+            <DialogTitle>Mercado Pago</DialogTitle>
+            <DialogDescription>Todavía no podemos conectar tu cuenta de Mercado Pago. Cuando esté disponible, la vas a configurar desde acá.</DialogDescription>
+            <label className="pn-check"><input type="checkbox" checked={s.gifts.acceptCard} onChange={e => update(x => ({ ...x, gifts: { ...x.gifts, acceptCard: e.target.checked } }))} /><span>Mostrar también la opción de pagar con tarjeta</span></label>
+            <p className="pn-hint">Es solo tu preferencia: el cobro con tarjeta se habilita cuando conectemos un servicio de pagos.</p>
+            <div className="pn-actions is-end"><button type="button" className="pn-btn" onClick={() => setCfg(null)}>Listo</button></div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {creating && (
         <Dialog open onOpenChange={o => { if (!o) setCreating(false); }}>
@@ -574,13 +525,28 @@ function GiftsModule() {
         </Dialog>
       )}
 
-      <Dialog open={preview} onOpenChange={setPreview}>
-        <DialogContent className="pn-dialog is-preview">
-          <DialogTitle>Así la ven tus invitados</DialogTitle>
-          <DialogDescription>Es la misma página que /ejemplo/regalos, con tus datos. Se actualiza sola.</DialogDescription>
-          <PreviewFrame path={`${sitePath(s)}/regalos`} device="mobile" />
-        </DialogContent>
-      </Dialog>
+      {packOpen && (() => {
+        const set = packOpen;
+        const gs = setGifts(set);
+        const all = gs.every(g => hasCatalogGift(s, g.id));
+        const total = gs.reduce((n, g) => n + g.amount, 0);
+        const toggle = () => { setPackOpen(null); if (all) withUndo(`Quitaste los regalos de «${set.name}».`, () => update(x => removeSetGifts(x, set.giftIds))); else doAddSet(set); };
+        return (
+          <Dialog open onOpenChange={o => { if (!o) setPackOpen(null); }}>
+            <DialogContent className="pn-dialog">
+              <DialogTitle>{set.name}</DialogTitle>
+              <DialogDescription>{set.description}</DialogDescription>
+              <p className="rg-label">{gs.length} regalos incluidos</p>
+              <ul className="rg-pack-list">{gs.map(g => <li key={g.id}><span>{g.name}</span><b>{formatARS(g.amount)}</b></li>)}</ul>
+              <p className="rg-pack-total"><span>Total</span><strong>{formatARS(total)}</strong></p>
+              <div className="pn-actions is-end">
+                <button type="button" className="pn-btn is-ghost" onClick={() => setPackOpen(null)}>Cerrar</button>
+                <button type="button" className={`pn-btn${all ? ' is-ghost' : ''}`} onClick={toggle}>{all ? 'Quitar pack' : <><Plus size={15} aria-hidden="true" />Agregar pack</>}</button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 }

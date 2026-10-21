@@ -32,6 +32,8 @@ export function seedState(): AppState {
     gifts: {
       cover: null,
       alias: 'tomas.martina',
+      bank: 'Banco de ejemplo',
+      cbu: '0000000000000000000000',
       acceptCard: true,
       items: [
         ...['ollas', 'vajilla', 'cafetera', 'sabanas', 'lampara'].map(id => ({ ...seedGift(id), fromSet: 'primer-hogar' })),
@@ -43,8 +45,8 @@ export function seedState(): AppState {
       given: [{ id: 'seed-vajilla', name: 'Lucía Ferreyra', message: '¡Que sean muy felices!', how: 'alias', at: Date.UTC(2026, 9, 12, 15, 30) }],
     },
     groups: [
-      { id: 'seed-g1', name: 'Mesa 1 · Familia' },
-      { id: 'seed-g2', name: 'Mesa 2 · Amigos' },
+      { id: 'seed-g1', name: 'Mesa 1 · Familia', note: 'Familia directa', capacity: 8 },
+      { id: 'seed-g2', name: 'Mesa 2 · Amigos', capacity: 10 },
       { id: 'seed-g3', name: 'Mesa 3 · Trabajo' },
     ],
     guests: [

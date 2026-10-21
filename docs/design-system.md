@@ -76,7 +76,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 - Botones de un diálogo o formulario: **Cancelar a la izquierda, acción principal a la derecha** (`.pn-actions.is-end`).
 - Quitar algo reversible: aviso con **Deshacer**; destructivo e irreversible: `ConfirmDialog`.
 - Los cambios del panel **se guardan solos**; no hay botón «Guardar» por pantalla (los diálogos de edición sí confirman).
-- Botón «Ver como invitado» siempre visible en la cabecera del panel.
+- Botón «Vista previa» siempre visible en la cabecera del panel (abre un pop-up con la página pública).
 - En pantallas táctiles todo botón llega a 44 px (`pointer: coarse`).
 - Editar con resultado a la vista: en el celular los campos se editan debajo de una vista previa fija; no se mueve la edición a otra pantalla.
 - Una acción principal por pantalla; las secundarias son «ghost» (borde, sin relleno).
@@ -96,7 +96,7 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
 - **Tarjeta de regalo** (`.pn-gcard`): sin caja ni sombra; foto cuadrada, nombre (2 renglones), monto en negrita pizarra y una sola acción. En «Tu lista» las acciones son íconos de 44 px (`Editar`, `Quitar`), sin borde.
 - **Sets** (`.pn-settile`): degradé inferior reforzado (0.05 → 0.86) para que el nombre y el contador se lean sobre cualquier foto.
 - **Barra de selección** (`.pn-selbar`): cantidad y monto a la izquierda, «Ver» a la derecha; `.pn-pick` deja 80 px al final para que no tape el contenido.
-- **Invitados en celular (≤ 760 px):** fila de 68 px (nombre en negrita + estado · mesa · restricción). Tocar la fila abre la hoja de edición; el detalle y los selectores completos están ahí. En escritorio sigue la tabla con selectores.
+- **Invitados (2026-10-21):** una sola lista para todos los anchos (`.gl-*`): cuatro bloques de totales (Total, Confirmados, Sin responder, Con restricción), buscador, filtros desplegables combinables (Respuesta, Restricción, Grupo o mesa y Origen, con «Limpiar filtros») y una fila por persona con avatar, nombre y etiquetas de estado, grupo o mesa, restricción y origen. Tocar la fila abre la edición (estado, grupo y menú se cambian ahí); el tacho elimina con «Deshacer». En el celular los totales se compactan y queda solo el tacho. Ya no hay tabla con selectores.
 - **Celular, ajustes de la auditoría responsive (2026-10-20):** en «Regalos» el encabezado apila título y descripción a lo ancho con «Copiar enlace»/«Crear regalo» en una fila debajo, y las solapas no se parten en dos renglones (una línea cada una, con desplazamiento horizontal). En los diálogos con formulario (≤ 560 px) Cancelar y Guardar comparten fila y la acción destructiva («Eliminar») queda aparte, arriba. Los íconos dentro de `.pn-btn` no se encogen. La auditoría (320–768 px) no encontró desborde horizontal en el panel; falta validar en dispositivos reales.
 - **Hoja inferior** (`.pn-dialog.is-sheet`, ≤ 560 px): pegada abajo, hasta 90 dvh, botones fijos al pie. Todo `.pn-dialog .pn-actions.is-end` queda a la vista en celular.
 - **Mesas:** accesos con conteo (`.pn-mesa-nav`: «Sin lugar N», una píldora por mesa), selector compacto por persona («Asignar a…» si no tiene mesa). No hay capacidad por mesa en el modelo, por eso no se muestra.

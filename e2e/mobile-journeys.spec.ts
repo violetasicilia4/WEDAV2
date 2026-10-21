@@ -158,7 +158,8 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
   });
 
   test('Flujo 7: vista previa → plan → resumen de publicación, sin simular pagos', async ({ page }) => {
-    await page.getByRole('link', { name: 'Ver como invitado' }).click();
+    // La cabecera ahora abre la vista previa en un pop-up; esta pantalla completa sigue en su ruta.
+    await page.goto('/panel/vista-previa');
     await expect(page.getByText('Todavía no está publicada')).toBeVisible();
     await page.getByRole('button', { name: 'Publicar', exact: true }).click();
     await page.getByRole('radio', { name: /Invitación/ }).check({ force: true });

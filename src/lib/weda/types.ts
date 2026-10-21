@@ -49,7 +49,8 @@ export type Guest = {
   source: GuestSource;
 };
 
-export type Group = { id: string; name: string };
+/** Mesa o grupo. `capacity` (lugares) y `note` (descripción) son opcionales. */
+export type Group = { id: string; name: string; capacity?: number; note?: string };
 
 export type SiteEvent = {
   key: EventKey;
@@ -90,7 +91,7 @@ export type AppState = {
   preferredPlan: PlanId | null;
   planId: PlanId | null;
   /** `acceptCard`: preferencia de la pareja; en esta etapa no hay cobro real con tarjeta. */
-  gifts: { cover: string | null; alias: string; acceptCard: boolean; items: ListGift[]; given: GivenGift[] };
+  gifts: { cover: string | null; alias: string; bank: string; cbu: string; acceptCard: boolean; items: ListGift[]; given: GivenGift[] };
   guests: Guest[];
   groups: Group[];
   site: SiteConfig;

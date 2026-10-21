@@ -155,6 +155,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
                     </button>
                   )}
                 </div>
+                {(site.bank || site.cbu) && <dl className="rg-bank">{site.bank && <div><dt>Banco</dt><dd>{site.bank}</dd></div>}{site.cbu && <div><dt>CBU</dt><dd>{site.cbu}</dd></div>}</dl>}
                 <p className="rg-help">{alias ? `Transferí ${formatARS(total)} a este alias y después cargá el comprobante.` : 'Los novios todavía no cargaron su alias. Cuando lo hagan, vas a verlo acá.'}</p>
               </>
             ) : (

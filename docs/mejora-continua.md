@@ -13,7 +13,7 @@ Registro compacto para retomar el trabajo. Verificá siempre el estado real del 
 |---|---|---|---|
 | Al aparecer un error de validación, el campo vecino se estiraba (`.pn-two`) | P2 | `align-items: start` | Ambos inputs miden 48 px con errores |
 | Inicio: «Falta: Evento 1» a una pareja nueva | P2 | «Cargá la ceremonia y el lugar» si no hay eventos completos | Texto verificado en el panel vacío |
-| Packs de regalos de 600–800 px en celular | P2 | Lista de regalos plegable (`PackGifts`), abierta en ≥ 641 px | 799 → ~440 px; en 1280 px siguen abiertos |
+| Packs de regalos de 600–800 px en celular | P2 | Tarjeta compacta (foto, título, descripción) y detalle en pop-up «Ver qué incluye» | 799 → ~440 px; en 1280 px siguen abiertos |
 | Pantalla de función bloqueada: «El sitio … no está incluida» (género) y sin salida de la prueba | P2 | «se activa con el plan X» y enlace «Volver a probar todo» | Texto y acción verificados; el contenido se conserva |
 | Resumen de publicación sin accesos a los pendientes | P2 | `publishSummary().todo` con enlaces (ver `ux-flows.md`) | Test unitario nuevo |
 

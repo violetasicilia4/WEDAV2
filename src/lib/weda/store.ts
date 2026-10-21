@@ -90,7 +90,7 @@ export function sanitize(raw: unknown): AppState {
     preferredPlan: planOf(raw['preferredPlan'], from),
     planId: planOf(raw['planId'], from),
     gifts: {
-      cover: typeof g['cover'] === 'string' ? g['cover'] : null, alias: str(g['alias']), acceptCard: bool(g['acceptCard'], false),
+      cover: typeof g['cover'] === 'string' ? g['cover'] : null, alias: str(g['alias']), bank: str(g['bank']), cbu: str(g['cbu']), acceptCard: bool(g['acceptCard'], false),
       items: arr(g['items']).map(listGift).filter((x): x is ListGift => !!x),
       given: arr(g['given']).filter(isObj).filter(x => typeof x['id'] === 'string').map(x => ({
         id: str(x['id']), name: str(x['name']), message: str(x['message']),
@@ -101,7 +101,7 @@ export function sanitize(raw: unknown): AppState {
       })),
     },
     guests: arr(raw['guests']).map(guest).filter((x): x is Guest => !!x),
-    groups: arr(raw['groups']).filter(isObj).filter(x => typeof x['id'] === 'string' && typeof x['name'] === 'string').map(x => ({ id: str(x['id']), name: str(x['name']) })),
+    groups: arr(raw['groups']).filter(isObj).filter(x => typeof x['id'] === 'string' && typeof x['name'] === 'string').map(x => ({ id: str(x['id']), name: str(x['name']), ...(typeof x['capacity'] === 'number' && x['capacity'] > 0 ? { capacity: Math.floor(x['capacity']) } : {}), ...(str(x['note']) ? { note: str(x['note']) } : {}) })),
     site: site(raw['site']),
     seeded: bool(raw['seeded'], false),
   };
