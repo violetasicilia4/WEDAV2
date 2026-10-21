@@ -687,3 +687,8 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 
 /* Imagen de muestra de Weda como portada: se oscurece un poco para que nombres y fecha se lean sobre las flores claras. */
 .dm-root .iv-cover.is-sample .iv-cover-img { filter: brightness(.68) saturate(.95); }
+
+/* Modo «ventana» (?ventana): la página real recortada que usa el editor del panel para mostrar la sección que se edita. Sin barra, pie ni accesos flotantes; el resto es idéntico a lo que ven los invitados. */
+.dm-root.is-window .ej-bar, .dm-root.is-window .skip-link, .dm-root.is-window .iv-footer, .dm-root.is-window .dm-fab { display: none; }
+html:has(.dm-root.is-window) { scrollbar-width: none; }
+html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }

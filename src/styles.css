@@ -2082,3 +2082,11 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .plans-grid { grid-auto-rows: 1fr; }
 .plan-card { height: 100%; }
 @media (max-width: 900px) { .plan-for-line { min-height: 0; } }
+
+/* Auditoría 2026-10-21: áreas de toque de 44 px en la barra flotante y los puntos de testimonios, sin cambiar el tamaño visible. */
+@media (pointer: coarse) {
+  .float-cta, .float-link { position: relative; }
+  .float-cta::after, .float-link::after { content: ''; position: absolute; inset: -4px 0; }
+  .float-left .seed-logo { min-height: 44px; }
+}
+@media (pointer: coarse) { .tm-dots { gap: 0; } .tm-dots button { width: 44px; height: 44px; } }

@@ -1,7 +1,7 @@
 // Estructura común de la página pública de un casamiento (la de /ejemplo y la de cada pareja):
 // barra de arriba, contenido, pie y el formulario de confirmación. Lee todo de useSite().
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { CalendarCheck, Gift, Mail, Menu, X } from 'lucide-react';
+import { ArrowLeft, CalendarCheck, Gift, Mail, Menu, X } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { RsvpProvider, useRsvp } from '@/components/rsvp-dialog';
 import { useSite } from '@/lib/weda/site-model';
@@ -14,6 +14,9 @@ const to = (path: string) => path as never;
 
 // true cuando la página se muestra dentro de la vista previa del panel (un iframe): ahí no hace falta el botón de salir.
 const useEmbedded = () => useSyncExternalStore(() => () => {}, () => window.self !== window.top, () => false);
+
+// true cuando la página se carga como «ventana» del editor (`?ventana`): la misma página real, recortada, sin barra, pie ni accesos.
+const useWindowMode = () => useSyncExternalStore(() => () => {}, () => new URLSearchParams(window.location.search).has('ventana'), () => false);
 
 // Navegación de arriba, como en la landing: texto sobre la foto y, al scrollear, una burbuja de cristal que queda pegada arriba.
 function SiteNav() {
@@ -53,7 +56,7 @@ function SiteNav() {
     <header className={`ej-bar${embedded ? ' is-embedded' : ''}`} ref={ref}>
       <nav className="ej-bar-inner" aria-label="Secciones del sitio">
         <div className="ej-bar-pill ej-bar-close">
-          <Link to={to(site.exit.href)} className="ej-bar-link" aria-label={site.exit.label}><X size={16} aria-hidden="true" /><span>{site.exit.label}</span></Link>
+          <Link to={to(site.exit.href)} className="ej-bar-link" aria-label={site.exit.label}><ArrowLeft size={16} aria-hidden="true" /><span>{site.exit.label}</span></Link>
         </div>
         <div className="ej-bar-pill ej-bar-links">
           {showInvitation && <Link to={to(site.homePath)} hash="nos-casamos" className="ej-bar-link" activeOptions={{ exact: true }} activeProps={{ 'aria-current': 'page' }}>Invitación</Link>}
@@ -73,7 +76,8 @@ function SiteNav() {
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const site = useSite();
-  return <RsvpProvider><div className="dm-root">
+  const windowMode = useWindowMode();
+  return <RsvpProvider><div className={`dm-root${windowMode ? ' is-window' : ''}`}>
     <a className="skip-link" href="#main">Ir al contenido</a>
     <SiteNav />
     <main id="main">{children}</main>

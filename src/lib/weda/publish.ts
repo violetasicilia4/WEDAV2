@@ -1,7 +1,7 @@
 // Resumen de publicación: qué se publicaría con cada plan y qué queda como borrador. Función pura sobre el AppState y la matriz de planes.
 // La publicación y el pago NO están conectados (no hay servidor): esto solo informa, no publica ni cobra nada.
 import { sectionGaps } from './journey';
-import { hasEventDetails } from './logic';
+import { hasEventDetails, publicPages } from './logic';
 import { can, planById, planFor, type Feature } from './plans';
 import type { AppState, PlanId } from './types';
 
@@ -40,3 +40,12 @@ export function publishSummary(s: AppState, planId: PlanId): PublishSummary {
 }
 
 export const planName = (id: PlanId | null) => planById(id)?.name ?? '';
+
+/** En una frase, qué páginas ve el invitado con cada plan. Sale de la matriz de planes: nada se afirma que `plans.ts` no incluya. */
+export function publishedPagesText(planId: PlanId): string {
+  const pages = publicPages(planId);
+  if (!pages.invitation) return 'solo la lista de regalos.';
+  const extras = (['playlist', 'gallery', 'message'] as Feature[]).filter(f => can(planId, f));
+  if (extras.length === 0) return 'la invitación (con confirmación de asistencia) y la lista de regalos.';
+  return 'el sitio completo: la invitación con música, galería de fotos y mensaje final, y la lista de regalos.';
+}

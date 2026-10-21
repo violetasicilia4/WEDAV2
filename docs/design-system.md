@@ -34,7 +34,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 **Landing (`styles.css`):** fondo `oklch(0.948 0.008 106)`; `--primary` `oklch(0.277 0.074 136)`; `--accent` `oklch(0.935 0.139 122)`; `--destructive` `oklch(0.55 0.18 26)`; además `--paper #f5f2eb`, `--slate #707d87`, `--forest #2b4045`, `--olive #b6b46e`, `--section #f3f0e8`.
 
 **Panel (`panel.css`, variables `--pn-*`):**
-- pizarra de Weda: `--pn-slate #707d87` (botones y acentos), `--pn-slate-d #5a646c` (hover, énfasis), `--pn-slate-l #8a959e`;
+- grises neutros del panel (sin azul, decisión de la dueña 2026-10-21): `--pn-slate #6b6b6b` (acentos y estados activos), `--pn-slate-d #4a4a4a` (botones primarios, énfasis), `--pn-slate-l #9a9a9a`; superficies tintadas `rgb(60 60 60 / .08)`;
 - **fondo blanco** en todo el panel (decisión de la autora; `--pn-bg` y `--pn-paper` son `#fff`), con bordes finos para separar bloques;
 - estados con color además de texto: verde (`#e7efe4` / `#34502c`) = completo, ámbar (`#fbf0dc` / `#6b4a10`) = falta completar, neutro = oculto o sin empezar, rojo `#b3402f` = destructivo y error de guardado.
 
@@ -68,7 +68,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 | Solapas `.pn-tabs` | Módulo de regalos. Hasta 560 px ocupan todo el ancho en columnas iguales y usan la etiqueta corta (`pn-tab-short`); el título largo va dentro de cada panel. Nunca deben necesitar scroll lateral. |
 | Lista ordenable (`SortableGifts`) | Orden por arrastre (mantener apretado en el celular), Alt + flechas con teclado. |
 
-| Editor en el celular | Vista previa fija arriba (`.pn-editor .pn-preview-pane`, sticky bajo 1100 px y desde 520 px de alto) + secciones debajo; «Ampliar vista»/«Seguir editando» alterna; cada sección cierra con «Listo». |
+| Editor de «Tu página» | Edición con resultado a la vista: la **ventana en vivo** (`LiveCard`, clases `lc-*`, `src/components/panel/live-card.tsx`) es la página pública real en un iframe (`?ventana`) alineado a la sección que se edita; se actualiza por `storage` (~150 ms). ≥ 1280 px: sección · formulario · ventana fija a la derecha. Menos: chips de sección (con ícono de estado) y ventana fijas arriba (se pueden ocultar), formulario debajo; con teclado abierto se achica. «Ver completa» abre el pop-up de vista previa anclado en esa sección. |
 | Tarjetas de la lista | `.pn-ggrid.is-list`: mismas tarjetas `.pn-gcard` que el catálogo, con «Editar» y «Quitar». |
 | Más opciones `.pn-more` | `<details>` para campos opcionales de un formulario corto. |
 
@@ -78,7 +78,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 - Los cambios del panel **se guardan solos**; no hay botón «Guardar» por pantalla (los diálogos de edición sí confirman).
 - Botón «Vista previa» siempre visible en la cabecera del panel (abre un pop-up con la página pública).
 - En pantallas táctiles todo botón llega a 44 px (`pointer: coarse`).
-- Editar con resultado a la vista: en el celular los campos se editan debajo de una vista previa fija; no se mueve la edición a otra pantalla.
+- Editar con resultado a la vista: la ventana en vivo queda siempre en pantalla junto a (o encima de) los campos; la página completa se ve en el pop-up de «Vista previa».
 - Una acción principal por pantalla; las secundarias son «ghost» (borde, sin relleno).
 - El plan restringe el acceso, no borra datos: al cambiar de plan se conservan.
 
@@ -113,13 +113,25 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
 
 ## 4d. Rediseño de la arquitectura del panel (2026-10)
 
-- **Acciones (panel y diálogos):** primaria = pizarra oscura (`#5A646C`) en negrita con esquinas de 12 px; secundaria (`is-ghost`) = superficie tintada sin borde; terciaria = enlace (`pn-link`); destructiva = rojo (`is-danger`). Las píldoras quedan para filtros, solapas, selectores de vista y la barra flotante de regalos. Encabezados compactos (`.pn-page-head.is-compact`): título de 24 px y una acción chica a la derecha (baja a un segundo renglón a ≤ 380 px).
+- **Acciones (panel y diálogos):** primaria = gris oscuro (`#4a4a4a`) en negrita con esquinas de 12 px; secundaria (`is-ghost`) = superficie tintada sin borde; terciaria = enlace (`pn-link`); destructiva = rojo (`is-danger`). Las píldoras quedan para filtros, solapas, selectores de vista y la barra flotante de regalos. Encabezados compactos (`.pn-page-head.is-compact`): título de 24 px y una acción chica a la derecha (baja a un segundo renglón a ≤ 380 px).
 - **Inicio:** pareja y fecha, UNA tarjeta «Siguiente paso» (copia y destino salen de `nextAction()` en `journey.ts`; «Configurar aportes» abre `/panel/regalos?tab=cobro`), «Estado» con un conteo real («N de M pasos listos», sin porcentajes: los segmentos reflejan el estado de cada etapa) y tres accesos (Invitación, Regalos, Invitados) con su dato real. Publicar queda como acción secundaria. En escritorio, siguiente paso y estado van en dos columnas.
 - **Editor de la página:** navegación de secciones con punto de estado (verde completa, ámbar falta, gris oculta/sin cargar): Portada · Eventos · Confirmación · Dress code · Fotos · Mensaje final · Música (las que el plan no incluye quedan marcadas con su plan). Solo se ven los campos de la sección elegida; en «Eventos» cada momento es una fila que se abre sola (una a la vez) y tiene su «Mostrar». Celular: «Vista previa» abre la página pública real a pantalla completa (`.pn-pvfull`, con «Volver a editar»); la navegación de secciones queda fija arriba. Escritorio (≥ 1100 px): secciones | campos | vista previa fija. El botón «Ver como invitado» del encabezado se oculta en el editor del celular para no duplicar la acción.
 - **Regalos:** encabezado «Tu lista de regalos» + «N regalos · $ total» y «Agregar regalos» como acción principal (se oculta en «Elegir regalos»). Solapas: Elegir · Mi lista · Aportes · Recibidos (mismos contenidos que antes; «Cobro» pasó a llamarse «Aportes»).
-- **Invitados:** encabezado con conteo («12 invitados · 5 confirmaron») y «Agregar invitados»; filtros como píldoras con conteo; estado vacío compacto con una acción principal («Agregar invitados»), una secundaria («Importar desde Excel») y un enlace.
+- **Invitados:** encabezado con conteo («12 invitados · 5 confirmaron») y un campo de alta rápida (`.gl-quick`: Enter suma y sigue, pegar una lista suma todas; «Con más datos» abre el formulario completo); filtros como píldoras con conteo; estado vacío compacto con una acción principal («Agregar invitados»), una secundaria («Importar desde Excel») y un enlace.
 
 - **Alta (`/crear/*`: registro, datos y foto):** foto de fondo a pantalla completa (`public/fondo-registro.webp`, vía `.pn-flow`) y una tarjeta blanca (`#fff`, radio 20) con los campos; el cierre es un círculo blanco. Los botones principales son gris claro neutro (`#e8e9ea`, texto oscuro) y los secundarios blancos con borde gris; el interruptor activo va en gris medio `#9a9d9f`. Todo en la gama de blancos y grises. Sin sombras. En el paso de la foto en celular, la tarjeta ocupa la pantalla sin scroll.
+
+## 4d-bis. Inicio del panel en dos capas (2026-10-21)
+
+- **Inicio, secciones** (`.hm-path` y `.hm-manage`, ambas con `.hm-grid` y `.hm-tile`): tarjetas de borde fino con ícono en cuadrado tenue, título, una línea de texto y flecha; sin numeración y sin etiquetas de estado (solo la de plan bloqueado). Una columna en celular, dos desde 720 px (con cantidad impar, la última ocupa el ancho), tres desde 1100 px. «Gestión de invitados» va abajo, separada por una línea fina.
+- **«Publicar» siempre a mano:** `.pn-publish-btn` (gris oscuro `--pn-slate-d`, píldora) en `.pn-top-actions` junto a «Vista previa» en todas las pantallas del panel; en ≤ 399 px «Vista previa» queda solo con el ícono (el nombre sigue accesible). «Publicar» no va en el menú (no es una sección): la barra lateral y la inferior muestran solo Inicio, Regalos, Tu página e Invitados. Excepción deliberada a «botones suaves»: es la acción principal.
+- Regla: una pantalla puede tener una capa principal (con pasos y un cierre destacado) y otra de administración quieta; no mezclar los accesos de ambas en la misma grilla.
+
+## 4d-ter. Publicar: tres cuadrados de producto (2026-10-21)
+
+- `.pn-prods` / `.pn-prod`: tres tarjetas sobre superficie (`--pn-surface`). Orden interno: ícono en círculo blanco (`.pn-prod-ico`) + nombre (22 px) + frase corta; precio en 28 px; fila de datos con ícono (`.pn-prod-facts`: «Pago único», «Publicada 1 año»); puntos con ícono (`.pn-feats`, 15 px, una línea por punto; el primero, «Todo lo de …», va atenuado); «Ver más» plegable (`.pn-prod-more`, con el detalle y los avisos); y dos acciones apiladas: «Ver link» (secundaria, blanca) y «Publicar» (principal). Poco texto visible: el detalle es a pedido.
+- Tres columnas desde 860 px; una columna en celular (hoja inferior, sin scroll horizontal). El diálogo se ensancha (`.is-products`, hasta 1080 px) solo al elegir; el resumen vuelve a 560 px. La elección actual lleva aro de 2 px y la etiqueta «Tu elección actual». Los íconos salen de `HIGHLIGHT_ICON` / `PLAN_ICON` en `ui.tsx` (los datos, en `plans.ts`).
+- Mismo criterio que las tarjetas de plan de la landing: las tres con la misma jerarquía, sin opción «recomendada».
 
 ## 4e. Versión web del panel (≥ 1024 px): esquema de dashboard
 
@@ -142,8 +154,10 @@ Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avi
 
 - No existe una **escala tipográfica** ni una **escala de espaciado** formal; cada componente fija sus valores.
 - Los **puntos de corte** no están centralizados. En `panel.css` se usan, entre otros, 560, 720, 900 y 1100 px; en el resto de los archivos otros valores.
-- No hay una definición del **color primario de Weda**: la landing usa `--primary` verde oscuro (`oklch(0.277 0.074 136)`) y el panel usa la pizarra `#707d87`. Ambos coexisten tal como están; no se unificaron.
+- No hay una definición del **color primario de Weda**: la landing usa `--primary` verde oscuro (`oklch(0.277 0.074 136)`) y el panel usa grises neutros (`#4a4a4a`). Ambos coexisten tal como están; no se unificaron.
 - No hay guía de **iconografía** más allá del uso de `lucide-react`, ni de **ilustración** ni de **animación** (solo transiciones puntuales).
 - No hay modo oscuro.
 - La cobertura de `prefers-reduced-motion` en el panel no está auditada.
 - No hay biblioteca de componentes documentada (Storybook o similar); la fuente es el código.
+
+- **Menú lateral recogible (web):** `.pn-side-toggle` con el ícono `SideMenuIcon` (`src/components/panel/side-menu-icon.tsx`: tres rayitas). `data-side='open|collapsed'` en `.pn-app`: 248 px abierto, 80 px recogido (solo íconos); transición de 220 ms que se anula con `prefers-reduced-motion`.

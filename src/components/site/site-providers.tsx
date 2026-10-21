@@ -5,9 +5,10 @@ import { useMemo, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useSessionState } from '@/lib/demo-session';
 import { applyRsvp, slugify } from '@/lib/weda/logic';
+import { isPlanId } from '@/lib/weda/plans';
 import { demoSiteData, siteFromState, SiteProvider, type SiteActions } from '@/lib/weda/site-model';
 import { update, useAppState, useHydrated } from '@/lib/weda/store';
-import type { GivenGift } from '@/lib/weda/types';
+import type { GivenGift, PlanId } from '@/lib/weda/types';
 import { SiteShell } from './site-shell';
 import '@/demo.css';
 import '@/ejemplo.css';
@@ -33,11 +34,26 @@ function Notice({ title, text, to, cta }: { title: string; text: string; to: str
   );
 }
 
+/* Vista previa «cómo queda con este plan»: el panel carga la página en un iframe con `?plan=…` y la página se arma como se vería con ese plan, SIN tocar el plan guardado (solo cambia lo que se muestra). Se lee una sola vez, al abrir: queda en el contexto del iframe aunque la navegación interna (Invitación ↔ Regalos) pierda el parámetro. Fuera del navegador no hay nada que leer. */
+let planOverride: PlanId | null | undefined;
+function readPlanOverride(): PlanId | null {
+  if (typeof window === 'undefined') return null;
+  if (planOverride === undefined) {
+    const v = new URLSearchParams(window.location.search).get('plan');
+    planOverride = isPlanId(v) ? v : null;
+  }
+  return planOverride;
+}
+
 export function AppSite({ slug, children }: { slug: string; children: ReactNode }) {
   const state = useAppState();
   const hydrated = useHydrated();
   const mine = state.onboarded && slugify(state.couple.first, state.couple.second) === slug;
-  const data = useMemo(() => (mine ? siteFromState(state) : null), [mine, state]);
+  const data = useMemo(() => {
+    if (!mine) return null;
+    const as = readPlanOverride();
+    return siteFromState(as ? { ...state, planId: as } : state);
+  }, [mine, state]);
   const actions = useMemo<SiteActions>(() => ({
     given: state.gifts.given,
     recordGift: (gs, who) => update(s => ({

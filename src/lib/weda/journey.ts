@@ -84,15 +84,17 @@ export function guestsStage(s: AppState): Stage {
   const detail = n === 0 ? 'Todavía no cargaste a nadie. Podés importar una planilla o sumar personas de a una.'
     : `${plural(n, 'invitado', 'invitados')} · ${plural(confirmed, 'confirmó', 'confirmaron')} · ${pending} sin responder`;
   return {
-    id: 'invitados', step: 'Paso 3', title: 'Organizá a tus invitados', description: 'Cargá tu lista y seguí las confirmaciones de asistencia.',
+    id: 'invitados', step: 'Gestión', title: 'Organizá a tus invitados', description: 'Cargá tu lista y seguí las confirmaciones de asistencia.',
     status, detail, cta: ctaFor(status), to: '/panel/invitados', optional: false, locked: !can(s.planId, 'guests'),
   };
 }
 
 /** «Revisá y publicá» nunca bloquea: es el cierre del recorrido. La publicación real todavía no está conectada. */
 export function publishStage(s: AppState, before: Stage[]): Stage {
-  const started = before.filter(x => !x.locked && x.status !== 'todo').length;
-  const ready = before.filter(x => !x.locked).every(x => x.status === 'review' || x.status === 'done') && started > 0;
+  // Invitados y mesas son gestión, no se publican: no cuentan para estar lista la página.
+  const build = before.filter(x => x.id !== 'invitados');
+  const started = build.filter(x => !x.locked && x.status !== 'todo').length;
+  const ready = build.filter(x => !x.locked).every(x => x.status === 'review' || x.status === 'done') && started > 0;
   const status: StageStatus = ready ? 'review' : started > 0 ? 'doing' : 'todo';
   const detail = ready ? 'Ya podés ver cómo lo van a ver tus invitados. La publicación todavía no está conectada.'
     : 'Podés mirar cómo queda en cualquier momento. Publicar es lo último y no frena la edición.';
@@ -109,9 +111,9 @@ export function stages(s: AppState): Stage[] {
 
 const SCORE: Record<StageStatus, number> = { todo: 0, doing: 0.35, review: 0.75, done: 1 };
 
-/** Un único progreso general (0–100) sobre las etapas de armado. La publicación no suma: no se puede completar todavía. */
+/** Un único progreso general (0–100) sobre las etapas de armado (regalos y página). Ni la publicación (todavía no se puede completar) ni los invitados (gestión, no se publican) suman. */
 export function progress(list: Stage[]): number {
-  const build = list.filter(x => x.id !== 'publicar' && !x.locked);
+  const build = list.filter(x => x.id !== 'publicar' && x.id !== 'invitados' && !x.locked);
   if (build.length === 0) return 0;
   return Math.round((build.reduce((n, x) => n + SCORE[x.status], 0) / build.length) * 100);
 }
@@ -123,12 +125,11 @@ export function headline(pct: number): string {
   return 'Todo está preparado para revisar.';
 }
 
-/** El paso más útil ahora, según el estado real. Ninguna de estas acciones bloquea a las demás. */
+/** El paso más útil ahora, según el estado real. Solo recorre la construcción (regalos → página → revisar): cargar invitados es gestión y nunca es «el siguiente paso». Ninguna de estas acciones bloquea a las demás. */
 export function nextAction(s: AppState): NextAction {
-  const g = giftsStage(s), si = siteStage(s), gu = guestsStage(s);
+  const g = giftsStage(s), si = siteStage(s);
   if (!g.locked && s.gifts.items.length === 0) return { label: 'Elegí los primeros regalos', to: '/panel/regalos', stage: 'regalos', title: 'Armá tu lista de regalos', text: 'Elegí un set completo o los regalos uno por uno.', cta: 'Elegir regalos' };
   if (!g.locked && s.gifts.alias.trim() === '') return { label: 'Configurá cómo vas a recibir los aportes', to: '/panel/regalos', search: { tab: 'cobro' }, stage: 'regalos', title: 'Dejá lista tu lista de regalos', text: 'Elegí cómo querés recibir los aportes.', cta: 'Configurar aportes' };
   if (!si.locked && si.status !== 'done') return { label: 'Terminá de personalizar tu invitación', to: '/panel/sitio', stage: 'sitio', title: 'Terminá tu invitación', text: si.detail, cta: 'Editar invitación' };
-  if (!gu.locked && s.guests.length === 0) return { label: 'Importá tu lista o agregá tu primera persona', to: '/panel/invitados', stage: 'invitados', title: 'Sumá a tus invitados', text: 'Importá una planilla o agregá a la primera persona.', cta: 'Agregar invitados' };
   return { label: 'Revisá cómo lo verán tus invitados', to: '/panel/vista-previa', stage: 'publicar', title: 'Revisá cómo lo ven tus invitados', text: 'Mirá la invitación completa antes de compartirla.', cta: 'Ver vista previa' };
 }

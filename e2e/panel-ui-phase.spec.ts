@@ -1,4 +1,4 @@
-import { expect, onboard, stored, test } from './helpers';
+import { closePreview, expect, onboard, openPreview, stored, test } from './helpers';
 
 const WIDTHS = [320, 360, 390, 430];
 
@@ -27,7 +27,7 @@ for (const w of WIDTHS) {
       await page.getByRole('button', { name: /Luna de miel, 8 regalos/ }).click();
       await expect(page.locator('.pn-settile.is-on .pn-gcheck')).toBeVisible();
       await expect(page.locator('.pn-gcard.is-in .pn-gcheck').first()).toBeVisible();
-      await page.getByRole('tab', { name: /Mi lista/ }).click();
+      await page.getByRole('tab', { name: /Mis regalos/ }).click();
       await page.getByRole('button', { name: 'Editar Pasaje luna de miel' }).click();
       await expect(page.getByRole('dialog')).toBeVisible();
       await page.keyboard.press('Escape');
@@ -42,7 +42,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Invitados: filas compactas, edición en hoja inferior y la hoja entra en pantalla', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
+    await page.getByRole('button', { name: 'Con más datos' }).click();
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
     await page.getByLabel('Apellido').fill('Sosa');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
@@ -64,7 +64,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Mesas: conteos por mesa, quién queda sin lugar y asignación desde el selector compacto', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
+    await page.getByRole('button', { name: 'Con más datos' }).click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
     await page.getByLabel('Apellido').fill('Paz');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
@@ -97,10 +97,11 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     expect(field.y + field.height).toBeLessThanOrEqual(bottomNav.y);
     await expect(snav.getByRole('button', { name: /Dress code/ })).toContainText('Completa');
     expect((await stored(page)).site.dressCode.title).toBe('Elegante sport');
-    // La vista previa es la página real y se cierra con «Volver a editar».
-    await page.getByRole('button', { name: 'Vista previa', exact: true }).click();
+    // La ventana (página real) ya muestra el título; la vista previa es la página real en un pop-up y se cierra con Escape.
+    await expect(page.frameLocator('.lc-frame').locator('#dresscode')).toContainText('Elegante sport');
+    await openPreview(page);
     await expect.poll(() => page.frameLocator('iframe').locator('#dresscode').count()).toBe(1);
-    await page.getByRole('button', { name: 'Volver a editar' }).click();
+    await closePreview(page);
     await expect(page.getByLabel('Título')).toHaveValue('Elegante sport');
   });
 
@@ -126,7 +127,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Invitados: se elimina desde la hoja de edición y se puede deshacer', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
+    await page.getByRole('button', { name: 'Con más datos' }).click();
     await page.getByLabel('Nombre', { exact: true }).fill('Lola');
     await page.getByLabel('Apellido').fill('Mora');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
@@ -137,12 +138,13 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     expect((await stored(page)).guests).toHaveLength(1);
   });
 
-  test('Planes: el botón deshabilitado explica por qué y todos los diálogos son hojas con botones a la vista', async ({ page }) => {
+  test('Publicar: tres productos con precio y «Ver link», y todos los diálogos son hojas con botones a la vista', async ({ page }) => {
     await page.goto('/panel/vista-previa', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Publicar', exact: true }).click();
+    await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     const dlg = page.getByRole('dialog');
-    await expect(dlg.getByRole('button', { name: 'Elegí un plan' })).toBeDisabled();
-    await expect(dlg.getByText('Elegí uno de los tres planes')).toBeVisible();
+    await expect(dlg.getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
+    await expect(dlg.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
+    await expect(dlg.getByText('Publicada 1 año')).toHaveCount(3);
     const box = (await dlg.boundingBox())!;
     expect(box.x).toBe(0);
     expect(Math.round(box.y + box.height)).toBe(844);

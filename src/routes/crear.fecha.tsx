@@ -51,7 +51,7 @@ function DateAndPlace() {
   return (
     <OnboardingShell step={2} back="/crear" formId="ob-date" title="¿Cuándo y dónde?" sub="Si todavía no lo saben, no pasa nada: lo completan cuando quieran." side={<OnboardingPhoto src="/onboarding-fecha.webp" />}>
       <form id="ob-date" onSubmit={submit} noValidate className="pn-form">
-        <Field label="Fecha del casamiento" error={errors.date}>
+        <Field id="on-date" label="Fecha del casamiento" error={errors.date}>
           {a => <input id="on-date" type="date" min={todayIso()} value={noDate ? '' : date} disabled={noDate} onChange={e => { setDate(e.target.value); setErrors(x => ({ ...x, date: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
         </Field>
         <label className="pn-toggle">
@@ -59,7 +59,7 @@ function DateAndPlace() {
           <span className="pn-toggle-track" aria-hidden="true" />
           <span>Todavía no tenemos fecha</span>
         </label>
-        <Field label="Lugar del casamiento" error={errors.place}>
+        <Field id="on-place" label="Lugar del casamiento" error={errors.place}>
           {a => <input id="on-place" type="text" autoComplete="off" placeholder="Salón, jardín o ciudad" value={noPlace ? '' : place} disabled={noPlace} onChange={e => { setPlace(e.target.value); setErrors(x => ({ ...x, place: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
         </Field>
         <label className="pn-toggle">

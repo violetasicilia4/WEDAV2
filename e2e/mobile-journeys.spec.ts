@@ -1,4 +1,4 @@
-import { expect, nav, onboard, openPreview, previewText, stored, test } from './helpers';
+import { closePreview, expect, nav, onboard, openPreview, previewText, stored, test } from './helpers';
 
 test.describe('Recorridos del panel en celular (390 px)', () => {
   test.beforeEach(async ({ page }) => { await onboard(page); });
@@ -17,7 +17,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByRole('button', { name: /8 regalos elegidos/ }).click();
     // El aviso «Deshacer» no tapa los botones del diálogo: el clic llega a «Revisar mi lista».
     await page.getByRole('button', { name: 'Revisar mi lista' }).click();
-    await expect(page.getByRole('tab', { name: /Mi lista/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: /Mis regalos/ })).toHaveAttribute('aria-selected', 'true');
 
     const cards = page.getByRole('list', { name: 'Regalos de tu lista' }).getByRole('listitem');
     await expect(cards).toHaveCount(8);
@@ -58,7 +58,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByLabel('Tu alias bancario').fill('lucia.violeta');
     await expect(page.getByText('Estado: configurado.')).toBeVisible();
     await expect(page.locator('.pn-alias-card code')).toHaveText('lucia.violeta');
-    await page.getByRole('tab', { name: /Mi lista/ }).click();
+    await page.getByRole('tab', { name: /Mis regalos/ }).click();
     await expect(page.getByRole('list', { name: 'Regalos de tu lista' }).getByRole('listitem')).toHaveCount(8);
     expect((await stored(page)).gifts.alias).toBe('lucia.violeta');
   });
@@ -76,12 +76,11 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByLabel('Dirección').fill('Calle 123, Ciudad');
     await expect(page.locator('#sec-ceremonia')).toContainText('Ceremonia');
 
-    // La vista previa se abre a pantalla completa con los datos reales y tiene una salida clara.
-    await page.getByRole('button', { name: 'Vista previa', exact: true }).click();
-    await expect(page.getByRole('dialog', { name: 'Vista previa de tu página' })).toBeVisible();
+    // La ventana (la página real, recortada en la sección que se edita) refleja lo escrito; la vista previa abre la página real en un pop-up con salida clara.
+    await expect(page.frameLocator('.lc-frame').locator('#dia')).toContainText('Parroquia San Isidro');
+    await openPreview(page);
     await expect.poll(() => previewText(page)).toContain('Parroquia San Isidro');
-    await page.getByRole('button', { name: 'Volver a editar' }).click();
-    await expect(page.getByRole('dialog', { name: 'Vista previa de tu página' })).toHaveCount(0);
+    await closePreview(page);
     await expect(page.getByLabel('Nombre del lugar')).toHaveValue('Parroquia San Isidro');
     await page.reload({ waitUntil: 'networkidle' });
     expect((await stored(page)).site.events[0].name).toBe('Parroquia San Isidro');
@@ -91,7 +90,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await nav(page, 'Tu página').click();
     await page.locator('#sec-rsvp').click();
     const toggle = page.getByRole('checkbox', { name: 'Mostrar' });
-    const inPreview = async () => { await openPreview(page); await page.frameLocator('iframe').locator('.iv-cover-img').waitFor(); const n = await page.frameLocator('iframe').locator('#confirmar').count(); await page.getByRole('button', { name: 'Volver a editar' }).click().catch(() => {}); return n; };
+    const inPreview = async () => { await openPreview(page); await page.frameLocator('iframe').locator('.iv-cover-img').waitFor(); const n = await page.frameLocator('iframe').locator('#confirmar').count(); await closePreview(page); return n; };
     await expect.poll(inPreview).toBe(1);
     await toggle.uncheck();
     await expect(page.locator('.pn-spanel .pn-sec-status')).toContainText('Oculta');
@@ -102,7 +101,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 5: invitados → alta manual → importar (duplicados y errores) → exportar', async ({ page }) => {
     await nav(page, 'Invitados').click();
-    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
+    await page.getByRole('button', { name: 'Con más datos' }).click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
     await page.getByLabel('Apellido').fill('Pérez');
     await page.getByRole('button', { name: 'Agregar', exact: true }).click();
@@ -133,7 +132,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 6: mesas y grupos → crear y asignar sin ser obligatorio', async ({ page }) => {
     await nav(page, 'Invitados').click();
-    await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
+    await page.getByRole('button', { name: 'Con más datos' }).click();
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
     await page.getByLabel('Apellido').fill('Sosa');
     await page.getByRole('button', { name: 'Agregar', exact: true }).click();
@@ -161,15 +160,16 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     // La cabecera ahora abre la vista previa en un pop-up; esta pantalla completa sigue en su ruta.
     await page.goto('/panel/vista-previa');
     await expect(page.getByText('Todavía no está publicada')).toBeVisible();
-    await page.getByRole('button', { name: 'Publicar', exact: true }).click();
-    await page.getByRole('radio', { name: /Invitación/ }).check({ force: true });
-    await page.getByRole('button', { name: 'Ver resumen con Invitación' }).click();
+    await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
+    // Tres cuadrados (Regalos, Invitación, Completo): cada uno tiene su propio «Publicar» y su «Ver link».
+    await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
+    await page.getByRole('button', { name: 'Publicar Invitación' }).click();
     await expect(page.getByText('La publicación y el pago todavía no están conectados.')).toBeVisible();
     const pay = page.getByRole('button', { name: /Pagar y publicar/ });
     await expect(pay).toBeDisabled();
     // Mirar el resumen no cambia el sitio ni el plan guardado.
     expect((await stored(page)).planId).toBeNull();
-    await page.getByRole('button', { name: 'Cambiar de plan' }).click();
+    await page.getByRole('button', { name: 'Volver a las opciones' }).click();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('heading', { name: 'Ver como invitado' })).toBeVisible();
   });

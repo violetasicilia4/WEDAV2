@@ -14,14 +14,14 @@ export const Route = createFileRoute('/panel/vista-previa')({ component: Preview
 function Preview() {
   const s = useAppState();
   const pages = publicPages(s.planId);
-  const [page, setPage] = useState<'home' | 'gifts'>(pages.invitation ? 'home' : 'gifts');
   const [device, setDevice] = useState<'mobile' | 'desktop'>('mobile');
   const plans = usePlans();
   const base = sitePath(s);
   // Sin plan elegido se prueba todo: el resumen se muestra como quedaría con el plan más completo.
   const summary = publishSummary(s, s.planId ?? 'completo');
   const gaps = sectionGaps(s);
-  const path = page === 'gifts' || !pages.invitation ? `${base}/regalos` : base;
+  // El micrositio se recorre con su propia barra (Invitación · Regalá · Confirmá asistencia): acá no hay selector de página. Abre en la invitación, o en los regalos si el plan no incluye invitación.
+  const path = pages.invitation ? base : `${base}/regalos`;
 
   return (
     <div className="pn-page pn-page-preview">
@@ -31,16 +31,12 @@ function Preview() {
           <p className="pn-sub">Así la ven tus invitados. Todavía no está publicada.</p>
         </div>
         <div className="pn-head-actions">
-          <Link to={(pages.invitation ? '/panel/sitio' : '/panel/regalos') as never} className="pn-btn is-ghost"><ArrowLeft size={16} aria-hidden="true" />{page === 'gifts' || !pages.invitation ? 'Volver a mis regalos' : 'Volver a editar mi página'}</Link>
+          <Link to={(pages.invitation ? '/panel/sitio' : '/panel/regalos') as never} className="pn-btn is-ghost"><ArrowLeft size={16} aria-hidden="true" />{pages.invitation ? 'Volver a editar mi página' : 'Volver a mis regalos'}</Link>
           <button type="button" className="pn-btn" onClick={plans.open}>Publicar</button>
         </div>
       </header>
 
       <div className="pn-preview-bar">
-        <div className="pn-switch is-small" role="group" aria-label="Qué página ver">
-          {pages.invitation && <button type="button" className={page === 'home' ? 'on' : ''} aria-pressed={page === 'home'} onClick={() => setPage('home')}>Invitación</button>}
-          {pages.gifts && <button type="button" className={page === 'gifts' || !pages.invitation ? 'on' : ''} aria-pressed={page === 'gifts' || !pages.invitation} onClick={() => setPage('gifts')}>Lista de regalos</button>}
-        </div>
         <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
       </div>
 

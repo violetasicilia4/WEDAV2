@@ -37,9 +37,12 @@ export const previewText = (page: Page) => page.frameLocator('iframe').locator('
 /** PNG de 1×1 px: alcanza para probar la carga de una foto. */
 export const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 
-/** En el celular la vista previa del editor se abre a pantalla completa con «Vista previa»; en escritorio ya está al lado. */
+/** La cabecera del panel abre la vista previa en un pop-up (formato web en compu, celular en el celular). */
 export async function openPreview(page: Page) {
-  const btn = page.getByRole('button', { name: 'Vista previa', exact: true });
-  if (await btn.isVisible().catch(() => false)) await btn.click();
-  await expect(page.locator('iframe')).toBeVisible();
+  await page.getByRole('button', { name: 'Vista previa', exact: true }).first().click();
+  await expect(page.getByRole('dialog').locator('iframe')).toBeVisible();
+}
+export async function closePreview(page: Page) {
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 }

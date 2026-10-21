@@ -3,14 +3,18 @@
 //   Regalos    → lista de regalos
 //   Invitación → + micrositio, confirmación de asistencia (RSVP), invitados y mesas
 //   Completo   → + música de la fiesta, galería de fotos con hashtag y mensaje final
-// Precios de referencia en pesos argentinos, de PAGO ÚNICO (definición comercial). No se afirma ausencia de suscripción
-// ni duración de la publicación: esas condiciones no están definidas. Se cobra al publicar, y la publicación todavía no está conectada.
+// Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante UN AÑO (definiciones comerciales de la
+// autora, 2026-10-21). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
 // Mientras no se elige plan (planId null) la pareja prueba todo: el plan se elige al publicar. Cambiar de plan nunca borra datos:
 // lo que el plan no incluye se conserva como borrador y solo se oculta al mostrar (editor, navegación, página pública).
 // La música es SOLO configuración y vista previa: no hay conexión real con Spotify ni con ningún servicio.
 import type { PlanId } from './types';
 
 export type Feature = 'gifts' | 'site' | 'rsvp' | 'guests' | 'groups' | 'playlist' | 'gallery' | 'message';
+
+/** Ícono de cada punto destacado (el mapa a componentes vive en el panel: acá solo datos). */
+export type HighlightIcon = 'gift' | 'card' | 'receipt' | 'link' | 'globe' | 'check' | 'users' | 'music' | 'photos' | 'heart';
+export type Highlight = { icon: HighlightIcon; label: string };
 
 export type Plan = {
   id: PlanId;
@@ -19,6 +23,10 @@ export type Plan = {
   tagline: string;
   /** Para quién es, en una línea. */
   summary: string;
+  /** Qué es, como producto, en pocas palabras: la que encabeza cada cuadrado al elegir qué publicar. */
+  product: string;
+  /** Lo concreto que suma este plan (sin repetir lo heredado), corto y con ícono, para el cuadrado de «Publicar». El detalle completo está en `items`. */
+  highlights: Highlight[];
   /** Precio de referencia en ARS, de pago único. Cambiarlo acá lo cambia en toda la aplicación. */
   price: number;
   /** Plan del que hereda todo. */
@@ -30,12 +38,21 @@ export type Plan = {
 
 export const CURRENCY = 'ARS';
 export const PRICE_UNIT = 'pago único';
+/** Cuánto tiempo queda publicada la página con cualquiera de los planes (definición comercial de la autora, 2026-10-21). */
+export const PUBLICATION_TERM = '1 año';
 export const HIGHLIGHTS = 3;
 
 export const PLANS: Plan[] = [
   {
     id: 'regalos', name: 'Regalos', tagline: 'Tu lista de regalos, lista para compartir.',
     summary: 'Para quienes quieren una lista de regalos para sus invitados.',
+    product: 'Solo la lista de regalos',
+    highlights: [
+      { icon: 'gift', label: 'Lista de regalos' },
+      { icon: 'card', label: 'Alias y tarjeta para recibir' },
+      { icon: 'receipt', label: 'Regalos recibidos y quién los hizo' },
+      { icon: 'link', label: 'Link para compartir' },
+    ],
     price: 95000, inherits: null,
     items: [
       'Lista de regalos personalizada',
@@ -49,6 +66,12 @@ export const PLANS: Plan[] = [
   {
     id: 'invitacion', name: 'Invitación', tagline: 'Tu invitación digital, con todo lo esencial para tus invitados.',
     summary: 'Para quienes quieren invitación digital, regalos y confirmaciones en un solo lugar.',
+    product: 'La invitación y tus invitados',
+    highlights: [
+      { icon: 'globe', label: 'Página con los datos de la fiesta' },
+      { icon: 'check', label: 'Confirmación de asistencia' },
+      { icon: 'users', label: 'Invitados, mesas y grupos' },
+    ],
     price: 180000, inherits: 'regalos',
     items: [
       'Micrositio con portada, nombres y fecha',
@@ -65,6 +88,12 @@ export const PLANS: Plan[] = [
   {
     id: 'completo', name: 'Completo', tagline: 'Cada detalle de su historia, en una experiencia para compartir.',
     summary: 'Para quienes quieren un micrositio más completo y personal.',
+    product: 'El micrositio completo',
+    highlights: [
+      { icon: 'music', label: 'Música de la fiesta' },
+      { icon: 'photos', label: 'Galería de fotos' },
+      { icon: 'heart', label: 'Mensaje final' },
+    ],
     price: 320000, inherits: 'invitacion',
     items: [
       'Música de la fiesta: tus invitados suman las canciones',

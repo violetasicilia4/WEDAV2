@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { CircleHelp, Eye, Gift, Globe, House, Lock, Users } from 'lucide-react';
+import { CircleHelp, Eye, Gift, Globe, Heart, House, Lock, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { PlansProvider, PreviewFrame, ToastProvider } from '@/components/panel/ui';
+import { SideMenuIcon } from '@/components/panel/side-menu-icon';
+import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
-import { openPreview, OPEN_PREVIEW, type PreviewPage } from '@/lib/weda/preview-event';
+import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
 import { can, planById, type Feature } from '@/lib/weda/plans';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import '@/panel.css';
@@ -42,38 +43,39 @@ function Profile() {
   );
 }
 
-/* Vista previa: la página pública REAL con tus datos, en un pop-up. En compu se ve en formato web (con opción de ver el celular); en el celular, en formato celular.
-   Se abre siempre arriba de la página que corresponde: «home» = inicio de la invitación, «gifts» = lista de regalos. Si el plan no incluye una de las dos, muestra la otra. */
-function PreviewDialog({ page: first, onClose }: { page: PreviewPage; onClose: () => void }) {
+/* Vista previa: el micrositio REAL con tus datos, en un pop-up, tal como lo recibe un invitado: invitación, «Regalá» y «Confirmá asistencia» se recorren con la barra del propio micrositio.
+   No hay selector de página (la invitación incluye todo). Solo se elige cómo verlo: en compu, web o celular; en el celular, formato celular.
+   `req.page` es solo desde dónde abre: «gifts» arranca en la lista de regalos (si el plan no incluye una de las dos páginas, abre la otra). */
+function PreviewDialog({ req, onClose }: { req: PreviewRequest; onClose: () => void }) {
   const s = useAppState();
   const pages = publicPages(s.planId);
-  const [page, setPage] = useState<PreviewPage>(first === 'home' && !pages.invitation ? 'gifts' : first === 'gifts' && !pages.gifts ? 'home' : first);
+  const first = req.page === 'home' && !pages.invitation ? 'gifts' : req.page === 'gifts' && !pages.gifts ? 'home' : req.page;
   const wide = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
   const [device, setDevice] = useState<'mobile' | 'desktop'>(wide ? 'desktop' : 'mobile');
-  const path = page === 'gifts' ? `${sitePath(s)}/regalos` : sitePath(s);
+  const path = first === 'gifts' ? `${sitePath(s)}/regalos` : sitePath(s);
   return (
     <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
       <DialogContent className={`pn-dialog is-pv is-${device}`}>
         <DialogTitle>Vista previa</DialogTitle>
-        <DialogDescription>Así la ven tus invitados, con tus datos. Todavía no está publicada.</DialogDescription>
-        <div className="pn-pv-tools">
-          {pages.invitation && pages.gifts && (
-            <div className="pn-switch is-small" role="group" aria-label="Qué página ver">
-              <button type="button" className={page === 'home' ? 'on' : ''} aria-pressed={page === 'home'} onClick={() => setPage('home')}>Invitación</button>
-              <button type="button" className={page === 'gifts' ? 'on' : ''} aria-pressed={page === 'gifts'} onClick={() => setPage('gifts')}>Lista de regalos</button>
-            </div>
-          )}
-          {wide && (
+        <DialogDescription>Así recibe tu casamiento un invitado, con tus datos. Todavía no está publicada.</DialogDescription>
+        {wide && (
+          <div className="pn-pv-tools">
             <div className="pn-switch is-small" role="group" aria-label="Cómo verla">
               <button type="button" className={device === 'desktop' ? 'on' : ''} aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Web</button>
               <button type="button" className={device === 'mobile' ? 'on' : ''} aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Celular</button>
             </div>
-          )}
-        </div>
-        <PreviewFrame path={path} device={device} />
+          </div>
+        )}
+        <PreviewFrame path={path} device={device} {...(first === 'home' && req.anchor !== undefined ? { anchor: req.anchor } : {})} />
       </DialogContent>
     </Dialog>
   );
+}
+
+/* «Publicar» abre el diálogo de publicación (los tres productos). Está siempre a mano: arriba a la derecha junto a «Vista previa» y en el menú. */
+function PublishButton({ className, children }: { className: string; children: React.ReactNode }) {
+  const plans = usePlans();
+  return <button type="button" className={className} onClick={plans.open}>{children}</button>;
 }
 
 /* Ayuda: explica lo que Weda hace hoy, sin prometer lo que todavía no está conectado. */
@@ -106,9 +108,12 @@ function PanelLayout() {
   const hydrated = useHydrated();
   const full = useStorageFull();
   const [help, setHelp] = useState(false);
-  const [pv, setPv] = useState<PreviewPage | null>(null);
+  // Menú lateral (solo en web): abierto o recogido en una columna de íconos. Se recuerda en este navegador.
+  const [collapsed, setCollapsed] = useState(() => { try { return typeof window !== 'undefined' && window.localStorage.getItem('weda-side') === 'collapsed'; } catch { return false; } });
+  const toggleSide = () => setCollapsed(c => { const next = !c; try { window.localStorage.setItem('weda-side', next ? 'collapsed' : 'open'); } catch { /* sin almacenamiento: queda solo en esta sesión */ } return next; });
+  const [pv, setPv] = useState<PreviewRequest | null>(null);
   useEffect(() => {
-    const open = (e: Event) => setPv((e as CustomEvent<{ page: PreviewPage }>).detail?.page ?? 'home');
+    const open = (e: Event) => setPv((e as CustomEvent<PreviewRequest>).detail ?? { page: 'home' });
     window.addEventListener(OPEN_PREVIEW, open);
     return () => window.removeEventListener(OPEN_PREVIEW, open);
   }, []);
@@ -126,23 +131,29 @@ function PanelLayout() {
   return (
     <ToastProvider>
       <PlansProvider>
-      <div className="pn-root pn-app">
+      <div className="pn-root pn-app" data-side={collapsed ? 'collapsed' : 'open'}>
         <a className="skip-link" href="#main">Ir al contenido</a>
         <header className="pn-top">
           <Link to="/panel" className="seed-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
           {/* Vista previa en todas las secciones: abre la página pública en un pop-up. «Regalos» va directo a la lista; el resto, al inicio de la invitación. */}
-          {!onPreview && <button type="button" className="pn-btn pn-preview-btn" onClick={() => openPreview(onGifts ? 'gifts' : 'home')}><Eye size={16} aria-hidden="true" /><span>Vista previa</span></button>}
+          <div className="pn-top-actions">
+            {!onPreview && <button type="button" className="pn-btn is-ghost pn-preview-btn" onClick={() => openPreview(onGifts ? 'gifts' : 'home')}><Eye size={16} aria-hidden="true" /><span>Vista previa</span></button>}
+            <PublishButton className="pn-btn pn-publish-btn"><Heart size={16} aria-hidden="true" /><span>Publicar</span></PublishButton>
+          </div>
         </header>
 
         <aside className="pn-side">
-          <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
+          <div className="pn-side-top">
+            <button type="button" className="pn-side-toggle" onClick={toggleSide} aria-expanded={!collapsed} aria-controls="pn-side-nav" aria-label={collapsed ? 'Abrir el menú' : 'Recoger el menú'} title={collapsed ? 'Abrir el menú' : 'Recoger el menú'}><SideMenuIcon /></button>
+            <Link to="/panel" className="seed-logo pn-side-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
+          </div>
           <Profile />
-          <nav aria-label="Secciones del panel" className="pn-nav">
+          <nav aria-label="Secciones del panel" className="pn-nav" id="pn-side-nav">
             <div className="pn-nav-group">
               {NAV.map(n => {
                 const locked = !!n.feature && !can(planId, n.feature);
                 return (
-                  <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link">
+                  <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link" title={n.label}>
                     <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
                     <span>{n.label}</span>
                     {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
@@ -151,7 +162,7 @@ function PanelLayout() {
               })}
             </div>
           </nav>
-          <button type="button" className="pn-side-help" onClick={() => setHelp(true)}><CircleHelp size={20} strokeWidth={1.5} aria-hidden="true" /><span>Ayuda</span></button>
+          <button type="button" className="pn-side-help" title="Ayuda" onClick={() => setHelp(true)}><CircleHelp size={20} strokeWidth={1.5} aria-hidden="true" /><span>Ayuda</span></button>
         </aside>
 
         <main id="main" className="pn-main">
@@ -160,7 +171,7 @@ function PanelLayout() {
         </main>
       </div>
       {help && <HelpDialog onClose={() => setHelp(false)} />}
-      {pv && <PreviewDialog key={pv} page={pv} onClose={() => setPv(null)} />}
+      {pv && <PreviewDialog key={`${pv.page}-${pv.anchor ?? ''}`} req={pv} onClose={() => setPv(null)} />}
       </PlansProvider>
     </ToastProvider>
   );

@@ -1050,3 +1050,7 @@
 .rg-bank div { display: flex; justify-content: space-between; gap: 12px; }
 .rg-bank dt { opacity: .7; }
 .rg-bank dd { margin: 0; overflow-wrap: anywhere; text-align: right; }
+
+/* Auditoría 2026-10-21: en pantallas táctiles los enlaces de la barra del micrositio miden 34-36 px; el área de toque llega a 44 px sin cambiar cómo se ve. */
+@media (pointer: coarse) { .ej-bar-link { position: relative; } .ej-bar-link::after { content: ''; position: absolute; inset: -5px 0; } }
+@media (pointer: coarse) { .ej-bar-burger { min-width: 44px; justify-content: center; } }

@@ -7,6 +7,14 @@ import { nitro } from "nitro/vite";
 
 export default defineConfig(({ command }) => ({
   plugins: [
+    // Solo en desarrollo: otros proyectos usaron el puerto 8080 y el navegador puede mostrar una copia guardada de ellos (también del HTML) en vez de Weda.
+    {
+      name: "weda-dev-no-store",
+      apply: "serve",
+      configureServer(server) {
+        server.middlewares.use((_req, res, next) => { res.setHeader("Cache-Control", "no-store"); next(); });
+      },
+    },
     tsConfigPaths(),
     tanstackStart({
       // Entrada de servidor propia (src/server.ts): envuelve los errores de SSR.
@@ -35,5 +43,7 @@ export default defineConfig(({ command }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Otros proyectos usaron este puerto: sin esto el navegador puede mostrar una copia guardada de ellos en vez de Weda.
+    headers: { "Cache-Control": "no-store" },
   },
 }));

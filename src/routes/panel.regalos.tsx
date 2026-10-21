@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { ArrowDown, ArrowUp, Check, ChevronRight, Copy, Eye, Gift as GiftIcon, GripVertical, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
 import { CoupleCover, Field, Locked, PreviewFrame, useToast } from '@/components/panel/ui';
+import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/catalog';
 import { formatARS, type Gift } from '@/lib/demo-wedding';
@@ -21,11 +22,11 @@ export const Route = createFileRoute('/panel/regalos')({
   component: GiftsModule,
 });
 
-type Tab = 'como' | 'lista' | 'agregar' | 'recibidos' | 'cobro';
-/* Orden de la pantalla: cómo funciona → mis regalos → catálogo y packs → aportes recibidos → datos de cobro. Se puede entrar a cualquiera.
-   En pantallas angostas se muestra la etiqueta corta para que las cinco solapas entren sin scroll lateral. */
+type Tab = 'lista' | 'agregar' | 'recibidos' | 'cobro';
+/* Cuatro solapas, sin numerar (no son pasos obligatorios): mi lista · catálogo y packs · aportes recibidos · datos de cobro. Se entra siempre a «Mis regalos»:
+   si está vacía, su estado vacío lleva al catálogo. «Cómo funciona» dejó de ser una solapa: es un desplegable al pie de «Mis regalos» y un aviso del paso que falta. */
 const TABS: { id: Tab; label: string; short: string }[] = [
-  { id: 'como', label: 'Cómo funciona', short: 'Guía' }, { id: 'lista', label: 'Mis regalos', short: 'Mis regalos' },
+  { id: 'lista', label: 'Mis regalos', short: 'Mis regalos' },
   { id: 'agregar', label: 'Catálogo y packs', short: 'Catálogo' }, { id: 'recibidos', label: 'Aportes recibidos', short: 'Aportes' },
   { id: 'cobro', label: 'Datos de cobro', short: 'Cobro' },
 ];
@@ -215,7 +216,10 @@ function GiftsModule() {
   const s = useAppState();
   const toast = useToast();
   const search = Route.useSearch();
-  const [tab, setTab] = useState<Tab>(() => search.tab ?? 'como');
+  const [tab, setTab] = useState<Tab>(() => search.tab ?? 'lista');
+  const tabsRef = useScrollFade<HTMLDivElement>();
+  // Al cambiar de pestaña (o entrar directo a una), la activa se centra: con 5 pestañas en una pantalla angosta, las de los extremos quedan fuera de vista.
+  useEffect(() => { centerChild(tabsRef.current, tabsRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')); }, [tab, tabsRef]);
   const [catView, setCatView] = useState<'packs' | 'singles'>('packs');
   const [packOpen, setPackOpen] = useState<GiftSet | null>(null);
   const [creating, setCreating] = useState(false);
@@ -263,11 +267,11 @@ function GiftsModule() {
         </div>
       </header>
 
-      <div className="pn-tabs" role="tablist" aria-label="Lista de regalos">
+      <div className="pn-tabs pn-fade" role="tablist" aria-label="Lista de regalos" ref={tabsRef}>
         {TABS.map((t, i) => (
           <button key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls="pn-tabpanel" tabIndex={tab === t.id ? 0 : -1} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}
             onKeyDown={e => { if (e.key === 'ArrowRight') { e.preventDefault(); setTab(TABS[(i + 1) % TABS.length]!.id); } if (e.key === 'ArrowLeft') { e.preventDefault(); setTab(TABS[(i + TABS.length - 1) % TABS.length]!.id); } }}>
-            <span className="pn-tab-long">{i + 1}. {t.label}</span><span className="pn-tab-short">{t.short}</span>
+            <span className="pn-tab-long">{t.label}</span><span className="pn-tab-short">{t.short}</span>
             {t.id === 'lista' && items.length > 0 && <span className="pn-count">{items.length}</span>}
             {t.id === 'cobro' && !alias && <><span className="pn-dot-todo" aria-hidden="true" /><span className="pn-sr">(pendiente, opcional por ahora)</span></>}
             {t.id === 'recibidos' && received.length > 0 && <span className="pn-count">{received.length}</span>}
@@ -276,28 +280,15 @@ function GiftsModule() {
       </div>
 
       <div id="pn-tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="pn-tabpanel">
-        {tab === 'como' && (
-          <div className="rg-how">
-            <p className="rg-eyebrow is-first">Pasos del funcionamiento</p>
-            <ol className="rg-steps">
-              {[
-                { done: items.length > 0, title: 'Elegí o creá los regalos de tu lista', text: items.length > 0 ? `Tenés ${items.length} ${items.length === 1 ? 'regalo' : 'regalos'} en tu lista. Podés sumar packs completos o armar regalos individuales.` : 'Sumá un pack completo o elegí regalos de a uno. También podés crear los tuyos.', cta: items.length > 0 ? `Ver mis regalos (${items.length})` : 'Elegir regalos', go: () => setTab(items.length > 0 ? 'lista' : 'agregar') },
-                { done: !!alias, title: 'Sumá tu alias', text: alias ? `Alias cargado (${alias}). Tus invitados ven a dónde mandar su aporte.` : 'Cargá el alias donde querés recibir los aportes de tus invitados.', cta: alias ? 'Ver datos de cobro' : 'Cargar alias', go: () => setTab('cobro') },
-                { done: false, title: 'Compartí el enlace de tu lista', text: 'Tus invitados entran desde el celular, eligen un regalo y te lo regalan. Hoy es una demo: el enlace real se activa al publicar.', cta: 'Copiar enlace', go: copyLink },
-                { done: received.length > 0, title: 'Recibí los aportes y agradecé', text: received.length > 0 ? 'Revisá quién te regaló qué y con qué mensaje, para agradecerles.' : 'Cuando un invitado te regale algo, lo ves acá con su nombre y su mensaje.', cta: received.length > 0 ? `${received.length} ${received.length === 1 ? 'aporte' : 'aportes'}` : 'Ver aportes', go: () => setTab('recibidos') },
-              ].map(st => (
-                <li key={st.title} className={`rg-step${st.done ? ' is-done' : ''}`}>
-                  <span className="rg-step-ico" aria-hidden="true">{st.done ? <Check size={18} strokeWidth={2} /> : <GiftIcon size={18} strokeWidth={1.5} />}</span>
-                  <div className="rg-step-text"><h3>{st.title}{st.done && <span className="pn-chip is-ok">Listo</span>}</h3><p>{st.text}</p></div>
-                  <button type="button" className="pn-btn is-ghost is-small" onClick={st.go}>{st.cta}<ChevronRight size={15} aria-hidden="true" /></button>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-
         {tab === 'lista' && (
-          items.length === 0 ? (
+          <>
+          {items.length > 0 && !alias && (
+            <div className="rg-setup" role="status">
+              <div><strong>Falta un paso para recibir aportes</strong><p>Cargá tu alias: es lo que tus invitados ven para saber a dónde mandar su regalo.</p></div>
+              <button type="button" className="pn-btn" onClick={() => setTab('cobro')}>Cargar alias<ChevronRight size={15} aria-hidden="true" /></button>
+            </div>
+          )}
+          {items.length === 0 ? (
             <div className="pn-empty">
               <h2>Armá tu lista en un minuto</h2>
               <p>Sumá un set completo de regalos y después sacá los que no quieras. También podés elegir de a uno o crear uno propio.</p>
@@ -360,7 +351,17 @@ function GiftsModule() {
                 </>
               )}
             </>
-          )
+          )}
+          <details className="rg-help">
+            <summary>¿Cómo funciona la lista de regalos?</summary>
+            <ol>
+              <li>Elegís o creás los regalos de tu lista (sets completos o de a uno).</li>
+              <li>Cargás tu alias en «Datos de cobro»: ahí te llegan los aportes.</li>
+              <li>Compartís el enlace de la lista. Hoy es una demo: el enlace real se activa al publicar.</li>
+              <li>Tus invitados eligen un regalo y lo ves en «Aportes recibidos», con su nombre y su mensaje, para agradecerles.</li>
+            </ol>
+          </details>
+          </>
         )}
 
         {tab === 'agregar' && (

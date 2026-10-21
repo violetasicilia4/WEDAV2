@@ -1,21 +1,22 @@
 // Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, módulos bloqueados y vista previa.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Check, Lock, X } from 'lucide-react';
+import { BadgeCheck, CalendarCheck, CalendarClock, Check, ChevronDown, CreditCard, ExternalLink, Gift, Globe, Heart, Images, Link2, Lock, MailOpen, Music, Plus, ReceiptText, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { coupleLabel, dateLabel, draftsFor, isSamplePhoto, photoPosition, resolvePhoto, setPlan } from '@/lib/weda/logic';
-import { publishSummary } from '@/lib/weda/publish';
-import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, type Feature } from '@/lib/weda/plans';
+import { coupleLabel, dateLabel, draftsFor, isSamplePhoto, photoPosition, resolvePhoto, setPlan, sitePath } from '@/lib/weda/logic';
+import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
+import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, PUBLICATION_TERM, type Feature, type HighlightIcon } from '@/lib/weda/plans';
 import { update, useAppState, useStorageFull } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
 
 /* ------------------------------------------------------------------ campos */
 
-type FieldProps = { label: string; error?: string | undefined; hint?: string | undefined; optional?: boolean; children: (a: { id: string; describedBy: string | undefined; invalid: boolean }) => ReactNode };
+type FieldProps = { label: string; /** Id del control si ya tiene uno fijo (lo usan tests y el foco al validar): la etiqueta queda asociada a ese. Sin él se genera uno. */ id?: string; error?: string | undefined; hint?: string | undefined; optional?: boolean; children: (a: { id: string; describedBy: string | undefined; invalid: boolean }) => ReactNode };
 
 /** Etiqueta + control + ayuda + error, con los ids bien asociados (lectores de pantalla). */
-export function Field({ label, error, hint, optional, children }: FieldProps) {
-  const id = useId();
+export function Field({ label, id: fixedId, error, hint, optional, children }: FieldProps) {
+  const auto = useId();
+  const id = fixedId ?? auto;
   const describedBy = [hint ? `${id}-h` : '', error ? `${id}-e` : ''].filter(Boolean).join(' ') || undefined;
   return (
     <div className={`pn-field${error ? ' has-error' : ''}`}>
@@ -169,6 +170,9 @@ export function PreviewFrame({ path, device, anchor, jump }: { path: string; dev
 
 /* ------------------------------------------------------------------ plan y publicación */
 
+const HIGHLIGHT_ICON: Record<HighlightIcon, LucideIcon> = { gift: Gift, card: CreditCard, receipt: ReceiptText, link: Link2, globe: Globe, check: CalendarCheck, users: Users, music: Music, photos: Images, heart: Heart };
+const PLAN_ICON: Record<PlanId, LucideIcon> = { regalos: Gift, invitacion: MailOpen, completo: Sparkles };
+
 /** Se elige el plan al publicar (no antes). Elegir NO cobra ni publica: la publicación y el pago todavía no están conectados. */
 function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const state = useAppState();
@@ -178,43 +182,70 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
   const summary = picked ? publishSummary(state, picked) : null;
   const drafts = picked ? draftsFor(state, picked) : [];
   const close = () => { setChosen(false); onClose(); };
-  // Mirar el resumen no cambia nada: el sitio solo se ajusta al plan si la pareja lo pide («Ver mi sitio con este plan»).
-  const choose = () => { if (picked) setChosen(true); };
+  // Elegir un cuadrado lleva al resumen. Mirar el resumen no cambia nada: el sitio solo se ajusta al plan si la pareja lo pide («Ver mi sitio con este plan»).
+  const choose = (id: PlanId) => { setPicked(id); setChosen(true); };
   const applyPlan = () => { if (picked) update(s => setPlan(s, picked)); close(); };
   const backToTrial = () => { update(s => ({ ...s, planId: null })); close(); };
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
-      <DialogContent className="pn-dialog pn-plans-dialog">
+      <DialogContent className={`pn-dialog pn-plans-dialog${chosen ? '' : ' is-products'}`}>
         {!chosen ? (
           <>
-            <DialogTitle>Elegí tu plan para publicar</DialogTitle>
-            <DialogDescription>Armaste todo gratis y sin tarjeta. El plan se elige recién ahora, y podés cambiarlo cuando quieras sin perder lo que cargaste.</DialogDescription>
-            <div className="pn-plan-opts" role="radiogroup" aria-label="Plan">
-              {PLANS.map(p => (
-                <label key={p.id} className={`pn-plan-opt${picked === p.id ? ' on' : ''}`}>
-                  <input type="radio" name="plan" value={p.id} checked={picked === p.id} onChange={() => setPicked(p.id)} />
-                  <span className="pn-plan-opt-main"><strong>{p.name}</strong><small>{p.summary}</small></span>
-                  <span className="pn-plan-opt-price"><strong>{formatPrice(p.price)}</strong><small>{PRICE_UNIT}</small></span>
-                </label>
-              ))}
+            <DialogTitle>¿Qué querés publicar?</DialogTitle>
+            <DialogDescription>Elegí una opción. Cambiarla no borra nada de lo que armaste.</DialogDescription>
+            <div className="pn-prods">
+              {PLANS.map(p => {
+                const base = p.inherits ? planById(p.inherits) : undefined;
+                const Head = PLAN_ICON[p.id];
+                const drafts = draftsFor(state, p.id);
+                // «Ver link»: la página pública real, armada como se vería con este producto (no cambia el plan guardado).
+                const link = `${sitePath(state)}${p.id === 'regalos' ? '/regalos' : ''}?plan=${p.id}`;
+                return (
+                  <article key={p.id} className={`pn-prod${state.planId === p.id ? ' is-current' : ''}`} aria-labelledby={`pn-prod-${p.id}`}>
+                    <header className="pn-prod-head">
+                      <span className="pn-prod-ico" aria-hidden="true"><Head size={22} strokeWidth={1.5} /></span>
+                      <div>
+                        <h3 id={`pn-prod-${p.id}`}>{p.name}</h3>
+                        <p className="pn-prod-what">{p.product}</p>
+                      </div>
+                    </header>
+                    {state.planId === p.id && <span className="pn-prod-tag">Tu elección actual</span>}
+                    <p className="pn-prod-price"><strong>{formatPrice(p.price)}</strong></p>
+                    <ul className="pn-prod-facts">
+                      <li><BadgeCheck size={16} strokeWidth={1.6} aria-hidden="true" /> {PRICE_UNIT.charAt(0).toUpperCase() + PRICE_UNIT.slice(1)}</li>
+                      <li><CalendarClock size={16} strokeWidth={1.6} aria-hidden="true" /> Publicada {PUBLICATION_TERM}</li>
+                    </ul>
+                    <ul className="pn-feats">
+                      {base && <li className="is-base"><Plus size={18} strokeWidth={1.6} aria-hidden="true" /><span>Todo lo de {base.name}</span></li>}
+                      {p.highlights.map(h => {
+                        const Icon = HIGHLIGHT_ICON[h.icon];
+                        return <li key={h.label}><Icon size={18} strokeWidth={1.5} aria-hidden="true" /><span>{h.label}</span></li>;
+                      })}
+                    </ul>
+                    <details className="pn-prod-more">
+                      <summary>Ver más <ChevronDown size={16} aria-hidden="true" /></summary>
+                      <ul className="pn-plan-items is-plain">{p.items.map(it => <li key={it}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span>{it}</span></li>)}</ul>
+                      {drafts.length > 0 && <p className="pn-note">No se publica: {drafts.map(d => d.label.toLowerCase()).join(', ')}. Lo que cargaste queda como borrador.</p>}
+                    </details>
+                    <div className="pn-prod-actions">
+                      <a className="pn-btn is-ghost" href={link} target="_blank" rel="noopener noreferrer" aria-label={`Ver el link de ${p.name} (se abre en otra pestaña)`}>
+                        <ExternalLink size={16} aria-hidden="true" /> Ver link
+                      </a>
+                      <button type="button" className="pn-btn" aria-label={`Publicar ${p.name}`} onClick={() => choose(p.id)}>Publicar</button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
-            {plan && (
-              <div className="pn-plan-detail" aria-live="polite">
-                <p className="pn-label">{plan.inherits ? `Todo lo de ${planById(plan.inherits)?.name}, y además:` : 'Incluye:'}</p>
-                <ul className="pn-plan-items">{plan.items.map(it => <li key={it}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span>{it}</span></li>)}</ul>
-                {drafts.length > 0 && <p className="pn-note">Con este plan, {drafts.map(d => d.label.toLowerCase()).join(', ')} no se publica{drafts.length > 1 ? 'n' : ''}: lo que cargaste queda como borrador y se publica con el plan {[...new Set(drafts.map(d => d.plan))].join(' o ')}.</p>}
-              </div>
-            )}
-            {!picked && <p className="pn-hint pn-why" id="pn-plan-why">Elegí uno de los tres planes para ver su resumen.</p>}
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" onClick={close}>Ahora no</button>
-              <button type="button" className="pn-btn" onClick={choose} disabled={!picked} aria-describedby={picked ? undefined : 'pn-plan-why'}>{plan ? `Ver resumen con ${plan.name}` : 'Elegí un plan'}</button>
             </div>
           </>
         ) : (
           <>
-            <DialogTitle>Resumen de publicación · Plan {plan?.name}</DialogTitle>
-            <DialogDescription>{plan ? `${formatPrice(plan.price)} ${PRICE_UNIT}. ` : ''}Esto es lo que se publicaría con este plan. Cambiar de plan no borra nada de lo que cargaste.</DialogDescription>
+            <DialogTitle>Publicar · {plan?.name}</DialogTitle>
+            <DialogDescription>{plan ? `${formatPrice(plan.price)} ${PRICE_UNIT} · publicada ${PUBLICATION_TERM}. ` : ''}Esto es lo que se publicaría. Cambiar de opción no borra nada de lo que cargaste.</DialogDescription>
+            {plan && <p className="pn-muted"><strong>Se publica:</strong> {publishedPagesText(plan.id)}</p>}
             {summary && (
               <div className="pn-publish">
                 {summary.published.length > 0 && (<><p className="pn-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
@@ -232,7 +263,7 @@ function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
               {state.planId !== picked && <button type="button" className="pn-link" onClick={applyPlan}>Ver mi sitio con este plan</button>}
               {state.planId && <>{state.planId !== picked && ' · '}<button type="button" className="pn-link" onClick={backToTrial}>Volver a probar todo</button></>}</p>
             <div className="pn-actions is-end">
-              <button type="button" className="pn-btn is-ghost" onClick={() => setChosen(false)}>Cambiar de plan</button>
+              <button type="button" className="pn-btn is-ghost" onClick={() => setChosen(false)}>Volver a las opciones</button>
               <button type="button" className="pn-btn" disabled aria-disabled="true">Pagar y publicar (sin conexión)</button>
             </div>
           </>

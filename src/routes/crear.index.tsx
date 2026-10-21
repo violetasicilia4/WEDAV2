@@ -45,19 +45,19 @@ function Names() {
     <OnboardingShell step={1} back="/crear/cuenta" formId="ob-names" title="Conozcámonos. ¿Cómo se llaman?" sub="Con estos datos armamos tu panel y tu sitio. Lo demás lo completás después." side={<OnboardingPhoto src="/onboarding-nombres.webp" trimLeft />}>
       <form id="ob-names" onSubmit={submit} noValidate className="pn-form">
         <div className="pn-two">
-          <Field label="Tu nombre" error={errors.first}>
+          <Field id="on-first" label="Tu nombre" error={errors.first}>
             {a => <input id="on-first" type="text" autoComplete="given-name" value={first} onChange={text(setFirst, 'first')} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
           </Field>
-          <Field label="Tu apellido">
+          <Field id="on-first-last" label="Tu apellido">
             {a => <input id="on-first-last" type="text" autoComplete="family-name" value={firstLast} onChange={text(setFirstLast)} aria-describedby={a.describedBy} />}
           </Field>
         </div>
         <p className="ob-amp" aria-hidden="true">&amp;</p>
         <div className="pn-two">
-          <Field label="Nombre de tu pareja" error={errors.second}>
+          <Field id="on-second" label="Nombre de tu pareja" error={errors.second}>
             {a => <input id="on-second" type="text" autoComplete="off" value={second} onChange={text(setSecond, 'second')} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
           </Field>
-          <Field label="Apellido de tu pareja">
+          <Field id="on-second-last" label="Apellido de tu pareja">
             {a => <input id="on-second-last" type="text" autoComplete="off" value={secondLast} onChange={text(setSecondLast)} aria-describedby={a.describedBy} />}
           </Field>
         </div>

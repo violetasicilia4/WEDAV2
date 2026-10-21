@@ -62,10 +62,10 @@ function Account() {
       </header>
 
       <form onSubmit={submit} noValidate className="pn-form">
-        <Field label="Correo electrónico" error={errors.email}>
+        <Field id="ac-email" label="Correo electrónico" error={errors.email}>
           {a => <input id="ac-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(x => ({ ...x, email: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
         </Field>
-        <Field label="Clave" error={errors.password} hint={signup ? 'Mínimo 8 caracteres, con mayúscula, minúscula y número.' : undefined}>
+        <Field id="ac-pass" label="Clave" error={errors.password} hint={signup ? 'Mínimo 8 caracteres, con mayúscula, minúscula y número.' : undefined}>
           {a => (
             <div className="pn-pass">
               <input id="ac-pass" type={show ? 'text' : 'password'} autoComplete={signup ? 'new-password' : 'current-password'} value={password} onChange={e => { setPassword(e.target.value); setErrors(x => ({ ...x, password: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />

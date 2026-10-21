@@ -19,7 +19,7 @@ La lista de regalos digital es el diferencial comercial principal y va unida al 
 Es una demo sin backend: el estado se guarda en el navegador (localStorage). La publicación y el pago todavía no están conectados. El panel, el editor del micrositio y la página pública de cada pareja son superficies distintas de la landing comercial (ruta `/`).
 
 ## Capabilities and Constraints
-- Planes (fuente única en `src/lib/weda/plans.ts`): Regalos ARS 95.000, Invitación ARS 180.000, Completo ARS 320.000, en pago único. No cambiar precios, nombres ni prestaciones sin documentarlo.
+- Planes (fuente única en `src/lib/weda/plans.ts`): Regalos ARS 95.000, Invitación ARS 180.000, Completo ARS 320.000, en pago único y con la página publicada durante 1 año (definición de la autora, 2026-10-21; hoy es solo un texto, no hay publicación real). No cambiar precios, nombres, duración ni prestaciones sin documentarlo.
 - La lista de regalos recibe por alias y tarjeta. No hay integración con Mercado Pago ni con otros medios de pago.
 - Sin backend, sin integraciones nuevas, sin cambios al modelo de datos.
 - No hay estadísticas ni métricas de uso reales.

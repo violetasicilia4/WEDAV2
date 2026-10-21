@@ -392,10 +392,13 @@ describe('recorrido guiado (journey)', () => {
     expect(stages(st)[1]!.status).toBe('review');
     expect(stages(st)[1]!.detail).toContain('Dress code');
   });
-  it('sin invitados se recomienda cargarlos; con todo listo, revisar cómo lo verán', () => {
+  it('los invitados son gestión: sin invitados igual se recomienda revisar y publicar, y no frenan el progreso', () => {
     const s = seedState();
-    expect(nextAction({ ...s, guests: [] }).stage === 'invitados' || nextAction({ ...s, guests: [] }).stage === 'sitio').toBe(true);
+    const sinInvitados = { ...s, guests: [] };
+    expect(nextAction(sinInvitados).stage).toBe('publicar');
     expect(nextAction(s).stage).toBe('publicar');
+    expect(progress(stages(sinInvitados))).toBe(100);
+    expect(stages(sinInvitados).find(x => x.id === 'publicar')!.status).toBe('review');
     expect(progress(stages(s))).toBe(100);
     expect(headline(100)).toContain('preparado');
   });
@@ -465,5 +468,17 @@ describe('mesas con lugares', () => {
     expect(validateCapacity('10')).toBeUndefined();
     expect(validateCapacity('0')).toBeTruthy();
     expect(validateCapacity('abc')).toBeTruthy();
+  });
+});
+
+import { publishedPagesText } from '@/lib/weda/publish';
+
+describe('qué se publica con cada plan (publishedPagesText)', () => {
+  it('Regalos: solo la lista; Invitación: invitación + lista; Completo: el sitio completo', () => {
+    expect(publishedPagesText('regalos')).toBe('solo la lista de regalos.');
+    expect(publishedPagesText('invitacion')).toContain('la invitación');
+    expect(publishedPagesText('invitacion')).not.toContain('música');
+    expect(publishedPagesText('completo')).toContain('sitio completo');
+    expect(publishedPagesText('completo')).toContain('música');
   });
 });

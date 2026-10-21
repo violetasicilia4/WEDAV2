@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, ChevronDown, ExternalLink, Eye, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { createFileRoute } from '@tanstack/react-router';
+import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
-import { Field, Locked, PreviewFrame, useToast, usePlans } from '@/components/panel/ui';
+import { LiveCard, useKeyboardState } from '@/components/panel/live-card';
+import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
+import { Field, Locked, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
-import { dateLabel, hasEventDetails, isSafeMapsUrl, mapsLink, sitePath, uid, validateOnboarding } from '@/lib/weda/logic';
+import { hasEventDetails, isSafeMapsUrl, mapsLink, uid, validateOnboarding } from '@/lib/weda/logic';
 import { eventComplete, sectionGaps } from '@/lib/weda/journey';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
+import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';
 import type { AppState, SiteConfig, SiteEvent } from '@/lib/weda/types';
 
@@ -30,6 +33,8 @@ type Sec = { id: SectionId; label: string; title: string; status: string; tone: 
 const ICON: Record<SectionId, LucideIcon> = { portada: ImageIcon, eventos: CalendarDays, rsvp: UserCheck, dress: Shirt, fotos: Images, mensaje: MessageSquareText, musica: Music };
 /** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
 const ANCHOR: Record<SectionId, string> = { portada: '', eventos: 'dia', rsvp: 'confirmar', dress: 'dresscode', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
+/** Estado de la sección con forma además de color: tilde = lista, aviso = falta algo, ojo tachado = oculta o fuera del plan. */
+const STATUS_ICON: Record<Tone, LucideIcon> = { ok: Check, todo: CircleAlert, off: EyeOff };
 const photoWord = (n: number) => `${n} ${n === 1 ? 'foto' : 'fotos'}`;
 
 /** Estado de cada sección, derivado de los datos reales (misma regla que el Inicio: eventComplete/sectionGaps). */
@@ -57,14 +62,8 @@ function sectionsOf(s: AppState): Sec[] {
   return list;
 }
 
-const useWide = () => useSyncExternalStore(
-  cb => { const m = window.matchMedia('(min-width: 1280px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
-  () => window.matchMedia('(min-width: 1280px)').matches,
-  () => false,
-);
-
 /** La sección elegida: título, estado, «Mostrar» (si se puede ocultar) y solo sus campos. */
-function Panel({ sec, planTag, enabled, onToggle, onSee, children }: { sec: Sec; planTag?: string | undefined; enabled?: boolean | undefined; onToggle?: ((v: boolean) => void) | undefined; onSee: () => void; children: React.ReactNode }) {
+function Panel({ sec, planTag, enabled, onToggle, children }: { sec: Sec; planTag?: string | undefined; enabled?: boolean | undefined; onToggle?: ((v: boolean) => void) | undefined; children: React.ReactNode }) {
   const plans = usePlans();
   if (sec.locked) {
     return (
@@ -85,7 +84,7 @@ function Panel({ sec, planTag, enabled, onToggle, onSee, children }: { sec: Sec;
       </header>
       {enabled === false
         ? <p className="pn-note">Esta sección está oculta y tus invitados no la ven. Lo que ya cargaste se conserva: activá «Mostrar» para volver a usarla.</p>
-        : <>{children}<div className="pn-spanel-foot"><button type="button" className="pn-link" onClick={onSee}><Eye size={14} aria-hidden="true" />Ver en la vista previa</button></div></>}
+        : children}
     </section>
   );
 }
@@ -166,31 +165,31 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
 function SiteEditor() {
   const s = useAppState();
   const toast = useToast();
-  const wide = useWide();
   const [active, setActive] = useState<SectionId>('portada');
   const [openEv, setOpenEv] = useState<SiteEvent['key'] | null>(() => s.site.events.find(e => e.enabled)?.key ?? null);
-  const [anchor, setAnchor] = useState<string | undefined>(undefined);
-  const [jump, setJump] = useState(0);
-  const [previewing, setPreviewing] = useState(false);
+  const [liveOpen, setLiveOpen] = useState(true);
   const [track, setTrack] = useState({ title: '', artist: '' });
   const [trackError, setTrackError] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const chipsRef = useScrollFade<HTMLUListElement>();
+  const kb = useKeyboardState();
 
   if (!can(s.planId, 'site')) return <Locked feature="site" />;
   const site = s.site;
-  const path = sitePath(s);
   const sections = sectionsOf(s);
   const sec = sections.find(x => x.id === active)!;
   const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, can(s.planId, 'gallery') && site.gallery.enabled, can(s.planId, 'message') && site.message.enabled, can(s.planId, 'playlist') && site.playlist.enabled].filter(Boolean).length;
 
-  // Elegir una sección lleva la vista previa (si está al lado) hasta ahí y deja el formulario a la vista.
+  // Elegir una sección deja el formulario a la vista (en el celular la tarjeta queda fija arriba).
   const pick = (id: SectionId) => {
-    setActive(id); setAnchor(ANCHOR[id]);
-    if (!wide) window.setTimeout(() => panelRef.current?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }), 0);
+    setActive(id);
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // El chip elegido se centra en la fila (con 7 secciones, los de los extremos quedan fuera de la pantalla).
+    centerChild(chipsRef.current, chipsRef.current?.querySelector<HTMLElement>(`#sec-${id}`));
+    window.setTimeout(() => panelRef.current?.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }), 0);
   };
-  // «Ver en la vista previa»: al lado en pantallas grandes; en el celular se abre a pantalla completa.
-  const see = (id: SectionId) => { setAnchor(ANCHOR[id]); setJump(n => n + 1); if (!wide) setPreviewing(true); };
+  const hiddenNow = ({ portada: false, eventos: false, rsvp: !site.rsvp.enabled, dress: !site.dressCode.enabled, fotos: !site.gallery.enabled, mensaje: !site.message.enabled, musica: !site.playlist.enabled } as Record<SectionId, boolean>)[active];
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -214,54 +213,64 @@ function SiteEditor() {
   const flag = (k: 'rsvp' | 'dressCode' | 'gallery' | 'message' | 'playlist') => (v: boolean) => patchSite(x => ({ ...x, [k]: { ...x[k], enabled: v } }));
 
   return (
-    <div className="pn-page pn-editor">
+    <div className="pn-page pn-editor" data-kb={kb}>
       <header className="pn-page-head is-compact">
         <div>
           <h1>Tu página</h1>
           <p className="pn-sub">Tus invitados ven {visibleCount} {visibleCount === 1 ? 'sección' : 'secciones'}.</p>
         </div>
-        {!wide && <button type="button" className="pn-btn" onClick={() => { setAnchor(ANCHOR[active]); setPreviewing(true); }}><Eye size={16} aria-hidden="true" />Vista previa</button>}
       </header>
 
       <div className="pn-editor-grid">
         <nav className="pn-snav" aria-label="Secciones de tu página">
-          <ul>
-            {sections.map(x => (
-              <li key={x.id}>
-                <button type="button" id={`sec-${x.id}`} className={`pn-snav-btn${active === x.id ? ' on' : ''}`} aria-current={active === x.id ? 'true' : undefined} onClick={() => pick(x.id)}>
-                  {(() => { const Icon = ICON[x.id]; return <Icon size={18} strokeWidth={1.6} className="pn-snav-ico" aria-hidden="true" />; })()}<i className={`pn-sdot is-${x.tone}`} aria-hidden="true" />{x.label}<span className="pn-sr"> · {x.status}</span>
-                </button>
-              </li>
-            ))}
+          <ul ref={chipsRef} className="pn-fade">
+            {sections.map(x => {
+              const Icon = ICON[x.id], Status = STATUS_ICON[x.tone];
+              return (
+                <li key={x.id}>
+                  <button type="button" id={`sec-${x.id}`} className={`pn-snav-btn${active === x.id ? ' on' : ''}`} aria-current={active === x.id ? 'true' : undefined} onClick={() => pick(x.id)}>
+                    <Icon size={18} strokeWidth={1.6} className="pn-snav-ico" aria-hidden="true" /><span className={`pn-sdot is-${x.tone}`} aria-hidden="true"><Status size={13} strokeWidth={2.4} /></span>{x.label}<span className="pn-sr"> · {x.status}</span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
+        {!sec.locked && (
+          <div className="pn-live">
+            {liveOpen
+              ? <LiveCard s={s} section={active} label={sec.title} hidden={hiddenNow} openEvent={openEv} keyboard={kb} onSeeFull={() => openPreview('home', ANCHOR[active])} onHide={() => setLiveOpen(false)} />
+              : <div className="lc-collapsed"><p className="lc-cap">Así lo ven tus invitados</p><button type="button" className="pn-link" onClick={() => setLiveOpen(true)}>Mostrar cómo queda</button></div>}
+          </div>
+        )}
+
         <div className="pn-editor-pane" ref={panelRef}>
           {active === 'portada' && (
-            <Panel sec={sec} onSee={() => see('portada')}>
+            <Panel sec={sec}>
               <CoverFields />
               <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
               {!s.date && <p className="pn-hint">La cuenta regresiva aparece cuando definas la fecha.</p>}
             </Panel>
           )}
           {active === 'eventos' && (
-            <Panel sec={sec} onSee={() => see('eventos')}>
-              <ul className="pn-evlist">{site.events.map(ev => <EventRow key={ev.key} ev={ev} open={openEv === ev.key} onOpen={k => { setOpenEv(k); if (k) setAnchor('dia'); }} />)}</ul>
+            <Panel sec={sec}>
+              <ul className="pn-evlist">{site.events.map(ev => <EventRow key={ev.key} ev={ev} open={openEv === ev.key} onOpen={setOpenEv} />)}</ul>
             </Panel>
           )}
           {active === 'rsvp' && (
-            <Panel sec={sec} enabled={site.rsvp.enabled} onToggle={flag('rsvp')} onSee={() => see('rsvp')}>
+            <Panel sec={sec} enabled={site.rsvp.enabled} onToggle={flag('rsvp')}>
             <p className="pn-muted">Tus invitados confirman desde la página y las respuestas se suman solas a la solapa Invitados. No hace falta cargar nada.</p>
             </Panel>
           )}
           {active === 'dress' && (
-            <Panel sec={sec} enabled={site.dressCode.enabled} onToggle={flag('dressCode')} onSee={() => see('dress')}>
+            <Panel sec={sec} enabled={site.dressCode.enabled} onToggle={flag('dressCode')}>
             <Field label="Título">{a => <input id={a.id} type="text" value={site.dressCode.title} placeholder="Elegante sport" onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, title: e.target.value } }))} />}</Field>
             <Field label="Texto" optional>{a => <textarea id={a.id} rows={3} value={site.dressCode.text} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, text: e.target.value } }))} />}</Field>
             </Panel>
           )}
           {active === 'fotos' && (
-            <Panel sec={sec} planTag={tagFor('gallery')} enabled={site.gallery.enabled} onToggle={flag('gallery')} onSee={() => see('fotos')}>
+            <Panel sec={sec} planTag={tagFor('gallery')} enabled={site.gallery.enabled} onToggle={flag('gallery')}>
             {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
             {site.gallery.photos.length > 0 && (
               <ul className="pn-photos">
@@ -284,13 +293,13 @@ function SiteEditor() {
             </Panel>
           )}
           {active === 'mensaje' && (
-            <Panel sec={sec} planTag={tagFor('message')} enabled={site.message.enabled} onToggle={flag('message')} onSee={() => see('mensaje')}>
+            <Panel sec={sec} planTag={tagFor('message')} enabled={site.message.enabled} onToggle={flag('message')}>
             <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
             <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
             </Panel>
           )}
           {active === 'musica' && (
-            <Panel sec={sec} planTag={tagFor('playlist')} enabled={site.playlist.enabled} onToggle={flag('playlist')} onSee={() => see('musica')}>
+            <Panel sec={sec} planTag={tagFor('playlist')} enabled={site.playlist.enabled} onToggle={flag('playlist')}>
               <p className="pn-note">Es una lista armada acá, solo para la vista previa: no está conectada a Spotify ni a otro servicio de música.</p>
               <Field label="Nombre de la playlist" optional>{a => <input id={a.id} type="text" value={site.playlist.name} placeholder="Nuestra fiesta" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, name: e.target.value } }))} />}</Field>
               <form onSubmit={addTrack} noValidate className="pn-inline-form is-tracks">
@@ -309,39 +318,8 @@ function SiteEditor() {
           )}
         </div>
 
-        {wide && (
-          <div className="pn-preview-pane">
-            <div className="pn-preview-bar">
-              <p className="pn-edit-label">Vista previa</p>
-              <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
-            </div>
-            <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
-          </div>
-        )}
       </div>
 
-      {!wide && previewing && <PreviewSheet path={path} anchor={anchor} jump={jump} onClose={() => setPreviewing(false)} />}
-    </div>
-  );
-}
-
-/** Vista previa a pantalla completa (celular): la misma página pública, con una salida clara de vuelta a la edición. */
-function PreviewSheet({ path, anchor, jump, onClose }: { path: string; anchor: string | undefined; jump: number; onClose: () => void }) {
-  const back = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    back.current?.focus();
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', key);
-    return () => { document.removeEventListener('keydown', key); opener?.focus?.(); };
-  }, [onClose]);
-  return (
-    <div className="pn-pvfull" role="dialog" aria-modal="true" aria-label="Vista previa de tu página">
-      <div className="pn-pvfull-bar">
-        <button type="button" ref={back} className="pn-btn is-ghost" onClick={onClose}><ArrowLeft size={16} aria-hidden="true" />Volver a editar</button>
-        <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
-      </div>
-      <PreviewFrame path={path} device="mobile" anchor={anchor} jump={jump} />
     </div>
   );
 }
