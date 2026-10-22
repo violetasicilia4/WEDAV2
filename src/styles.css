@@ -1392,3 +1392,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 
 /* Franja «¿Invitado?»: texto en blanco sobre el verde claro */
 .announcement { color: #fff; }
+
+/* Celular: «Crear mi evento» de la sección de herramientas queda centrado en el blanco entre la última tarjeta y la sección de abajo (mismo aire arriba y abajo). */
+@media (max-width: 640px) {
+  .products-section .feat-cta { margin-top: calc((24px + clamp(72px, 12svh, 140px)) / 2); }
+  .products-section { padding-bottom: calc((24px + clamp(72px, 12svh, 140px)) / 2 + var(--curve)); }
+}
