@@ -84,6 +84,19 @@ export function sanitize(raw: unknown): AppState {
   return withDefaultTable(build(raw, from));
 }
 
+const isoOf = (v: unknown): string | null => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null);
+/** Lee la publicación guardada; cualquier dato inválido la descarta (vuelve a «sin publicar»). */
+function publication(v: unknown): AppState['publication'] {
+  if (!isObj(v)) return null;
+  const plan = planOf(v['planId'], 2), at = isoOf(v['publishedAt']), until = isoOf(v['expiresAt']);
+  if (!plan || !at || !until) return null;
+  const payments = arr(v['payments']).filter(isObj).map(x => {
+    const p = planOf(x['planId'], 2), when = isoOf(x['at']);
+    return p && when && (x['kind'] === 'publish' || x['kind'] === 'upgrade') && typeof x['amount'] === 'number' && Number.isFinite(x['amount']) && x['amount'] >= 0 ? { kind: x['kind'] as 'publish' | 'upgrade', planId: p, amount: x['amount'], at: when } : null;
+  }).filter((x): x is NonNullable<typeof x> => !!x);
+  return { planId: plan, live: bool(v['live'], false), publishedAt: at, expiresAt: until, payments };
+}
+
 function build(raw: Record<string, unknown>, from: number): AppState {
   const c = isObj(raw['couple']) ? raw['couple'] : {}, g = isObj(raw['gifts']) ? raw['gifts'] : {};
   return {
@@ -108,6 +121,7 @@ function build(raw: Record<string, unknown>, from: number): AppState {
     groups: arr(raw['groups']).filter(isObj).filter(x => typeof x['id'] === 'string' && typeof x['name'] === 'string').map(x => ({ id: str(x['id']), name: str(x['name']), ...(typeof x['capacity'] === 'number' && x['capacity'] > 0 ? { capacity: Math.floor(x['capacity']) } : {}), ...(str(x['note']) ? { note: str(x['note']) } : {}) })),
     site: site(raw['site']),
     seeded: bool(raw['seeded'], false),
+    publication: publication(raw['publication']),
   };
 }
 

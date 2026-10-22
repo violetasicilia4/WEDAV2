@@ -5,6 +5,7 @@ import { useMemo, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useSessionState } from '@/lib/demo-session';
 import { applyRsvp, slugify } from '@/lib/weda/logic';
+import { isLive } from '@/lib/weda/payments';
 import { isPlanId } from '@/lib/weda/plans';
 import { demoSiteData, siteFromState, SiteProvider, type SiteActions } from '@/lib/weda/site-model';
 import { update, useAppState, useHydrated } from '@/lib/weda/store';
@@ -62,6 +63,9 @@ export function AppSite({ slug, children }: { slug: string; children: ReactNode 
     recordRsvp: people => update(s => applyRsvp(s, people)),
   }), [state.gifts.given]);
   if (!hydrated) return <div className="dm-root"><p className="site-loading" role="status">Cargando…</p></div>;
+  // Página dada de baja: solo la ve su dueño dentro de la vista previa del panel (iframe o «cómo queda con este plan»).
+  const takenDown = mine && !!state.publication && !isLive(state) && !readPlanOverride() && !(typeof window !== 'undefined' && window.self !== window.top);
+  if (takenDown) return <Notice title="Esta página no está publicada" text="Su dueño la bajó por ahora. Volvé a probar más tarde." to="/" cta="Ir a Weda" />;
   if (!data) return <Notice title="Este sitio no está disponible" text="Esta es una demostración: los sitios se guardan solo en el navegador de quien los creó. Podés crear el tuyo o recorrer el ejemplo." to="/crear/cuenta" cta="Crear mi evento" />;
   return <SiteProvider data={data} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
 }

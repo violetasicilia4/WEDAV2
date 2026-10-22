@@ -56,10 +56,10 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 | `ToastProvider` / `useToast` | Avisos breves; admiten acción «Deshacer» (botón de 44 px). Se cierran al cambiar de ruta y, con un diálogo abierto, suben a la parte superior para no tapar sus botones. |
 | `ConfirmDialog` | Confirmación de acciones destructivas (eliminar invitado, grupo, reiniciar la demo). |
 | `Locked`, `LockedBlock` | Función no incluida en el plan elegido: qué es, en qué plan está y que lo cargado se conserva como borrador; el botón «Ver los planes» abre el diálogo de planes. Sin upsell en el resto de las pantallas. |
-| `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. No cobra ni publica. |
+| `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. |
 | Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver todo lo que incluye» en `<details>`, CTA «Crear mi evento gratis»). Sin plan «recomendado». Todo sale de `plans.ts`. |
 | `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`; `jump` repite el pedido para la misma sección y espera si la sección todavía no existe). |
-| `PublishDialog` | Explica que todavía no se puede publicar; no simula contratación ni pago. |
+| `PublishDialog` (`panel/publish-dialog.tsx`) | Elegir → revisar y pagar (pago de prueba) → publicada; con publicación existente, «Tu publicación» (mejorar pagando la diferencia, bajar, volver a publicar). Clases `.pn-pay` (lista de datos), `.pn-upgrade`, `.pn-spin`. Ver `ux-flows.md`. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |
 | `PhotoPicker`, `CoupleDialog` | Foto de portada y datos del casamiento. Patrón compacto: botón «Subir una foto» + fila de miniaturas (`pn-cover-pick`: «Tu foto» si ya subió una, y las imágenes de muestra), selección visible con borde y nombre en negrita. |
 | `GroupsView` | Mesas y grupos dentro de Invitados. |

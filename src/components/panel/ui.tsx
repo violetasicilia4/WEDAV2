@@ -1,13 +1,12 @@
 // Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, módulos bloqueados y vista previa.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { BadgeCheck, CalendarCheck, CalendarClock, Check, ChevronDown, CreditCard, ExternalLink, Gift, Globe, Heart, Images, Link2, Lock, MailOpen, Music, Plus, ReceiptText, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
+import { Lock, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { coupleLabel, dateLabel, draftsFor, isSamplePhoto, photoPosition, resolvePhoto, setPlan, sitePath } from '@/lib/weda/logic';
-import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
-import { formatPrice, PLANS, planById, planFor, PRICE_UNIT, PUBLICATION_TERM, type Feature, type HighlightIcon } from '@/lib/weda/plans';
+import { coupleLabel, dateLabel, isSamplePhoto, photoPosition, resolvePhoto } from '@/lib/weda/logic';
+import { planFor, type Feature } from '@/lib/weda/plans';
+import { PublishDialog } from '@/components/panel/publish-dialog';
 import { update, useAppState } from '@/lib/weda/store';
-import type { PlanId } from '@/lib/weda/types';
 
 /* ------------------------------------------------------------------ campos */
 
@@ -170,108 +169,6 @@ export function PreviewFrame({ path, device, anchor, jump }: { path: string; dev
 
 /* ------------------------------------------------------------------ plan y publicación */
 
-const HIGHLIGHT_ICON: Record<HighlightIcon, LucideIcon> = { gift: Gift, card: CreditCard, receipt: ReceiptText, link: Link2, globe: Globe, check: CalendarCheck, users: Users, music: Music, photos: Images, heart: Heart };
-const PLAN_ICON: Record<PlanId, LucideIcon> = { regalos: Gift, invitacion: MailOpen, completo: Sparkles };
-
-/** Se elige el plan al publicar (no antes). Elegir NO cobra ni publica: la publicación y el pago todavía no están conectados. */
-function PlansDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const state = useAppState();
-  const [picked, setPicked] = useState<PlanId | null>(state.planId);
-  const [chosen, setChosen] = useState(false);
-  const plan = planById(picked);
-  const summary = picked ? publishSummary(state, picked) : null;
-  const close = () => { setChosen(false); onClose(); };
-  // Elegir un cuadrado lleva al resumen. Mirar el resumen no cambia nada: el sitio solo se ajusta al plan si la pareja lo pide («Ver mi sitio con este plan»).
-  const choose = (id: PlanId) => { setPicked(id); setChosen(true); };
-  const applyPlan = () => { if (picked) update(s => setPlan(s, picked)); close(); };
-  const backToTrial = () => { update(s => ({ ...s, planId: null })); close(); };
-  return (
-    <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
-      <DialogContent className={`pn-dialog pn-plans-dialog${chosen ? '' : ' is-products'}`}>
-        {!chosen ? (
-          <>
-            <DialogTitle>¿Qué querés publicar?</DialogTitle>
-            <DialogDescription>Elegí una opción. Cambiarla no borra nada de lo que armaste.</DialogDescription>
-            <div className="pn-prods">
-              {PLANS.map(p => {
-                const base = p.inherits ? planById(p.inherits) : undefined;
-                const Head = PLAN_ICON[p.id];
-                const drafts = draftsFor(state, p.id);
-                // «Ver link»: la página pública real, armada como se vería con este producto (no cambia el plan guardado).
-                const link = `${sitePath(state)}${p.id === 'regalos' ? '/regalos' : ''}?plan=${p.id}`;
-                return (
-                  <article key={p.id} className={`pn-prod${state.planId === p.id ? ' is-current' : ''}`} aria-labelledby={`pn-prod-${p.id}`}>
-                    <header className="pn-prod-head">
-                      <span className="pn-prod-ico" aria-hidden="true"><Head size={22} strokeWidth={1.5} /></span>
-                      <div>
-                        <h3 id={`pn-prod-${p.id}`}>{p.name}</h3>
-                        <p className="pn-prod-what">{p.product}</p>
-                      </div>
-                    </header>
-                    {state.planId === p.id && <span className="pn-prod-tag">Tu elección actual</span>}
-                    <p className="pn-prod-price"><strong>{formatPrice(p.price)}</strong></p>
-                    <ul className="pn-prod-facts">
-                      <li><BadgeCheck size={16} strokeWidth={1.6} aria-hidden="true" /> {PRICE_UNIT.charAt(0).toUpperCase() + PRICE_UNIT.slice(1)}</li>
-                      <li><CalendarClock size={16} strokeWidth={1.6} aria-hidden="true" /> Publicada {PUBLICATION_TERM}</li>
-                    </ul>
-                    <ul className="pn-feats">
-                      {base && <li className="is-base"><Plus size={18} strokeWidth={1.6} aria-hidden="true" /><span>Todo lo de {base.name}</span></li>}
-                      {p.highlights.map(h => {
-                        const Icon = HIGHLIGHT_ICON[h.icon];
-                        return <li key={h.label}><Icon size={18} strokeWidth={1.5} aria-hidden="true" /><span>{h.label}</span></li>;
-                      })}
-                    </ul>
-                    <details className="pn-prod-more">
-                      <summary>Ver más <ChevronDown size={16} aria-hidden="true" /></summary>
-                      <ul className="pn-plan-items is-plain">{p.items.map(it => <li key={it}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span>{it}</span></li>)}</ul>
-                      {drafts.length > 0 && <p className="pn-note">No se publica: {drafts.map(d => d.label.toLowerCase()).join(', ')}. Lo que cargaste queda como borrador.</p>}
-                    </details>
-                    <div className="pn-prod-actions">
-                      <a className="pn-btn is-ghost" href={link} target="_blank" rel="noopener noreferrer" aria-label={`Ver el link de ${p.name} (se abre en otra pestaña)`}>
-                        <ExternalLink size={16} aria-hidden="true" /> Ver link
-                      </a>
-                      <button type="button" className="pn-btn" aria-label={`Publicar ${p.name}`} onClick={() => choose(p.id)}>Publicar</button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-            <div className="pn-actions is-end">
-              <button type="button" className="pn-btn is-ghost" onClick={close}>Ahora no</button>
-            </div>
-          </>
-        ) : (
-          <>
-            <DialogTitle>Publicar · {plan?.name}</DialogTitle>
-            <DialogDescription>{plan ? `${formatPrice(plan.price)} ${PRICE_UNIT} · publicada ${PUBLICATION_TERM}. ` : ''}Esto es lo que se publicaría. Cambiar de opción no borra nada de lo que cargaste.</DialogDescription>
-            {plan && <p className="pn-muted"><strong>Se publica:</strong> {publishedPagesText(plan.id)}</p>}
-            {summary && (
-              <div className="pn-publish">
-                {summary.published.length > 0 && (<><p className="pn-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
-                {summary.empty.length > 0 && (<><p className="pn-label">Incluido, pero vacío</p><ul className="pn-plan-items is-plain">{summary.empty.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
-                {summary.drafts.length > 0 && (<><p className="pn-label">Queda como borrador</p><ul className="pn-plan-items is-plain">{summary.drafts.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail} Se publica desde el plan {i.plan}.</span></li>)}</ul></>)}
-                <p className="pn-label">Antes de publicar</p>
-                {summary.todo.length === 0
-                  ? <p className="pn-note">No te falta nada de lo que Weda puede verificar. Los detalles de estilo (fotos, galería, mensaje) son opcionales.</p>
-                  : <ul className="pn-plan-items is-plain pn-todo">{summary.todo.map(t => <li key={t.text}><span>{t.text}</span><Link to={t.to as never} {...(t.search ? { search: t.search as never } : {})} className="pn-link" onClick={close}>{t.cta}</Link></li>)}</ul>}
-                {summary.todo.length > 0 && <p className="pn-hint">Son recomendaciones: hoy ninguna impide publicar y podés resolverlas cuando quieras.</p>}
-              </div>
-            )}
-            <p className="pn-note" role="status"><strong>La publicación y el pago todavía no están conectados.</strong> Hoy no se cobra ni se publica nada en Internet: el sitio sigue viéndose solo en este navegador.</p>
-            <p className="pn-muted">{state.planId === picked ? `Tu sitio ya se muestra con el plan ${plan?.name}.` : state.planId ? `Tu sitio se muestra con el plan ${planById(state.planId)?.name}.` : 'Mientras no elijas, ves y probás todas las funciones.'}{' '}
-              {state.planId !== picked && <button type="button" className="pn-link" onClick={applyPlan}>Ver mi sitio con este plan</button>}
-              {state.planId && <>{state.planId !== picked && ' · '}<button type="button" className="pn-link" onClick={backToTrial}>Volver a probar todo</button></>}</p>
-            <div className="pn-actions is-end">
-              <button type="button" className="pn-btn is-ghost" onClick={() => setChosen(false)}>Volver a las opciones</button>
-              <button type="button" className="pn-btn" disabled aria-disabled="true">Pagar y publicar (sin conexión)</button>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 const PlansContext = createContext<{ open: () => void }>({ open: () => {} });
 export const usePlans = () => useContext(PlansContext);
 
@@ -282,7 +179,7 @@ export function PlansProvider({ children }: { children: ReactNode }) {
   return (
     <PlansContext.Provider value={value}>
       {children}
-      {open && <PlansDialog open onClose={() => setOpen(false)} />}
+      {open && <PublishDialog open onClose={() => setOpen(false)} />}
     </PlansContext.Provider>
   );
 }

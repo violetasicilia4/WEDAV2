@@ -168,22 +168,72 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByRole('list', { name: 'Mesas y grupos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Familia' }) })).toContainText('Marta Sosa');
   });
 
-  test('Flujo 7: vista previa → plan → resumen de publicación, sin simular pagos', async ({ page }) => {
-    // La cabecera ahora abre la vista previa en un pop-up; esta pantalla completa sigue en su ruta.
+  test('Publicar → «Ver link» de Invitación y de Completo muestran la lista de regalos, porque esos planes la incluyen', async ({ page }) => {
+    await nav(page, 'Regalos').click();
+    await page.getByRole('tab', { name: 'Catálogo' }).click();
+    await page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) }).getByRole('button', { name: 'Agregar' }).click();
+    await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
+    const links: Record<string, string> = {};
+    for (const plan of ['Regalos', 'Invitación', 'Completo']) links[plan] = (await page.getByRole('link', { name: new RegExp(`Ver el link de ${plan}`) }).getAttribute('href'))!;
+    await page.keyboard.press('Escape');
+    for (const plan of ['Invitación', 'Completo']) {
+      await page.goto(links[plan]!, { waitUntil: 'networkidle' });
+      const sec = page.locator('#regalos');
+      await expect(sec.getByRole('heading', { name: 'Lista de regalos' })).toBeVisible();
+      await expect(sec.getByText('Pasaje luna de miel')).toBeVisible();
+      await expect(sec.getByRole('link', { name: 'Ver lista de regalos' })).toHaveAttribute('href', /\/regalos/);
+    }
+    // El plan Regalos es solo la lista: el link abre directamente la página de regalos.
+    await page.goto(links['Regalos']!, { waitUntil: 'networkidle' });
+    await expect(page).toHaveURL(/\/regalos/);
+    await expect(page.getByText('Pasaje luna de miel')).toBeVisible();
+  });
+
+  test('Flujo 7: elegir plan → pagar (simulado) → publicada → mejorar pagando la diferencia → bajar y volver a publicar', async ({ page }) => {
     await page.goto('/panel/vista-previa');
     await expect(page.getByText('Todavía no está publicada')).toBeVisible();
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
-    // Tres cuadrados (Regalos, Invitación, Completo): cada uno tiene su propio «Publicar» y su «Ver link».
     await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
     await page.getByRole('button', { name: 'Publicar Invitación' }).click();
-    await expect(page.getByText('La publicación y el pago todavía no están conectados.')).toBeVisible();
-    const pay = page.getByRole('button', { name: /Pagar y publicar/ });
-    await expect(pay).toBeDisabled();
-    // Mirar el resumen no cambia el sitio ni el plan guardado.
-    expect((await stored(page)).planId).toBeNull();
-    await page.getByRole('button', { name: 'Volver a las opciones' }).click();
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('heading', { name: 'Ver como invitado' })).toBeVisible();
+    // Revisión: aclara que es un pago de prueba y no cambia nada hasta pagar.
+    await expect(page.getByText('No se cobra nada ni se guardan datos de pago.')).toBeVisible();
+    expect((await stored(page)).publication).toBeNull();
+    await page.getByRole('button', { name: 'Volver', exact: true }).click();
+    await page.getByRole('button', { name: 'Publicar Invitación' }).click();
+    await page.getByRole('button', { name: /^Pagar / }).click();
+    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Invitación!' })).toBeVisible({ timeout: 10000 });
+    await expect.poll(async () => ((await stored(page)) as { planId: string }).planId).toBe('invitacion');
+    const first = (await stored(page)) as { planId: string; publication: { live: boolean; planId: string; payments: { kind: string; amount: number }[] } };
+    expect(first.planId).toBe('invitacion');
+    expect(first.publication.live).toBe(true);
+    expect(first.publication.payments).toHaveLength(1);
+    await page.getByRole('button', { name: 'Listo' }).click();
+    // El botón de la cabecera pasa a «Publicada» y abre la gestión.
+    const head = page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true });
+    await head.click();
+    await expect(page.getByRole('heading', { name: 'Tu publicación' })).toBeVisible();
+    // Mejorar a Completo: solo la diferencia.
+    await page.getByRole('button', { name: 'Mejorar a Completo' }).click();
+    await expect(page.getByText('Pagás la diferencia')).toBeVisible();
+    await page.getByRole('button', { name: /^Pagar / }).click();
+    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Completo!' })).toBeVisible({ timeout: 10000 });
+    await expect.poll(async () => ((await stored(page)) as { planId: string }).planId).toBe('completo');
+    const up = (await stored(page)) as { planId: string; publication: { payments: { kind: string; amount: number }[] } };
+    expect(up.planId).toBe('completo');
+    expect(up.publication.payments.map(x => x.kind)).toEqual(['publish', 'upgrade']);
+    await page.getByRole('button', { name: 'Listo' }).click();
+    // Bajar la página (con confirmación) y volver a publicar sin pagar de nuevo.
+    await page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true }).click();
+    await page.getByRole('button', { name: 'Bajar la página' }).click();
+    await page.getByRole('button', { name: 'Sí, bajar la página' }).click();
+    // El guardado local es diferido: se espera a que se escriba.
+    await expect.poll(async () => ((await stored(page)) as { publication: { live: boolean } }).publication.live).toBe(false);
+    await page.getByRole('button', { name: 'Volver a publicar' }).click();
+    await expect.poll(async () => ((await stored(page)) as { publication: { live: boolean } }).publication.live).toBe(true);
+    expect(((await stored(page)) as { publication: { payments: unknown[] } }).publication.payments).toHaveLength(2);
+    // La publicación sobrevive a recargar.
+    await page.reload();
+    await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();
   });
 });
 

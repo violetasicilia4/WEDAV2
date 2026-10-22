@@ -82,7 +82,7 @@ Sin plan elegido (prueba gratuita) `can()` devuelve verdadero para todo. Las res
 |---|---|
 | Crear evento, elegir/cambiar plan, panel, lista de regalos, invitados, grupos, editor, vista previa, persistencia en el navegador | Cuentas y autenticación; publicación del sitio y dirección pública; cobro y precios; enviar correos o mensajes (RSVP, regalos); recibir dinero (el alias es solo texto); subir imágenes a un servidor; que las respuestas de invitados reales lleguen al panel desde otros dispositivos |
 
-El RSVP público y el regalo público **actualizan el estado local**; no avisan a nadie. «Publicar» explica que se habilitará cuando el servicio esté conectado: no simula una contratación.
+El RSVP público y el regalo público **actualizan el estado local**; no avisan a nadie. «Publicar» recorre un pago **simulado** (sin cobro real, sin servicio): guarda `state.publication` localmente (`payments.ts`).
 
 ## 7. Decisiones y pendientes
 

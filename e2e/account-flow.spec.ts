@@ -70,22 +70,4 @@ test.describe('Cuenta simulada · el evento guardado se conserva', () => {
     await page.reload({ waitUntil: 'networkidle' });
     expect(await couple(page)).toEqual({ first: 'Carla', second: 'Dani' });
   });
-
-  test('7. empezar de cero: avisa del evento guardado, pide confirmación y recién ahí lo borra', async ({ page }) => {
-    await onboard(page);
-    await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('status').filter({ hasText: 'Lucía & Violeta' })).toBeVisible();
-    // Cancelar no borra nada.
-    await page.getByRole('button', { name: 'Empezar un evento nuevo' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
-    expect(await couple(page)).toEqual({ first: 'Lucía', second: 'Violeta' });
-    // Confirmar descarta el evento y empieza el onboarding vacío.
-    await page.getByRole('button', { name: 'Empezar un evento nuevo' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Sí, empezar de cero' }).click();
-    await page.waitForURL(/\/crear$/);
-    await expect(page.locator('#on-first')).toHaveValue('');
-    expect(await page.evaluate(() => localStorage.getItem('weda-app'))).toBeNull();
-    await page.reload({ waitUntil: 'networkidle' });
-    await expect(page.locator('#on-first')).toHaveValue('');
-  });
 });

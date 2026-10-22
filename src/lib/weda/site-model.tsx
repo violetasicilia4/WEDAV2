@@ -32,7 +32,7 @@ export type SiteData = {
   dateShort: string | null;
   calendarTitle: string;
   events: WeddingEvent[];
-  blocks: { invitation: boolean; save: boolean; countdown: boolean; day: boolean; rsvp: boolean; dress: boolean; photos: boolean; playlist: boolean; message: boolean };
+  blocks: { invitation: boolean; save: boolean; countdown: boolean; day: boolean; rsvp: boolean; dress: boolean; photos: boolean; playlist: boolean; message: boolean; gifts: boolean };
   rsvp: { deadline: string | null; menus: readonly { id: string; name: string }[] | null };
   dressCode: { title: string; text: string; palette: { name: string; color: string }[] };
   gallery: { photos: { src: string; alt: string; pos?: string | undefined }[]; hashtag: string; handle: string };
@@ -76,7 +76,7 @@ export const demoSiteData: SiteData = {
   dateShort: demoWedding.dateShort,
   calendarTitle: calendar.title,
   events: demoEvents,
-  blocks: { invitation: true, save: true, countdown: true, day: true, rsvp: true, dress: true, photos: true, playlist: true, message: true },
+  blocks: { invitation: true, save: true, countdown: true, day: true, rsvp: true, dress: true, photos: true, playlist: true, message: true, gifts: false },
   rsvp: { deadline: demoDeadline, menus: demoMenus },
   dressCode: demoDress,
   gallery: { photos: [demoGallery[0], demoGallery[2], demoGallery[3]].filter((g): g is (typeof demoGallery)[number] => !!g), hashtag: demoSocial.hashtag, handle: demoSocial.handle },
@@ -139,6 +139,8 @@ export function siteFromState(s: AppState): SiteData {
       photos: hasPhotos,
       playlist: premiumMusic,
       message: can(s.planId, 'message') && s.site.message.enabled,
+      // La lista de regalos que incluye el plan se ve también en la invitación (una muestra y el acceso a la lista completa).
+      gifts: can(s.planId, 'gifts') && gifts.length > 0,
     },
     rsvp: { deadline: s.site.rsvp.deadline && parseDate(s.site.rsvp.deadline) ? dayMonth(s.site.rsvp.deadline) : null, menus: s.site.rsvp.menus ? demoMenus : null },
     dressCode: { title: s.site.dressCode.title.trim(), text: s.site.dressCode.text.trim(), palette: PALETTE },

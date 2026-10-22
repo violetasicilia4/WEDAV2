@@ -8,6 +8,7 @@ import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/log
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
 import { can, type Feature } from '@/lib/weda/plans';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
+import { isLive } from '@/lib/weda/payments';
 import '@/panel.css';
 
 export const Route = createFileRoute('/panel')({
@@ -28,16 +29,17 @@ const NAV: NavItem[] = [
   { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
   { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
 ];
-/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado (por ahora siempre borrador: publicar todavía no está conectado).
+/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado (Borrador o Publicada, según el pago simulado).
    Es un enlace a /panel/perfil (datos del casamiento y cuenta). En escritorio va en el menú; en celular, como avatar arriba (`compact`). */
 function Profile({ compact = false }: { compact?: boolean }) {
   const photo = useAppSelector(s => s.photo);
   const couple = useAppSelector(s => s.couple);
+  const status = useAppSelector(s => isLive(s)) ? 'Publicada' : 'Borrador';
   const img = <img className="pn-profile-img" src={resolvePhoto(photo)} alt="" />;
   if (compact) return (
     <Link to="/panel/perfil" className="pn-top-avatar" activeProps={{ 'aria-current': 'page' }} aria-label={`Perfil de ${coupleLabel(couple)}`}>
       {img}
-      <span className="pn-top-id" aria-hidden="true"><span className="pn-profile-names">{coupleLabel(couple)}</span><span className="pn-profile-meta">Borrador</span></span>
+      <span className="pn-top-id" aria-hidden="true"><span className="pn-profile-names">{coupleLabel(couple)}</span><span className="pn-profile-meta">{status}</span></span>
     </Link>
   );
   return (
@@ -45,7 +47,7 @@ function Profile({ compact = false }: { compact?: boolean }) {
       {img}
       <span className="pn-profile-text">
         <span className="pn-profile-names">{coupleLabel(couple)}</span>
-        <span className="pn-profile-meta"><span>Casamiento</span><i aria-hidden="true" /><span>Borrador</span></span>
+        <span className="pn-profile-meta"><span>Casamiento</span><i aria-hidden="true" /><span>{status}</span></span>
       </span>
     </Link>
   );
@@ -85,6 +87,13 @@ function PreviewDialog({ req, onClose }: { req: PreviewRequest; onClose: () => v
 function PublishButton({ className, children }: { className: string; children: React.ReactNode }) {
   const plans = usePlans();
   return <button type="button" className={className} onClick={plans.open}>{children}</button>;
+}
+
+function PublishLabel() {
+  const state = useAppState();
+  const live = isLive(state);
+  const down = !!state.publication && !live;
+  return <><Heart size={16} aria-hidden="true" /><span>{live ? 'Publicada' : down ? 'Despublicada' : 'Publicar'}</span></>;
 }
 
 /* Ayuda: explica lo que Weda hace hoy, sin prometer lo que todavía no está conectado. */
@@ -147,7 +156,7 @@ function PanelLayout() {
           <Profile compact />
           <div className="pn-top-actions">
             {!onPreview && <button type="button" className="pn-btn is-ghost pn-preview-btn" onClick={() => openPreview(onGifts ? 'gifts' : 'home')}><Eye size={16} aria-hidden="true" /><span>Vista previa</span></button>}
-            <PublishButton className="pn-btn pn-publish-btn"><Heart size={16} aria-hidden="true" /><span>Publicar</span></PublishButton>
+            <PublishButton className="pn-btn pn-publish-btn"><PublishLabel /></PublishButton>
           </div>
         </header>
 

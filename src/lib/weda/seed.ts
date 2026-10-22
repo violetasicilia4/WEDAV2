@@ -24,6 +24,7 @@ export function seedState(): AppState {
     ...e,
     onboarded: true,
     seeded: true,
+    publication: null,
     couple: { first: 'Tomás', second: 'Martina' },
     date: '2027-04-17',
     photo: { kind: 'upload', src: '/pareja-portada-8.webp', name: 'portada.webp' },

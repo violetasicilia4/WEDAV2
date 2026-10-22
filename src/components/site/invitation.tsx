@@ -3,12 +3,13 @@
 // Es la MISMA página para /ejemplo y para el sitio de cada pareja: todo viene de useSite().
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { CalendarPlus, Plus } from 'lucide-react';
+import { CalendarPlus, Gift as GiftIcon, Plus } from 'lucide-react';
 import { ClinkIcon, HallIcon, RingsIcon } from '@/components/hand-icons';
 import { useRsvp } from '@/components/rsvp-dialog';
 import { SiteCover } from './site-cover';
 import { buildIcs, downloadIcs, parseTime } from '@/lib/ics';
 import { getCountdown, type Countdown } from '@/lib/countdown';
+import { formatARS } from '@/lib/demo-wedding';
 import { useSessionState } from '@/lib/demo-session';
 import { monthName, slugify } from '@/lib/weda/logic';
 import { useSite } from '@/lib/weda/site-model';
@@ -112,6 +113,30 @@ function TheDay() {
           </ol>
         </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* Lista de regalos (planes que la incluyen): una muestra de la lista y el acceso a la lista completa. */
+function GiftsPreview() {
+  const { gifts, giftsPath } = useSite();
+  const sample = gifts.slice(0, 4);
+  return (
+    <section className="iv-section iv-gifts" id="regalos" aria-labelledby="iv-gifts-title">
+      <div className="iv-wrap">
+        <h2 id="iv-gifts-title" className="iv-h2">Lista de regalos</h2>
+        <p className="iv-gifts-sub">Si querés sumarte con un regalo, esta es nuestra lista.</p>
+        <ul className="iv-gifts-grid">
+          {sample.map(g => (
+            <li key={g.id}>
+              <span className="iv-gifts-photo" aria-hidden="true">{g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos || g.zoom ? { objectPosition: g.pos, ...(g.zoom ? { transform: `scale(${g.zoom.scale})`, transformOrigin: g.zoom.origin } : {}) } : undefined} /> : <GiftIcon size={28} strokeWidth={1.3} />}</span>
+              <span className="iv-gifts-name">{g.name}</span>
+              <span className="iv-gifts-price">{formatARS(g.amount)}</span>
+            </li>
+          ))}
+        </ul>
+        <Link to={giftsPath as never} className="iv-btn">Ver lista de regalos</Link>
       </div>
     </section>
   );
@@ -246,6 +271,7 @@ export function Invitation() {
     <SiteCover variant="home" next="#nos-casamos" />
     <Welcome />
     {blocks.day && <TheDay />}
+    {blocks.gifts && <GiftsPreview />}
     {blocks.rsvp && <RsvpBand />}
     {blocks.dress && <Practical />}
     {blocks.photos && <Photos />}

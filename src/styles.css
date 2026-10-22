@@ -1407,12 +1407,12 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .products-section .feat-card { width: min(100%, 520px); margin-inline: auto; }
 }
 
-/* «Crear mi lista de regalos» (bloque verde claro): verde Weda con texto blanco. */
-.duo-section .seed-button { background: #959571; color: #fff; }
-.duo-section .seed-button:hover { background: #838361; }
+/* «Crear mi lista de regalos» (bloque verde claro): un tono apenas más oscuro que el fondo, con texto oscuro para que se lea. */
+.duo-section .seed-button { background: #c0bfa4; color: var(--foreground); }
+.duo-section .seed-button:hover { background: #b3b296; }
 
 /* ---------- Testimonios: tres tarjetas a la vista (fila en pantallas grandes, columna en celular). Cita arriba; abajo, foto y nombre de la pareja ---------- */
-.tg { display: grid; gap: clamp(24px, 3vw, 40px); width: 100%; max-width: 1200px; margin-inline: auto; }
+.tg { display: grid; gap: clamp(24px, 3vw, 40px); width: 100%; }
 .tg-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .tg-grid > li { display: flex; }
 .tg-card { margin: 0; width: 100%; display: flex; flex-direction: column; justify-content: space-between; gap: 22px; padding: clamp(20px, 2.2vw, 28px); border-radius: 20px; background: #fff; border: 1px solid rgb(59 60 58 / .12); color: var(--foreground); }
@@ -1427,3 +1427,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .viacap-section { min-height: 0; padding-block: clamp(20px, 2.5vw, 36px); }
 .viacap-section .section-inner { padding-block: clamp(24px, 3vw, 40px); }
 .viacap-section .tm, .viacap-section .tg { gap: clamp(20px, 2.4vw, 32px); }
+
+/* Testimonios: las tres tarjetas ocupan el ancho casi hasta los bordes y son más rectangulares (menos altas). */
+@media (min-width: 901px) {
+  .viacap-section .section-inner { padding-inline: clamp(12px, 1.4vw, 20px); }
+  .tg-card { gap: 16px; padding: 20px 26px; }
+}

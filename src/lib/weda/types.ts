@@ -79,6 +79,11 @@ export type SiteConfig = {
   message: { enabled: boolean; title: string; text: string };
 };
 
+/** Un pago SIMULADO (no hay cobro real): publicar un plan, o pagar la diferencia al mejorar de plan. */
+export type Payment = { kind: 'publish' | 'upgrade'; planId: PlanId; amount: number; /** ISO 8601 */ at: string };
+/** Publicación simulada: el sitio se «publica» solo en este navegador. Se puede dar de baja (`live: false`) sin perder el pago. */
+export type Publication = { planId: PlanId; live: boolean; /** ISO 8601 */ publishedAt: string; /** ISO 8601: un año después de publicar. */ expiresAt: string; payments: Payment[] };
+
 export type AppState = {
   version: 2;
   /** true cuando la pareja terminó el onboarding. */
@@ -99,4 +104,6 @@ export type AppState = {
   site: SiteConfig;
   /** true si los datos vienen del escenario de ejemplo (Tomás y Martina). */
   seeded: boolean;
+  /** Publicación (simulada) con su historial de pagos, o null si todavía no se publicó. */
+  publication: Publication | null;
 };

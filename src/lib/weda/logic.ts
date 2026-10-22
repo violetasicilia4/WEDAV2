@@ -207,6 +207,7 @@ export const emptyState = (): AppState => ({
   groups: [defaultGroup()],
   site: defaultSite(),
   seeded: false,
+  publication: null,
 });
 
 /* ------------------------------------------------------------------ regalos */

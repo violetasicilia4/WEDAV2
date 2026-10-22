@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
-import { ConfirmDialog, Field, FlowClose } from '@/components/panel/ui';
+import { Field, FlowClose } from '@/components/panel/ui';
 import { accountDestination, hasEvent } from '@/lib/weda/account';
 import { isEmail, strongPassword } from '@/lib/weda/logic';
-import { reset, update, useAppState, useHydrated } from '@/lib/weda/store';
+import { update, useAppState, useHydrated } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/crear/cuenta')({
   // «?modo=ingresar» abre la pantalla en «Ingresá a Weda» (el botón «Iniciar sesión» de la landing).
@@ -30,7 +30,7 @@ const AppleMark = () => (
 
 /* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda la clave (la pantalla no lo anuncia). El correo se recuerda solo en este navegador
    (se muestra en el perfil). Registrarse o ingresar, con correo, Google o Apple, NUNCA borra el evento guardado: lo conserva y sigue donde corresponda.
-   Empezar de cero es una decisión explícita, con confirmación. */
+   Sin avisos: la pantalla no menciona el evento guardado. */
 function Account() {
   const navigate = useNavigate();
   const { modo } = Route.useSearch();
@@ -40,15 +40,12 @@ function Account() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
-  const [confirmNew, setConfirmNew] = useState(false);
   const [errors, setErrors] = useState<{ email?: string | undefined; password?: string | undefined }>({});
   const signup = mode === 'signup';
   const saved = hydrated && hasEvent(state);
-  const names = [state.couple.first, state.couple.second].map(n => n.trim()).filter(Boolean).join(' & ');
 
   // Con evento guardado, sigue donde corresponde (panel si ya lo terminó; si no, el onboarding con lo ya cargado). Sin evento, empieza el onboarding.
   const next = () => { void navigate({ to: saved ? accountDestination(state) : '/crear' }); };
-  const startOver = () => { setConfirmNew(false); reset(); void navigate({ to: '/crear' }); };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,12 +66,6 @@ function Account() {
         <p>{signup ? 'Registrate en Weda' : 'Ingresá a Weda'}</p>
       </header>
 
-      {saved && (
-        <p className="pn-note" role="status">
-          Ya tenés un evento guardado en este navegador: <strong>{names}</strong>. Se conserva al {signup ? 'registrarte' : 'ingresar'}.{' '}
-          <button type="button" className="pn-link" onClick={() => setConfirmNew(true)}>Empezar un evento nuevo</button>
-        </p>
-      )}
 
       <form onSubmit={submit} noValidate className="pn-form">
         <Field id="ac-email" label="Correo electrónico" error={errors.email}>
@@ -105,7 +96,6 @@ function Account() {
         {signup ? '¿Ya sos miembro? ' : '¿Todavía no tenés cuenta? '}
         <button type="button" className="pn-link" onClick={() => { setMode(signup ? 'login' : 'signup'); setErrors({}); }}>{signup ? 'Ingresá' : 'Registrate'}</button>
       </p>
-      <ConfirmDialog open={confirmNew} title="¿Empezar un evento nuevo?" text={`Se borra el evento «${names}» y todo lo que cargaste en este navegador. No se puede deshacer.`} confirmLabel="Sí, empezar de cero" onConfirm={startOver} onCancel={() => setConfirmNew(false)} />
     </div>
   );
 }
