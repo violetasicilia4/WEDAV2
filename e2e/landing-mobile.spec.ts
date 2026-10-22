@@ -109,16 +109,21 @@ test.describe('Landing · celular 390 px', () => {
     for (const t of ['Lista de regalos personalizada', 'Confirmación de asistencia (RSVP)', 'Música de la fiesta', 'Galería de fotos con hashtag e Instagram', 'Mensaje final personalizado']) expect(all.join('\n')).toContain(t);
   });
 
-  test('testimonios: el carrusel se desplaza solo en horizontal, marca el activo y no ensancha la página', async ({ page }) => {
+  test('testimonios: tres tarjetas a la vista, una debajo de la otra en celular, con la cita arriba y la foto y el nombre de la pareja abajo', async ({ page }) => {
     await goLanding(page);
-    const track = page.locator('.tm-track');
-    await track.scrollIntoViewIfNeeded();
-    const before = await page.evaluate(() => document.documentElement.scrollWidth);
-    const activeText = () => page.locator('.tm-slide.is-on blockquote').first().innerText();
-    const first = await activeText();
-    await track.focus(); await page.keyboard.press('ArrowRight');
-    await expect.poll(activeText).not.toBe(first);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(before);
+    const cards = page.locator('.tg-card');
+    await cards.first().scrollIntoViewIfNeeded();
+    await expect(cards).toHaveCount(3);
+    await expect(page.locator('.tm, .tm-track, .tm-dots')).toHaveCount(0);                 // sin carrusel ni puntos
+    const boxes = await cards.evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); const q = e.querySelector('blockquote')!.getBoundingClientRect(); const f = e.querySelector('figcaption')!.getBoundingClientRect(); return { top: r.top, left: r.left, right: r.right, quoteTop: q.top, capTop: f.top, name: e.querySelector('figcaption strong')!.textContent, hasImg: !!e.querySelector('figcaption img'), figText: e.querySelector('figcaption')!.textContent, vw: innerWidth }; }));
+    for (const b of boxes) {
+      expect(b.quoteTop).toBeLessThan(b.capTop);                                           // la cita va arriba y la pareja abajo
+      expect(b.hasImg).toBe(true);
+      expect(b.figText).toBe(b.name);                                                      // solo el nombre de la pareja: sin cargo ni rol
+      expect(b.left).toBeGreaterThanOrEqual(0); expect(b.right).toBeLessThanOrEqual(b.vw);
+    }
+    expect(boxes[1]!.top).toBeGreaterThan(boxes[0]!.top + 40);                            // en celular quedan en columna
+    expect(boxes[2]!.top).toBeGreaterThan(boxes[1]!.top + 40);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });
 });

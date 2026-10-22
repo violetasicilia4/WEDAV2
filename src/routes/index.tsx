@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ const features = [
 const giftSteps = [
   { title: 'Creá tu cuenta y armá tu sitio', Icon: UserPlus },
   { title: 'Armá tu lista de regalos', Icon: Gift },
-  { title: 'Sumá tu alias y tu tarjeta', Icon: Wallet },
+  { title: 'Vinculá tu alias', Icon: Wallet },
   { title: 'Seguí los regalos de tus invitados', Icon: BellRing },
 ];
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
@@ -62,61 +62,23 @@ const testimonials = [
   { quote: 'Nos sirvió para organizarnos con los invitados. Cada uno podía confirmar desde la página y nosotros ir viendo las respuestas sin tener que revisar todos los chats.', who: 'Mica & Agus', photo: '/parejas/mica-agus.jpg' },
 ];
 function Testimonials() {
-  const track = useRef<HTMLDivElement>(null);
-  const paused = useRef(false);
-  const [i, setI] = useState(0);
-  const n = testimonials.length;
-  // Tres copias de la lista: al llegar a una punta se salta (sin que se note) a la copia del medio, así el carrusel no tiene fin.
-  const slides = [...testimonials, ...testimonials, ...testimonials];
-  const left = (c: HTMLElement, el: HTMLElement) => c.offsetLeft - (el.clientWidth - c.offsetWidth) / 2;
-  const nearest = (el: HTMLElement) => {
-    const mid = el.scrollLeft + el.clientWidth / 2;
-    let best = 0, dist = Infinity;
-    Array.from(el.children).forEach((c, k) => { const d = Math.abs((c as HTMLElement).offsetLeft + (c as HTMLElement).offsetWidth / 2 - mid); if (d < dist) { dist = d; best = k; } });
-    return best;
-  };
-  const scrollToAbs = (k: number, smooth: boolean) => {
-    const el = track.current; const card = el?.children[k] as HTMLElement | undefined; if (!el || !card) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el.scrollTo({ left: left(card, el), behavior: smooth && !reduce ? 'smooth' : 'auto' });
-  };
-  const step = (d: number) => { const el = track.current; if (el) scrollToAbs(nearest(el) + d, true); };
-  useEffect(() => { scrollToAbs(n, false); }, []);
-  // Al terminar de desplazarse: actualizar el punto activo y volver a la copia del medio si hace falta.
-  const settle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const onScroll = (el: HTMLDivElement) => {
-    setI(nearest(el) % n);
-    clearTimeout(settle.current);
-    settle.current = setTimeout(() => { const k = nearest(el); if (k < n || k >= 2 * n) scrollToAbs((k % n) + n, false); }, 140);
-  };
-  // Avanza solo cada 7 s; se detiene al pasar el mouse, al tocar, con el foco adentro, con la pestaña oculta o con movimiento reducido.
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const t = setInterval(() => { if (!paused.current && !document.hidden) step(1); }, 7000);
-    return () => clearInterval(t);
-  }, []);
-  const hold = (v: boolean) => () => { paused.current = v; };
+  // Tres testimonios a la vista: uno al lado del otro en pantallas grandes y uno debajo del otro en celular (sin carrusel ni scroll).
   return (
-    <div className="tm" role="region" aria-roledescription="carrusel" aria-label="Testimonios" onMouseEnter={hold(true)} onMouseLeave={hold(false)} onTouchStart={hold(true)} onFocus={hold(true)} onBlur={hold(false)}>
+    <div className="tg">
       <div className="tm-head">
         <p className="eyebrow">● Testimonios</p>
         <h2>Lo que dicen las parejas</h2>
       </div>
-      <div className="tm-track" ref={track} onScroll={e => onScroll(e.currentTarget)} tabIndex={0} aria-live="off" aria-label="Testimonios, usá las flechas para cambiar" onKeyDown={e => { if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); } }}>
-        {slides.map((t, k) => (
-          <figure className={`tm-slide${k % n === i ? ' is-on' : ''}`} key={k} role="group" aria-roledescription="diapositiva" aria-label={`${(k % n) + 1} de ${n}`} aria-hidden={k < n || k >= 2 * n ? true : undefined}>
-            <div className="tm-top">
-              <img src={t.photo} alt={k >= n && k < 2 * n ? `${t.who}, pareja` : ''} width={48} height={48} loading="lazy" />
-              <figcaption><strong>{t.who}</strong></figcaption>
-              <span className="tm-mark" aria-hidden="true">“</span>
-            </div>
-            <blockquote>{t.quote}</blockquote>
-          </figure>
+      <ul className="tg-grid" aria-label="Testimonios">
+        {testimonials.slice(0, 3).map(t => (
+          <li key={t.who}>
+            <figure className="tg-card">
+              <blockquote>{t.quote}</blockquote>
+              <figcaption><img src={t.photo} alt="" width={48} height={48} loading="lazy" /><strong>{t.who}</strong></figcaption>
+            </figure>
+          </li>
         ))}
-      </div>
-      <div className="tm-dots" role="group" aria-label="Elegir testimonio">
-        {testimonials.map((_, k) => <button type="button" key={k} className={k === i ? 'on' : ''} aria-label={`Ir al testimonio ${k + 1}`} aria-current={k === i} onClick={() => scrollToAbs(n + k, true)} />)}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -167,7 +129,7 @@ function Index() {
     <main id="main">
     <section className="seed-hero" id="top">
       <video className="hero-image" poster="/hero-poster.jpg" muted loop playsInline preload="none" aria-hidden="true" ref={heroVideo}/>
-      <div className="hero-inner"><div className="hero-copy"><h1>Tu casamiento empieza antes del gran día.</h1><p>Creá el sitio de tu casamiento, recibí regalos y organizá las confirmaciones de tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
+      <div className="hero-inner"><div className="hero-copy"><h1>Tu casamiento empieza antes del gran día.</h1><p>Creá el sitio de tu casamiento, armá tu lista de regalos y organizá las confirmaciones de tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
       <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear/cuenta">Crear mi evento</SeedLink></div></div></div>

@@ -1398,3 +1398,32 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .products-section .feat-cta { margin-top: calc((24px + clamp(72px, 12svh, 140px)) / 2); }
   .products-section { padding-bottom: calc((24px + clamp(72px, 12svh, 140px)) / 2 + var(--curve)); }
 }
+
+/* Landing · «Todo para compartir su casamiento»: «Lista de regalos», «Sitio del casamiento» y «Confirmación de asistencia» (título, texto y demo) quedan centrados en su bloque. */
+.products-section .feat-card { justify-items: center; text-align: center; }
+.products-section .feat-card > h3, .products-section .feat-card > p { text-align: center !important; justify-self: center !important; }
+@media (max-width: 900px) {
+  .products-section .feat-grid { justify-items: center; }
+  .products-section .feat-card { width: min(100%, 520px); margin-inline: auto; }
+}
+
+/* «Crear mi lista de regalos» (bloque verde claro): verde Weda con texto blanco. */
+.duo-section .seed-button { background: #959571; color: #fff; }
+.duo-section .seed-button:hover { background: #838361; }
+
+/* ---------- Testimonios: tres tarjetas a la vista (fila en pantallas grandes, columna en celular). Cita arriba; abajo, foto y nombre de la pareja ---------- */
+.tg { display: grid; gap: clamp(24px, 3vw, 40px); width: 100%; max-width: 1200px; margin-inline: auto; }
+.tg-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.tg-grid > li { display: flex; }
+.tg-card { margin: 0; width: 100%; display: flex; flex-direction: column; justify-content: space-between; gap: 22px; padding: clamp(20px, 2.2vw, 28px); border-radius: 20px; background: #fff; border: 1px solid rgb(59 60 58 / .12); color: var(--foreground); }
+.tg-card blockquote { margin: 0; max-width: none; font-size: clamp(15px, 1.15vw, 17px); line-height: 1.55; font-weight: var(--w-regular, 400); color: var(--foreground); text-wrap: pretty; }
+.tg-card figcaption { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--foreground); }
+.tg-card figcaption img { flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.tg-card figcaption strong { font-weight: var(--w-medium); font-size: 15px; }
+@media (min-width: 641px) and (max-width: 900px) { .tg-grid { max-width: 560px; margin-inline: auto; } }
+@media (min-width: 901px) { .tg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+
+/* Testimonios: la sección se ajusta a su contenido (título + tres tarjetas), sin el aire de pantalla completa de arriba y de abajo. */
+.viacap-section { min-height: 0; padding-block: clamp(20px, 2.5vw, 36px); }
+.viacap-section .section-inner { padding-block: clamp(24px, 3vw, 40px); }
+.viacap-section .tm, .viacap-section .tg { gap: clamp(20px, 2.4vw, 32px); }
