@@ -1584,3 +1584,7 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
   .pn-app .pn-top .pn-preview-btn { width: 44px; padding: 0; justify-content: center; }
   .pn-app .pn-top .pn-preview-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 }
+
+/* Cobro: la etiqueta de estado («Sin configurar», «Próximamente») nunca se parte en dos renglones; el título cede el espacio. */
+.pn-cfg-head h2 { min-width: 0; }
+.pn-cfg-head .pn-chip { flex: none; white-space: nowrap; }
