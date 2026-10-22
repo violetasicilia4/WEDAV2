@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
@@ -35,6 +35,12 @@ const features = [
   { title: 'Lista de regalos', note: 'Creen su lista con regalos y proyectos que quieran compartir con sus invitados.', icon: <GiftDemo /> },
   { title: 'Sitio del casamiento', note: 'Compartan la fecha, los lugares, las fotos y todos los detalles del evento.', icon: <SiteDemo /> },
   { title: 'Confirmación de asistencia', note: 'Reciban las respuestas de sus invitados y organicen quiénes los acompañarán.', icon: <RsvpDemo /> },
+];
+const giftSteps = [
+  { title: 'Creá tu cuenta y armá tu sitio', Icon: UserPlus },
+  { title: 'Armá tu lista de regalos', Icon: Gift },
+  { title: 'Sumá tu alias y tu tarjeta', Icon: Wallet },
+  { title: 'Seguí los regalos de tus invitados', Icon: BellRing },
 ];
 function SeedLogo() { return <a href="/" className="seed-logo" aria-label="Weda, inicio">Weda<i aria-hidden="true" /></a>; }
 // CTA de la landing. Cada uno tiene un destino real (una sección de esta página o una ruta existente);
@@ -163,11 +169,11 @@ function Index() {
       <video className="hero-image" poster="/hero-poster.jpg" muted loop playsInline preload="none" aria-hidden="true" ref={heroVideo}/>
       <div className="hero-inner"><div className="hero-copy"><h1>Tu casamiento empieza antes del gran día.</h1><p>Creá el sitio de tu casamiento, recibí regalos y organizá las confirmaciones de tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
-    <section className="phrase-section"><div className="section-inner"><p className="phrase">Disfrutá el camino al gran día.</p></div></section>
-    <section className="products-section is-green" id="regalos"><div className="section-inner">
+    <section className="products-section" id="products"><div className="section-inner">
       <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear/cuenta">Crear mi evento</SeedLink></div></div></div>
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
+    <section className="duo-section" id="regalos"><div className="duo-split"><div className="duo-photo"><img src="/landing-regalos.webp" alt="Un novio cargando a su novia en un campo al atardecer" loading="lazy" decoding="async"/></div><div className="duo-panel"><p className="eyebrow">Regalos</p><h2>Una lista de regalos hecha para ustedes.</h2><ol className="duo-steps">{giftSteps.map(({ title, Icon }, i) => <li key={title}><span className="duo-step-n" aria-hidden="true">{i + 1}</span><Icon className="duo-step-ico" size={22} strokeWidth={1.4} aria-hidden="true" /><b>{title}</b></li>)}</ol><div className="duo-cta"><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div></div></div></section>
     <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
     <LandingPlans />
     </main>
@@ -177,7 +183,7 @@ function Index() {
         <nav className="footer-nav" aria-label="Secciones de Weda">
           <a href="#regalos">Lista de regalos</a>
           <Link to="/ejemplo">Sitio del casamiento</Link>
-          <a href="#regalos">Confirmación de asistencia</a>
+          <a href="#products">Confirmación de asistencia</a>
           <Link to="/ejemplo">Ver ejemplo</Link>
         </nav>
       </div>

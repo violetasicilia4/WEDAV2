@@ -46,7 +46,7 @@ test.describe('Landing · celular 390 px', () => {
   test('las anclas del pie dejan el título de la sección por debajo de la barra', async ({ page }) => {
     await goLanding(page);
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    for (const [name, id] of [['Lista de regalos', 'regalos'], ['Confirmación de asistencia', 'regalos']] as const) {
+    for (const [name, id] of [['Lista de regalos', 'regalos'], ['Confirmación de asistencia', 'products']] as const) {
       await page.locator('.footer-nav a', { hasText: name }).click();
       await expect.poll(() => page.evaluate(id => Math.round(document.getElementById(id)!.getBoundingClientRect().top), id)).toBeGreaterThanOrEqual(65);
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -59,33 +59,30 @@ test.describe('Landing · celular 390 px', () => {
       const r = (e: Element) => e.getBoundingClientRect();
       const h1 = document.querySelector('.seed-hero h1')!, btn = document.querySelector('.seed-hero .seed-button')!;
       const link = [...document.querySelectorAll('.seed-hero .hero-actions a')].find(a => !a.classList.contains('seed-button'))!;
-      const next = document.querySelector('.phrase-section')!;
+      const next = document.querySelector('.feat-head h2')!;
       const copy = document.querySelector('.hero-copy')!;
-      return { copyCenter: (r(copy).top + r(copy).bottom) / 2, lines: Math.round(r(h1).height / parseFloat(getComputedStyle(h1).lineHeight)), btnH: r(btn).height, btnR: r(btn).right, linkH: r(link).height, linkR: r(link).right, vw: innerWidth, vh: innerHeight, nextTop: r(next).top, nextTop: r(next).top, copy: document.querySelector('.seed-hero p')!.textContent };
+      return { copyCenter: (r(copy).top + r(copy).bottom) / 2, lines: Math.round(r(h1).height / parseFloat(getComputedStyle(h1).lineHeight)), btnH: r(btn).height, btnR: r(btn).right, linkH: r(link).height, linkR: r(link).right, vw: innerWidth, vh: innerHeight, nextTop: r(next).top, nextBottom: r(next).bottom, copy: document.querySelector('.seed-hero p')!.textContent };
     });
     expect(m.lines).toBeLessThanOrEqual(2);                     // el título (copy actual: «Tu casamiento empieza antes del gran día.») ocupa 1 o 2 renglones, nunca se corta
     expect(Math.abs(m.copyCenter - m.vh / 2)).toBeLessThan(12);   // el bloque de texto queda en el centro de la pantalla
     expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.linkH).toBeGreaterThanOrEqual(44);
     expect(m.btnR).toBeLessThanOrEqual(m.vw); expect(m.linkR).toBeLessThanOrEqual(m.vw);
-    expect(m.nextTop).toBeLessThan(m.vh);                    // la sección siguiente (la frase de Weda) asoma en el primer pantallazo…
+    expect(m.nextBottom).toBeLessThanOrEqual(m.vh);          // el título de la sección siguiente se ve…
     expect(m.copy).toContain('regalos');                      // …y los regalos se mencionan desde el primer pantallazo
   });
 
-  test('demos: «Todo para compartir su casamiento» con lista de regalos, sitio y confirmación dentro del bloque verde, y la frase de Weda sobre blanco', async ({ page }) => {
+  test('regalos: copy nuevo, mismo CTA y una foto grande sin deformar', async ({ page }) => {
     await goLanding(page);
-    // Sobre blanco va la frase de Weda; el bloque verde (#regalos) lleva el título, el CTA y las tres demos.
-    await expect(page.locator('.phrase-section .phrase')).toHaveText('Disfrutá el camino al gran día.');
     const sec = page.locator('#regalos');
-    await expect(sec.getByRole('heading', { name: 'Todo para compartir su casamiento.' })).toBeVisible();
-    await expect(sec.getByRole('link', { name: 'Crear mi evento' })).toHaveAttribute('href', '/crear/cuenta');
-    for (const demo of ['Lista de regalos', 'Sitio del casamiento', 'Confirmación de asistencia']) await expect(sec.getByRole('heading', { name: demo })).toBeVisible();
-    // Ya no está el bloque anterior («Una lista de regalos hecha para ustedes.», sus pasos y su foto).
-    await expect(page.getByRole('heading', { name: 'Una lista de regalos hecha para ustedes.' })).toHaveCount(0);
-    await expect(page.locator('.duo-section')).toHaveCount(0);
-    // El bloque verde está después de la frase y su fondo es el verde claro de Weda.
-    const m = await page.evaluate(() => ({ phraseTop: document.querySelector('.phrase-section')!.getBoundingClientRect().top, greenTop: document.querySelector('#regalos')!.getBoundingClientRect().top, bg: getComputedStyle(document.querySelector('#regalos')!).backgroundColor }));
-    expect(m.greenTop).toBeGreaterThan(m.phraseTop);
-    expect(m.bg).toBe('rgb(223, 222, 204)');
+    await expect(sec.getByRole('heading', { name: 'Una lista de regalos hecha para ustedes.' })).toBeVisible();
+    await expect(sec.getByRole('link', { name: 'Crear mi lista de regalos' })).toHaveAttribute('href', '/crear/cuenta');
+    // La sección tiene una sola foto (antes eran tres): cubre su recuadro sin deformarse y entra en el ancho de la pantalla.
+    const imgs = await sec.locator('.duo-photo img').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, fit: getComputedStyle(e).objectFit, vw: innerWidth }; }));
+    expect(imgs).toHaveLength(1);
+    expect(imgs[0]!.fit).toBe('cover');
+    expect(imgs[0]!.w).toBeGreaterThan(imgs[0]!.vw * 0.9);
+    expect(imgs[0]!.w).toBeLessThanOrEqual(imgs[0]!.vw);
+    expect(imgs[0]!.h).toBeGreaterThan(200);
   });
 
   test('planes: precios intactos, «Ver todo lo que incluye» se abre y el CTA queda al pie de cada tarjeta', async ({ page }) => {

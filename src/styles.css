@@ -1398,12 +1398,3 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .products-section .feat-cta { margin-top: calc((24px + clamp(72px, 12svh, 140px)) / 2); }
   .products-section { padding-bottom: calc((24px + clamp(72px, 12svh, 140px)) / 2 + var(--curve)); }
 }
-
-/* ---------- Landing: frase de Weda sobre blanco y demos (lista de regalos, sitio y confirmación) dentro del bloque verde ---------- */
-.phrase-section { background: #fff; color: var(--foreground); text-align: center; padding: clamp(64px, 11svh, 140px) 0 calc(clamp(64px, 11svh, 140px) + var(--curve)); }
-.phrase { margin: 0 auto; max-width: 18ch; font-size: clamp(var(--t-page), 5.2vw, var(--t-display-l)); font-weight: var(--w-medium); line-height: 1.1; letter-spacing: var(--ls-title, -.02em); text-wrap: balance; }
-.products-section.is-green { position: relative; z-index: 1; margin-top: calc(var(--curve) * -1); border-radius: var(--curve) var(--curve) 0 0; background: #dfdecc; padding-bottom: clamp(56px, 9svh, 96px); }
-@media (max-width: 640px) {
-  .products-section.is-green { padding-bottom: 56px; }
-  .products-section.is-green .feat-cta { margin-top: 56px; }
-}
