@@ -1620,3 +1620,6 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
   .pn-dialog.is-pack .rg-mini-photo { border-radius: 16px; }
   .pn-dialog.is-pack .rg-mini-name { display: block; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; -webkit-line-clamp: unset; }
 }
+
+/* Foto del onboarding en celulares muy bajos (p. ej. 320 × 568): la foto se achica para que todo entre en una pantalla sin scroll. */
+@media (max-width: 899px) and (max-height: 600px) { .ob-body.is-big .ob-photo.is-square { width: min(100%, 160px); } }

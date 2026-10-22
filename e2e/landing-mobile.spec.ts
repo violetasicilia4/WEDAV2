@@ -53,7 +53,7 @@ test.describe('Landing · celular 390 px', () => {
     }
   });
 
-  test('hero: texto centrado en la pantalla, título en un renglón, botones táctiles y asoma la sección siguiente', async ({ page }) => {
+  test('hero: texto centrado en la pantalla, título en uno o dos renglones, botones táctiles y asoma la sección siguiente', async ({ page }) => {
     await goLanding(page);
     const m = await page.evaluate(() => {
       const r = (e: Element) => e.getBoundingClientRect();
@@ -63,22 +63,26 @@ test.describe('Landing · celular 390 px', () => {
       const copy = document.querySelector('.hero-copy')!;
       return { copyCenter: (r(copy).top + r(copy).bottom) / 2, lines: Math.round(r(h1).height / parseFloat(getComputedStyle(h1).lineHeight)), btnH: r(btn).height, btnR: r(btn).right, linkH: r(link).height, linkR: r(link).right, vw: innerWidth, vh: innerHeight, nextTop: r(next).top, nextBottom: r(next).bottom, copy: document.querySelector('.seed-hero p')!.textContent };
     });
-    expect(m.lines).toBe(1);
+    expect(m.lines).toBeLessThanOrEqual(2);                     // el título (copy actual: «Tu casamiento empieza antes del gran día.») ocupa 1 o 2 renglones, nunca se corta
     expect(Math.abs(m.copyCenter - m.vh / 2)).toBeLessThan(12);   // el bloque de texto queda en el centro de la pantalla
     expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.linkH).toBeGreaterThanOrEqual(44);
     expect(m.btnR).toBeLessThanOrEqual(m.vw); expect(m.linkR).toBeLessThanOrEqual(m.vw);
     expect(m.nextBottom).toBeLessThanOrEqual(m.vh);          // el título de la sección siguiente se ve…
-    expect(m.copy).toContain('lista de regalos');             // …y la lista de regalos está desde el primer pantallazo
+    expect(m.copy).toContain('regalos');                      // …y los regalos se mencionan desde el primer pantallazo
   });
 
-  test('regalos: copy nuevo, mismo CTA y fotos 4:3 sin deformar', async ({ page }) => {
+  test('regalos: copy nuevo, mismo CTA y una foto grande sin deformar', async ({ page }) => {
     await goLanding(page);
     const sec = page.locator('#regalos');
     await expect(sec.getByRole('heading', { name: 'Una lista de regalos hecha para ustedes.' })).toBeVisible();
     await expect(sec.getByRole('link', { name: 'Crear mi lista de regalos' })).toHaveAttribute('href', '/crear/cuenta');
-    const imgs = await sec.locator('.duo-media img').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return { ratio: r.width / r.height, fit: getComputedStyle(e).objectFit }; }));
-    expect(imgs.length).toBeGreaterThanOrEqual(3);
-    for (const i of imgs) { expect(Math.abs(i.ratio - 4 / 3)).toBeLessThan(0.03); expect(i.fit).toBe('cover'); }
+    // La sección tiene una sola foto (antes eran tres): cubre su recuadro sin deformarse y entra en el ancho de la pantalla.
+    const imgs = await sec.locator('.duo-photo img').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, fit: getComputedStyle(e).objectFit, vw: innerWidth }; }));
+    expect(imgs).toHaveLength(1);
+    expect(imgs[0]!.fit).toBe('cover');
+    expect(imgs[0]!.w).toBeGreaterThan(imgs[0]!.vw * 0.9);
+    expect(imgs[0]!.w).toBeLessThanOrEqual(imgs[0]!.vw);
+    expect(imgs[0]!.h).toBeGreaterThan(200);
   });
 
   test('planes: precios intactos, «Ver todo lo que incluye» se abre y el CTA queda al pie de cada tarjeta', async ({ page }) => {
@@ -135,11 +139,11 @@ test.describe('Landing · escritorio no cambia', () => {
   test.use({ viewport: { width: 1440, height: 900 }, isMobile: false, hasTouch: false });
   test('la barra conserva sus dos píldoras y el título del hero su tamaño', async ({ page }) => {
     await goLanding(page);
-    const m = await page.evaluate(() => { const pills = [...document.querySelectorAll('.float-pill')]; return { n: pills.length, radius: getComputedStyle(pills[0]!).borderRadius, h1: getComputedStyle(document.querySelector('.seed-hero h1')!).fontSize, ws: getComputedStyle(document.querySelector('.seed-hero h1')!).whiteSpace, pad: getComputedStyle(document.querySelector('.products-section')!).paddingTop, weight: getComputedStyle(document.querySelector('.feat-head h2')!).fontWeight }; });
+    const m = await page.evaluate(() => { const pills = [...document.querySelectorAll('.float-pill')]; return { n: pills.length, radius: getComputedStyle(pills[0]!).borderRadius, h1: getComputedStyle(document.querySelector('.seed-hero h1')!).fontSize, ws: getComputedStyle(document.querySelector('.seed-hero h1')!).whiteSpace, pad: getComputedStyle(document.querySelector('.products-section')!).paddingTop, weight: getComputedStyle(document.querySelector('.feat-head h2')!).fontWeight, vh: innerHeight }; });
     expect(m.n).toBe(2);
     expect(m.radius).not.toBe('0px');
     expect(m.h1).toBe('64px'); // Display XL (token --t-display-xl)
-    expect(m.pad).toBe('72px');
+    expect(m.pad).toBe(`${Math.min(140, Math.max(72, m.vh * 0.12))}px`); // padding de la sección: clamp(72px, 12svh, 140px)
     expect(m.weight).toBe('500'); // Medium
   });
 });

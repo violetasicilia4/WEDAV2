@@ -12,27 +12,41 @@ export const test = base.extend<{ consoleErrors: string[] }>({
 });
 export { expect };
 
-/** Registro (solo interfaz) + datos del casamiento de Lucía y Violeta, sin fecha, sin foto. Termina en /panel. */
+/** Registro (solo interfaz) + datos del casamiento de Lucía y Violeta, sin fecha, sin lugar y sin foto. Recorre las tres pantallas actuales del onboarding
+ *  (nombres → fecha y lugar → foto) y termina en /panel. Los tests de onboarding recorren la foto de verdad. */
 export async function onboard(page: Page, first = 'Lucía', second = 'Violeta') {
   await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
   await page.fill('#ac-email', 'lucia@example.com');
   await page.fill('#ac-pass', 'Clave1234');
   await page.getByRole('button', { name: 'Registrarme', exact: true }).click();
   await page.waitForURL(/\/crear$/);
+  await fillNamesAndContinue(page, first, second);
+  await skipDateAndPlace(page);
+  await page.waitForURL(/\/crear\/foto/);
+  await page.getByRole('button', { name: 'Omitir por ahora' }).click();
+  await page.waitForURL(/\/panel/);
+}
+/** Paso 1 del onboarding: nombres y «Continuar». Deja la página en /crear/fecha. */
+export async function fillNamesAndContinue(page: Page, first = 'Lucía', second = 'Violeta') {
   await page.fill('#on-first', first);
   await page.fill('#on-second', second);
-  await page.getByRole('switch', { name: 'Todavía no tenemos fecha' }).check();
   await page.getByRole('button', { name: 'Continuar' }).click();
-  // Paso de la foto: acá se omite; los tests de onboarding lo recorren con foto.
+  await page.waitForURL(/\/crear\/fecha/);
+}
+/** Paso 2 (fecha y lugar): ambos son opcionales, se marcan «Todavía no» y se continúa. Deja la página en /crear/foto. */
+export async function skipDateAndPlace(page: Page) {
+  await page.getByRole('switch', { name: 'Todavía no tenemos fecha' }).check();
+  await page.getByRole('switch', { name: 'Todavía no tenemos lugar' }).check();
+  await page.getByRole('button', { name: 'Continuar' }).click();
   await page.waitForURL(/\/crear\/foto/);
-  await page.getByRole('button', { name: 'Ahora no, la subo después' }).click();
-  await page.waitForURL(/\/panel/);
 }
 
 export const nav = (page: Page, name: string) => page.getByRole('navigation', { name: 'Secciones del panel' }).getByRole('link', { name });
 export const stored = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('weda-app') ?? '{}'));
-/** Texto de la página pública que muestra el iframe de la vista previa (puede estar en mayúsculas por estilo). */
-export const previewText = (page: Page) => page.frameLocator('iframe').locator('body').innerText();
+/** El iframe de la vista previa (el pop-up «Vista previa»). En «Tu página» hay además la ventana en vivo (`.lc-frame`), por eso no alcanza con `iframe`. */
+export const previewFrame = (page: Page) => page.getByRole('dialog').frameLocator('iframe');
+/** Texto de la página pública que muestra la vista previa (puede estar en mayúsculas por estilo). */
+export const previewText = (page: Page) => previewFrame(page).locator('body').innerText();
 
 /** PNG de 1×1 px: alcanza para probar la carga de una foto. */
 export const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');

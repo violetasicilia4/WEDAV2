@@ -1,42 +1,44 @@
-import { closePreview, expect, nav, onboard, openPreview, previewText, stored, test } from './helpers';
+import { closePreview, expect, nav, onboard, openPreview, previewFrame, previewText, stored, test } from './helpers';
 
 test.describe('Recorridos del panel en celular (390 px)', () => {
   test.beforeEach(async ({ page }) => { await onboard(page); });
 
-  test('Flujo 1: Inicio → Regalos → selección → revisión, sin perder nada', async ({ page }) => {
+  test('Flujo 1: Inicio → Regalos → catálogo → pack → revisión, sin perder nada', async ({ page }) => {
     // Inicio: una sola acción principal que lleva a elegir los primeros regalos.
-    await page.getByRole('link', { name: /Elegir regalos/ }).click();
+    await page.getByRole('link', { name: 'Elegir regalos' }).click();
     await expect(page).toHaveURL(/\/panel\/regalos/);
 
     // Las cuatro solapas entran en el ancho de la pantalla (sin scroll lateral).
-    const edges = await page.$$eval('.pn-tabs button', bs => bs.map(b => b.getBoundingClientRect().right));
-    expect(edges).toHaveLength(4);
-    for (const e of edges) expect(e).toBeLessThanOrEqual(390);
+    const tabs = page.getByRole('tablist', { name: 'Lista de regalos' }).getByRole('tab');
+    await expect(tabs).toHaveCount(4);
+    for (const box of await tabs.evaluateAll(els => els.map(e => e.getBoundingClientRect().right))) expect(box).toBeLessThanOrEqual(390);
 
-    await page.getByRole('button', { name: /Luna de miel, 8 regalos/ }).click();
-    await page.getByRole('button', { name: /8 regalos elegidos/ }).click();
-    // El aviso «Deshacer» no tapa los botones del diálogo: el clic llega a «Revisar mi lista».
-    await page.getByRole('button', { name: 'Revisar mi lista' }).click();
-    await expect(page.getByRole('tab', { name: /Mis regalos/ })).toHaveAttribute('aria-selected', 'true');
+    // Catálogo → pack «Luna de miel»: se agregan sus 8 regalos y el aviso ofrece «Deshacer».
+    await page.getByRole('tab', { name: 'Catálogo' }).click();
+    const pack = page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) });
+    await pack.getByRole('button', { name: 'Agregar' }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Agregaste 8 regalos.' })).toBeVisible();
+    await expect(pack.getByText('En tu lista')).toBeVisible();
 
-    const cards = page.getByRole('list', { name: 'Regalos de tu lista' }).getByRole('listitem');
+    await page.getByRole('tab', { name: /Mis regalos/ }).click();
+    const cards = page.getByRole('list', { name: /Regalos de tu lista/ }).getByRole('listitem');
     await expect(cards).toHaveCount(8);
-    await expect(page.getByText('Pasaje luna de miel')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pasaje luna de miel' })).toBeVisible();
 
-    // Quitar uno actualiza la lista y el resumen al instante; «Deshacer» lo devuelve.
+    // Quitar uno actualiza la lista al instante; «Deshacer» lo devuelve.
     await page.getByRole('button', { name: 'Quitar Pasaje luna de miel' }).click();
     await expect(cards).toHaveCount(7);
-    await expect(page.getByRole('status').filter({ hasText: /7 regalos ·/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Mis regalos (7)' })).toBeVisible();
     await page.getByRole('button', { name: 'Deshacer' }).click();
     await expect(cards).toHaveCount(8);
     await page.getByRole('button', { name: 'Quitar Pasaje luna de miel' }).click();
     await expect(cards).toHaveCount(7);
 
-    // La representación visual integrada usa los datos reales: la página de regalos se abre en la misma pantalla.
-    await page.getByRole('button', { name: 'Ver cómo la ven tus invitados' }).click();
-    await expect(page.getByRole('button', { name: 'Ocultar la página de regalos' })).toBeVisible();
+    // La vista previa desde Regalos abre la página de regalos real, con los datos actuales.
+    await openPreview(page);
     await expect.poll(() => previewText(page)).toContain('Noche en hotel boutique');
     expect(await previewText(page)).not.toContain('Pasaje luna de miel');
+    await closePreview(page);
 
     await page.reload({ waitUntil: 'networkidle' });
     expect((await stored(page)).gifts.items).toHaveLength(7);
@@ -44,22 +46,30 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 2: Regalos → cobro (opcional) → volver a la lista → continuar sin alias', async ({ page }) => {
     await nav(page, 'Regalos').click();
-    await page.getByRole('button', { name: /Hogar, 8 regalos/ }).click();
-    await page.getByRole('tab', { name: /Aportes/ }).click();
-    await expect(page.getByText('No es obligatorio para seguir armando tu casamiento')).toBeVisible();
-    await expect(page.getByText('Estado: sin configurar. Podés dejarlo para después.')).toBeVisible();
+    await page.getByRole('tab', { name: 'Catálogo' }).click();
+    await page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Hogar', exact: true }) }).getByRole('button', { name: 'Agregar' }).click();
+    await page.getByRole('tab', { name: /Mis regalos/ }).click();
+    // Falta el alias, pero no bloquea: el aviso lo explica y se puede seguir.
+    await expect(page.getByRole('status').filter({ hasText: 'Falta un paso para recibir aportes' })).toBeVisible();
+    await page.getByRole('tab', { name: /Cobro/ }).click();
+    await expect(page.getByRole('region', { name: 'Transferencia bancaria' }).getByText('Sin configurar')).toBeVisible();
 
     // Se puede seguir sin completar el cobro.
     await nav(page, 'Tu página').click();
     await expect(page.getByRole('heading', { name: 'Tu página' })).toBeVisible();
     await nav(page, 'Regalos').click();
 
-    await page.getByRole('tab', { name: /Aportes/ }).click();
-    await page.getByLabel('Tu alias bancario').fill('lucia.violeta');
-    await expect(page.getByText('Estado: configurado.')).toBeVisible();
-    await expect(page.locator('.pn-alias-card code')).toHaveText('lucia.violeta');
+    // El alias se guarda mientras se escribe (sin botón «Guardar»).
+    await page.getByRole('tab', { name: /Cobro/ }).click();
+    await page.getByRole('region', { name: 'Transferencia bancaria' }).getByRole('button', { name: 'Configurar' }).click();
+    await page.getByRole('dialog').getByLabel('Alias').fill('lucia.violeta');
+    await page.getByRole('dialog').getByRole('button', { name: 'Listo' }).click();
+    await expect(page.getByRole('region', { name: 'Transferencia bancaria' }).getByText('Configurado')).toBeVisible();
     await page.getByRole('tab', { name: /Mis regalos/ }).click();
-    await expect(page.getByRole('list', { name: 'Regalos de tu lista' }).getByRole('listitem')).toHaveCount(8);
+    await expect(page.getByRole('list', { name: /Regalos de tu lista/ }).getByRole('listitem')).toHaveCount(8);
+    await expect(page.getByText('Falta un paso para recibir aportes')).toHaveCount(0);
+    await expect.poll(async () => (await stored(page)).gifts.alias).toBe('lucia.violeta');   // el guardado local es diferido
+    await page.reload({ waitUntil: 'networkidle' });
     expect((await stored(page)).gifts.alias).toBe('lucia.violeta');
   });
 
@@ -90,7 +100,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await nav(page, 'Tu página').click();
     await page.locator('#sec-rsvp').click();
     const toggle = page.getByRole('checkbox', { name: 'Mostrar' });
-    const inPreview = async () => { await openPreview(page); await page.frameLocator('iframe').locator('.iv-cover-img').waitFor(); const n = await page.frameLocator('iframe').locator('#confirmar').count(); await closePreview(page); return n; };
+    const inPreview = async () => { await openPreview(page); await previewFrame(page).locator('.iv-cover-img').waitFor(); const n = await previewFrame(page).locator('#confirmar').count(); await closePreview(page); return n; };
     await expect.poll(inPreview).toBe(1);
     await toggle.uncheck();
     await expect(page.locator('.pn-spanel .pn-sec-status')).toContainText('Oculta');
@@ -107,7 +117,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByRole('button', { name: 'Agregar', exact: true }).click();
     await expect(page.getByRole('status').filter({ hasText: /^\s*1 de 1 invitado/ })).toBeVisible();
 
-    await page.getByRole('button', { name: /Importar desde Excel/ }).click();
+    await page.getByRole('button', { name: 'Importar', exact: true }).click();
     const csv = 'Nombre,Apellido,Asistencia,Restricción alimentaria\nAna,Pérez,Pendiente,\nBeto,Sosa,Confirmado,\nCarla,,Pendiente,\nDiego,Luna,Quizás,\n';
     await page.setInputFiles('input[type=file]', { name: 'invitados.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
     const result = page.locator('.pn-import-result');
@@ -118,7 +128,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     // Nada cambió hasta confirmar.
     expect((await stored(page)).guests).toHaveLength(1);
     await page.getByRole('button', { name: 'Importar 1' }).click();
-    expect((await stored(page)).guests).toHaveLength(2);
+    await expect.poll(async () => (await stored(page)).guests).toHaveLength(2);
 
     // Un «Deshacer» pendiente no sobrevive a un cambio de pantalla: no puede pisar cambios posteriores.
     await expect(page.getByRole('button', { name: 'Deshacer' })).toBeVisible();
@@ -126,7 +136,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByRole('button', { name: 'Deshacer' })).toHaveCount(0);
 
     await nav(page, 'Invitados').click();
-    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Exportar a Excel' }).click()]);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Exportar', exact: true }).click()]);
     expect(download.suggestedFilename()).toBe('invitados-weda.xlsx');
   });
 
@@ -136,24 +146,26 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
     await page.getByLabel('Apellido').fill('Sosa');
     await page.getByRole('button', { name: 'Agregar', exact: true }).click();
-    await page.getByRole('button', { name: /Mesas y grupos/ }).click();
-    await page.getByLabel('Nuevo grupo o mesa').fill('Mesa 1');
-    await page.getByRole('button', { name: 'Crear' }).click();
+    // Sin crear nada, ya hay una mesa de ejemplo («Mesa 1»): usar mesas no es obligatorio. Se crea otra desde el diálogo.
+    await page.getByRole('button', { name: /^Mesas y grupos/ }).click();
     await expect(page.getByRole('heading', { name: 'Mesa 1' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sin grupo' })).toBeVisible();
-    // Asignar desde la lista de invitados.
-    await page.getByRole('button', { name: /^Invitados/ }).click();
-    // En el celular la fila es compacta: el grupo se cambia desde la hoja de edición.
+    await page.getByRole('button', { name: 'Crear mesa' }).click();
+    await page.getByRole('dialog').getByLabel('Nombre').fill('Familia');
+    await page.getByRole('dialog').getByRole('button', { name: 'Crear', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Familia' })).toBeVisible();
+    // Asignar desde la lista de invitados: en el celular la fila es compacta y el grupo se cambia desde la hoja de edición.
+    await page.getByRole('button', { name: /^Lista de invitados/ }).click();
     await page.getByRole('button', { name: 'Editar a Marta Sosa' }).click();
-    await page.getByLabel('Grupo o mesa').selectOption({ label: 'Mesa 1' });
+    await page.getByRole('dialog').getByLabel('Grupo o mesa').selectOption({ label: 'Familia' });
     await page.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByRole('button', { name: 'Editar a Marta Sosa' })).toContainText('Mesa 1');
+    await expect(page.getByRole('button', { name: 'Editar a Marta Sosa' })).toContainText('Familia');
+    await expect.poll(async () => (await stored(page)).guests[0].groupId).not.toBeNull();   // el guardado local es diferido
     const state = await stored(page);
-    expect(state.groups.map((g: { name: string }) => g.name)).toEqual(['Mesa 1']);
-    expect(state.guests[0].groupId).toBe(state.groups[0].id);
-    await page.getByRole('button', { name: /Mesas y grupos/ }).click();
-    await expect(page.getByRole('heading', { name: 'Mesa 1' })).toBeVisible();
-    await expect(page.locator('.pn-group', { has: page.getByRole('heading', { name: 'Mesa 1' }) })).toContainText('Marta Sosa');
+    expect(state.groups.map((g: { name: string }) => g.name)).toEqual(['Mesa 1', 'Familia']);
+    expect(state.guests[0].groupId).toBe(state.groups[1].id);
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: /^Mesas y grupos/ }).click();
+    await expect(page.getByRole('list', { name: 'Mesas y grupos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Familia' }) })).toContainText('Marta Sosa');
   });
 
   test('Flujo 7: vista previa → plan → resumen de publicación, sin simular pagos', async ({ page }) => {

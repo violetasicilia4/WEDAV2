@@ -7,6 +7,7 @@ import {
 import { SETS } from '@/lib/weda/catalog';
 import { can, formatPrice, PLANS, type Feature } from '@/lib/weda/plans';
 import { parseStored, sanitize, STORAGE_VERSION } from '@/lib/weda/store';
+import { accountDestination, hasEvent } from '@/lib/weda/account';
 import { seedState } from '@/lib/weda/seed';
 import { siteFromState } from '@/lib/weda/site-model';
 
@@ -480,5 +481,23 @@ describe('qué se publica con cada plan (publishedPagesText)', () => {
     expect(publishedPagesText('invitacion')).not.toContain('música');
     expect(publishedPagesText('completo')).toContain('sitio completo');
     expect(publishedPagesText('completo')).toContain('música');
+  });
+});
+
+describe('cuenta simulada: evento guardado y destino', () => {
+  const vacio = () => emptyState();
+  it('sin nombres ni onboarding terminado no hay evento guardado', () => {
+    expect(hasEvent(vacio())).toBe(false);
+    expect(hasEvent({ ...vacio(), couple: { first: '  ', second: '' } })).toBe(false);
+  });
+  it('hay evento guardado con el onboarding terminado o con al menos un nombre cargado', () => {
+    expect(hasEvent({ ...vacio(), onboarded: true })).toBe(true);
+    expect(hasEvent({ ...vacio(), couple: { first: 'Lucía', second: '' } })).toBe(true);
+    expect(hasEvent({ ...vacio(), couple: { first: '', second: 'Violeta' } })).toBe(true);
+  });
+  it('con el onboarding terminado se sigue al panel; si no, al onboarding (que conserva lo cargado)', () => {
+    expect(accountDestination({ ...vacio(), onboarded: true })).toBe('/panel');
+    expect(accountDestination({ ...vacio(), couple: { first: 'Lucía', second: 'Violeta' } })).toBe('/crear');
+    expect(accountDestination(vacio())).toBe('/crear');
   });
 });

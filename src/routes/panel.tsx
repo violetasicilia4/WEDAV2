@@ -63,7 +63,8 @@ function PreviewDialog({ req, onClose }: { req: PreviewRequest; onClose: () => v
   const path = first === 'gifts' ? `${sitePath(s)}/regalos` : sitePath(s);
   return (
     <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent className={`pn-dialog is-pv is-${device}`}>
+      {/* El foco entra al diálogo y no al iframe de la página: así Escape lo cierra y el teclado no queda atrapado dentro de la página embebida. */}
+      <DialogContent className={`pn-dialog is-pv is-${device}`} onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }}>
         <DialogTitle>Vista previa</DialogTitle>
         <DialogDescription>Así recibe tu casamiento un invitado, con tus datos. Todavía no está publicada.</DialogDescription>
         {wide && (

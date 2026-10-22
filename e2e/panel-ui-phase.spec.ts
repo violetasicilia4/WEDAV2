@@ -1,4 +1,4 @@
-import { closePreview, expect, onboard, openPreview, stored, test } from './helpers';
+import { closePreview, expect, onboard, openPreview, previewFrame, stored, test } from './helpers';
 
 const WIDTHS = [320, 360, 390, 430];
 
@@ -7,32 +7,61 @@ for (const w of WIDTHS) {
     test.use({ viewport: { width: w, height: 844 } });
     test.beforeEach(async ({ page }) => { await onboard(page); });
 
-    test('Regalos: la barra de selección no tapa el final de «Elegir» y no hay scroll lateral', async ({ page }) => {
+    test('Regalos: el catálogo no tiene scroll lateral, el botón «En tu lista» y los botones de cada pack entran en su tarjeta', async ({ page }) => {
       await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
-      await page.getByRole('button', { name: /Luna de miel, 8 regalos/ }).click();
-      await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
-      await page.waitForTimeout(300);
-      const bar = await page.locator('.pn-selbar').boundingBox();
-      const last = await page.locator('.pn-status-line').boundingBox();
-      expect(last!.y + last!.height, `fin del contenido ${JSON.stringify(last)} vs barra ${JSON.stringify(bar)}`).toBeLessThanOrEqual(bar!.y);
-      // La barra conserva cantidad y monto sin cortarse.
-      const txt = page.locator('.pn-selbar-text');
-      await expect(txt).toContainText('8 regalos elegidos · $');
-      expect(await txt.evaluate(e => e.scrollWidth <= e.clientWidth)).toBe(true);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
+      // La vista previa carga los estilos de la página pública: el panel no debe romperse después de abrirla (antes, «En tu lista» se descolocaba).
+      await openPreview(page);
+      await closePreview(page);
+      await page.getByRole('tab', { name: 'Catálogo' }).click();
+      const pack = page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) });
+      await pack.getByRole('button', { name: 'Agregar' }).click();
+      await expect(page.getByRole('status').filter({ hasText: 'Agregaste 8 regalos.' })).toBeVisible();
+      const chip = pack.getByText('En tu lista');
+      await expect(chip).toBeVisible();
+      const m = await pack.evaluate(card => {
+        const r = (e: Element) => e.getBoundingClientRect();
+        const c = r(card), chipEl = [...card.querySelectorAll('.rg-pack-chip')][0]!, cover = card.querySelector('.rg-pack-cover')!;
+        return { chipH: r(chipEl).height, chipTop: r(chipEl).top - r(cover).top, chipLeft: r(chipEl).left - r(cover).left,
+          buttonsInside: [...card.querySelectorAll('.rg-pack-actions .pn-btn')].every(b => r(b).right <= c.right + 0.5 && r(b).left >= c.left - 0.5), sw: document.documentElement.scrollWidth - innerWidth };
+      });
+      expect(m.chipH).toBeLessThan(40);                    // una sola línea (no ícono arriba y texto abajo)
+      expect(m.chipTop).toBeLessThan(20);                  // arriba a la izquierda de la portada del pack, no sobre el título
+      expect(m.chipLeft).toBeLessThan(20);
+      expect(m.buttonsInside).toBe(true);                  // «Ver qué incluye» y «Quitar pack» nunca se recortan
+      expect(m.sw).toBeLessThanOrEqual(0);
     });
 
-    test('Regalos: seleccionado se distingue con tilde y «Mi lista» deja editar y quitar', async ({ page }) => {
+    test('Regalos: «Ver qué incluye» abre una hoja a pantalla casi completa, con nombres en un renglón y scroll propio', async ({ page }) => {
       await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
-      await page.getByRole('button', { name: /Luna de miel, 8 regalos/ }).click();
-      await expect(page.locator('.pn-settile.is-on .pn-gcheck')).toBeVisible();
-      await expect(page.locator('.pn-gcard.is-in .pn-gcheck').first()).toBeVisible();
+      await page.getByRole('tab', { name: 'Catálogo' }).click();
+      await page.getByRole('button', { name: 'Ver qué incluye el pack Luna de miel' }).click();
+      const dlg = page.getByRole('dialog');
+      await expect(dlg.getByRole('heading', { name: 'Luna de miel' })).toBeVisible();
+      const m = await dlg.evaluate(d => {
+        const r = d.getBoundingClientRect(), list = d.querySelector('.rg-pack-minis')!;
+        return { x: r.x, bottom: r.bottom, h: r.height, vh: innerHeight, oneLine: [...d.querySelectorAll('.rg-mini-name')].every(n => n.scrollHeight <= n.clientHeight + 1), scrolls: list.scrollHeight >= list.clientHeight };
+      });
+      expect(m.x).toBe(0);
+      expect(Math.round(m.bottom)).toBe(m.vh);
+      expect(m.h).toBeGreaterThan(m.vh * 0.8);
+      expect(m.oneLine).toBe(true);
+      expect(m.scrolls).toBe(true);
+      await expect(dlg.getByRole('button', { name: 'Agregar pack' })).toBeInViewport();
+    });
+
+    test('Regalos: un pack agregado se marca «En tu lista» y «Mis regalos» deja editar y quitar', async ({ page }) => {
+      await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
+      await page.getByRole('tab', { name: 'Catálogo' }).click();
+      const pack = page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) });
+      await pack.getByRole('button', { name: 'Agregar' }).click();
+      await expect(pack.getByText('En tu lista')).toBeVisible();
+      await expect(pack.getByRole('button', { name: 'Quitar pack' })).toBeVisible();
       await page.getByRole('tab', { name: /Mis regalos/ }).click();
       await page.getByRole('button', { name: 'Editar Pasaje luna de miel' }).click();
       await expect(page.getByRole('dialog')).toBeVisible();
       await page.keyboard.press('Escape');
       await page.getByRole('button', { name: 'Quitar Pasaje luna de miel' }).click();
-      expect((await stored(page)).gifts.items).toHaveLength(7);
+      await expect.poll(async () => (await stored(page)).gifts.items.length).toBe(7);
     });
   });
 }
@@ -46,10 +75,10 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
     await page.getByLabel('Apellido').fill('Sosa');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
-    const row = page.locator('.pn-table tbody tr').first();
+    const row = page.getByRole('list', { name: 'Lista de invitados' }).getByRole('listitem').first();
     const h = (await row.boundingBox())!.height;
-    expect(h).toBeGreaterThanOrEqual(60);
-    expect(h).toBeLessThanOrEqual(76);
+    expect(h).toBeGreaterThanOrEqual(44);                    // objetivo táctil
+    expect(h).toBeLessThanOrEqual(140);                      // tarjeta del invitado: nombre, respuesta, grupo, menú y origen sin ocupar media pantalla
     await expect(page.getByRole('button', { name: 'Editar a Marta Sosa' })).toContainText('Pendiente');
     await page.getByRole('button', { name: 'Editar a Marta Sosa' }).click();
     const sheet = page.locator('.pn-dialog.is-sheet');
@@ -59,24 +88,31 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     await page.getByRole('dialog').getByLabel('Asistencia').selectOption({ label: 'Confirmado' });
     await page.getByRole('button', { name: 'Guardar' }).click();
     await expect(page.getByRole('button', { name: 'Editar a Marta Sosa' })).toContainText('Confirmado');
-    expect((await stored(page)).guests[0].status).toBe('confirmed');
+    await expect.poll(async () => (await stored(page)).guests[0].status).toBe('confirmed');
   });
 
-  test('Mesas: conteos por mesa, quién queda sin lugar y asignación desde el selector compacto', async ({ page }) => {
+  test('Mesas: resumen de lugares, quién queda sin mesa y asignación desde el selector de cada mesa', async ({ page }) => {
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
     await page.getByLabel('Apellido').fill('Paz');
     await page.getByRole('button', { name: 'Agregar' }).last().click();
     await page.getByRole('button', { name: /^Mesas y grupos/ }).click();
-    await page.getByLabel('Nuevo grupo o mesa').fill('Mesa 1');
-    await page.getByRole('button', { name: 'Crear' }).click();
-    const nav = page.getByRole('navigation', { name: 'Ir a una mesa o grupo' });
-    await expect(nav.getByRole('link', { name: /Sin lugar 1/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /Mesa 1 0/ })).toBeVisible();
-    await page.getByLabel('Mover a Ana Paz').selectOption({ label: 'Mesa 1' });
-    await expect(nav.getByRole('link', { name: /Mesa 1 1/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /Sin lugar 0/ })).toBeVisible();
+    // «Mesa 1» ya viene de ejemplo: usar mesas no obliga a crear nada.
+    const summary = page.getByRole('list', { name: 'Resumen de mesas' });
+    const mesa = page.getByRole('list', { name: 'Mesas y grupos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Mesa 1' }) });
+    await expect(summary.getByRole('listitem').filter({ hasText: 'Sin mesa asignada' })).toContainText('1');
+    await expect(summary.getByRole('listitem').filter({ hasText: 'Invitados sentados' })).toContainText('0');
+    await expect(mesa).toContainText('Mesa vacía');
+    await mesa.getByLabel('Sentar un invitado en Mesa 1').selectOption({ label: 'Ana Paz' });
+    await expect(mesa).toContainText('Ana Paz');
+    await expect(mesa).toContainText('1 persona');
+    await expect(summary.getByRole('listitem').filter({ hasText: 'Sin mesa asignada' })).toContainText('0');
+    await expect(summary.getByRole('listitem').filter({ hasText: 'Invitados sentados' })).toContainText('1');
+    await expect.poll(async () => (await stored(page)).guests[0].groupId).not.toBeNull();
+    // Sacarla de la mesa vuelve a dejarla sin mesa.
+    await mesa.getByRole('button', { name: 'Sacar a Ana Paz de Mesa 1' }).click();
+    await expect(summary.getByRole('listitem').filter({ hasText: 'Sin mesa asignada' })).toContainText('1');
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
   });
 
@@ -96,11 +132,11 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     const bottomNav = (await page.locator('.pn-side').boundingBox())!;
     expect(field.y + field.height).toBeLessThanOrEqual(bottomNav.y);
     await expect(snav.getByRole('button', { name: /Dress code/ })).toContainText('Completa');
-    expect((await stored(page)).site.dressCode.title).toBe('Elegante sport');
+    await expect.poll(async () => (await stored(page)).site.dressCode.title).toBe('Elegante sport'); // el guardado local es diferido (se vuelca al ocultar o cerrar la pestaña)
     // La ventana (página real) ya muestra el título; la vista previa es la página real en un pop-up y se cierra con Escape.
     await expect(page.frameLocator('.lc-frame').locator('#dresscode')).toContainText('Elegante sport');
     await openPreview(page);
-    await expect.poll(() => page.frameLocator('iframe').locator('#dresscode').count()).toBe(1);
+    await expect.poll(() => previewFrame(page).locator('#dresscode').count()).toBe(1);
     await closePreview(page);
     await expect(page.getByLabel('Título')).toHaveValue('Elegante sport');
   });
@@ -114,15 +150,16 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     expect(b.y + b.height).toBeLessThanOrEqual(640);
   });
 
-  test('Regalos: las categorías son píldoras seleccionables y filtran el catálogo', async ({ page }) => {
+  test('Regalos: un regalo individual del catálogo se agrega y se quita desde su tarjeta (las categorías ya no son un filtro)', async ({ page }) => {
     await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
-    const total = await page.locator('.pn-status-line').innerText();
-    const chip = page.getByRole('group', { name: 'Categoría' }).getByRole('button').nth(1);
-    await chip.click();
-    await expect(chip).toHaveAttribute('aria-pressed', 'true');
-    await expect.poll(() => page.locator('.pn-status-line').innerText()).not.toBe(total);
-    await page.getByRole('group', { name: 'Categoría' }).getByRole('button', { name: 'Todas' }).click();
-    await expect.poll(() => page.locator('.pn-status-line').innerText()).toBe(total);
+    await page.getByRole('tab', { name: 'Catálogo' }).click();
+    await page.getByRole('button', { name: 'Regalos individuales' }).click();
+    await page.getByRole('button', { name: 'Agregar Excursión en barco a tu lista' }).click();
+    await expect.poll(async () => (await stored(page)).gifts.items.map((g: { name: string }) => g.name)).toEqual(['Excursión en barco']);
+    await page.getByRole('tab', { name: /Mis regalos/ }).click();
+    await expect(page.getByRole('heading', { name: 'Excursión en barco' })).toBeVisible();
+    await page.getByRole('button', { name: 'Quitar Excursión en barco' }).click();
+    await expect.poll(async () => (await stored(page)).gifts.items).toHaveLength(0);
   });
 
   test('Invitados: se elimina desde la hoja de edición y se puede deshacer', async ({ page }) => {
@@ -133,9 +170,9 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     await page.getByRole('button', { name: 'Agregar' }).last().click();
     await page.getByRole('button', { name: 'Editar a Lola Mora' }).click();
     await page.getByRole('button', { name: 'Eliminar invitado' }).click();
-    expect((await stored(page)).guests).toHaveLength(0);
+    await expect.poll(async () => (await stored(page)).guests).toHaveLength(0);
     await page.getByRole('button', { name: 'Deshacer' }).click();
-    expect((await stored(page)).guests).toHaveLength(1);
+    await expect.poll(async () => (await stored(page)).guests).toHaveLength(1);
   });
 
   test('Publicar: tres productos con precio y «Ver link», y todos los diálogos son hojas con botones a la vista', async ({ page }) => {
