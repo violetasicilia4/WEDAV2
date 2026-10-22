@@ -1370,3 +1370,15 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .float-left .seed-logo { min-height: 44px; }
 }
 @media (pointer: coarse) { .tm-dots { gap: 0; } .tm-dots button { width: 44px; height: 44px; } }
+
+/* Landing · paleta verde: franja "¿Invitado?" y footer en el verde oscuro; sección de beneficios en el verde claro (texto oscuro) */
+.announcement, .seed-footer { background: #959571; }
+.duo-section { background: #dfdecc; color: var(--foreground); }
+.duo-photo { background: transparent; }
+.duo-steps li { border-top-color: rgb(59 60 58 / .16); }
+.duo-steps li:last-child { border-bottom-color: rgb(59 60 58 / .16); }
+.duo-step-ico { color: rgb(59 60 58 / .8); }
+.duo-step-n { color: rgb(59 60 58 / .55); }
+.duo-panel .duo-cta .seed-link-button { color: var(--foreground); }
+.duo-section .seed-button { background: #fff; }
+.duo-section .seed-button:hover { background: var(--paper); }
