@@ -1377,8 +1377,8 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 /* Inicio: las dos secciones usan las mismas tarjetas; la gestión queda abajo, separada por una línea. */
 .hm-grid .hm-tile { min-height: 96px; }
 /* «Publicar» es la acción principal de toda la pantalla: gris oscuro, aunque el resto de los botones del panel sean claros. */
-.pn-app .pn-top .pn-btn.pn-publish-btn { background: var(--pn-slate-d); color: #fff; border-color: transparent; }
-.pn-app .pn-top .pn-btn.pn-publish-btn:hover:not(:disabled) { background: var(--pn-ink); }
+.pn-app .pn-top .pn-btn.pn-publish-btn { background: #959571; color: #fff; border-color: transparent; }
+.pn-app .pn-top .pn-btn.pn-publish-btn:hover:not(:disabled) { background: #838361; }
 /* Con dos columnas y una cantidad impar de tarjetas, la última ocupa todo el ancho (sin hueco al costado). */
 @media (min-width: 720px) and (max-width: 1099px) { .hm-grid > li:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 

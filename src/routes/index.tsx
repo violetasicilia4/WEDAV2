@@ -179,7 +179,7 @@ function Index() {
     </main>
     <footer className="seed-footer"><div className="section-inner">
       <div className="footer-top">
-        <div><SeedLogo/><p className="footer-mission">Tu gran día empieza acá.</p></div>
+        <div><SeedLogo/><p className="footer-mission">Tu casamiento empieza antes del gran día.</p></div>
         <nav className="footer-nav" aria-label="Secciones de Weda">
           <a href="#regalos">Lista de regalos</a>
           <Link to="/ejemplo">Sitio del casamiento</Link>

@@ -1389,3 +1389,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (max-width: 640px) {
   .products-section { padding-top: 36px; }
 }
+
+/* Franja «¿Invitado?»: texto en blanco sobre el verde claro */
+.announcement { color: #fff; }
