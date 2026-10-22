@@ -392,8 +392,7 @@ function GiftsModule() {
                     <li className="pn-gown">
                       <button type="button" onClick={() => setCreating(true)}>
                         <span className="pn-owndot" aria-hidden="true"><Plus size={28} strokeWidth={1.6} /></span>
-                        <strong>Crear un regalo propio</strong>
-                        <span>Con tu nombre, tu monto y tu imagen</span>
+                        <strong>Crear regalo</strong>
                       </button>
                     </li>
                     {catalog.map(g => <CatalogCard key={g.id} gift={g} inList={hasCatalogGift(s, g.id)} onAdd={() => addOne(g.id)} onRemove={() => rmCatalog(g.id)} />)}

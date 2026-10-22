@@ -34,7 +34,12 @@ function Profile({ compact = false }: { compact?: boolean }) {
   const photo = useAppSelector(s => s.photo);
   const couple = useAppSelector(s => s.couple);
   const img = <img className="pn-profile-img" src={resolvePhoto(photo)} alt="" />;
-  if (compact) return <Link to="/panel/perfil" className="pn-top-avatar" activeProps={{ 'aria-current': 'page' }} aria-label={`Perfil de ${coupleLabel(couple)}`}>{img}</Link>;
+  if (compact) return (
+    <Link to="/panel/perfil" className="pn-top-avatar" activeProps={{ 'aria-current': 'page' }} aria-label={`Perfil de ${coupleLabel(couple)}`}>
+      {img}
+      <span className="pn-top-id" aria-hidden="true"><span className="pn-profile-names">{coupleLabel(couple)}</span><span className="pn-profile-meta">Borrador</span></span>
+    </Link>
+  );
   return (
     <Link to="/panel/perfil" className="pn-profile" activeProps={{ 'aria-current': 'page' }} title="Perfil" aria-label={`Perfil de ${coupleLabel(couple)}`}>
       {img}
@@ -138,10 +143,10 @@ function PanelLayout() {
         <header className="pn-top">
           <Link to="/panel" className="seed-logo" aria-label="Weda, ir al inicio">Weda<i aria-hidden="true" /></Link>
           {/* Vista previa en todas las secciones: abre la página pública en un pop-up. «Regalos» va directo a la lista; el resto, al inicio de la invitación. */}
+          <Profile compact />
           <div className="pn-top-actions">
             {!onPreview && <button type="button" className="pn-btn is-ghost pn-preview-btn" onClick={() => openPreview(onGifts ? 'gifts' : 'home')}><Eye size={16} aria-hidden="true" /><span>Vista previa</span></button>}
             <PublishButton className="pn-btn pn-publish-btn"><Heart size={16} aria-hidden="true" /><span>Publicar</span></PublishButton>
-            <Profile compact />
           </div>
         </header>
 
