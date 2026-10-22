@@ -821,7 +821,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 /* La barra de progreso va por fuera (más ancha); el texto y la foto quedan juntos y centrados en un bloque más angosto. El avance usa el azul de Weda. */
 .pn-flow.is-onboarding .pn-flow-main { width: min(calc(100% - 48px), 1400px); }
 .ob-body { width: min(100%, 1040px); margin-inline: auto; }
-.ob-bar i { background: var(--pn-slate); }
+.ob-bar i { background: #959571; }
 
 .ob-skip { margin-top: 6px; color: var(--pn-ink); }
 
@@ -933,7 +933,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .rg-section-head .pn-muted { margin-top: 4px; font-size: 14.5px; }
 .rg-label { display: block; font-size: 12px; font-weight: var(--w-medium); letter-spacing: .06em; text-transform: uppercase; color: var(--pn-muted); }
 .rg-text { margin: 0; font-size: 14px; line-height: 1.45; color: var(--pn-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.rg-chip { position: absolute; left: 12px; top: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px; background: rgb(255 255 255 / .94); box-shadow: 0 0 0 1px rgb(59 60 58 / .16); color: var(--pn-ink); font-size: 12.5px; font-weight: var(--w-medium); }
+.rg-pack-chip { position: absolute; left: 12px; top: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px; background: rgb(255 255 255 / .94); box-shadow: 0 0 0 1px rgb(59 60 58 / .16); color: var(--pn-ink); font-size: 12.5px; font-weight: var(--w-medium); }
 .rg-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--pn-hair); }
 .rg-foot strong { display: block; margin-top: 2px; font-size: 18px; font-weight: var(--w-semibold); font-variant-numeric: tabular-nums; }
 
@@ -1610,3 +1610,32 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
   .pn-plans-dialog.is-products .pn-prod-actions .pn-btn { min-height: 42px; padding: 0 10px; }
   .pn-plans-dialog.is-products .pn-actions.is-end { margin-top: 0; }
 }
+
+/* «Ver qué incluye» (pack) en celular: la hoja ocupa casi toda la pantalla, el título y los botones quedan fijos y la lista de regalos corre con scroll.
+   Dos columnas: fotos más grandes y cada nombre en un solo renglón. */
+@media (max-width: 560px) {
+  .pn-dialog.is-pack { height: 92dvh; max-height: 92dvh; overflow: hidden; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto; }
+  .pn-dialog.is-pack .rg-pack-minis { max-height: none; min-height: 0; overflow-y: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; padding: 4px 0 12px; }
+  .pn-dialog.is-pack .rg-mini { gap: 8px; }
+  .pn-dialog.is-pack .rg-mini-photo { border-radius: 16px; }
+  .pn-dialog.is-pack .rg-mini-name { display: block; font-size: 15px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; -webkit-line-clamp: unset; }
+}
+
+/* ===== «Prepará tu evento»: checklist del Inicio. Estados reales (nadie marca nada a mano); fila = un solo enlace o botón. ===== */
+.ck { display: grid; gap: 12px; padding: 18px 20px; border: 1px solid var(--pn-hair); border-radius: var(--pn-r-card); background: #fff; }
+.ck-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ck-head h2 { font-size: 18px; line-height: 1.25; }
+.pn-root .ck-count { margin: 0; font-size: 13px; color: var(--pn-muted); }
+.ck-bar { height: 4px; border-radius: 999px; background: rgb(59 60 58 / .1); overflow: hidden; }
+.ck-bar i { display: block; height: 100%; border-radius: inherit; background: #959571; transition: width .35s ease; }
+.ck-list { list-style: none; margin: 0; padding: 0; }
+.ck-list li + li { border-top: 1px solid var(--pn-hair); }
+.ck-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 8px 0; border: 0; background: none; color: var(--pn-ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; border-radius: 8px; }
+.ck-row:focus-visible { outline: 2px solid var(--pn-ink); outline-offset: 2px; }
+.ck-mark { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border: 1.5px solid var(--pn-slate-l); border-radius: 50%; background: #fff; color: #fff; transition: background .2s ease, border-color .2s ease; }
+.ck-label { flex: 1; min-width: 0; font-size: 15px; line-height: 1.35; transition: color .2s ease; }
+.ck-action { flex: none; font-size: 14px; color: var(--pn-slate-d); text-decoration: underline; text-underline-offset: 4px; }
+.ck-row:hover .ck-action { color: var(--pn-ink); }
+.ck-list .is-done .ck-mark { background: #959571; border-color: #959571; }
+.ck-list .is-done .ck-label { color: var(--pn-muted); text-decoration: line-through; }
+@media (prefers-reduced-motion: reduce) { .ck-bar i, .ck-mark, .ck-label { transition: none; } }

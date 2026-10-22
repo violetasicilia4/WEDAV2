@@ -371,7 +371,7 @@ function GiftsModule() {
                   return (
                     <li key={set.id} className={`rg-pack${all ? ' is-on' : ''}`}>
                       <div className="rg-pack-cover" style={cover ? { backgroundImage: `url(${cover})` } : undefined}>
-                        {all && <span className="rg-chip"><Check size={13} strokeWidth={2.5} aria-hidden="true" />En tu lista</span>}
+                        {all && <span className="rg-pack-chip"><Check size={13} strokeWidth={2.5} aria-hidden="true" />En tu lista</span>}
                         <div><small>{gs.length} regalos</small><h3>{set.name}</h3></div>
                       </div>
                       <div className="rg-pack-body">
@@ -526,7 +526,7 @@ function GiftsModule() {
         const toggle = () => { setPackOpen(null); if (all) withUndo(`Quitaste los regalos de «${set.name}».`, () => update(x => removeSetGifts(x, set.giftIds))); else doAddSet(set); };
         return (
           <Dialog open onOpenChange={o => { if (!o) setPackOpen(null); }}>
-            <DialogContent className="pn-dialog">
+            <DialogContent className="pn-dialog is-pack">
               <DialogTitle>{set.name}</DialogTitle>
               <DialogDescription>{set.description}</DialogDescription>
               <p className="rg-label">{gs.length} regalos incluidos</p>

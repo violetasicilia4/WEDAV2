@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Eye, Gift, Globe, LayoutGrid, Lock, Pencil, Users } from 'lucide-react';
+import { Checklist } from '@/components/panel/checklist';
 import { CoupleDialog } from '@/components/panel/couple-form';
 import { ConfirmDialog, CoupleCover } from '@/components/panel/ui';
 import { nextAction } from '@/lib/weda/journey';
@@ -54,6 +55,8 @@ function Home() {
       <CoupleCover eyebrow="Tu casamiento">
         <button type="button" className="pn-btn is-small" onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> Editar datos</button>
       </CoupleCover>
+
+      <Checklist />
 
       <section className="pn-next" aria-labelledby="pn-next-title">
         <p className="pn-label-s">Siguiente paso</p>

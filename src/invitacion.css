@@ -655,3 +655,6 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 .dm-root .iv-day .iv-when-cell + .iv-when-cell { border-left-color: rgb(59 60 58 / .18); }
 .dm-root .iv-day .iv-card-events li + li::before { background: rgb(59 60 58 / .22); }
 .dm-root .iv-day .iv-card :where(a, button):focus-visible { outline-color: var(--iv-ink); }
+
+/* Pie de la invitación («creado con Weda»): verde Weda, el mismo del footer de la landing */
+.dm-root .iv-footer { background: #959571; }
