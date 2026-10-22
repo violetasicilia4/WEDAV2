@@ -28,7 +28,7 @@ const AppleMark = () => (
   </svg>
 );
 
-/* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda la clave (la pantalla lo dice). El correo se recuerda solo en este navegador
+/* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda la clave (la pantalla no lo anuncia). El correo se recuerda solo en este navegador
    (se muestra en el perfil). Registrarse o ingresar, con correo, Google o Apple, NUNCA borra el evento guardado: lo conserva y sigue donde corresponda.
    Empezar de cero es una decisión explícita, con confirmación. */
 function Account() {
@@ -69,7 +69,6 @@ function Account() {
         <p>{signup ? 'Registrate en Weda' : 'Ingresá a Weda'}</p>
       </header>
 
-      <p className="pn-terms">Versión de prueba: no se crea una cuenta real ni se guarda tu clave. Tus datos quedan solo en este navegador.</p>
       {saved && (
         <p className="pn-note" role="status">
           Ya tenés un evento guardado en este navegador: <strong>{names}</strong>. Se conserva al {signup ? 'registrarte' : 'ingresar'}.{' '}

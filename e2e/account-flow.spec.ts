@@ -88,9 +88,4 @@ test.describe('Cuenta simulada · el evento guardado se conserva', () => {
     await page.reload({ waitUntil: 'networkidle' });
     await expect(page.locator('#on-first')).toHaveValue('');
   });
-
-  test('8. los textos aclaran que es una versión de prueba y no una cuenta real', async ({ page }) => {
-    await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
-    await expect(page.getByText('Versión de prueba: no se crea una cuenta real ni se guarda tu clave.')).toBeVisible();
-  });
 });
