@@ -1383,3 +1383,8 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .duo-panel .duo-cta .seed-link-button { color: var(--foreground); }
 .duo-section .seed-button { background: #fff; }
 .duo-section .seed-button:hover { background: var(--paper); }
+
+/* Celular: «Todo para compartir su casamiento.» sube, con menos aire entre el hero y el título */
+@media (max-width: 640px) {
+  .products-section { padding-top: 36px; }
+}
