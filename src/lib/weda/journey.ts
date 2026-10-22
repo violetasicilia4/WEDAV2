@@ -132,33 +132,3 @@ export function nextAction(s: AppState): NextAction {
   if (!si.locked && si.status !== 'done') return { label: 'Terminá de personalizar tu invitación', to: '/panel/sitio', stage: 'sitio', title: 'Terminá tu invitación', text: si.detail, cta: 'Editar invitación' };
   return { label: 'Revisá cómo lo verán tus invitados', to: '/panel/vista-previa', stage: 'publicar', title: 'Revisá cómo lo ven tus invitados', text: 'Mirá la invitación completa antes de compartirla.', cta: 'Ver vista previa' };
 }
-
-/** Checklist «Prepará tu evento» del Inicio. Igual que el resto del recorrido, todo se deriva del AppState real: nadie marca nada a mano.
- *  Las tareas de funciones que el plan elegido no incluye no se muestran (no son pendientes de esa pareja). */
-export type ChecklistId = 'datos' | 'regalos' | 'invitacion' | 'compartir';
-export type ChecklistItem = {
-  id: ChecklistId;
-  label: string;
-  /** Verbo de la acción de la derecha («Completar», «Configurar»…). */
-  action: string;
-  done: boolean;
-  /** A dónde lleva la tarea; si no hay ruta, abre un diálogo (`dialog`). */
-  to?: string;
-  search?: { tab: 'cobro' };
-  dialog?: 'couple' | 'publish';
-};
-
-export function checklist(s: AppState): ChecklistItem[] {
-  const g = giftsStage(s), si = siteStage(s);
-  const items: ChecklistItem[] = [
-    // La fecha se edita en «Editar datos»; el lugar, en los momentos de la página.
-    s.date === null
-      ? { id: 'datos', label: 'Completá los datos de tu evento', action: 'Completar', done: false, dialog: 'couple' }
-      : { id: 'datos', label: 'Completá los datos de tu evento', action: 'Completar', done: s.site.events.some(eventComplete), to: '/panel/sitio' },
-  ];
-  if (!g.locked) items.push({ id: 'regalos', label: 'Armá tu lista de regalos', action: 'Configurar', done: g.status === 'done', to: '/panel/regalos', ...(s.gifts.items.length > 0 && s.gifts.alias.trim() === '' ? { search: { tab: 'cobro' as const } } : {}) });
-  if (!si.locked) items.push({ id: 'invitacion', label: 'Personalizá tu invitación', action: 'Personalizar', done: si.status === 'done', to: '/panel/sitio' });
-  // Compartir necesita la publicación, que todavía no está conectada: no se simula, queda pendiente y lleva a «Publicar».
-  items.push({ id: 'compartir', label: 'Compartí tu invitación', action: 'Compartir', done: false, dialog: 'publish' });
-  return items;
-}

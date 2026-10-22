@@ -7,7 +7,6 @@ import {
 import { SETS } from '@/lib/weda/catalog';
 import { can, formatPrice, PLANS, type Feature } from '@/lib/weda/plans';
 import { parseStored, sanitize, STORAGE_VERSION } from '@/lib/weda/store';
-import { checklist } from '@/lib/weda/journey';
 import { seedState } from '@/lib/weda/seed';
 import { siteFromState } from '@/lib/weda/site-model';
 
@@ -481,35 +480,5 @@ describe('qué se publica con cada plan (publishedPagesText)', () => {
     expect(publishedPagesText('invitacion')).not.toContain('música');
     expect(publishedPagesText('completo')).toContain('sitio completo');
     expect(publishedPagesText('completo')).toContain('música');
-  });
-});
-
-describe('checklist «Prepará tu evento»', () => {
-  it('sin nada cargado: pendiente salvo lo que el plan no incluye, y siempre con «Compartir» al final', () => {
-    const items = checklist({ ...emptyState(), onboarded: true });
-    expect(items.map(i => i.id)).toEqual(['datos', 'regalos', 'invitacion', 'compartir']);
-    expect(items.every(i => !i.done)).toBe(true);
-    expect(items[0]).toMatchObject({ dialog: 'couple' });
-    expect(items[3]).toMatchObject({ dialog: 'publish', done: false });
-  });
-  it('deriva cada tarea del estado real (la escena de ejemplo tiene todo armado salvo compartir)', () => {
-    const items = checklist(seedState());
-    expect(items.filter(i => i.done).map(i => i.id)).toEqual(['datos', 'regalos', 'invitacion']);
-  });
-  it('sacar los regalos o el alias vuelve a dejar pendiente la tarea (nada queda marcado a mano)', () => {
-    const s = seedState();
-    expect(checklist({ ...s, gifts: { ...s.gifts, items: [] } }).find(i => i.id === 'regalos')?.done).toBe(false);
-    const sinAlias = checklist({ ...s, gifts: { ...s.gifts, alias: '' } }).find(i => i.id === 'regalos');
-    expect(sinAlias).toMatchObject({ done: false, search: { tab: 'cobro' } });
-  });
-  it('sin fecha, «datos del evento» abre el diálogo de la pareja; con fecha lleva a la página', () => {
-    const s = seedState();
-    expect(checklist({ ...s, date: null })[0]).toMatchObject({ done: false, dialog: 'couple' });
-    expect(checklist(s)[0]).toMatchObject({ to: '/panel/sitio' });
-  });
-  it('no muestra como pendientes las funciones que el plan elegido no incluye', () => {
-    const ids = checklist({ ...seedState(), planId: 'regalos' }).map(i => i.id);
-    expect(ids).toContain('regalos');
-    expect(ids).not.toContain('invitacion');
   });
 });
