@@ -459,7 +459,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* Hoja inferior (celular): formularios cortos que se editan sin perder de vista la lista. */
 @media (max-width: 560px) {
-  .pn-dialog.is-sheet { top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; translate: none !important; max-height: 90dvh; border-radius: 20px 20px 0 0 !important; padding-bottom: max(20px, env(safe-area-inset-bottom)) !important; }
+  .pn-dialog.is-sheet { top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; --tw-translate-x: 0px !important; --tw-translate-y: 0px !important; max-height: 90dvh; border-radius: 20px 20px 0 0 !important; padding-bottom: max(20px, env(safe-area-inset-bottom)) !important; }
 }
 @media (max-width: 560px) {
   .pn-dialog.is-sheet .pn-actions { position: sticky; bottom: calc(-1 * max(20px, env(safe-area-inset-bottom))); margin-bottom: calc(-1 * max(20px, env(safe-area-inset-bottom))); padding: 12px 0 max(20px, env(safe-area-inset-bottom)); background: #fff; }
@@ -499,7 +499,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .pn-switch button.on { background: var(--pn-slate-d); }
 
   /* Todos los diálogos son hojas inferiores con asa y cierre circular; los botones quedan fijos al pie. */
-  .pn-dialog { top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; translate: none !important; max-height: 92dvh; border-radius: var(--pn-r-sheet) var(--pn-r-sheet) 0 0 !important; padding-bottom: max(20px, env(safe-area-inset-bottom)) !important; }
+  .pn-dialog { top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; max-width: none !important; transform: none !important; --tw-translate-x: 0px !important; --tw-translate-y: 0px !important; max-height: 92dvh; border-radius: var(--pn-r-sheet) var(--pn-r-sheet) 0 0 !important; padding-bottom: max(20px, env(safe-area-inset-bottom)) !important; }
   .pn-dialog::before { content: ''; justify-self: center; width: 36px; height: 4px; margin: -8px 0 -4px; border-radius: 999px; background: var(--pn-line-s); }
   .pn-dialog > button[class*='absolute'] { top: 10px !important; right: 12px !important; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: var(--pn-surface); opacity: 1 !important; }
   .pn-dialog > button[class*='absolute'] svg { width: 18px; height: 18px; }
@@ -890,7 +890,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .ob-form .pn-form { gap: 14px; }
   .ob-form .pn-two { grid-template-columns: 1fr 1fr; gap: 12px; }
   .ob-form .pn-field > label { font-size: 14px; }
-  .ob-amp { margin: 0; font-size: 32px; text-align: center; }
+  .ob-amp { margin: 0; font-size: 32px; text-align: left; }
   .ob-form .pn-toggle { min-height: 44px; }
   .ob-form .pn-toggle + .pn-field { margin-top: 12px; }
   .ob-foot { position: sticky; bottom: 0; z-index: 3; gap: 12px; padding: 12px 0 max(16px, env(safe-area-inset-bottom)); background: #fff; }
