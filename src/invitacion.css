@@ -626,3 +626,32 @@ html:has(.dm-root), body:has(.dm-root), .dm-root, .dm-root main, .dm-root .iv-se
 .dm-root.is-window .ej-bar, .dm-root.is-window .skip-link, .dm-root.is-window .iv-footer { display: none; }
 html:has(.dm-root.is-window) { scrollbar-width: none; }
 html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
+
+/* ---------- Botones y selecciones de la invitación: verde claro de Weda (antes pizarra azul), con texto oscuro para que se lea ---------- */
+.dm-root { --iv-btn: #dfdecc; --iv-btn-h: #d1d0b8; --iv-btn-ink: #3b3c3a; }
+.dm-root .iv-btn:not(.is-paper),
+.dm-root .rg-filters button.on,
+.dm-root .rg-next .seed-button,
+.dm-root .seed-button,
+.dm-root .dm-solid,
+.dm-root .rg-dialog .dm-solid,
+.dm-root .rg-cart-bar .dm-solid,
+.dm-root .dm-rsvp .dm-solid,
+.dm-root .site-notice a { background: var(--iv-btn); color: var(--iv-btn-ink); }
+.dm-root .iv-btn:not(.is-paper):hover,
+.dm-root .seed-button:hover,
+.dm-root .dm-solid:hover { background: var(--iv-btn-h); }
+.dm-root .rg-chip.on span,
+.dm-root .dm-rsvp-opt.on span,
+.dm-root .dm-rsvp-menu.on span { background: var(--iv-btn); border-color: var(--iv-btn); color: var(--iv-btn-ink); }
+.dm-root .rg-card.in-cart .rg-photo { outline-color: var(--iv-btn); }
+
+/* Bloque de ceremonia, recepción y fiesta: verde clarito de Weda (antes pizarra azul), con texto oscuro */
+.dm-root .iv-section.iv-day { background-color: #dfdecc !important; color: var(--iv-ink); }
+.dm-root .iv-day .iv-card-events, .dm-root .iv-day .iv-card-events li { border-color: rgb(59 60 58 / .18); }
+.dm-root .iv-day .iv-card-icon, .dm-root .iv-day .iv-card-body h3, .dm-root .iv-day .iv-card-place, .dm-root .iv-day .iv-when-n { color: var(--iv-ink); }
+.dm-root .iv-day .iv-card-addr, .dm-root .iv-day .iv-card-note, .dm-root .iv-day .iv-when-l { color: var(--iv-muted); }
+.dm-root .iv-day .iv-when { border-bottom-color: rgb(59 60 58 / .18); }
+.dm-root .iv-day .iv-when-cell + .iv-when-cell { border-left-color: rgb(59 60 58 / .18); }
+.dm-root .iv-day .iv-card-events li + li::before { background: rgb(59 60 58 / .22); }
+.dm-root .iv-day .iv-card :where(a, button):focus-visible { outline-color: var(--iv-ink); }
