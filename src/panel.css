@@ -1377,8 +1377,8 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 /* Inicio: las dos secciones usan las mismas tarjetas; la gestión queda abajo, separada por una línea. */
 .hm-grid .hm-tile { min-height: 96px; }
 /* «Publicar» es la acción principal de toda la pantalla: gris oscuro, aunque el resto de los botones del panel sean claros. */
-.pn-app .pn-top .pn-btn.pn-publish-btn { background: #959571; color: #fff; border-color: transparent; }
-.pn-app .pn-top .pn-btn.pn-publish-btn:hover:not(:disabled) { background: #838361; }
+.pn-app .pn-top .pn-btn.pn-publish-btn { background: #c2c18c; color: #fff; border-color: transparent; }
+.pn-app .pn-top .pn-btn.pn-publish-btn:hover:not(:disabled) { background: #b3b27d; }
 /* Con dos columnas y una cantidad impar de tarjetas, la última ocupa todo el ancho (sin hueco al costado). */
 @media (min-width: 720px) and (max-width: 1099px) { .hm-grid > li:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
@@ -1588,3 +1588,25 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 /* Cobro: la etiqueta de estado («Sin configurar», «Próximamente») nunca se parte en dos renglones; el título cede el espacio. */
 .pn-cfg-head h2 { min-width: 0; }
 .pn-cfg-head .pn-chip { flex: none; white-space: nowrap; }
+
+/* Packs: «Ver qué incluye» y «Agregar» nunca se recortan; si no entran lado a lado en la tarjeta, «Agregar» pasa al renglón de abajo. */
+.rg-pack-actions { flex-wrap: wrap; }
+.rg-pack-actions .pn-btn { flex: 1 1 auto; min-width: max-content; }
+
+/* «¿Qué querés publicar?» en compu: las tres opciones resumidas para que entren sin scroll. El detalle completo sigue en «Ver más». */
+@media (min-width: 860px) {
+  .pn-dialog.pn-plans-dialog.is-products { padding: 22px 26px 18px !important; }
+  .pn-plans-dialog.is-products .pn-prods { gap: 12px; margin: 10px 0 8px; }
+  .pn-plans-dialog.is-products .pn-prod { gap: 8px; padding: 14px 16px; }
+  .pn-plans-dialog.is-products .pn-prod-ico { width: 40px; height: 40px; }
+  .pn-plans-dialog.is-products .pn-prod h3 { font-size: 20px; }
+  .pn-plans-dialog.is-products .pn-prod-price strong { font-size: 24px; }
+  .pn-plans-dialog.is-products .pn-prod-facts { font-size: 13px; }
+  .pn-plans-dialog.is-products .pn-feats { gap: 8px; padding-top: 10px; }
+  .pn-plans-dialog.is-products .pn-feats li { font-size: 14px; }
+  .pn-plans-dialog.is-products .pn-feats li:nth-child(n+4) { display: none; }
+  .pn-plans-dialog.is-products .pn-prod-more summary { min-height: 28px; }
+  .pn-plans-dialog.is-products .pn-prod-actions { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+  .pn-plans-dialog.is-products .pn-prod-actions .pn-btn { min-height: 42px; padding: 0 10px; }
+  .pn-plans-dialog.is-products .pn-actions.is-end { margin-top: 0; }
+}
