@@ -20,10 +20,10 @@ export const Route = createFileRoute('/')({
       { property: 'og:description', content: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.' },
       { property: 'og:type', content: 'website' },
       { property: 'og:locale', content: 'es_AR' },
-      { property: 'og:image', content: absolute('/pareja-portada.jpg') },
-      { property: 'og:image:alt', content: 'Una pareja abrazada, imagen de Weda' },
+      { property: 'og:image', content: absolute('/og-weda.png') },
+      { property: 'og:image:alt', content: 'Weda, la plataforma para casamientos' },
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:image', content: absolute('/pareja-portada.jpg') },
+      { name: 'twitter:image', content: absolute('/og-weda.png') },
     ],
     links: [
       ...(SITE_URL ? [{ rel: 'canonical', href: `${SITE_URL}/` }] : []),

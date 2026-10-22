@@ -1,4 +1,4 @@
-:root { --dm-blue: #5A646C; }
+:root { --dm-blue: #959571; }
 /* Casamiento de ejemplo (rutas /ejemplo/*).
    Solo usa tokens y componentes ya definidos en styles.css (--paper, --section, --slate, --curve, .seed-button,
    .seed-hero, .duo-section, .plans-section, .plan-card, .seed-footer…). Todo lo nuevo lleva prefijo .dm- y no toca la landing. */
@@ -90,7 +90,7 @@
 .dm-rsvp-field label span { color: var(--muted-foreground); }
 .dm-rsvp-field input[type="text"], .dm-rsvp-field textarea { width: 100%; min-height: 48px; padding: 0 16px; border-radius: 14px; border: 1px solid rgb(59 60 58 / .25); background: #fff; color: var(--foreground); font: inherit; font-size: 16px; outline: none; transition: border-color .2s, box-shadow .2s; }
 .dm-rsvp-field textarea { padding: 12px 16px; line-height: 1.5; resize: vertical; }
-.dm-rsvp-field input:focus-visible, .dm-rsvp-field textarea:focus-visible { border-color: var(--dm-blue); box-shadow: 0 0 0 3px rgb(90 100 108 / .3); }
+.dm-rsvp-field input:focus-visible, .dm-rsvp-field textarea:focus-visible { border-color: var(--dm-blue); box-shadow: 0 0 0 3px rgb(149 149 113 / .3); }
 .dm-rsvp-field.has-error input[type="text"], .dm-rsvp-field.has-error textarea { border-color: var(--destructive); }
 .dm-rsvp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dm-rsvp-opt, .dm-rsvp-menu { position: relative; display: block; cursor: pointer; }
@@ -102,7 +102,7 @@
 .dm-rsvp-menu strong { font-weight: 400; font-size: 15px; }
 .dm-rsvp-menu small { font-size: 13px; line-height: 1.4; color: var(--muted-foreground); }
 .dm-rsvp-menu.on span { border-color: var(--dm-blue); background: var(--paper); box-shadow: inset 0 0 0 1px var(--dm-blue); }
-.dm-rsvp-opt:focus-within span, .dm-rsvp-menu:focus-within span { box-shadow: 0 0 0 3px rgb(90 100 108 / .35); }
+.dm-rsvp-opt:focus-within span, .dm-rsvp-menu:focus-within span { box-shadow: 0 0 0 3px rgb(149 149 113 / .35); }
 .dm-rsvp-field.has-error .dm-rsvp-opt span, .dm-rsvp-field.has-error .dm-rsvp-menu span { border-color: var(--destructive); }
 .dm-rsvp-actions { display: flex; flex-direction: row-reverse; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
 .dm-rsvp-done { display: grid; gap: 0; }
