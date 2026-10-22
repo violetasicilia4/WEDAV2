@@ -1372,9 +1372,8 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (pointer: coarse) { .tm-dots { gap: 0; } .tm-dots button { width: 44px; height: 44px; } }
 
 /* Landing · paleta verde: franja "¿Invitado?" y footer en el verde oscuro; sección de beneficios en el verde claro (texto oscuro) */
-.announcement, .seed-footer { background: #c2c18c; }
-.announcement { color: var(--foreground); }
-.seed-footer { color: #fff; }
+.announcement { background: #c2c18c; color: var(--foreground); }
+.seed-footer { background: #959571; color: #fff; }
 .seed-footer .footer-nav a { color: #fff; }
 .duo-section { background: #dfdecc; color: var(--foreground); }
 .duo-photo { background: transparent; }
