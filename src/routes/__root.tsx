@@ -14,23 +14,20 @@ import typographyCss from "../typography.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Página no encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          La página que buscás no existe o se movió.
+        <p className="text-sm font-medium text-muted-foreground">Error 404</p>
+        <h1 className="mt-2 text-[length:var(--t-page)] font-semibold leading-[var(--lh-title)] tracking-[var(--ls-title)] text-foreground">Esta página no existe</h1>
+        <p className="mt-3 text-base text-muted-foreground">
+          La dirección que buscás no existe o se movió.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
+        <div className="mt-8">
+          <Link to="/" className="seed-button inline-flex items-center justify-center">
             Ir al inicio
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -39,33 +36,31 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-[length:var(--t-page)] font-semibold leading-[var(--lh-title)] tracking-[var(--ls-title)] text-foreground">
           No se pudo cargar esta página
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-3 text-base text-muted-foreground">
           Algo salió mal de nuestro lado. Probá actualizar o volvé al inicio.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
           <button
+            type="button"
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="seed-button inline-flex cursor-pointer items-center justify-center"
           >
             Reintentar
           </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Ir al inicio
+          <a href="/" className="seed-link-button inline-flex items-center">
+            <span>Ir al inicio</span>
           </a>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

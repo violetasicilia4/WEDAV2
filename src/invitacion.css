@@ -146,6 +146,8 @@
 .dm-root .iv-footer-brand { font-size: 21px; min-height: 44px; color: #fff; }
 .dm-root .iv-footer p { flex: 1 1 320px; margin: 0; max-width: 56ch; font: 400 13px/1.5 var(--iv-font); color: #fff; }
 .dm-root .iv-footer span { font: 400 12px/1.2 var(--iv-font); color: #fff; }
+/* Solo en el ejemplo: la salida natural para quien lo está mirando es empezar el suyo. Enlace de texto, sin relleno ni sombra. */
+.dm-root .iv-footer-cta { display: inline-flex; align-items: center; min-height: 44px; color: #fff; font: 500 14px/1.2 var(--iv-font); text-decoration: underline; text-underline-offset: 4px; }
 
 /* ---------- lista de regalos: mismo sistema ---------- */
 .dm-root .rg-list { background: #fff; padding-top: clamp(32px, 4vw, 56px) !important; padding-bottom: var(--iv-pad); }

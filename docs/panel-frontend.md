@@ -25,7 +25,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 | `/panel/mesas` | Grupos y mesas. |
 | `/panel/sitio` | Editor del sitio por bloques con vista previa en vivo. |
 | `/panel/perfil` | Perfil: «Datos del casamiento» (nombres, fecha, lugar y foto; mismo formulario `CoupleForm` que el diálogo del inicio) y «Tu cuenta» (correo, clave, cerrar sesión). No está en el menú: se entra por el bloque de la pareja arriba del menú (web) o el avatar arriba a la derecha (celular). |
-| `/panel/vista-previa` | «Ver como invitado»: la página pública real en celular o compu. |
+| `/panel/vista-previa` | «Vista previa»: la página pública real en celular o compu. |
 | `/sitio/$slug`, `/sitio/$slug/regalos` | Página pública **simulada** de la pareja (ej.: `/sitio/tomas-y-martina`). Mismos componentes que `/ejemplo`. |
 
 Modificadas: `/ejemplo*` (ahora usan los componentes compartidos; se ve y funciona igual), landing (los CTA «Crear mi evento», «Crear mi lista de regalos» y «Elegir plan» llevan a `/crear/cuenta`), barra flotante.

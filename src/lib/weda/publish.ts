@@ -7,7 +7,7 @@ import type { AppState, PlanId } from './types';
 
 export type PublishState = 'published' | 'empty' | 'draft';
 export type PublishItem = { feature: Feature; label: string; state: PublishState; detail: string; /** Plan que la habilita (solo si queda como borrador). */ plan?: string };
-export type PublishTodo = { text: string; to: string; cta: string; search?: { tab: 'cobro' } };
+export type PublishTodo = { text: string; to: string; cta: string; search?: { tab: 'cobro' } | { editar: 'datos' } };
 export type PublishSummary = { items: PublishItem[]; published: PublishItem[]; drafts: PublishItem[]; empty: PublishItem[]; warnings: string[]; /** Pendientes con acceso directo para resolverlos. Ninguno frena nada: la publicación todavía no está conectada y no hay reglas definidas que la bloqueen. */ todo: PublishTodo[] };
 
 /** Funciones que ven los invitados en la versión pública (invitados y mesas son de gestión: no se publican). */
@@ -34,7 +34,7 @@ export function publishSummary(s: AppState, planId: PlanId): PublishSummary {
   const todo: PublishTodo[] = [];
   if (can(planId, 'gifts') && s.gifts.items.length === 0) todo.push({ text: 'Elegí al menos un regalo para tu lista.', to: '/panel/regalos', cta: 'Elegir regalos' });
   if (can(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') todo.push({ text: 'Configurá cómo vas a recibir los regalos (alias).', to: '/panel/regalos', cta: 'Configurar cobro', search: { tab: 'cobro' } });
-  if (can(planId, 'site') && !s.date) todo.push({ text: 'Definí la fecha del casamiento.', to: '/panel', cta: 'Ir al inicio' });
+  if (can(planId, 'site') && !s.date) todo.push({ text: 'Definí la fecha del casamiento.', to: '/panel', cta: 'Definir la fecha', search: { editar: 'datos' } });
   if (can(planId, 'site')) for (const g of sectionGaps(s)) todo.push({ text: `Completá «${g.label}»: está activada pero le faltan datos.`, to: '/panel/sitio', cta: 'Completar' });
   return { items, todo, published: items.filter(i => i.state === 'published'), drafts: items.filter(i => i.state === 'draft'), empty: items.filter(i => i.state === 'empty'), warnings };
 }

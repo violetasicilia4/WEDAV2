@@ -48,3 +48,4 @@ playwright-report/
 .impeccable/*.local.json
 .impeccable/hook.*
 capturas/
+explore-results

@@ -33,10 +33,8 @@ export async function fillNamesAndContinue(page: Page, first = 'Lucía', second 
   await page.getByRole('button', { name: 'Continuar' }).click();
   await page.waitForURL(/\/crear\/fecha/);
 }
-/** Paso 2 (fecha y lugar): ambos son opcionales, se marcan «Todavía no» y se continúa. Deja la página en /crear/foto. */
+/** Paso 2 (fecha y lugar): ambos son opcionales; se dejan vacíos y se continúa. Deja la página en /crear/foto. */
 export async function skipDateAndPlace(page: Page) {
-  await page.getByRole('switch', { name: 'Todavía no tenemos fecha' }).check();
-  await page.getByRole('switch', { name: 'Todavía no tenemos lugar' }).check();
   await page.getByRole('button', { name: 'Continuar' }).click();
   await page.waitForURL(/\/crear\/foto/);
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { ArrowRight, Eye, Gift, Globe, LayoutGrid, Lock, Pencil, Users } from 'lucide-react';
 import { CoupleDialog } from '@/components/panel/couple-form';
@@ -8,13 +8,21 @@ import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { reset, useAppState } from '@/lib/weda/store';
 
-export const Route = createFileRoute('/panel/')({ component: Home });
+export const Route = createFileRoute('/panel/')({
+  // «?editar=datos» abre «Datos del casamiento» al entrar (lo usa el pendiente «Definí la fecha» del diálogo de publicar).
+  validateSearch: (q: Record<string, unknown>): { editar?: 'datos' } => (q['editar'] === 'datos' ? { editar: 'datos' } : {}),
+  component: Home,
+});
 
 /* Inicio en dos secciones: (1) «Lo que vas a publicar» (regalos, página, vista previa) y (2) «Gestión de invitados», aparte y más abajo, porque invitados y mesas no se publican. Sin numeración, sin estados y sin recuentos. «Publicar» no es una tarjeta: es el botón de arriba a la derecha (siempre visible) y el del menú. */
 function Home() {
   const s = useAppState();
   const navigate = useNavigate();
-  const [editing, setEditing] = useState(false);
+  const { editar } = Route.useSearch();
+  const [editing, setEditing] = useState(editar === 'datos');
+  // Ya estando en el Inicio (por ejemplo, desde el diálogo de publicar) el parámetro cambia sin montar la pantalla de nuevo: se abre igual.
+  useEffect(() => { if (editar === 'datos') setEditing(true); }, [editar]);
+  const closeEditing = () => { setEditing(false); if (editar) void navigate({ to: '/panel', search: {}, replace: true }); };
   const [confirmReset, setConfirmReset] = useState(false);
   const next = nextAction(s);
 
@@ -86,7 +94,7 @@ function Home() {
         <p>Tus datos se guardan solo en este navegador. <button type="button" className="pn-link is-muted" onClick={() => setConfirmReset(true)}>Reiniciar la demo</button></p>
       </footer>
 
-      {editing && <CoupleDialog open onClose={() => setEditing(false)} />}
+      {editing && <CoupleDialog open onClose={closeEditing} />}
       <ConfirmDialog open={confirmReset} title="¿Reiniciar la demo?" text="Se borran tu evento, la lista de regalos, los invitados y todo lo que cargaste en este navegador. No se puede deshacer." confirmLabel="Sí, reiniciar" onConfirm={() => { setConfirmReset(false); reset(); void navigate({ to: '/crear', replace: true }); }} onCancel={() => setConfirmReset(false)} />
     </div>
   );
