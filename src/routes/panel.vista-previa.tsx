@@ -27,7 +27,7 @@ function Preview() {
     <div className="pn-page pn-page-preview">
       <header className="pn-page-head">
         <div>
-          <h1>Ver como invitado</h1>
+          <h1>Vista previa</h1>
           <p className="pn-sub">Así la ven tus invitados. Todavía no está publicada.</p>
         </div>
         <div className="pn-head-actions">

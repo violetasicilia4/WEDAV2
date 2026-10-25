@@ -86,6 +86,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
       <p>{site.kind === 'demo'
         ? 'Este sitio fue creado con Weda: lista de regalos, sitio del casamiento y confirmación de asistencia en un solo lugar.'
         : `Sitio de ${site.names} creado con Weda.`}</p>
+      {site.kind === 'demo' && <Link to="/crear/cuenta" className="iv-footer-cta">Crear mi evento gratis</Link>}
       <span>© 2026 Weda</span>
     </div></footer>
   </div></RsvpProvider>;
