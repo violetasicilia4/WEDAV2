@@ -1,0 +1,2 @@
+Cormorant Garamond (c) The Cormorant Project Authors (github.com/CatharsisFonts/Cormorant).
+Licencia: SIL Open Font License 1.1 (https://openfontlicense.org). Subconjuntos latin y latin-ext, tal como los distribuye Google Fonts.

@@ -5,30 +5,18 @@ import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
 import { LandingPlans } from '@/components/landing-plans';
-
-// URL pública del sitio. Los metadatos sociales y el canonical necesitan una URL absoluta: se toma de VITE_SITE_URL
-// (por ejemplo "https://weda.example"). Si no está definida quedan rutas relativas, que es lo único honesto sin dominio.
-const SITE_URL = ((import.meta.env['VITE_SITE_URL'] as string | undefined) ?? '').replace(/\/$/, '');
-const absolute = (path: string) => `${SITE_URL}${path}`;
+import { pageMeta } from '@/lib/site';
 
 export const Route = createFileRoute('/')({
-  head: () => ({
-    meta: [
-      { title: 'Weda • Lista de regalos y sitio para tu casamiento' },
-      { name: 'description', content: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar. Weda, la plataforma para casamientos.' },
-      { property: 'og:title', content: 'Weda • Lista de regalos y sitio para tu casamiento' },
-      { property: 'og:description', content: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.' },
-      { property: 'og:type', content: 'website' },
-      { property: 'og:locale', content: 'es_AR' },
-      { property: 'og:image', content: absolute('/og-weda.png') },
-      { property: 'og:image:alt', content: 'Weda, la plataforma para casamientos' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:image', content: absolute('/og-weda.png') },
-    ],
-    links: [
-      ...(SITE_URL ? [{ rel: 'canonical', href: `${SITE_URL}/` }] : []),
-    ],
-  }),
+  head: () => {
+    const { meta, links } = pageMeta({
+      title: 'Weda • Lista de regalos y sitio para tu casamiento',
+      description: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar. Weda, la plataforma para casamientos.',
+      ogDescription: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.',
+      path: '/',
+    });
+    return { meta, links };
+  },
   component: Index,
 });
 const features = [
@@ -83,21 +71,6 @@ function Testimonials() {
   );
 }
 function Index() {
-  // Tipografía del micrositio (solo para la maqueta del bloque «Sitio del casamiento», más abajo): se pide con la página ya cargada,
-  // en vez de bloquear el primer render con una hoja de estilos externa.
-  useEffect(() => {
-    if (document.getElementById('cormorant-font')) return;
-    const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-    const add = () => {
-      const l = document.createElement('link');
-      l.id = 'cormorant-font'; l.rel = 'stylesheet';
-      l.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap';
-      document.head.appendChild(l);
-    };
-    const go = () => { if (ric) ric.call(window, add, { timeout: 4000 }); else window.setTimeout(add, 1500); };
-    if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
-    return () => window.removeEventListener('load', go);
-  }, []);
   const heroVideo = useRef<HTMLVideoElement>(null);
   // El video (3,6 MB) se pide recién cuando la página terminó de cargar y el navegador está libre: la portada (póster) es lo primero que se ve
   // y no compite con el resto. Con movimiento reducido, ahorro de datos o conexión lenta no se descarga: queda el póster.

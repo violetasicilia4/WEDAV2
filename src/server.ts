@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { buildRobots, buildSitemap } from "./lib/site";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -44,12 +45,26 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// robots.txt y sitemap.xml se generan acá para poder incluir la URL absoluta del sitio (VITE_SITE_URL) cuando exista.
+// Sin dominio configurado no hay sitemap (un sitemap exige URLs absolutas y no se inventa un dominio): responde 404.
+function staticSeoResponse(pathname: string): Response | null {
+  if (pathname === "/robots.txt") {
+    return new Response(buildRobots(), { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" } });
+  }
+  if (pathname === "/sitemap.xml") {
+    const xml = buildSitemap();
+    if (xml) return new Response(xml, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
+  }
+  return null;
+}
+
 // La demo (/ejemplo, /crear, /panel y /sitio) no debe aparecer en buscadores. Además de <meta name="robots">, se envía la
 // directiva por cabecera HTTP. robots.txt NO bloquea estas rutas: si las bloqueara, los buscadores no verían el noindex.
 function withRobotsHeader(request: Request, response: Response): Response {
   const { pathname } = new URL(request.url);
   const isPrivateDemo = ["/ejemplo", "/crear", "/panel", "/sitio"].some(p => pathname === p || pathname.startsWith(`${p}/`));
-  if (!isPrivateDemo) return response;
+  // Una ruta inexistente (404) tampoco se indexa.
+  if (!isPrivateDemo && response.status !== 404) return response;
   const headers = new Headers(response.headers);
   headers.set("X-Robots-Tag", "noindex, nofollow");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
@@ -58,6 +73,8 @@ function withRobotsHeader(request: Request, response: Response): Response {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const seo = staticSeoResponse(new URL(request.url).pathname);
+      if (seo) return seo;
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return withRobotsHeader(request, await normalizeCatastrophicSsrResponse(response));

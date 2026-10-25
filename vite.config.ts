@@ -28,6 +28,8 @@ export default defineConfig(({ command }) => ({
           // Los JS/CSS ya vienen con hash; se sirven comprimidos (gzip y brotli) y con caché larga.
           compressPublicAssets: { gzip: true, brotli: true },
           routeRules: {
+            // Cabeceras de seguridad básicas para todo el sitio. No hay CSP todavía: requiere definir los orígenes reales (ver docs/frontend-production-readiness.md).
+            "/**": { headers: { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin" } },
             "/assets/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },
             // Fuentes y fotos de parejas no cambian de nombre al cambiar de contenido: caché larga pero revalidable.
             "/fonts/**": { headers: { "cache-control": "public, max-age=31536000, immutable" } },

@@ -48,7 +48,7 @@ Antes de compartir un cambio: `npm run typecheck && npm run lint && npm test && 
 
 Ninguna es obligatoria. Copiá `.env.example` a `.env.local` si querés usarlas.
 
-- `VITE_SITE_URL`: URL pública del sitio, para el `canonical` y los metadatos sociales de la landing.
+- `VITE_SITE_URL`: URL pública del sitio (sin barra final), **se lee al compilar**. Con ella la landing emite `canonical`, `og:url` y `og:image` absolutos, y el servidor publica `/sitemap.xml` y la línea `Sitemap:` de `/robots.txt`. Sin ella no se inventa ningún dominio: rutas relativas y sin sitemap (404).
 - `CHROMIUM_PATH`: ruta a un Chromium para las pruebas E2E.
 
 ## Estructura

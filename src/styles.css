@@ -779,7 +779,7 @@ a:not([href]) { cursor: default; }
 .fd-stage { isolation: isolate; background: #1c2a1c; box-shadow: none; }
 .fd-stage::before {
   content: ''; position: absolute; inset: calc(-24 * var(--px)); z-index: -1;
-  background: url('/fondo-cards.png?v=2') center / cover no-repeat;
+  background: url('/fondo-cards.webp?v=3') center / cover no-repeat;
   filter: blur(calc(14 * var(--px))) brightness(.62) saturate(.9);
 }
 .fd-stage::after { content: ''; position: absolute; inset: 0; z-index: -1; background: rgb(12 20 12 / .25); }

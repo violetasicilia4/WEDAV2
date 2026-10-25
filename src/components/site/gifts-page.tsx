@@ -288,6 +288,7 @@ export function GiftsPage() {
         </label>
       </div>
       {visible.length === 0 && <p className="rg-empty">No encontramos regalos con esos filtros. Probá con otra búsqueda o limpiá los filtros.</p>}
+      <h2 className="dm-sr">Regalos</h2>
       <div className="rg-grid">
         {visible.map(g => <GiftCard key={g.id} gift={g} chosen={site.kind === 'demo' && chosen.includes(g.id)} inCart={cart.some(c => c.id === g.id)} onPick={g => { returnFocus.current = document.activeElement as HTMLElement | null; setCart(c => c.some(x => x.id === g.id) ? c : [...c, g]); setCartOpen(true); }} />)}
       </div>

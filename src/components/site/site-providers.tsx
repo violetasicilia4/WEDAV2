@@ -1,7 +1,7 @@
 // Quién provee los datos de la página pública:
 //  - DemoSite: /ejemplo (Ignacio & Martina). Los regalos elegidos duran lo que dure la sesión del navegador.
 //  - AppSite: /sitio/$slug y la vista previa. Lee y escribe el estado local de la pareja (lista, invitados, respuestas).
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useSessionState } from '@/lib/demo-session';
 import { applyRsvp, slugify } from '@/lib/weda/logic';
@@ -62,6 +62,14 @@ export function AppSite({ slug, children }: { slug: string; children: ReactNode 
     })),
     recordRsvp: people => update(s => applyRsvp(s, people)),
   }), [state.gifts.given]);
+  // Los datos de la pareja solo existen en este navegador: el título con sus nombres se pone recién al hidratar (el HTML del servidor es genérico).
+  const heading = data ? `${state.couple.first} y ${state.couple.second}`.trim() : '';
+  useEffect(() => {
+    if (!heading) return;
+    const before = document.title;
+    document.title = `${heading} • Casamiento`;
+    return () => { document.title = before; };
+  }, [heading]);
   if (!hydrated) return <div className="dm-root"><p className="site-loading" role="status">Cargando…</p></div>;
   // Página dada de baja: solo la ve su dueño dentro de la vista previa del panel (iframe o «cómo queda con este plan»).
   const takenDown = mine && !!state.publication && !isLive(state) && !readPlanOverride() && !(typeof window !== 'undefined' && window.self !== window.top);

@@ -4,16 +4,14 @@ import { ArrowRight, Search, X } from 'lucide-react';
 import { FloatNav } from '@/components/float-nav';
 import { wedding } from '@/lib/demo-wedding';
 import { findCouples } from '@/lib/demo-couples';
+import { pageMeta } from '@/lib/site';
 
 export const Route = createFileRoute('/encontrar')({
-  head: () => ({
-    meta: [
-      { title: 'Encontrá un casamiento • Weda' },
-      { name: 'description', content: 'Buscá a los novios por su nombre y entrá a su invitación, su lista de regalos y la confirmación de asistencia.' },
-      // El listado identifica a personas: no debe indexarse.
-      { name: 'robots', content: 'noindex, nofollow' },
-    ],
-  }),
+  head: () => {
+    const { meta } = pageMeta({ title: 'Encontrá un casamiento • Weda', description: 'Buscá a los novios por su nombre y entrá a su invitación, su lista de regalos y la confirmación de asistencia.' });
+    // El listado identifica a personas: no debe indexarse.
+    return { meta: [...meta, { name: 'robots', content: 'noindex, nofollow' }] };
+  },
   component: Find,
 });
 

@@ -29,7 +29,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 | `/sitio/$slug`, `/sitio/$slug/regalos` | Página pública **simulada** de la pareja (ej.: `/sitio/tomas-y-martina`). Mismos componentes que `/ejemplo`. |
 
 Modificadas: `/ejemplo*` (ahora usan los componentes compartidos; se ve y funciona igual), landing (los CTA «Crear mi evento», «Crear mi lista de regalos» y «Elegir plan» llevan a `/crear/cuenta`), barra flotante.
-`/crear`, `/panel` y `/sitio` llevan `noindex` (meta + cabecera `X-Robots-Tag`).
+`/ejemplo`, `/encontrar`, `/crear`, `/panel` y `/sitio` llevan `noindex` (meta + cabecera `X-Robots-Tag`, que también se envía en cualquier 404). `/robots.txt` y `/sitemap.xml` los genera `src/server.ts` con `src/lib/site.ts`; los metadatos de cada página salen de `pageMeta()` (misma fuente). Estado de SEO y producción: [frontend-production-readiness.md](frontend-production-readiness.md).
 Se eligió `/sitio/$slug` y no `/$slug` para no chocar con las rutas existentes; el slug se normaliza (`Tomás & Martina` → `tomas-y-martina`).
 
 ## 3. Componentes reutilizados / compartidos
