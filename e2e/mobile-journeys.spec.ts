@@ -75,10 +75,10 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 3: Tu página → elegir Eventos → editar → verlo en la vista previa a pantalla completa → volver sin perder datos', async ({ page }) => {
     await nav(page, 'Tu página').click();
-    // Una sola sección a la vez: solo se ven los campos de la portada, no los de los eventos.
-    await expect(page.getByRole('navigation', { name: 'Secciones de tu página' })).toBeVisible();
+    // Primero la estructura de la invitación; los campos de una sección aparecen recién al elegirla.
+    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
     await expect(page.getByLabel('Nombre del lugar')).toHaveCount(0);
-    await page.locator('#sec-eventos').click();
+    await page.getByRole('button', { name: /^Editar Eventos/ }).click();
     // La primera fila de eventos ya viene abierta.
     if ((await page.locator('#sec-ceremonia').getAttribute('aria-expanded')) !== 'true') await page.locator('#sec-ceremonia').click();
     await page.getByLabel('Nombre del evento').fill('Ceremonia');
@@ -96,17 +96,31 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     expect((await stored(page)).site.events[0].name).toBe('Parroquia San Isidro');
   });
 
-  test('Flujo 4: mostrar y ocultar secciones se refleja en la vista previa', async ({ page }) => {
+  test('Flujo 4: quitar y volver a agregar una sección se refleja en la vista previa, sin perder lo cargado', async ({ page }) => {
     await nav(page, 'Tu página').click();
-    await page.locator('#sec-rsvp').click();
-    const toggle = page.getByRole('checkbox', { name: 'Mostrar' });
     const inPreview = async () => { await openPreview(page); await previewFrame(page).locator('.iv-cover-img').waitFor(); const n = await previewFrame(page).locator('#confirmar').count(); await closePreview(page); return n; };
     await expect.poll(inPreview).toBe(1);
-    await toggle.uncheck();
-    await expect(page.locator('.pn-spanel .pn-sec-status')).toContainText('Oculta');
+    await page.getByRole('button', { name: 'Quitar Confirmación de la invitación' }).click();
+    // Pasa a «Para agregar» (reversible) y la página ya no la muestra.
+    await expect(page.getByRole('button', { name: 'Agregar Confirmación a la invitación' })).toBeVisible();
     await expect.poll(inPreview).toBe(0);
-    await toggle.check();
+    await page.getByRole('button', { name: 'Agregar Confirmación a la invitación' }).click();
+    await expect(page.getByRole('heading', { name: 'Confirmación de asistencia' })).toBeVisible();
     await expect.poll(inPreview).toBe(1);
+  });
+
+  test('Flujo 4b: reordenar secciones cambia el orden de la página y se conserva al recargar', async ({ page }) => {
+    await nav(page, 'Tu página').click();
+    await page.getByRole('button', { name: 'Agregar Dress code a la invitación' }).click();
+    await page.getByLabel('Título').fill('Elegante sport');
+    await page.getByRole('button', { name: 'Listo' }).click();
+    const order = async () => { await openPreview(page); await previewFrame(page).locator('.iv-cover-img').waitFor(); const ids = await previewFrame(page).locator('#confirmar, #dresscode').evaluateAll(els => els.map(e => e.id)); await closePreview(page); return ids; };
+    await expect.poll(order).toEqual(['confirmar', 'dresscode']);
+    await page.getByRole('button', { name: 'Subir Dress code' }).click();
+    await expect.poll(order).toEqual(['dresscode', 'confirmar']);
+    await expect.poll(async () => (await stored(page)).site.order.slice(0, 3)).toEqual(['eventos', 'dress', 'rsvp']);
+    await page.reload({ waitUntil: 'networkidle' });
+    await expect.poll(order).toEqual(['dresscode', 'confirmar']);
   });
 
   test('Flujo 5: invitados → alta manual → importar (duplicados y errores) → exportar', async ({ page }) => {

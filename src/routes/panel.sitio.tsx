@@ -1,17 +1,17 @@
-import { useRef, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { ArrowDown, ArrowUp, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { LiveCard, useKeyboardState } from '@/components/panel/live-card';
-import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
+import { SitePreview, type Device, type PreviewSection } from '@/components/panel/site-preview';
 import { Field, Locked, useToast, usePlans } from '@/components/panel/ui';
 import { readImage } from '@/lib/weda/images';
-import { hasEventDetails, isSafeMapsUrl, mapsLink, uid, validateOnboarding } from '@/lib/weda/logic';
+import { hasEventDetails, isSafeMapsUrl, mapsLink, moveBlock, sitePath, uid, validateOnboarding } from '@/lib/weda/logic';
 import { eventComplete } from '@/lib/weda/journey';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';
-import type { AppState, SiteConfig, SiteEvent } from '@/lib/weda/types';
+import type { AppState, BlockId, SiteConfig, SiteEvent } from '@/lib/weda/types';
 
 export const Route = createFileRoute('/panel/sitio')({ component: SiteEditor });
 
@@ -35,6 +35,14 @@ const ICON: Record<SectionId, LucideIcon> = { portada: ImageIcon, eventos: Calen
 const ANCHOR: Record<SectionId, string> = { portada: '', eventos: 'dia', rsvp: 'confirmar', dress: 'dresscode', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
 /** Estado de la sección con forma además de color: tilde = lista, aviso = falta algo, ojo tachado = oculta o fuera del plan. */
 const STATUS_ICON: Record<Tone, LucideIcon> = { ok: Check, todo: CircleAlert, off: EyeOff };
+/** Para qué sirve cada sección, en una línea (se muestra en «Para agregar»). */
+const PURPOSE: Record<SectionId, string> = {
+  portada: 'Foto, nombres y fecha', eventos: 'Horarios y lugares, con mapa', rsvp: 'Tus invitados responden desde la página', dress: 'Cómo vestirse ese día',
+  fotos: 'Una galería con su hashtag', mensaje: 'Unas palabras para cerrar', musica: 'La playlist de la fiesta',
+};
+/** Las secciones que se pueden reordenar y su id en el orden guardado. */
+const BLOCK_SECTION: Record<BlockId, SectionId> = { eventos: 'eventos', rsvp: 'rsvp', dress: 'dress', fotos: 'fotos', musica: 'musica' };
+const SECTION_FOR_PREVIEW = (p: PreviewSection): SectionId | 'regalos' => p;
 const photoWord = (n: number) => `${n} ${n === 1 ? 'foto' : 'fotos'}`;
 
 /** Estado de cada sección, derivado de los datos reales (misma regla que el Inicio: eventComplete/sectionGaps). */
@@ -62,8 +70,8 @@ function sectionsOf(s: AppState): Sec[] {
   return list;
 }
 
-/** La sección elegida: título, estado, «Mostrar» (si se puede ocultar) y solo sus campos. */
-function Panel({ sec, planTag, enabled, onToggle, children }: { sec: Sec; planTag?: string | undefined; enabled?: boolean | undefined; onToggle?: ((v: boolean) => void) | undefined; children: React.ReactNode }) {
+/** La sección elegida: título, estado y solo sus campos. Agregar, quitar y ordenar viven en la estructura de la invitación. */
+function Panel({ sec, planTag, children }: { sec: Sec; planTag?: string | undefined; children: React.ReactNode }) {
   const plans = usePlans();
   if (sec.locked) {
     return (
@@ -80,11 +88,8 @@ function Panel({ sec, planTag, enabled, onToggle, children }: { sec: Sec; planTa
           <h2 id={`panel-${sec.id}`}>{sec.title}{planTag && <em className="pn-plantag">{planTag}</em>}</h2>
           <p className={`pn-sec-status is-${sec.tone}`}>{sec.status}</p>
         </div>
-        {onToggle && <label className="pn-sec-toggle"><input type="checkbox" checked={!!enabled} onChange={e => onToggle(e.target.checked)} /><span>Mostrar</span></label>}
       </header>
-      {enabled === false
-        ? <p className="pn-note">Esta sección está oculta y tus invitados no la ven. Lo que ya cargaste se conserva: activá «Mostrar» para volver a usarla.</p>
-        : children}
+      {children}
     </section>
   );
 }
@@ -162,34 +167,109 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
   );
 }
 
+
+/** ¿La sección está en la invitación? (Una sección fuera del plan nunca está.) */
+function isOn(s: AppState, id: SectionId): boolean {
+  const site = s.site;
+  switch (id) {
+    case 'portada': return true;
+    case 'eventos': return site.events.some(e => e.enabled);
+    case 'rsvp': return site.rsvp.enabled;
+    case 'dress': return site.dressCode.enabled;
+    case 'fotos': return site.gallery.enabled && can(s.planId, 'gallery');
+    case 'mensaje': return site.message.enabled && can(s.planId, 'message');
+    case 'musica': return site.playlist.enabled && can(s.planId, 'playlist');
+  }
+}
+/** Agregar o quitar una sección: solo cambia si se muestra; todo lo que cargó la pareja se conserva. */
+function setOn(id: SectionId, v: boolean) {
+  patchSite(x => {
+    switch (id) {
+      case 'rsvp': return { ...x, rsvp: { ...x.rsvp, enabled: v } };
+      case 'dress': return { ...x, dressCode: { ...x.dressCode, enabled: v } };
+      case 'fotos': return { ...x, gallery: { ...x.gallery, enabled: v } };
+      case 'mensaje': return { ...x, message: { ...x.message, enabled: v } };
+      case 'musica': return { ...x, playlist: { ...x.playlist, enabled: v } };
+      case 'eventos': return v && !x.events.some(e => e.enabled) ? { ...x, events: x.events.map((e, i) => (i === 0 ? { ...e, enabled: true } : e)) } : x;
+      default: return x;
+    }
+  });
+}
+const REMOVABLE: SectionId[] = ['rsvp', 'dress', 'fotos', 'musica', 'mensaje'];
+
+type Row = { id: SectionId | 'regalos'; sec?: Sec; label: string; status: string; tone: Tone; movable: boolean; removable: boolean; fixed?: string };
+
 function SiteEditor() {
   const s = useAppState();
   const toast = useToast();
-  const [active, setActive] = useState<SectionId>('portada');
+  const plans = usePlans();
+  // `null` = la estructura de la invitación; una sección = su edición.
+  const [sel, setSel] = useState<SectionId | null>(null);
+  const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const [device, setDevice] = useState<Device>(() => (typeof window !== 'undefined' && window.matchMedia('(min-width: 1100px)').matches ? 'desktop' : 'mobile'));
+  const [jump, setJump] = useState(0);
+  const [announce, setAnnounce] = useState('');
   const [openEv, setOpenEv] = useState<SiteEvent['key'] | null>(() => s.site.events.find(e => e.enabled)?.key ?? null);
-  const [liveOpen, setLiveOpen] = useState(true);
   const [track, setTrack] = useState({ title: '', artist: '' });
   const [trackError, setTrackError] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const chipsRef = useScrollFade<HTMLUListElement>();
   const kb = useKeyboardState();
+  const topRef = useRef<HTMLDivElement>(null);
 
   if (!can(s.planId, 'site')) return <Locked feature="site" />;
   const site = s.site;
   const sections = sectionsOf(s);
-  const sec = sections.find(x => x.id === active)!;
-  const visibleCount = 1 + site.events.filter(e => e.enabled).length + [site.rsvp.enabled, site.dressCode.enabled, can(s.planId, 'gallery') && site.gallery.enabled, can(s.planId, 'message') && site.message.enabled, can(s.planId, 'playlist') && site.playlist.enabled].filter(Boolean).length;
+  const byId = (id: SectionId) => sections.find(x => x.id === id)!;
+  const giftsOn = can(s.planId, 'gifts') && s.gifts.items.length > 0;
+  const shown = (b: BlockId) => isOn(s, BLOCK_SECTION[b]) || (b === 'eventos' && giftsOn);
 
-  // Elegir una sección deja el formulario a la vista (en el celular la tarjeta queda fija arriba).
-  const pick = (id: SectionId) => {
-    setActive(id);
-    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // El chip elegido se centra en la fila (con 7 secciones, los de los extremos quedan fuera de la pantalla).
-    centerChild(chipsRef.current, chipsRef.current?.querySelector<HTMLElement>(`#sec-${id}`));
-    window.setTimeout(() => panelRef.current?.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }), 0);
+  /* Estructura: lo que hoy ve un invitado, de arriba hacia abajo. */
+  const rows: Row[] = [{ id: 'portada', sec: byId('portada'), label: 'Portada', status: byId('portada').status, tone: byId('portada').tone, movable: false, removable: false, fixed: 'Siempre primera' }];
+  for (const b of site.order) {
+    const id = BLOCK_SECTION[b], sec = byId(id);
+    if (isOn(s, id)) rows.push({ id, sec, label: sec.label, status: sec.status, tone: sec.tone, movable: true, removable: REMOVABLE.includes(id) });
+    if (b === 'eventos' && giftsOn) rows.push({ id: 'regalos', label: 'Lista de regalos', status: `${s.gifts.items.length} ${s.gifts.items.length === 1 ? 'regalo' : 'regalos'}`, tone: 'ok', movable: false, removable: false, fixed: 'Va con los eventos' });
+  }
+  if (isOn(s, 'mensaje')) rows.push({ id: 'mensaje', sec: byId('mensaje'), label: 'Mensaje final', status: byId('mensaje').status, tone: byId('mensaje').tone, movable: false, removable: true, fixed: 'Siempre al final' });
+  const movableIds = rows.filter(r => r.movable).map(r => r.id);
+  const addable = sections.filter(x => x.id !== 'portada' && !isOn(s, x.id));
+  const visibleCount = rows.length;
+  const sec = sel ? byId(sel) : null;
+  const hiddenNow = sel ? !isOn(s, sel) : false;
+
+  const open = (id: SectionId) => {
+    setSel(id); setTab('edit'); setJump(j => j + 1);
+    window.setTimeout(() => topRef.current?.scrollIntoView({ block: 'nearest' }), 0);
   };
-  const hiddenNow = ({ portada: false, eventos: false, rsvp: !site.rsvp.enabled, dress: !site.dressCode.enabled, fotos: !site.gallery.enabled, mensaje: !site.message.enabled, musica: !site.playlist.enabled } as Record<SectionId, boolean>)[active];
+  const back = () => { setSel(null); window.setTimeout(() => topRef.current?.scrollIntoView({ block: 'nearest' }), 0); };
+  const remove = (id: SectionId, label: string) => {
+    setOn(id, false);
+    if (sel === id) back();
+    toast(`Quitamos «${label}» de tu invitación. Lo que cargaste se guardó.`, 'ok', { label: 'Deshacer', onClick: () => setOn(id, true) });
+  };
+  const add = (id: SectionId) => { setOn(id, true); open(id); };
+  const move = (id: SectionId, dir: -1 | 1, label: string) => {
+    const b = (Object.keys(BLOCK_SECTION) as BlockId[]).find(k => BLOCK_SECTION[k] === id)!;
+    const next = moveBlock(site.order, b, dir, shown);
+    if (next === site.order) return;
+    patchSite(x => ({ ...x, order: next }));
+    setJump(j => j + 1);
+    const pos = next.filter(shown).indexOf(b) + 2; // la portada es la 1
+    setAnnounce(`${label} ahora es la sección ${pos} de ${visibleCount}.`);
+    // Al reordenar, la fila cambia de lugar: el foco vuelve al mismo botón para poder seguir moviéndola con el teclado.
+    window.requestAnimationFrame(() => {
+      const same = document.querySelector<HTMLButtonElement>(`[data-section="${id}"] [data-move="${dir}"]`);
+      (same && !same.disabled ? same : document.querySelector<HTMLElement>(`[data-section="${id}"] [data-move="${-dir}"]`))?.focus();
+    });
+  };
+  // Tocar una sección en la vista previa la elige en el editor.
+  const fromPreview = (p: PreviewSection) => {
+    const id = SECTION_FOR_PREVIEW(p);
+    if (id === 'regalos') { toast('La lista de regalos se arma en «Regalos».'); return; }
+    open(id);
+  };
+  const anchor = sel ? ANCHOR[sel] : undefined;
+  const path = sitePath(s);
 
   const addPhotos = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -212,114 +292,189 @@ function SiteEditor() {
   };
   const flag = (k: 'rsvp' | 'dressCode' | 'gallery' | 'message' | 'playlist') => (v: boolean) => patchSite(x => ({ ...x, [k]: { ...x[k], enabled: v } }));
 
+
   return (
-    <div className="pn-page pn-editor" data-kb={kb}>
+    <div className="pn-page pn-editor ed-page" data-kb={kb} data-tab={tab}>
       <header className="pn-page-head is-compact">
         <div>
           <h1>Tu página</h1>
-          <p className="pn-sub">Tus invitados ven {visibleCount} {visibleCount === 1 ? 'sección' : 'secciones'}.</p>
+          <p className="pn-sub">Tus invitados ven {visibleCount} {visibleCount === 1 ? 'sección' : 'secciones'}. Todo se guarda solo.</p>
+        </div>
+        <div className="pn-switch is-small ed-tabs" role="group" aria-label="Qué ver">
+          <button type="button" className={tab === 'edit' ? 'on' : ''} aria-pressed={tab === 'edit'} onClick={() => setTab('edit')}>Editar</button>
+          <button type="button" className={tab === 'preview' ? 'on' : ''} aria-pressed={tab === 'preview'} onClick={() => setTab('preview')}>Cómo queda</button>
         </div>
       </header>
+      <p className="pn-sr" role="status" aria-live="polite">{announce}</p>
 
-      <div className="pn-editor-grid">
-        <nav className="pn-snav" aria-label="Secciones de tu página">
-          <ul ref={chipsRef} className="pn-fade">
-            {sections.map(x => {
-              const Icon = ICON[x.id], Status = STATUS_ICON[x.tone];
-              return (
-                <li key={x.id}>
-                  <button type="button" id={`sec-${x.id}`} className={`pn-snav-btn${active === x.id ? ' on' : ''}`} aria-current={active === x.id ? 'true' : undefined} onClick={() => pick(x.id)}>
-                    <Icon size={18} strokeWidth={1.6} className="pn-snav-ico" aria-hidden="true" /><span className={`pn-sdot is-${x.tone}`} aria-hidden="true"><Status size={13} strokeWidth={2.4} /></span>{x.label}<span className="pn-sr"> · {x.status}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {!sec.locked && (
-          <div className="pn-live">
-            {liveOpen
-              ? <LiveCard s={s} section={active} label={sec.title} hidden={hiddenNow} openEvent={openEv} keyboard={kb} onSeeFull={() => openPreview('home', ANCHOR[active])} onHide={() => setLiveOpen(false)} />
-              : <div className="lc-collapsed"><p className="lc-cap">Así lo ven tus invitados</p><button type="button" className="pn-link" onClick={() => setLiveOpen(true)}>Mostrar cómo queda</button></div>}
-          </div>
-        )}
-
-        <div className="pn-editor-pane" ref={panelRef}>
-          {active === 'portada' && (
-            <Panel sec={sec}>
-              <CoverFields />
-              <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
-              {!s.date && <p className="pn-hint">La cuenta regresiva aparece cuando definas la fecha.</p>}
-            </Panel>
-          )}
-          {active === 'eventos' && (
-            <Panel sec={sec}>
-              <ul className="pn-evlist">{site.events.map(ev => <EventRow key={ev.key} ev={ev} open={openEv === ev.key} onOpen={setOpenEv} />)}</ul>
-            </Panel>
-          )}
-          {active === 'rsvp' && (
-            <Panel sec={sec} enabled={site.rsvp.enabled} onToggle={flag('rsvp')}>
-            <p className="pn-muted">Tus invitados confirman desde la página y las respuestas se suman solas a la solapa Invitados. No hace falta cargar nada.</p>
-            </Panel>
-          )}
-          {active === 'dress' && (
-            <Panel sec={sec} enabled={site.dressCode.enabled} onToggle={flag('dressCode')}>
-            <Field label="Título">{a => <input id={a.id} type="text" value={site.dressCode.title} placeholder="Elegante sport" onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, title: e.target.value } }))} />}</Field>
-            <Field label="Texto" optional>{a => <textarea id={a.id} rows={3} value={site.dressCode.text} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, text: e.target.value } }))} />}</Field>
-            </Panel>
-          )}
-          {active === 'fotos' && (
-            <Panel sec={sec} planTag={tagFor('gallery')} enabled={site.gallery.enabled} onToggle={flag('gallery')}>
-            {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
-            {site.gallery.photos.length > 0 && (
-              <ul className="pn-photos">
-                {site.gallery.photos.map((p, i) => (
-                  <li key={p.id}>
-                    <img src={p.src} alt="" />
-                    <div className="pn-gactions">
-                      <button type="button" className="pn-icon" onClick={() => movePhoto(i, -1)} disabled={i === 0} aria-label={`Mover la foto ${i + 1} antes`}><ArrowUp size={15} aria-hidden="true" /></button>
-                      <button type="button" className="pn-icon" onClick={() => movePhoto(i, 1)} disabled={i === site.gallery.photos.length - 1} aria-label={`Mover la foto ${i + 1} después`}><ArrowDown size={15} aria-hidden="true" /></button>
-                      <button type="button" className="pn-icon" onClick={() => patchSite(x => ({ ...x, gallery: { ...x.gallery, photos: x.gallery.photos.filter(q => q.id !== p.id) } }))} aria-label={`Quitar la foto ${i + 1}`}><X size={15} aria-hidden="true" /></button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <input ref={photoRef} className="pn-sr" type="file" multiple accept="image/jpeg,image/png,image/webp" aria-label="Elegir fotos" onChange={e => void addPhotos(e.target.files)} />
-            <div className="pn-actions is-tight"><button type="button" className="pn-btn is-ghost is-small" disabled={site.gallery.photos.length >= MAX_PHOTOS} onClick={() => photoRef.current?.click()}><Plus size={15} aria-hidden="true" />Agregar fotos</button><span className="pn-hint">{site.gallery.photos.length >= MAX_PHOTOS ? `Llegaste al máximo de ${MAX_PHOTOS} fotos. Quitá alguna para sumar otra.` : `${site.gallery.photos.length} de ${MAX_PHOTOS}. Se guardan en este dispositivo.`}</span></div>
-            <Field label="Hashtag" optional>{a => <input id={a.id} type="text" value={site.gallery.hashtag} placeholder="#TomasYMartina2027" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, hashtag: e.target.value } }))} />}</Field>
-            <Field label="Usuario de Instagram" optional>{a => <input id={a.id} type="text" value={site.gallery.handle} placeholder="@tomasymartina" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, handle: e.target.value } }))} />}</Field>
-            </Panel>
-          )}
-          {active === 'mensaje' && (
-            <Panel sec={sec} planTag={tagFor('message')} enabled={site.message.enabled} onToggle={flag('message')}>
-            <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
-            <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
-            </Panel>
-          )}
-          {active === 'musica' && (
-            <Panel sec={sec} planTag={tagFor('playlist')} enabled={site.playlist.enabled} onToggle={flag('playlist')}>
-              <p className="pn-note">Es una lista armada acá, solo para la vista previa: no está conectada a Spotify ni a otro servicio de música.</p>
-              <Field label="Nombre de la playlist" optional>{a => <input id={a.id} type="text" value={site.playlist.name} placeholder="Nuestra fiesta" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, name: e.target.value } }))} />}</Field>
-              <form onSubmit={addTrack} noValidate className="pn-inline-form is-tracks">
-                <Field label="Canción" error={trackError || undefined}>{a => <input id={a.id} type="text" value={track.title} onChange={e => { setTrack(t => ({ ...t, title: e.target.value })); setTrackError(''); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-                <Field label="Artista" optional>{a => <input id={a.id} type="text" value={track.artist} onChange={e => setTrack(t => ({ ...t, artist: e.target.value }))} />}</Field>
-                <button type="submit" className="pn-btn is-small">Agregar</button>
-              </form>
-              {site.playlist.tracks.length > 0 && (
-                <ol className="pn-tracks">
-                  {site.playlist.tracks.map((t, i) => (
-                    <li key={`${t.title}-${i}`}><span><strong>{t.title}</strong> · {t.artist}</span><button type="button" className="pn-icon" aria-label={`Quitar ${t.title}`} onClick={() => patchSite(x => ({ ...x, playlist: { ...x.playlist, tracks: x.playlist.tracks.filter((_, k) => k !== i) } }))}><X size={15} aria-hidden="true" /></button></li>
-                  ))}
+      <div className="ed-grid">
+        <div className="ed-side" ref={topRef}>
+          {!sec ? (
+            <>
+              <section className="ed-block" aria-labelledby="ed-structure">
+                <h2 id="ed-structure" className="ed-h">Tu invitación</h2>
+                <p className="ed-help">Así está armada, de arriba hacia abajo. Tocá una sección para editarla.</p>
+                <ol className="ed-rows">
+                  {rows.map((r, i) => {
+                    const Icon = r.id === 'regalos' ? GiftIcon : ICON[r.id];
+                    const Status = STATUS_ICON[r.tone];
+                    const main = (
+                      <>
+                        <span className="ed-num" aria-hidden="true">{i + 1}</span>
+                        <Icon size={18} strokeWidth={1.6} className="ed-ico" aria-hidden="true" />
+                        <span className="ed-text"><strong>{r.label}</strong><small className={`is-${r.tone}`}><Status size={12} strokeWidth={2.4} aria-hidden="true" />{r.status}</small></span>
+                      </>
+                    );
+                    return (
+                      <li key={r.id} className="ed-row" data-section={r.id}>
+                        {r.id === 'regalos'
+                          ? <Link to="/panel/regalos" className="ed-main" aria-label="Lista de regalos: se arma en Regalos">{main}<span className="ed-go">Ir a Regalos</span></Link>
+                          : <button type="button" className="ed-main" onClick={() => open(r.id as SectionId)} aria-label={`Editar ${r.label}. ${r.status}`}>{main}</button>}
+                        <div className="ed-acts">
+                          {r.movable
+                            ? <>
+                                <button type="button" className="pn-icon" data-move="-1" disabled={movableIds[0] === r.id} onClick={() => move(r.id as SectionId, -1, r.label)} aria-label={`Subir ${r.label}`}><ArrowUp size={16} aria-hidden="true" /></button>
+                                <button type="button" className="pn-icon" data-move="1" disabled={movableIds[movableIds.length - 1] === r.id} onClick={() => move(r.id as SectionId, 1, r.label)} aria-label={`Bajar ${r.label}`}><ArrowDown size={16} aria-hidden="true" /></button>
+                              </>
+                            : <span className="ed-fixed">{r.fixed}</span>}
+                          {r.removable && <button type="button" className="pn-icon" onClick={() => remove(r.id as SectionId, r.label)} aria-label={`Quitar ${r.label} de la invitación`}><X size={16} aria-hidden="true" /></button>}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
+              </section>
+
+              <section className="ed-block" aria-labelledby="ed-add">
+                <h2 id="ed-add" className="ed-h">Para agregar</h2>
+                {addable.length === 0
+                  ? <p className="ed-help">Ya tenés todas las secciones en tu invitación.</p>
+                  : <>
+                      <p className="ed-help">Quitar una sección no borra lo que cargaste: si la agregás de nuevo, está todo como lo dejaste.</p>
+                      <ul className="ed-rows is-add">
+                        {addable.map(x => {
+                          const Icon = ICON[x.id];
+                          const tag = x.locked ? `Plan ${planFor(x.locked)?.name}` : undefined;
+                          return (
+                            <li key={x.id} className="ed-row">
+                              <div className="ed-main is-static">
+                                <Icon size={18} strokeWidth={1.6} className="ed-ico" aria-hidden="true" />
+                                <span className="ed-text"><strong>{x.label}{tag && <em className="pn-plantag">{tag}</em>}</strong><small>{PURPOSE[x.id]}</small></span>
+                              </div>
+                              <div className="ed-acts">
+                                {x.locked
+                                  ? <button type="button" className="pn-btn is-ghost is-small" onClick={plans.open} aria-label={`Ver el plan que incluye ${x.label}`}>Ver plan</button>
+                                  : <button type="button" className="pn-btn is-ghost is-small" onClick={() => add(x.id)} aria-label={`Agregar ${x.label} a la invitación`}><Plus size={15} aria-hidden="true" />Agregar</button>}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>}
+              </section>
+            </>
+          ) : (
+            <>
+              <div className="ed-bar">
+                <button type="button" className="ed-back" onClick={back}><ArrowLeft size={16} aria-hidden="true" />Tu invitación</button>
+                {REMOVABLE.includes(sel!) && !sec.locked && !hiddenNow && <button type="button" className="pn-btn is-ghost is-small" onClick={() => remove(sel!, sec.label)}>Quitar de la invitación</button>}
+              </div>
+              {!sec.locked && (
+                <div className="pn-live ed-live">
+                  <LiveCard s={s} section={sel!} label={sec.title} hidden={hiddenNow} openEvent={openEv} keyboard={kb} onSeeFull={() => setTab('preview')} />
+                </div>
               )}
-            </Panel>
+              <div className="ed-form">
+
+      {sel === 'portada' && (
+        <Panel sec={sec}>
+          <CoverFields />
+          <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
+          {!s.date && <p className="pn-hint">La cuenta regresiva aparece cuando definas la fecha.</p>}
+        </Panel>
+      )}
+      {sel === 'eventos' && (
+        <Panel sec={sec}>
+          <ul className="pn-evlist">{site.events.map(ev => <EventRow key={ev.key} ev={ev} open={openEv === ev.key} onOpen={setOpenEv} />)}</ul>
+        </Panel>
+      )}
+      {sel === 'rsvp' && (
+        <Panel sec={sec}>
+        <p className="pn-muted">Tus invitados confirman desde la página y las respuestas se suman solas a la solapa Invitados. No hace falta cargar nada.</p>
+        </Panel>
+      )}
+      {sel === 'dress' && (
+        <Panel sec={sec}>
+        <Field label="Título">{a => <input id={a.id} type="text" value={site.dressCode.title} placeholder="Elegante sport" onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, title: e.target.value } }))} />}</Field>
+        <Field label="Texto" optional>{a => <textarea id={a.id} rows={3} value={site.dressCode.text} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, text: e.target.value } }))} />}</Field>
+        </Panel>
+      )}
+      {sel === 'fotos' && (
+        <Panel sec={sec} planTag={tagFor('gallery')}>
+        {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
+        {site.gallery.photos.length > 0 && (
+          <ul className="pn-photos">
+            {site.gallery.photos.map((p, i) => (
+              <li key={p.id}>
+                <img src={p.src} alt="" />
+                <div className="pn-gactions">
+                  <button type="button" className="pn-icon" onClick={() => movePhoto(i, -1)} disabled={i === 0} aria-label={`Mover la foto ${i + 1} antes`}><ArrowUp size={15} aria-hidden="true" /></button>
+                  <button type="button" className="pn-icon" onClick={() => movePhoto(i, 1)} disabled={i === site.gallery.photos.length - 1} aria-label={`Mover la foto ${i + 1} después`}><ArrowDown size={15} aria-hidden="true" /></button>
+                  <button type="button" className="pn-icon" onClick={() => patchSite(x => ({ ...x, gallery: { ...x.gallery, photos: x.gallery.photos.filter(q => q.id !== p.id) } }))} aria-label={`Quitar la foto ${i + 1}`}><X size={15} aria-hidden="true" /></button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <input ref={photoRef} className="pn-sr" type="file" multiple accept="image/jpeg,image/png,image/webp" aria-label="Elegir fotos" onChange={e => void addPhotos(e.target.files)} />
+        <div className="pn-actions is-tight"><button type="button" className="pn-btn is-ghost is-small" disabled={site.gallery.photos.length >= MAX_PHOTOS} onClick={() => photoRef.current?.click()}><Plus size={15} aria-hidden="true" />Agregar fotos</button><span className="pn-hint">{site.gallery.photos.length >= MAX_PHOTOS ? `Llegaste al máximo de ${MAX_PHOTOS} fotos. Quitá alguna para sumar otra.` : `${site.gallery.photos.length} de ${MAX_PHOTOS}. Se guardan en este dispositivo.`}</span></div>
+        <Field label="Hashtag" optional>{a => <input id={a.id} type="text" value={site.gallery.hashtag} placeholder="#TomasYMartina2027" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, hashtag: e.target.value } }))} />}</Field>
+        <Field label="Usuario de Instagram" optional>{a => <input id={a.id} type="text" value={site.gallery.handle} placeholder="@tomasymartina" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, handle: e.target.value } }))} />}</Field>
+        </Panel>
+      )}
+      {sel === 'mensaje' && (
+        <Panel sec={sec} planTag={tagFor('message')}>
+        <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
+        <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
+        </Panel>
+      )}
+      {sel === 'musica' && (
+        <Panel sec={sec} planTag={tagFor('playlist')}>
+          <p className="pn-note">Es una lista armada acá, solo para la vista previa: no está conectada a Spotify ni a otro servicio de música.</p>
+          <Field label="Nombre de la playlist" optional>{a => <input id={a.id} type="text" value={site.playlist.name} placeholder="Nuestra fiesta" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, name: e.target.value } }))} />}</Field>
+          <form onSubmit={addTrack} noValidate className="pn-inline-form is-tracks">
+            <Field label="Canción" error={trackError || undefined}>{a => <input id={a.id} type="text" value={track.title} onChange={e => { setTrack(t => ({ ...t, title: e.target.value })); setTrackError(''); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
+            <Field label="Artista" optional>{a => <input id={a.id} type="text" value={track.artist} onChange={e => setTrack(t => ({ ...t, artist: e.target.value }))} />}</Field>
+            <button type="submit" className="pn-btn is-small">Agregar</button>
+          </form>
+          {site.playlist.tracks.length > 0 && (
+            <ol className="pn-tracks">
+              {site.playlist.tracks.map((t, i) => (
+                <li key={`${t.title}-${i}`}><span><strong>{t.title}</strong> · {t.artist}</span><button type="button" className="pn-icon" aria-label={`Quitar ${t.title}`} onClick={() => patchSite(x => ({ ...x, playlist: { ...x.playlist, tracks: x.playlist.tracks.filter((_, k) => k !== i) } }))}><X size={15} aria-hidden="true" /></button></li>
+              ))}
+            </ol>
+          )}
+        </Panel>
+      )}
+
+                <div className="pn-actions"><button type="button" className="pn-btn" onClick={back}>Listo</button></div>
+              </div>
+            </>
           )}
         </div>
 
+        <div className="ed-view">
+          <div className="ed-view-bar">
+            <div className="pn-switch is-small" role="group" aria-label="Cómo verla">
+              <button type="button" className={device === 'mobile' ? 'on' : ''} aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Celular</button>
+              <button type="button" className={device === 'desktop' ? 'on' : ''} aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Compu</button>
+            </div>
+            <p className="ed-hint">Tocá una sección para editarla</p>
+            <button type="button" className="pn-link" onClick={() => openPreview('home', anchor)}>Ver completa</button>
+          </div>
+          <SitePreview path={path} device={device} anchor={anchor} jump={jump} active={sel && sel !== 'portada' ? sel : sel} onSelect={fromPreview} label="Vista previa de tu invitación, tal como la ven tus invitados" />
+        </div>
       </div>
-
     </div>
   );
 }

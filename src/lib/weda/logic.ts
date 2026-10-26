@@ -4,7 +4,7 @@ import { menus, type Category } from '@/lib/demo-wedding';
 import { catalogGift, setGifts, type GiftSet } from './catalog';
 import { can, planFor, type Feature } from './plans';
 import type {
-  AppState, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent,
+  AppState, BlockId, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent,
 } from './types';
 
 /* ------------------------------------------------------------------ utilidades */
@@ -167,7 +167,31 @@ export function mapsLink(ev: Pick<SiteEvent, 'name' | 'address' | 'mapsUrl'>): s
 
 export const DEFAULT_COVER_TEXT = '¡Nos casamos!';
 
+/** Orden de fábrica de la invitación: el mismo que tenía antes de poder reordenar. */
+export const DEFAULT_ORDER: BlockId[] = ['eventos', 'rsvp', 'dress', 'fotos', 'musica'];
+
+/** Orden válido a partir de cualquier valor: sin repetidos ni desconocidos, y con las secciones que falten al final (en su orden de fábrica). */
+export function normalizeOrder(v: unknown): BlockId[] {
+  const seen = new Set<BlockId>();
+  if (Array.isArray(v)) for (const x of v) if ((DEFAULT_ORDER as unknown[]).includes(x)) seen.add(x as BlockId);
+  for (const id of DEFAULT_ORDER) seen.add(id);
+  return [...seen];
+}
+
+/** Mueve una sección una posición hacia arriba (-1) o hacia abajo (+1) entre las que se muestran; las ocultas no cuentan, así el movimiento siempre se nota. */
+export function moveBlock(order: BlockId[], id: BlockId, dir: -1 | 1, visible: (b: BlockId) => boolean): BlockId[] {
+  const shown = order.filter(visible);
+  const at = shown.indexOf(id);
+  const swap = shown[at + dir];
+  if (at < 0 || swap === undefined) return order;
+  const next = [...order];
+  const i = next.indexOf(id), j = next.indexOf(swap);
+  next[i] = swap; next[j] = id;
+  return next;
+}
+
 export const defaultSite = (): SiteConfig => ({
+  order: [...DEFAULT_ORDER],
   coverText: DEFAULT_COVER_TEXT,
   events: [
     { key: 'ceremonia', enabled: true, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },

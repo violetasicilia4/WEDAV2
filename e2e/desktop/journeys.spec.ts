@@ -110,7 +110,7 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
     await expect(page.getByRole('heading', { name: 'Armá tu lista de regalos' })).toBeVisible();
     // Editor: la portada marca la fecha como pendiente y los eventos no inventan un lugar.
     await nav(page, 'Tu página').click();
-    await expect(page.getByRole('navigation', { name: 'Secciones de tu página' }).getByText(/Falta la fecha/)).toBeVisible();
+    await expect(page.getByRole('button', { name: /Editar Portada.*Falta la fecha/ })).toBeVisible();
     // Vista previa: «Fecha a confirmar» y nada de cuenta regresiva ni «Guardar la fecha».
     await openPreview(page);
     await expect.poll(() => previewText(page)).toMatch(/Fecha a confirmar/i);
@@ -224,6 +224,7 @@ test.describe('Perfil B · lo visual: editor y vista previa sincronizados', () =
   test('el texto de la portada y los nombres se ven en la vista previa; un cambio repetido deja el último valor', async ({ page }) => {
     await onboard(page, 'Lucía', 'Violeta');
     await nav(page, 'Tu página').click();
+    await page.getByRole('button', { name: /^Editar Portada/ }).click();
     const cover = page.getByLabel('Texto sobre los nombres');
     await cover.fill('Nos casamos en primavera');
     await cover.fill('Nos casamos en otoño');          // cambio repetido: queda el último

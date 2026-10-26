@@ -68,7 +68,12 @@ export type SiteEvent = {
 
 export type SitePhoto = { id: string; src: string; alt: string };
 
+/** Secciones de la invitación que la pareja puede reordenar (la portada va siempre primero y el mensaje final siempre al cierre). */
+export type BlockId = 'eventos' | 'rsvp' | 'dress' | 'fotos' | 'musica';
+
 export type SiteConfig = {
+  /** Orden en que se muestran las secciones reordenables. Siempre contiene las cinco, también las ocultas (al volver a mostrarlas conservan su lugar). */
+  order: BlockId[];
   coverText: string;
   events: SiteEvent[];
   countdown: boolean;

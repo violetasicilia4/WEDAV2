@@ -1,5 +1,5 @@
 // Escenario de ejemplo: Tomás y Martina. Todo es ficticio (nombres, lugares, direcciones, invitados e importes).
-import { emptyState } from './logic';
+import { DEFAULT_ORDER, emptyState } from './logic';
 import type { AppState, Guest, GuestStatus, ListGift } from './types';
 import { catalogGift } from './catalog';
 
@@ -67,6 +67,7 @@ export function seedState(): AppState {
       guest(14, 'Emilia', 'Quiroga', 'confirmed', 'sin-lactosa', null, 'rsvp'),
     ],
     site: {
+      order: [...DEFAULT_ORDER],
       coverText: '¡Nos casamos!',
       events: [
         { key: 'ceremonia', enabled: true, title: 'Ceremonia', name: 'Parroquia San Isidro Labrador', address: 'Libertador 16300, San Isidro, Buenos Aires', time: '17:00', note: 'Pedimos llegar con 20 minutos de anticipación.', mapsUrl: '' },

@@ -88,6 +88,14 @@ function mergeFromServer(local: AppState, w: any, email: string): AppState {
   return { ...w.draft, guests: w.guests, email, gifts: { ...w.draft.gifts, given: local.gifts.given }, publication: reconcilePublication(local.publication, w.publication), seeded: false, ...(w.slug ? { slug: w.slug } : {}) };
 }
 
+/* Marca local de lo último confirmado por el servidor (revisión y huella del borrador, sin duplicar las fotos). Sirve para distinguir, al volver a abrir la
+   página, «cambios míos que todavía no llegaron al servidor» (se conservan y se suben) de «otro dispositivo guardó antes» (gana el servidor). */
+const META_KEY = 'weda-sync';
+const hashOf = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + s.length.toString(36); };
+type Meta = { email: string; revision: number; hash: string; guestIds: string[] };
+const readMeta = (): Meta | null => { try { const m = JSON.parse(window.localStorage.getItem(META_KEY) ?? 'null'); return m && typeof m.email === 'string' && typeof m.revision === 'number' ? m as Meta : null; } catch { return null; } };
+const writeMeta = (email?: string) => { try { window.localStorage.setItem(META_KEY, JSON.stringify({ email: email ?? remote.user?.email ?? '', revision, hash: hashOf(syncedDraft), guestIds: [...syncedGuests.keys()] } satisfies Meta)); } catch { /* sin lugar: solo se pierde la ayuda para recuperar cambios */ } };
+
 function markSynced(w: { revision: number; guests: Guest[]; draft: AppState }) {
   revision = w.revision;
   syncedDraft = JSON.stringify(draftOf(w.draft));
@@ -121,6 +129,16 @@ async function attach(email: string): Promise<void> {
     baselineRef = null;
     set({ settled: true, user: { email }, error: null, notice: 'Guardamos en tu cuenta el casamiento que empezaste en este navegador.' });
     scheduleSave(0);
+  } else if (serverHasData && isUnsyncedLocal(local, w, email)) {
+    // Este navegador tiene cambios que no llegaron a guardarse (por ejemplo, se recargó antes del guardado) y nadie guardó otra cosa mientras tanto:
+    // se conservan y se suben. Las respuestas que llegaron al servidor desde el sitio público se suman (no se pisan).
+    const known = new Set(readMeta()?.guestIds ?? []);
+    const arrived = (w.guests as Guest[]).filter(g => !known.has(g.id) && !local.guests.some(x => x.id === g.id));
+    markSynced(w);
+    replace({ ...local, email, guests: [...local.guests, ...arrived], ...(w.slug ? { slug: w.slug } : {}) });
+    baselineRef = null;
+    set({ settled: true, user: { email }, error: null, publication: w.publication });
+    scheduleSave(0);
   } else if (serverHasData) {
     if (hasEvent(local) && JSON.stringify(draftOf(local)) !== JSON.stringify(draftOf(w.draft))) {
       try { window.localStorage.setItem(BACKUP_KEY, JSON.stringify(local)); } catch { /* sin lugar: el servidor igual conserva el casamiento de la cuenta */ }
@@ -129,16 +147,25 @@ async function attach(email: string): Promise<void> {
     replace(mergeFromServer(local, w, email));
     markSynced(w);
     baselineRef = getState();
+    writeMeta(email);
     set({ settled: true, user: { email }, error: null, save: 'saved', publication: w.publication });
   } else {
     replace({ ...local, email, publication: reconcilePublication(local.publication, w.publication), ...(w.slug ? { slug: w.slug } : {}) });
     markSynced(w);
     baselineRef = getState();
+    writeMeta(email);
     set({ settled: true, user: { email }, error: null, publication: w.publication });
   }
   frozen = false;
   unsub?.();
   unsub = subscribeState(() => { if (getState() !== baselineRef) scheduleSave(DEBOUNCE); });
+}
+
+function isUnsyncedLocal(local: AppState, w: any, email: string): boolean {
+  const meta = readMeta();
+  if (!meta || meta.email !== email || meta.revision !== w.revision) return false;
+  const localJson = JSON.stringify(draftOf(local));
+  return localJson !== JSON.stringify(draftOf(w.draft)) && hashOf(localJson) !== meta.hash;
 }
 
 /** Idempotente: la primera pantalla que lo necesite arranca la carga; las demás esperan la misma promesa. */
@@ -177,6 +204,7 @@ async function flush(): Promise<void> {
     for (const g of arrived) syncedGuests.set(g.id, guestKey(g));
     if (arrived.length) replace({ ...getState(), guests: [...getState().guests, ...arrived.filter(g => !getState().guests.some(x => x.id === g.id))] });
     baselineRef = getState();
+    writeMeta();
     retry = 0;
     set({ save: 'saved', error: null });
   } catch (e) {
@@ -238,6 +266,7 @@ export async function logout(): Promise<void> {
   try { await api('POST', '/api/auth/logout'); } catch { /* si no hay red, la cookie igual vence */ }
   unsub?.(); unsub = undefined; baselineRef = null; frozen = false;
   if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
+  try { window.localStorage.removeItem(META_KEY); } catch { /* nada que borrar */ }
   reset();
   started = Promise.resolve();
   set({ settled: true, user: null, save: 'idle', error: null, notice: null, publication: null });

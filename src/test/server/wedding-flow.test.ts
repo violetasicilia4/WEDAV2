@@ -84,6 +84,15 @@ describe('publicación y sitio público', () => {
     expect((await anon.get('/api/public/camila-y-lucas')).body.site.coverText).toBe('Texto nuevo sin publicar');
   });
 
+  it('el orden de las secciones que eligió la pareja se guarda y llega a lo publicado', async () => {
+    const owner = env.client(); await signUp(owner, 'orden@correo.com');
+    const base = draftFor('Olga', 'Raúl');
+    await saveDraft(owner, { ...base, site: { ...base.site, order: ['musica', 'fotos', 'dress', 'rsvp', 'eventos'] } });
+    expect((await owner.get('/api/wedding')).body.draft.site.order).toEqual(['musica', 'fotos', 'dress', 'rsvp', 'eventos']);
+    const slug = (await owner.post('/api/wedding/publish')).body.slug;
+    expect((await env.client().get(`/api/public/${slug}`)).body.site.order).toEqual(['musica', 'fotos', 'dress', 'rsvp', 'eventos']);
+  });
+
   it('slug inexistente → 404; despublicada → 410; republicar la vuelve a abrir', async () => {
     const anon = env.client();
     expect((await anon.get('/api/public/no-existe')).status).toBe(404);

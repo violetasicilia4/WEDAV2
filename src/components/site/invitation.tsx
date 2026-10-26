@@ -1,7 +1,7 @@
 // Invitación editorial. Orden pensado para el invitado: quién y cuándo (portada) → dónde y a qué hora (el día) → confirmar →
 // qué ponerse → fotos → música → cierre. Cada sección tiene una composición propia y aparece solo si está habilitada.
 // Es la MISMA página para /ejemplo y para el sitio de cada pareja: todo viene de useSite().
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { CalendarPlus, Gift as GiftIcon, Plus } from 'lucide-react';
 import { ClinkIcon, HallIcon, RingsIcon } from '@/components/hand-icons';
@@ -10,6 +10,8 @@ import { SiteCover } from './site-cover';
 import { buildIcs, downloadIcs, parseTime } from '@/lib/ics';
 import { getCountdown, type Countdown } from '@/lib/countdown';
 import { formatARS } from '@/lib/demo-wedding';
+import { DEFAULT_ORDER } from '@/lib/weda/logic';
+import type { BlockId } from '@/lib/weda/types';
 import { useSessionState } from '@/lib/demo-session';
 import { monthName, slugify } from '@/lib/weda/logic';
 import { useSite } from '@/lib/weda/site-model';
@@ -266,20 +268,23 @@ function Closing() {
 }
 
 export function Invitation() {
-  const { blocks } = useSite();
-  return <>
-    <SiteCover variant="home" next="#nos-casamos" />
-    <Welcome />
-    {blocks.day && <TheDay />}
-    {blocks.gifts && <GiftsPreview />}
-    {blocks.rsvp && <RsvpBand />}
-    {blocks.dress && <Practical />}
-    {blocks.photos && <Photos />}
-    {blocks.playlist && (
+  const { blocks, order = DEFAULT_ORDER } = useSite(); // los sitios publicados antes de poder reordenar no traen `order`
+  // Cada sección reordenable sabe si se muestra y cómo; «Regalos» acompaña siempre a los eventos y el mensaje final cierra la página.
+  const render: Record<BlockId, React.ReactNode> = {
+    eventos: blocks.day || blocks.gifts ? <>{blocks.day && <TheDay />}{blocks.gifts && <GiftsPreview />}</> : null,
+    rsvp: blocks.rsvp ? <RsvpBand /> : null,
+    dress: blocks.dress ? <Practical /> : null,
+    fotos: blocks.photos ? <Photos /> : null,
+    musica: blocks.playlist ? (
       <section className="iv-section iv-participate" aria-label="Playlist">
         <div className="iv-wrap"><PlaylistBlock /></div>
       </section>
-    )}
+    ) : null,
+  };
+  return <>
+    <SiteCover variant="home" next="#nos-casamos" />
+    <Welcome />
+    {order.map(id => <Fragment key={id}>{render[id]}</Fragment>)}
     {blocks.message && <Closing />}
   </>;
 }

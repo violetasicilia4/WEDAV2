@@ -3,7 +3,7 @@
 // - Se sincroniza entre pestañas y iframes (evento "storage"): así la vista previa del editor se actualiza sola.
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
 import { useRef, useSyncExternalStore } from 'react';
-import { defaultGroup, defaultSite, emptyState } from './logic';
+import { defaultGroup, defaultSite, emptyState, normalizeOrder } from './logic';
 import { isPlanId } from './plans';
 import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
@@ -61,6 +61,7 @@ function site(v: unknown): SiteConfig {
   const r = isObj(v['rsvp']) ? v['rsvp'] : {}, dc = isObj(v['dressCode']) ? v['dressCode'] : {}, ga = isObj(v['gallery']) ? v['gallery'] : {};
   const pl = isObj(v['playlist']) ? v['playlist'] : {}, ms = isObj(v['message']) ? v['message'] : {};
   return {
+    order: normalizeOrder(v['order']),
     coverText: str(v['coverText'], d.coverText), events, countdown: bool(v['countdown'], d.countdown),
     rsvp: { enabled: bool(r['enabled'], d.rsvp.enabled), deadline: str(r['deadline']), menus: bool(r['menus'], d.rsvp.menus) },
     dressCode: { enabled: bool(dc['enabled'], false), title: str(dc['title']), text: str(dc['text']) },

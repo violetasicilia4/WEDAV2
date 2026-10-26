@@ -9,8 +9,8 @@ import {
   type Category, type Gift, type WeddingEvent,
 } from '@/lib/demo-wedding';
 import { can } from './plans';
-import { coupleLabel, dateLabel, dateShort, dayMonth, hasEventDetails, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath } from './logic';
-import type { AppState, GivenGift } from './types';
+import { DEFAULT_ORDER, normalizeOrder, coupleLabel, dateLabel, dateShort, dayMonth, hasEventDetails, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath } from './logic';
+import type { AppState, BlockId, GivenGift } from './types';
 
 export type SiteData = {
   kind: 'demo' | 'app';
@@ -32,6 +32,8 @@ export type SiteData = {
   dateShort: string | null;
   calendarTitle: string;
   events: WeddingEvent[];
+  /** Orden de las secciones reordenables (ver `BlockId`). */
+  order: BlockId[];
   blocks: { invitation: boolean; save: boolean; countdown: boolean; day: boolean; rsvp: boolean; dress: boolean; photos: boolean; playlist: boolean; message: boolean; gifts: boolean };
   rsvp: { deadline: string | null; menus: readonly { id: string; name: string }[] | null };
   dressCode: { title: string; text: string; palette: { name: string; color: string }[] };
@@ -81,6 +83,7 @@ export const demoSiteData: SiteData = {
   dateShort: demoWedding.dateShort,
   calendarTitle: calendar.title,
   events: demoEvents,
+  order: DEFAULT_ORDER,
   blocks: { invitation: true, save: true, countdown: true, day: true, rsvp: true, dress: true, photos: true, playlist: true, message: true, gifts: false },
   rsvp: { deadline: demoDeadline, menus: demoMenus },
   dressCode: demoDress,
@@ -134,6 +137,7 @@ export function siteFromState(s: AppState): SiteData {
     dateShort: date ? dateShort(date) : null,
     calendarTitle: `Casamiento de ${names}`,
     events,
+    order: normalizeOrder(s.site.order),
     blocks: {
       invitation: can(s.planId, 'site'),
       save: true,
