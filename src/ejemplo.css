@@ -201,7 +201,7 @@
 .dm-rsvp-menus { grid-template-columns: 1fr 1fr; gap: 10px; }
 .dm-rsvp-menu span { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 12px; text-align: center; }
 .dm-rsvp-menu strong { font-family: var(--ej-sans); font-size: 14px; font-weight: 400; }
-.dm-rsvp-menu.on span { background: #5A646C; border-color: #5A646C; box-shadow: none; color: #fff; }
+.dm-rsvp-menu.on span { background: var(--dm-blue); border-color: var(--dm-blue); box-shadow: none; color: #fff; }
 .dm-rsvp-menu.on strong { color: #fff; }
 
 /* =========================================================================
