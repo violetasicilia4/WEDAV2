@@ -745,3 +745,6 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 .dm-root .iv-gifts .iv-wrap { max-width: 1120px; }
 .dm-root .iv-gifts-sub { max-width: min(100%, 76ch) !important; font-size: clamp(17px, 1.1vw + 11.5px, 27px) !important; line-height: 1.45 !important; }
 .dm-root .iv-gifts .iv-h2 { font-size: clamp(32px, 3.2vw + 10px, 60px) !important; }
+
+/* Portada: el "&" de los nombres va con el ampersand de la serif (cursiva), no con "y". */
+.dm-root .iv-cover-title .iv-amp { font-family: 'Cormorant Garamond', Garamond, Georgia, serif !important; font-style: italic; font-weight: 400; text-transform: none; }

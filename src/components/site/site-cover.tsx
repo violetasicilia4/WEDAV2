@@ -32,7 +32,7 @@ export function SiteCover({ variant = 'home', next }: Props) {
         ) : (
           <div className="iv-cover-group">
             {site.coverText && <p className="iv-cover-eyebrow">{site.coverText}</p>}
-            <h1 className="iv-cover-title iv-cover-top">{site.names.replace(/\s*&\s*/, ' y ')}</h1>
+            <h1 className="iv-cover-title iv-cover-top">{site.names.split(/\s*&\s*/).map((n, i) => (i === 0 ? n : <span key={i}> <span className="iv-amp">&amp;</span> {n}</span>))}</h1>
             {site.eventDate
               ? <p className="iv-cover-date" aria-label={site.dateShort ?? undefined}>{spaced(site.eventDate)}</p>
               : <p className="iv-cover-date">Fecha a confirmar</p>}
