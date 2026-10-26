@@ -1,13 +1,13 @@
 /* Micrositio de ejemplo · bloques (.ej-*) y lista de regalos (.rg-*).
    Mismos criterios que la landing: Arial, títulos livianos y grandes, mucho aire, esquinas muy redondeadas,
-   papel #f5f2eb / blanco, pizarra de Weda #5A646C solo en acciones y en un bloque de color. */
+   papel #f5f2eb / blanco, verde #959571 en acciones y opciones seleccionadas (ya no se usa la pizarra azulada en botones). */
 
 :root {
   --ej-pad: clamp(72px, 9vw, 132px);
   --ej-line: rgb(59 60 58 / .14);
   --ej-ink: var(--foreground);
   --ej-muted: var(--muted-foreground);
-  --ej-slate: #5A646C;
+  --ej-slate: #959571; /* verde de la invitación: fondos, bordes y foco de botones y opciones (antes pizarra azulada) */
   --ej-r: clamp(22px, 2.4vw, 32px);
 }
 
@@ -44,7 +44,7 @@
 .rg-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgb(59 60 58 / .12); }
 .rg-photo { position: relative; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: #ebe7dc; display: grid; place-items: center; }
 .rg-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.rg-icon { display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: rgb(255 255 255 / .7); color: var(--ej-slate); }
+.rg-icon { display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: rgb(255 255 255 / .7); color: var(--ej-ink); }
 .rg-price {
   position: absolute; left: 10px; bottom: 10px; padding: 6px 12px; border-radius: 999px; background: rgb(255 255 255 / .95);
   font-size: 13px; box-shadow: 0 4px 12px rgb(0 0 0 / .14);
@@ -71,7 +71,7 @@
 }
 .rg-form { display: grid; gap: 18px; }
 .rg-head { display: flex; align-items: center; gap: 14px; }
-.rg-thumb { flex: none; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 16px; overflow: hidden; background: var(--paper); color: var(--ej-slate); }
+.rg-thumb { flex: none; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 16px; overflow: hidden; background: var(--paper); color: var(--ej-ink); }
 .rg-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .rg-kicker { margin: 0 0 4px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ej-muted); }
 .rg-dialog h2 { margin: 0; font-size: 20px; font-weight: 400; line-height: 1.2; letter-spacing: -.005em; }
@@ -83,26 +83,26 @@
   width: 100%; min-height: 50px; padding: 0 16px; border-radius: 14px; border: 1px solid rgb(59 60 58 / .25); background: #fff; color: var(--foreground);
   font: inherit; font-size: 16px; outline: none; transition: border-color .2s, box-shadow .2s;
 }
-.rg-field input[type="text"]:focus-visible, .rg-field input[type="email"]:focus-visible { border-color: var(--ej-slate); box-shadow: 0 0 0 3px rgb(90 100 108 / .25); }
+.rg-field input[type="text"]:focus-visible, .rg-field input[type="email"]:focus-visible { border-color: var(--ej-slate); box-shadow: 0 0 0 3px rgb(149 149 113 / .35); }
 .rg-field.has-error input[type="text"], .rg-field.has-error input[type="email"] { border-color: var(--destructive); }
 .rg-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .rg-chip { position: relative; display: block; cursor: pointer; }
 .rg-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .rg-chip span { display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 14px; border: 1px solid rgb(59 60 58 / .25); font-size: 15px; transition: background .2s, color .2s, border-color .2s; }
 .rg-chip.on span { background: var(--ej-slate); border-color: var(--ej-slate); color: #fff; }
-.rg-chip:focus-within span { box-shadow: 0 0 0 3px rgb(90 100 108 / .3); }
+.rg-chip:focus-within span { box-shadow: 0 0 0 3px rgb(149 149 113 / .4); }
 .rg-alias { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 6px 6px 18px; border-radius: 14px; background: var(--paper); }
 .rg-alias code { font: inherit; font-size: 16px; }
 .rg-alias button {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; height: 40px; padding: 0 14px; border: 0; border-radius: 999px;
-  background: #fff; color: var(--ej-slate); font: inherit; font-size: 14px; cursor: pointer; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .14); touch-action: manipulation;
+  background: #fff; color: var(--ej-ink); font: inherit; font-size: 14px; cursor: pointer; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .14); touch-action: manipulation;
 }
 .rg-note { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--paper); font-size: 14px; line-height: 1.5; color: var(--ej-muted); }
 .rg-help { margin: -6px 0 0; font-size: 13px; color: var(--ej-muted); }
 .rg-send { width: 100%; height: 50px; }
 .rg-dialog .dm-solid { background: var(--ej-slate); color: #fff; }
 .rg-thanks { display: grid; justify-items: center; gap: 0; padding: 18px 0 6px; text-align: center; }
-.rg-check { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 20px; border-radius: 50%; background: #fff; color: var(--ej-slate); box-shadow: 0 0 0 1px rgb(59 60 58 / .08), 0 8px 22px rgb(59 60 58 / .1); }
+.rg-check { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 20px; border-radius: 50%; background: #fff; color: var(--ej-ink); box-shadow: 0 0 0 1px rgb(59 60 58 / .08), 0 8px 22px rgb(59 60 58 / .1); }
 .rg-thanks h2 { font-size: 26px; font-weight: 700; }
 .rg-thanks p { margin: 10px 0 24px; font-size: 15px; color: var(--ej-muted); }
 
@@ -335,13 +335,13 @@
 .rg-up-label { display: block; margin: 0 0 8px; font-size: 13px; color: var(--ej-muted); }
 .rg-file {
   display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border-radius: 14px; cursor: pointer;
-  border: 1.5px dashed rgb(59 60 58 / .28); color: var(--ej-slate); font-size: 15px; transition: border-color .2s, background .2s;
+  border: 1.5px dashed rgb(59 60 58 / .28); color: var(--ej-ink); font-size: 15px; transition: border-color .2s, background .2s;
 }
 .rg-file:hover { background: #f6f4ee; }
 .rg-file span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rg-file em { font-style: normal; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 .rg-file.has { border-style: solid; border-color: var(--ej-slate); background: #f6f4ee; }
-#rg-proof:focus-visible + .rg-file { box-shadow: 0 0 0 3px rgb(90 100 108 / .25); }
+#rg-proof:focus-visible + .rg-file { box-shadow: 0 0 0 3px rgb(149 149 113 / .35); }
 .rg-dialog .rg-send:disabled { background: rgb(59 60 58 / .12); color: var(--ej-muted); cursor: not-allowed; }
 .rg-missing { margin: -6px 0 0; font-size: 13px; color: var(--ej-muted); text-align: center; }
 .rg-up-label { font-size: 12px; line-height: 1.5; letter-spacing: .1em; text-transform: uppercase; color: var(--ej-muted); }
