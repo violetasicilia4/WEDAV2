@@ -4,8 +4,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Field, FlowClose } from '@/components/panel/ui';
 import { accountDestination, hasEvent } from '@/lib/weda/account';
 import { isEmail, strongPassword } from '@/lib/weda/logic';
-import { errorText, login, register } from '@/lib/weda/remote';
-import { getState, useAppState, useHydrated } from '@/lib/weda/store';
+import { errorText, login, register, setNotice } from '@/lib/weda/remote';
+import { getState, update, useAppState, useHydrated } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/crear/cuenta')({
   // «?modo=ingresar» abre la pantalla en «Ingresá a Weda» (el botón «Iniciar sesión» de la landing).
@@ -61,6 +61,13 @@ function Account() {
     setBusy(true); setFormError(undefined);
     void (signup ? register : login)(email.trim(), password).then(r => {
       setBusy(false);
+      // Si el servidor no tiene base de datos (por ejemplo un hosting de prueba), se sigue en modo demostración, como antes de que existieran las cuentas.
+      if (!r.ok && r.code === 'backend_unavailable') {
+        update(s => ({ ...s, email: email.trim() }));
+        setNotice('Las cuentas todavía no están disponibles en este sitio: tu casamiento se guarda solo en este navegador.');
+        next();
+        return;
+      }
       if (r.ok) { const s = getState(); void navigate({ to: hasEvent(s) ? accountDestination(s) : '/crear' }); return; }
       if (r.code === 'email_taken' || r.code === 'invalid_email') setErrors({ email: errorText(r.code) });
       else if (r.code === 'invalid_credentials' || r.code === 'weak_password') setErrors({ password: errorText(r.code) });

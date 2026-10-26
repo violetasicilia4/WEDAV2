@@ -59,18 +59,27 @@ async function readJson(req: Request): Promise<Record<string, unknown>> {
   } catch { throw new ApiError(400, 'invalid_json'); }
 }
 
+/** Abre la base al primer uso. Si no se puede (hosting sin disco persistente o sin `node:sqlite`), la API responde 503 y el resto del sitio sigue andando. */
+function openService(cfg: ServerConfig): Service {
+  try { return getService(cfg); }
+  catch (e) { console.error('No se pudo abrir la base de datos:', e); throw new ApiError(503, 'backend_unavailable'); }
+}
+const a0 = (parts: string[]) => parts[0];
+
 /** Devuelve null si la ruta no es de la API (para que siga el resto del servidor). */
-export async function handleApi(req: Request, cfg: ServerConfig, svc: Service = getService(cfg)): Promise<Response | null> {
+export async function handleApi(req: Request, cfg: ServerConfig, injected?: Service): Promise<Response | null> {
   const url = new URL(req.url);
+  // Solo las rutas /api/ tocan la base: el resto del sitio (landing, demo, panel sin cuenta) no depende de ella.
   if (!url.pathname.startsWith('/api/')) return null;
   const parts = url.pathname.slice(5).split('/').filter(Boolean);
   const method = req.method.toUpperCase();
   try {
     if (method !== 'GET' && method !== 'HEAD' && !originOk(req, cfg)) throw new ApiError(403, 'bad_origin');
+    if (a0(parts) === 'health') return json(200, { ok: true });
+    const svc = injected ?? openService(cfg);
     const session = (): Session => svc.requireSession(svc.sessionFromToken(cookieOf(req, COOKIE)));
     const [a, b, c, d] = parts;
 
-    if (a === 'health' && method === 'GET') return json(200, { ok: true });
 
     /* ---- cuenta */
     if (a === 'auth') {

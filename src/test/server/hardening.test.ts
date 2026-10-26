@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { handleApi } from '@/server/api';
 import { openDb } from '@/server/db';
 import { draftFor, makeEnv, signUp, type Env } from './helpers';
 
@@ -53,5 +54,15 @@ describe('endurecimiento de la API', () => {
   it('no deja claves ni tokens legibles en la base', () => {
     const rows = env.svc.db.prepare('SELECT id FROM sessions').all() as { id: string }[];
     expect(rows.every(r => /^[0-9a-f]{64}$/.test(r.id))).toBe(true);
+  });
+
+  it('sin base de datos disponible solo falla la API (503); el resto del sitio ni la toca', async () => {
+    const broken = { ...env.cfg, dbPath: '/etc/hostname/no-se-puede/weda.db', dataDir: '/etc/hostname/no-se-puede' };
+    // Rutas que no son de la API: no abre la base (regresión: antes se abría en cada pedido y el sitio entero fallaba en un hosting sin disco).
+    expect(await handleApi(new Request('http://weda.test/'), broken)).toBeNull();
+    expect(await handleApi(new Request('http://weda.test/ejemplo'), broken)).toBeNull();
+    const r = await handleApi(new Request('http://weda.test/api/me'), broken);
+    expect(r!.status).toBe(503);
+    expect((await r!.json()).error).toBe('backend_unavailable');
   });
 });

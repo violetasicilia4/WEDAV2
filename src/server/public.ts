@@ -16,6 +16,8 @@ export function lookupPublicSite(slug: string): PublicLookup {
   } catch (e) {
     if (e instanceof ApiError && e.status === 410) return { status: 'unpublished' };
     if (e instanceof ApiError && e.status === 404) return { status: 'missing' };
-    throw e;
+    // Sin base de datos (hosting sin disco persistente) no hay sitios publicados: la página sigue con su comportamiento local.
+    console.error('No se pudo leer el sitio publicado:', e);
+    return { status: 'missing' };
   }
 }

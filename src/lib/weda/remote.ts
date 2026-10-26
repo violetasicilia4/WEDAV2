@@ -100,7 +100,7 @@ const BACKUP_KEY = 'weda-app-local-backup';
 
 async function load(): Promise<void> {
   let me: { user: { email: string } | null };
-  try { me = await api('GET', '/api/me'); } catch { set({ settled: true, user: null, error: 'network' }); return; }
+  try { me = await api('GET', '/api/me'); } catch (e) { set({ settled: true, user: null, ...(e instanceof ApiFailure && e.code === 'backend_unavailable' ? {} : { error: 'network' }) }); return; }
   if (!me.user) { set({ settled: true, user: null }); return; }
   await attach(me.user.email);
 }
@@ -214,6 +214,7 @@ export async function reloadFromServer(): Promise<void> {
 }
 
 export const dismissNotice = () => set({ notice: null });
+export const setNotice = (notice: string) => set({ notice });
 
 /* ------------------------------------------------------------------ cuenta y publicación */
 
@@ -268,6 +269,7 @@ export async function unpublishRemote(): Promise<{ ok: true } | { ok: false; cod
 
 /** Mensajes para la persona (nunca el texto crudo del servidor). */
 export const ERROR_TEXT: Record<string, string> = {
+  backend_unavailable: 'Las cuentas no están disponibles en este momento.',
   network: 'No hay conexión con Weda. Revisá tu internet y probá de nuevo.',
   invalid_credentials: 'El correo o la clave no coinciden.',
   email_taken: 'Ya existe una cuenta con ese correo. Probá ingresar.',

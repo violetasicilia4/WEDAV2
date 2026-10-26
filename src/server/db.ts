@@ -1,8 +1,9 @@
 // Base de datos: SQLite nativo de Node (node:sqlite). Toda la persistencia pasa por acá y por service.ts; cambiar de motor
 // (Postgres) toca solo estos dos archivos. Las migraciones son ordenadas e idempotentes (PRAGMA user_version).
 import { mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
 
 export type Db = DatabaseSync;
 
@@ -131,7 +132,9 @@ const MIGRATIONS: string[] = [
 
 export function openDb(file: string): Db {
   if (file !== ':memory:') mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
-  const db = new DatabaseSync(file);
+  // Se carga recién acá: si el entorno no tiene `node:sqlite` (Node < 22.5), solo falla la API y el resto del sitio sigue funcionando.
+  const { DatabaseSync: Database } = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
+  const db = new Database(file);
   db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
   migrate(db);
   return db;
