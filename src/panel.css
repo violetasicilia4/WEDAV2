@@ -1737,3 +1737,13 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .ed-colors input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
 .ed-colors input[type='color']::-webkit-color-swatch { border: 0; border-radius: 50%; }
 .ed-colors input[type='color']::-moz-color-swatch { border: 0; border-radius: 50%; }
+
+/* Editor: color de fondo de cada sección. */
+.ed-bg { margin: 18px 0 0; padding: 0; border: 0; display: grid; gap: 8px; }
+.ed-bg legend { padding: 0; margin-bottom: 8px; font-size: 14px; font-weight: var(--w-semibold); }
+.ed-bg-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.ed-sw { position: relative; display: block; width: 40px; height: 40px; padding: 0; border: 1px solid var(--pn-line-s); border-radius: 50%; cursor: pointer; }
+.ed-sw.on { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--pn-ink); }
+.ed-sw.is-custom { background: conic-gradient(#f66, #fc6, #9e6, #6cf, #96f, #f6c, #f66); overflow: hidden; }
+.ed-sw.is-custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.ed-sw.is-custom.on::after { content: ''; position: absolute; inset: 11px; border-radius: 50%; background: #fff; }

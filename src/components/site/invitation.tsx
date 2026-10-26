@@ -9,7 +9,7 @@ import { useRsvp } from '@/components/rsvp-dialog';
 import { SiteCover } from './site-cover';
 import { buildIcs, downloadIcs, parseTime } from '@/lib/ics';
 import { getCountdown, type Countdown } from '@/lib/countdown';
-import { DEFAULT_ORDER } from '@/lib/weda/logic';
+import { DEFAULT_ORDER, isDarkBg } from '@/lib/weda/logic';
 import type { BlockId } from '@/lib/weda/types';
 import { useSessionState } from '@/lib/demo-session';
 import { monthName, slugify } from '@/lib/weda/logic';
@@ -63,16 +63,23 @@ function Welcome() {
   );
 }
 
+/* Fondo elegido por la pareja para una sección: el color y, según su luminosidad, el tono del texto (claro u oscuro) para que siempre se lea. */
+function useBg(id: BlockId): { style?: React.CSSProperties; 'data-tone'?: 'dark' | 'light' } {
+  const bg = useSite().bgs?.[id]; // los sitios publicados antes de poder elegir fondos no traen `bgs`
+  return bg ? { style: { background: bg, ['--iv-bg' as string]: bg } as React.CSSProperties, 'data-tone': isDarkBg(bg) ? 'dark' : 'light' } : {};
+}
+
 const eventIcons: Record<string, typeof RingsIcon> = { ceremonia: RingsIcon, recepcion: ClinkIcon, fiesta: HallIcon };
 
 /* El día: lista editorial de momentos. La composición se adapta a 1..N eventos sin tarjetas ni huecos. */
 function TheDay() {
+  const bg = useBg('eventos');
   const site = useSite();
   const { events } = site;
   const day = site.eventDate ? String(Number(site.eventDate.slice(8, 10))) : '—';
   const month = site.eventDate ? monthName(Number(site.eventDate.slice(5, 7))) : 'a confirmar';
   return (
-    <section className="iv-section iv-day" id="dia" aria-label="Horarios y lugares">
+    <section className="iv-section iv-day" id="dia" {...bg} aria-label="Horarios y lugares">
       <div className="iv-wrap">
         <div className="iv-day-grid">
         <div className="iv-card">
@@ -121,9 +128,10 @@ function TheDay() {
 
 /* Sección de regalos (planes que la incluyen): solo un título, un texto y el botón que lleva a la página de regalos. No muestra regalos de la lista. */
 function GiftsPreview() {
+  const bg = useBg('regalos');
   const { giftsPath, giftsSection } = useSite();
   return (
-    <section className="iv-section iv-gifts" id="regalos" aria-labelledby="iv-gifts-title">
+    <section className="iv-section iv-gifts" id="regalos" {...bg} aria-labelledby="iv-gifts-title">
       <div className="iv-wrap">
         <h2 id="iv-gifts-title" className="iv-h2">{giftsSection.title}</h2>
         {giftsSection.text && <p className="iv-gifts-sub">{giftsSection.text}</p>}
@@ -135,9 +143,10 @@ function GiftsPreview() {
 
 /* Caja de texto libre: un título y un mensaje que la pareja escribe para lo que quiera contar. */
 function NoteBlock() {
+  const bg = useBg('texto');
   const { note } = useSite();
   return (
-    <section className="iv-section iv-note" id="texto" aria-labelledby={note.title ? 'iv-note-title' : undefined} aria-label={note.title ? undefined : 'Mensaje'}>
+    <section className="iv-section iv-note" id="texto" {...bg} aria-labelledby={note.title ? 'iv-note-title' : undefined} aria-label={note.title ? undefined : 'Mensaje'}>
       <div className="iv-wrap">
         {note.title && <h2 id="iv-note-title" className="iv-h2">{note.title}</h2>}
         {note.text && <p className="iv-note-text">{note.text}</p>}
@@ -148,10 +157,11 @@ function NoteBlock() {
 
 /* Confirmar asistencia: bloque a ancho completo, con la fecha límite visible. */
 function RsvpBand() {
+  const bg = useBg('rsvp');
   const rsvp = useRsvp();
   const site = useSite();
   return (
-    <section className="iv-band iv-rsvp" id="confirmar" aria-labelledby="iv-rsvp-title">
+    <section className="iv-band iv-rsvp" id="confirmar" {...bg} aria-labelledby="iv-rsvp-title">
       <div className="iv-wrap iv-rsvp-grid">
         <div>
           <h2 id="iv-rsvp-title" className="iv-h2">Confirmá tu asistencia</h2>
@@ -168,9 +178,10 @@ function RsvpBand() {
 
 /* Fotos: retratos con el mismo tratamiento que las historias de la landing; el hashtag es un detalle al pie. */
 function Photos() {
+  const bg = useBg('fotos');
   const { gallery } = useSite();
   return (
-    <section className="iv-section iv-photos" id="fotos" aria-label="Fotos">
+    <section className="iv-section iv-photos" id="fotos" {...bg} aria-label="Fotos">
       <div className="iv-wrap">
         <div className="iv-mosaic">
           {gallery.photos.map((g, i) => (
@@ -192,10 +203,11 @@ function Photos() {
 
 /* Dress code: una sola sección, centrada y con su paleta. */
 function Practical() {
+  const bg = useBg('dress');
   const { dressCode } = useSite();
   const note = dressCode.title && dressCode.text.startsWith(`${dressCode.title}. `) ? dressCode.text.slice(dressCode.title.length + 2) : dressCode.text;
   return (
-    <section className="iv-section iv-practical" id="dresscode" aria-labelledby="iv-dress-title">
+    <section className="iv-section iv-practical" id="dresscode" {...bg} aria-labelledby="iv-dress-title">
       <div className="iv-wrap iv-dress">
         <p className="iv-eyebrow">Dress code</p>
         <h2 id="iv-dress-title" className="iv-dress-title">{dressCode.title || 'Dress code'}</h2>
@@ -271,6 +283,16 @@ function Closing() {
   );
 }
 
+/* Playlist: el contenedor con el fondo que eligió la pareja. */
+function Participate() {
+  const bg = useBg('musica');
+  return (
+    <section className="iv-section iv-participate" aria-label="Playlist" {...bg}>
+      <div className="iv-wrap"><PlaylistBlock /></div>
+    </section>
+  );
+}
+
 export function Invitation() {
   const { blocks, order = DEFAULT_ORDER } = useSite(); // los sitios publicados antes de poder reordenar no traen `order`
   // Cada sección reordenable sabe si se muestra y cómo; la portada va primero y el mensaje final cierra la página.
@@ -281,11 +303,7 @@ export function Invitation() {
     rsvp: blocks.rsvp ? <RsvpBand /> : null,
     dress: blocks.dress ? <Practical /> : null,
     fotos: blocks.photos ? <Photos /> : null,
-    musica: blocks.playlist ? (
-      <section className="iv-section iv-participate" aria-label="Playlist">
-        <div className="iv-wrap"><PlaylistBlock /></div>
-      </section>
-    ) : null,
+    musica: blocks.playlist ? <Participate /> : null,
   };
   return <>
     <SiteCover variant="home" next="#nos-casamos" />

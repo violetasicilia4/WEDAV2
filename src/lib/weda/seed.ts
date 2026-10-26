@@ -68,6 +68,7 @@ export function seedState(): AppState {
     ],
     site: {
       order: [...DEFAULT_ORDER],
+      bgs: {},
       coverText: '¡Nos casamos!',
       events: [
         { key: 'ceremonia', enabled: true, title: 'Ceremonia', name: 'Parroquia San Isidro Labrador', address: 'Libertador 16300, San Isidro, Buenos Aires', time: '17:00', note: 'Pedimos llegar con 20 minutos de anticipación.', mapsUrl: '' },

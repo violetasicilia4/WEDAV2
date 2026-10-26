@@ -676,3 +676,43 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 /* Caja de texto libre (título + mensaje que escribe la pareja): misma tipografía que el dress code. */
 .dm-root .iv-note .iv-wrap { max-width: 720px; margin: 0 auto; text-align: center; }
 .dm-root .iv-note-text { margin: 16px auto 0; max-width: 54ch; white-space: pre-line; overflow-wrap: anywhere; font: 400 clamp(16px, 1.4vw, 19px)/1.6 var(--iv-font); color: var(--iv-muted); }
+
+/* ===== Tipografía de la página pública (2026-10-28) =====
+   Textos más grandes en la web y legibles en el celular (nada por debajo de 13 px). Los títulos y rótulos cortos se escriben en un solo renglón: los botones y rótulos
+   no se parten (nowrap) y los títulos se achican solos lo justo para entrar (hook useFitOneLine en site-shell.tsx); si aun así no entran, se parten en dos renglones parejos. */
+.dm-root .iv-eyebrow, .dm-root .iv-welcome-title { font-size: clamp(13px, .35vw + 11.5px, 16px) !important; }
+.dm-root .iv-cover-date { font-size: clamp(16px, .55vw + 13.5px, 22px) !important; }
+.dm-root .iv-btn, .dm-root .iv-cover-cta { font-size: clamp(15px, .3vw + 13.5px, 18px); min-height: 48px; padding-inline: clamp(22px, 2vw, 30px); white-space: nowrap; }
+.dm-root .iv-link, .dm-root .iv-closing-link, .dm-root .iv-footer-cta { font-size: clamp(14px, .25vw + 12.5px, 17px); white-space: nowrap; }
+.dm-root .iv-card-place, .dm-root .iv-day .iv-card-place, .dm-root .iv-day-grid .iv-card-place { font-size: clamp(18px, .9vw + 13px, 26px); }
+.dm-root .iv-card-addr, .dm-root .iv-day .iv-card-addr, .dm-root .iv-day-grid .iv-card-addr { font-size: clamp(15px, .55vw + 12.5px, 20px); max-width: none; }
+.dm-root .iv-card-note, .dm-root .iv-day .iv-card-note, .dm-root .iv-day-grid .iv-card-note { font-size: clamp(14.5px, .45vw + 12.5px, 18px); max-width: none; }
+.dm-root .iv-card-map, .dm-root .iv-day .iv-card-map, .dm-root .iv-day-grid .iv-card-map { font-size: clamp(14px, .3vw + 12.5px, 17px); white-space: nowrap; }
+.dm-root .iv-day .iv-when-l, .dm-root .iv-count-l, .dm-root .iv-welcome .iv-count-l { font-size: clamp(13px, .3vw + 11.5px, 15px); }
+.dm-root .iv-when-cell, .dm-root .iv-count-n { white-space: nowrap; }
+.dm-root .iv-dress-text, .dm-root .iv-gifts-sub, .dm-root .iv-note-text, .dm-root .iv-playlist-text { font-size: clamp(16px, .55vw + 13.5px, 22px) !important; }
+.dm-root .iv-tracks strong { font-size: clamp(16px, .3vw + 14.5px, 20px); }
+.dm-root .iv-tracks small, .dm-root .iv-track-n { font-size: clamp(14px, .25vw + 12.5px, 17px); }
+.dm-root .iv-hashtag, .dm-root .iv-rsvp-deadline, .dm-root .iv-status { font-size: clamp(15px, .3vw + 13.5px, 19px); }
+.dm-root .iv-swatches span, .dm-root .iv-form label { font-size: clamp(13.5px, .2vw + 12.5px, 16px); }
+.dm-root .iv-closing p { font-size: clamp(17px, .6vw + 14px, 23px) !important; }
+.dm-root .iv-footer p { font-size: clamp(13.5px, .2vw + 12.5px, 16px); }
+.dm-root .iv-footer span { font-size: clamp(13px, .15vw + 12px, 15px); }
+/* Títulos y nombres: una línea cuando se puede; si no entran, dos renglones parejos y sin palabras sueltas. */
+.dm-root :where(.iv-h2, .iv-dress-title, .iv-playlist-title, .iv-cover-title, .iv-welcome-date, .iv-card-place) { text-wrap: balance; overflow-wrap: break-word; }
+
+/* ===== Fondos elegidos por la pareja =====
+   El color lo pone la pareja; el tono del texto (claro u oscuro) se calcula con la luminosidad del fondo (data-tone) para que siempre se lea.
+   Las secciones traen fondos fijos con !important (la curva del día, el blanco de Weda): el elegido (--iv-bg) los reemplaza con mayor especificidad. */
+.dm-root main section.iv-section[data-tone][data-tone], .dm-root main section.iv-band[data-tone][data-tone] { background: var(--iv-bg) !important; }
+.dm-root [data-tone='dark'] { --iv-ink: #fff; --iv-muted: rgb(255 255 255 / .85); --iv-hair: rgb(255 255 255 / .35); color: #fff; }
+.dm-root [data-tone='dark'] .iv-btn:not(.is-paper) { background: #fff; color: #3b3c3a; }
+.dm-root [data-tone='dark'] .iv-btn:not(.is-paper):hover { background: var(--iv-paper); }
+.dm-root [data-tone='dark'] .iv-form input { color: #3b3c3a; }
+.dm-root [data-tone='dark'] .iv-eyebrow, .dm-root [data-tone='dark'] .iv-welcome-title { color: rgb(255 255 255 / .85); }
+.dm-root .iv-band[data-tone='light'] { --iv-ink: #3b3c3a; --iv-muted: #575757; color: #3b3c3a; }
+.dm-root .iv-band[data-tone='light'] :where(h2, h3, p, span, small, label, strong) { color: #3b3c3a; }
+.dm-root .iv-band[data-tone='light'] .iv-btn.is-paper { background: var(--iv-btn); color: #3b3c3a; }
+/* Los círculos de colores llevan un borde fino para que se vean aunque el fondo de la sección tenga su mismo color. */
+.dm-root .iv-swatches i { box-shadow: 0 0 0 1px rgb(59 60 58 / .22); }
+.dm-root [data-tone='dark'] .iv-swatches i { box-shadow: 0 0 0 1px rgb(255 255 255 / .55); }

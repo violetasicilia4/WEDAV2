@@ -214,6 +214,32 @@ function setOn(id: SectionId, v: boolean) {
 }
 const REMOVABLE: SectionId[] = ['regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
 
+/** Colores sugeridos para el fondo de una sección (la pareja puede elegir cualquier otro con el selector). */
+const BG_PRESETS: { name: string; color: string }[] = [
+  { name: 'Blanco', color: '#ffffff' }, { name: 'Crema', color: '#f3f0e8' }, { name: 'Verde claro', color: '#e4e3d0' }, { name: 'Arena', color: '#d9cdb8' },
+  { name: 'Oliva', color: '#959571' }, { name: 'Bosque', color: '#2b4045' }, { name: 'Grafito', color: '#3b3c3a' },
+];
+const BG_SECTIONS: SectionId[] = ['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
+
+/** Color de fondo de una sección: sugeridos, uno propio y «Sin color» (vuelve al de Weda). El texto se adapta solo para que se lea. */
+function BgPicker({ id, value }: { id: BlockId; value: string | undefined }) {
+  const set = (v?: string) => patchSite(x => { const bgs = { ...x.bgs }; if (v) bgs[id] = v.toLowerCase(); else delete bgs[id]; return { ...x, bgs }; });
+  return (
+    <fieldset className="ed-bg">
+      <legend>Color de fondo de esta sección</legend>
+      <div className="ed-bg-row">
+        {BG_PRESETS.map(c => (
+          <button key={c.color} type="button" className={`ed-sw${value === c.color ? ' on' : ''}`} style={{ background: c.color }} aria-label={c.name} aria-pressed={value === c.color} title={c.name} onClick={() => set(c.color)} />
+        ))}
+        <label className={`ed-sw is-custom${value && !BG_PRESETS.some(c => c.color === value) ? ' on' : ''}`} title="Elegir otro color">
+          <input type="color" value={value && isHexColor(value) ? value : '#ffffff'} aria-label="Elegir otro color de fondo" onChange={e => set(e.target.value)} />
+        </label>
+      </div>
+      <p className="pn-hint">{value ? 'El texto se adapta solo al color que elijas.' : 'Ahora usa el color de Weda.'} {value && <button type="button" className="pn-link" onClick={() => set()}>Sin color (volver al de Weda)</button>}</p>
+    </fieldset>
+  );
+}
+
 type Row = { id: SectionId; sec?: Sec; label: string; status: string; tone: Tone; movable: boolean; removable: boolean; fixed?: string };
 
 function SiteEditor() {
@@ -501,6 +527,7 @@ function SiteEditor() {
         </Panel>
       )}
 
+                {BG_SECTIONS.includes(sel!) && !sec.locked && <BgPicker id={sel as BlockId} value={site.bgs[sel as BlockId]} />}
                 <div className="pn-actions"><button type="button" className="pn-btn" onClick={back}>Listo</button></div>
               </div>
             </>

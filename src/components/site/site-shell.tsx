@@ -1,6 +1,6 @@
 // Estructura común de la página pública de un casamiento (la de /ejemplo y la de cada pareja):
 // barra de arriba, contenido, pie y el formulario de confirmación. Lee todo de useSite().
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { ArrowLeft, CalendarCheck, Gift, Mail, Menu, X } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { RsvpProvider, useRsvp } from '@/components/rsvp-dialog';
@@ -74,10 +74,41 @@ function SiteNav() {
   );
 }
 
+/* Títulos y nombres en un solo renglón: si un texto corto no entra en su ancho, se achica lo justo (hasta un 72 %) para que entre; si aun así no entra, queda en dos
+   renglones parejos (text-wrap: balance). Se recalcula al cambiar el ancho, el contenido o cuando carga la tipografía. */
+const ONE_LINE = '.iv-h2, .iv-dress-title, .iv-playlist-title, .iv-cover-title, .iv-welcome-date';
+function useFitOneLine(root: RefObject<HTMLElement | null>, selector: string, minScale = 0.72) {
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    let raf = 0;
+    const fit = () => {
+      el.querySelectorAll<HTMLElement>(selector).forEach(n => {
+        n.style.fontSize = ''; n.style.whiteSpace = '';
+        if (!n.clientWidth) return;
+        n.style.whiteSpace = 'nowrap';
+        if (n.scrollWidth > n.clientWidth + 1) {
+          const base = parseFloat(getComputedStyle(n).fontSize);
+          n.style.fontSize = `${Math.floor(base * Math.max(minScale, n.clientWidth / n.scrollWidth) * 100) / 100}px`;
+          if (n.scrollWidth > n.clientWidth + 1) n.style.whiteSpace = ''; // sigue sin entrar: se parte en dos renglones parejos
+        }
+      });
+    };
+    const run = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
+    run();
+    const ro = new ResizeObserver(run); ro.observe(el);
+    const mo = new MutationObserver(run); mo.observe(el, { childList: true, subtree: true, characterData: true });
+    void document.fonts?.ready.then(run);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); mo.disconnect(); };
+  }, [root, selector, minScale]);
+}
+
 export function SiteShell({ children }: { children: ReactNode }) {
   const site = useSite();
   const windowMode = useWindowMode();
-  return <RsvpProvider><div className={`dm-root${windowMode ? ' is-window' : ''}`}>
+  const rootRef = useRef<HTMLDivElement>(null);
+  useFitOneLine(rootRef, ONE_LINE);
+  return <RsvpProvider><div ref={rootRef} className={`dm-root${windowMode ? ' is-window' : ''}`}>
     <a className="skip-link" href="#main">Ir al contenido</a>
     <SiteNav />
     <main id="main">{children}</main>

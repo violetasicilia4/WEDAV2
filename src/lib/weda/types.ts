@@ -75,6 +75,8 @@ export type BlockId = 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'foto
 export type Swatch = { name: string; color: string };
 
 export type SiteConfig = {
+  /** Color de fondo que la pareja eligió para cada sección (hexadecimal). Sin entrada = el de Weda. */
+  bgs: Partial<Record<BlockId, string>>;
   /** Orden en que se muestran las secciones reordenables. Siempre contiene las cinco, también las ocultas (al volver a mostrarlas conservan su lugar). */
   order: BlockId[];
   coverText: string;
