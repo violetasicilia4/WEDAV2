@@ -53,7 +53,7 @@ export type Guest = {
 export type Group = { id: string; name: string; capacity?: number; note?: string };
 
 /** Íconos que se pueden elegir para un momento del día. */
-export type EventIconId = 'rings' | 'church' | 'heart' | 'clink' | 'wine' | 'dinner' | 'cake' | 'hall' | 'music' | 'sparkle' | 'sun' | 'camera';
+export type EventIconId = 'rings' | 'church' | 'heart' | 'clink' | 'wine' | 'dinner' | 'hall' | 'music' | 'sparkle' | 'sun';
 
 export type SiteEvent = {
   key: EventKey;

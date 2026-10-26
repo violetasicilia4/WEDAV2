@@ -748,3 +748,37 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 
 /* Portada: el "&" de los nombres va con el ampersand de la serif (cursiva), no con "y". */
 .dm-root .iv-cover-title .iv-amp { font-family: 'Cormorant Garamond', Garamond, Georgia, serif !important; font-style: italic; font-weight: 400; text-transform: none; }
+
+/* Eventos en pantallas anchas: más grandes y con menos aire a los costados, para que las columnas no queden chicas en un fondo enorme. */
+@media (min-width: 1000px) {
+  .dm-root .iv-day .iv-wrap { width: 96%; max-width: 1560px; }
+  .dm-root .iv-day .iv-card-events li { padding: clamp(36px, 3.4vw, 64px) clamp(24px, 3vw, 64px); }
+  .dm-root .iv-day .iv-card-icon svg { width: 84px; height: 84px; }
+  .dm-root .iv-day .iv-card-body h3 { font-size: clamp(18px, .5vw + 12px, 22px) !important; margin: 16px 0 26px; }
+  .dm-root .iv-day .iv-when-n { font-size: clamp(40px, 3vw, 56px); }
+  .dm-root .iv-day .iv-when-l { font-size: clamp(14px, .3vw + 11px, 17px); }
+  .dm-root .iv-day .iv-when { gap: 8px; }
+  .dm-root .iv-day .iv-card-place, .dm-root .iv-day-grid .iv-card-place { font-size: clamp(26px, 1.2vw + 14px, 36px); line-height: 1.2; }
+  .dm-root .iv-day .iv-card-addr, .dm-root .iv-day-grid .iv-card-addr { font-size: clamp(19px, .6vw + 13px, 25px); line-height: 1.35; }
+  .dm-root .iv-day .iv-card-note, .dm-root .iv-day-grid .iv-card-note { font-size: clamp(17px, .5vw + 12px, 22px); }
+  .dm-root .iv-day .iv-card-map, .dm-root .iv-day-grid .iv-card-map { font-size: clamp(16px, .4vw + 12px, 20px); padding: 14px 32px; }
+  .dm-root .iv-day .iv-card-events li + li::before { height: 140px; }
+}
+
+/* «Cómo llegar»: verde más oscuro que el fondo de la sección. */
+.dm-root .iv-day .iv-card-map, .dm-root .iv-day-grid .iv-card-map { background: #b9b793 !important; color: var(--iv-ink) !important; }
+.dm-root .iv-day .iv-card-map:hover, .dm-root .iv-day-grid .iv-card-map:hover { background: #a9a780 !important; }
+
+/* Cierre («Que vengas ya es un regalo»): más compacto. */
+.dm-root .iv-closing { min-height: clamp(300px, 46svh, 440px) !important; }
+.dm-root .iv-closing .iv-closing-copy h2 { font-size: clamp(30px, 3.6vw, 52px) !important; }
+.dm-root .iv-closing .iv-closing-copy p { font-size: clamp(16px, .5vw + 13px, 20px) !important; margin-top: 12px; }
+.dm-root .iv-closing .iv-closing-actions { margin-top: 24px; }
+
+/* Dress code: tarjeta blanca sobre la foto del sobre. */
+.dm-root .iv-section.iv-practical { background: #ddd6d0 url(/fondo-dresscode.webp) center / cover no-repeat !important; padding-block: clamp(48px, 9vw, 128px); }
+.dm-root .iv-practical .iv-wrap.iv-dress { width: min(92%, 880px); max-width: 880px; box-sizing: border-box; padding: clamp(36px, 6vw, 84px) clamp(20px, 5vw, 64px); background: #fff; border-radius: clamp(18px, 2.4vw, 28px); }
+.dm-root .iv-dress .iv-eyebrow { letter-spacing: .22em; margin-bottom: clamp(14px, 2vw, 24px); }
+.dm-root .iv-dress .iv-swatches { margin-top: clamp(28px, 4vw, 48px); gap: clamp(16px, 3.4vw, 48px); }
+.dm-root .iv-dress .iv-swatches i { width: clamp(52px, 7vw, 76px); height: clamp(52px, 7vw, 76px); }
+.dm-root .iv-dress .iv-swatches span { font-size: clamp(15px, .6vw + 12px, 20px) !important; }

@@ -16,6 +16,8 @@ import type { AppState, BlockId, SiteConfig, SiteEvent } from '@/lib/weda/types'
 
 export const Route = createFileRoute('/panel/sitio')({ component: SiteEditor });
 
+/** Horarios cada 15 minutos (siempre en punto: 20:00, no 20:01). */
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
 const MAX_PHOTOS = 6;
 
 /** «Incluido en Completo»: solo para funciones que NO están en el plan base del sitio (lo que realmente diferencia los planes). */
@@ -168,16 +170,16 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
       </fieldset>
       <Field label="Nombre del lugar">{a => <input id={a.id} type="text" value={ev.name} placeholder="Parroquia San Isidro Labrador" onChange={e => set({ name: e.target.value })} />}</Field>
       <Field label="Dirección" hint={ev.address.trim() ? (shortAddress(ev.address) ? `En la tarjeta se ve «${shortAddress(ev.address)}». «Cómo llegar» abre Google Maps con la dirección completa.` : 'Una coordenada no se muestra en la tarjeta: «Cómo llegar» abre Google Maps en ese punto.') : 'Podés pegar la dirección tal como la copiás de Google Maps: en la tarjeta se ve solo la calle y la altura.'}>{a => <input id={a.id} type="text" value={ev.address} placeholder="Calle 123, Ciudad" onChange={e => set({ address: e.target.value })} aria-describedby={a.describedBy} />}</Field>
-      <div className="ed-maps">
-        <a className={`pn-btn is-ghost is-small${ev.name.trim() || ev.address.trim() ? '' : ' is-disabled'}`} href={ev.name.trim() || ev.address.trim() ? mapsSearch([ev.name, ev.address].map(x => x.trim()).filter(Boolean).join(', ')) : undefined} target="_blank" rel="noopener noreferrer" aria-disabled={!(ev.name.trim() || ev.address.trim())}>
-          <MapPin size={15} aria-hidden="true" />Buscar el lugar en Google Maps<span className="pn-sr"> (se abre en una pestaña nueva)</span>
-        </a>
-        <p className="pn-hint">Para fijar la ubicación exacta: buscá el lugar en Maps, tocá «Compartir» → «Copiar enlace» y pegalo abajo.</p>
-      </div>
-      <Field label="Enlace de Google Maps" optional error={urlError} hint="Si lo dejás vacío, armamos el enlace con el nombre y la dirección.">
+      <Field label="Enlace de Google Maps" optional error={urlError} hint="Opcional. Si lo dejás vacío, armamos el enlace con el nombre y la dirección. Para fijar el punto exacto: buscá el lugar en Maps, tocá «Compartir» → «Copiar enlace» y pegalo acá.">
         {a => <input id={a.id} type="url" value={ev.mapsUrl} placeholder="https://maps.app.goo.gl/…" onChange={e => set({ mapsUrl: e.target.value })} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
       </Field>
-      <Field label="Horario">{a => <input id={a.id} type="time" value={ev.time} onChange={e => set({ time: e.target.value })} />}</Field>
+      {(ev.name.trim() || ev.address.trim()) && <a className="pn-link" href={mapsSearch([ev.name, ev.address].map(x => x.trim()).filter(Boolean).join(', '))} target="_blank" rel="noopener noreferrer">Abrir Google Maps para copiar el enlace <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>}
+      <Field label="Horario" optional>{a => (
+        <select id={a.id} value={ev.time} onChange={e => set({ time: e.target.value })}>
+          <option value="">Sin horario</option>
+          {(ev.time && !TIME_OPTIONS.includes(ev.time) ? [ev.time, ...TIME_OPTIONS].sort() : TIME_OPTIONS).map(t => <option key={t} value={t}>{t} hs</option>)}
+        </select>
+      )}</Field>
       <details className="pn-more" open={!!ev.note}>
         <summary>Más opciones: nota para los invitados</summary>
         <div className="pn-more-body">

@@ -134,9 +134,9 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByLabel('Nombre del evento').fill('Ceremonia');
     await page.getByLabel('Nombre del lugar').fill('Parroquia San Isidro');
     await page.getByLabel('Dirección').fill('Av. del Libertador 1234, C1425 CABA, Argentina');
-    await page.getByLabel('Horario').fill('18:00');
+    await page.getByLabel('Horario').selectOption('18:00');
     await expect(page.getByText('En la tarjeta se ve «Av. del Libertador 1234»')).toBeVisible();
-    await expect(page.getByRole('link', { name: /Buscar el lugar en Google Maps/ })).toHaveAttribute('href', /google\.com\/maps\/search/);
+    await expect(page.getByRole('link', { name: /Abrir Google Maps para copiar el enlace/ })).toHaveAttribute('href', /google\.com\/maps\/search/);
     await expect(page.getByLabel('Enlace de Google Maps')).toBeVisible();
     await page.getByRole('button', { name: 'Listo' }).click();
 

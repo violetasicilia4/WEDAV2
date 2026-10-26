@@ -184,7 +184,7 @@ export function shortAddress(address: string): string {
 
 /** Ícono de fábrica de cada momento del día. */
 export const DEFAULT_EVENT_ICON: Record<string, EventIconId> = { ceremonia: 'rings', recepcion: 'clink', fiesta: 'hall', civil: 'rings', brunch: 'dinner' };
-export const EVENT_ICON_IDS: EventIconId[] = ['rings', 'church', 'heart', 'clink', 'wine', 'dinner', 'cake', 'hall', 'music', 'sparkle', 'sun', 'camera'];
+export const EVENT_ICON_IDS: EventIconId[] = ['rings', 'church', 'heart', 'clink', 'wine', 'dinner', 'hall', 'music', 'sparkle', 'sun'];
 
 /** Orden de fábrica de la invitación. */
 export const DEFAULT_ORDER: BlockId[] = ['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
