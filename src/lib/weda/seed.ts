@@ -68,12 +68,11 @@ export function seedState(): AppState {
     ],
     site: {
       order: [...DEFAULT_ORDER],
-      bgs: {},
       coverText: '¡Nos casamos!',
       events: [
-        { key: 'ceremonia', enabled: true, title: 'Ceremonia', name: 'Parroquia San Isidro Labrador', address: 'Libertador 16300, San Isidro, Buenos Aires', time: '17:00', note: 'Pedimos llegar con 20 minutos de anticipación.', mapsUrl: '' },
-        { key: 'recepcion', enabled: true, title: 'Recepción', name: 'Jardín de los Olivos', address: 'Camino Real 450, Pilar, Buenos Aires', time: '18:30', note: 'Brindis y música en vivo mientras cae el sol.', mapsUrl: '' },
-        { key: 'fiesta', enabled: true, title: 'Fiesta', name: 'Salón Los Álamos', address: 'Camino Real 450, Pilar, Buenos Aires', time: '20:30', note: 'Cena y baile hasta la madrugada.', mapsUrl: '' },
+        { key: 'ceremonia', icon: 'rings', enabled: true, title: 'Ceremonia', name: 'Parroquia San Isidro Labrador', address: 'Libertador 16300, San Isidro, Buenos Aires', time: '17:00', note: 'Pedimos llegar con 20 minutos de anticipación.', mapsUrl: '' },
+        { key: 'recepcion', icon: 'clink', enabled: true, title: 'Recepción', name: 'Jardín de los Olivos', address: 'Camino Real 450, Pilar, Buenos Aires', time: '18:30', note: 'Brindis y música en vivo mientras cae el sol.', mapsUrl: '' },
+        { key: 'fiesta', icon: 'hall', enabled: true, title: 'Fiesta', name: 'Salón Los Álamos', address: 'Camino Real 450, Pilar, Buenos Aires', time: '20:30', note: 'Cena y baile hasta la madrugada.', mapsUrl: '' },
       ],
       countdown: true,
       rsvp: { enabled: true, deadline: '2027-03-17', menus: true },

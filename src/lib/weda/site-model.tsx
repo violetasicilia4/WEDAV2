@@ -9,7 +9,7 @@ import {
   type Category, type Gift, type WeddingEvent,
 } from '@/lib/demo-wedding';
 import { can } from './plans';
-import { cleanBgs, DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, hasEventDetails, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath } from './logic';
+import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, hasEventDetails, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath } from './logic';
 import type { AppState, BlockId, GivenGift } from './types';
 
 export type SiteData = {
@@ -34,8 +34,6 @@ export type SiteData = {
   events: WeddingEvent[];
   /** Orden de las secciones reordenables (ver `BlockId`). */
   order: BlockId[];
-  /** Fondo elegido por la pareja para cada sección (sin entrada = el de Weda). */
-  bgs: Partial<Record<BlockId, string>>;
   /** `gifts`: hay lista de regalos; `giftsSection`: se muestra el acceso a la lista dentro de la invitación; `note`: se muestra la caja de texto libre. */
   blocks: { invitation: boolean; save: boolean; countdown: boolean; day: boolean; rsvp: boolean; dress: boolean; photos: boolean; playlist: boolean; message: boolean; gifts: boolean; giftsSection: boolean; note: boolean };
   giftsSection: { title: string; text: string; button: string };
@@ -88,7 +86,6 @@ export const demoSiteData: SiteData = {
   calendarTitle: calendar.title,
   events: demoEvents,
   order: DEFAULT_ORDER,
-  bgs: {},
   blocks: { invitation: true, save: true, countdown: true, day: true, rsvp: true, dress: true, photos: true, playlist: true, message: true, gifts: false, giftsSection: false, note: false },
   giftsSection: { title: DEFAULT_GIFTS_TITLE, text: DEFAULT_GIFTS_TEXT, button: DEFAULT_GIFTS_BUTTON },
   note: { title: '', text: '' },
@@ -114,7 +111,7 @@ export function siteFromState(s: AppState): SiteData {
   const premiumMusic = can(s.planId, 'playlist') && s.site.playlist.enabled && s.site.playlist.tracks.length > 0;
   const events: WeddingEvent[] = can(s.planId, 'site')
     ? s.site.events.filter(hasEventDetails).map(e => ({
-        key: e.key, label: e.title.trim() || `Evento ${SLOT[e.key]}`, time: e.time ? `${e.time} hs` : '', name: e.name || e.title.trim() || `Evento ${SLOT[e.key]}`, address: shortAddress(e.address),
+        key: e.key, icon: e.icon, label: e.title.trim() || `Evento ${SLOT[e.key]}`, time: e.time ? `${e.time} hs` : '', name: e.name || e.title.trim() || `Evento ${SLOT[e.key]}`, address: shortAddress(e.address),
         note: e.note, maps: mapsLink(e),
       }))
     : [];
@@ -145,7 +142,6 @@ export function siteFromState(s: AppState): SiteData {
     calendarTitle: `Casamiento de ${names}`,
     events,
     order: normalizeOrder(s.site.order),
-    bgs: cleanBgs(s.site.bgs),
     blocks: {
       invitation: can(s.planId, 'site'),
       save: true,

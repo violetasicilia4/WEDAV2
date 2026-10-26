@@ -52,8 +52,13 @@ export type Guest = {
 /** Mesa o grupo. `capacity` (lugares) y `note` (descripción) son opcionales. */
 export type Group = { id: string; name: string; capacity?: number; note?: string };
 
+/** Íconos que se pueden elegir para un momento del día. */
+export type EventIconId = 'rings' | 'church' | 'heart' | 'clink' | 'wine' | 'dinner' | 'cake' | 'hall' | 'music' | 'sparkle' | 'sun' | 'camera';
+
 export type SiteEvent = {
   key: EventKey;
+  /** Ícono del momento (de fábrica: alianzas, brindis, salón). */
+  icon: EventIconId;
   enabled: boolean;
   /** Nombre que la pareja le da al momento («Ceremonia», «After beach»…). Vacío = «Evento 1», «Evento 2»… */
   title: string;
@@ -75,8 +80,6 @@ export type BlockId = 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'foto
 export type Swatch = { name: string; color: string };
 
 export type SiteConfig = {
-  /** Color de fondo que la pareja eligió para cada sección (hexadecimal). Sin entrada = el de Weda. */
-  bgs: Partial<Record<BlockId, string>>;
   /** Orden en que se muestran las secciones reordenables. Siempre contiene las cinco, también las ocultas (al volver a mostrarlas conservan su lugar). */
   order: BlockId[];
   coverText: string;

@@ -3,13 +3,13 @@
 // Es la MISMA página para /ejemplo y para el sitio de cada pareja: todo viene de useSite().
 import { Fragment, useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { CalendarPlus, Plus } from 'lucide-react';
-import { ClinkIcon, HallIcon, RingsIcon } from '@/components/hand-icons';
+import { CalendarPlus, Gift as GiftIcon, Plus } from 'lucide-react';
+import { eventIcon } from '@/components/event-icons';
 import { useRsvp } from '@/components/rsvp-dialog';
 import { SiteCover } from './site-cover';
 import { buildIcs, downloadIcs, parseTime } from '@/lib/ics';
 import { getCountdown, type Countdown } from '@/lib/countdown';
-import { DEFAULT_ORDER, isDarkBg } from '@/lib/weda/logic';
+import { DEFAULT_EVENT_ICON, DEFAULT_ORDER } from '@/lib/weda/logic';
 import type { BlockId } from '@/lib/weda/types';
 import { useSessionState } from '@/lib/demo-session';
 import { monthName, slugify } from '@/lib/weda/logic';
@@ -63,29 +63,23 @@ function Welcome() {
   );
 }
 
-/* Fondo elegido por la pareja para una sección: el color y, según su luminosidad, el tono del texto (claro u oscuro) para que siempre se lea. */
-function useBg(id: BlockId): { style?: React.CSSProperties; 'data-tone'?: 'dark' | 'light' } {
-  const bg = useSite().bgs?.[id]; // los sitios publicados antes de poder elegir fondos no traen `bgs`
-  return bg ? { style: { background: bg, ['--iv-bg' as string]: bg } as React.CSSProperties, 'data-tone': isDarkBg(bg) ? 'dark' : 'light' } : {};
-}
-
-const eventIcons: Record<string, typeof RingsIcon> = { ceremonia: RingsIcon, recepcion: ClinkIcon, fiesta: HallIcon };
+/* Ícono de cada momento: el que eligió la pareja o, si no eligió, el de fábrica del momento. */
+const iconOf = (ev: { key: string; icon?: string | undefined }) => eventIcon(ev.icon, DEFAULT_EVENT_ICON[ev.key] ?? 'rings');
 
 /* El día: lista editorial de momentos. La composición se adapta a 1..N eventos sin tarjetas ni huecos. */
 function TheDay() {
-  const bg = useBg('eventos');
   const site = useSite();
   const { events } = site;
   const day = site.eventDate ? String(Number(site.eventDate.slice(8, 10))) : '—';
   const month = site.eventDate ? monthName(Number(site.eventDate.slice(5, 7))) : 'a confirmar';
   return (
-    <section className="iv-section iv-day" id="dia" {...bg} aria-label="Horarios y lugares">
+    <section className="iv-section iv-day" id="dia" aria-label="Horarios y lugares">
       <div className="iv-wrap">
         <div className="iv-day-grid">
         <div className="iv-card">
           <ul className="iv-card-tabs" aria-label="Ir a un momento del día">
             {events.map(ev => {
-              const Icon = eventIcons[ev.key] ?? RingsIcon;
+              const Icon = iconOf(ev);
               return (
                 <li key={ev.key}>
                   <a href={`#ev-${ev.key}`} aria-label={ev.label}><Icon size={26} strokeWidth={1.4} aria-hidden="true" /></a>
@@ -95,7 +89,7 @@ function TheDay() {
           </ul>
           <ol className="iv-card-events" data-n={events.length} style={{ ["--n" as string]: events.length } as React.CSSProperties}>
             {events.map(ev => {
-              const Icon = eventIcons[ev.key] ?? RingsIcon;
+              const Icon = iconOf(ev);
               const time = ev.time.replace(/\s*hs\.?$/i, '');
               return (
                 <li key={ev.key} id={`ev-${ev.key}`}>
@@ -128,11 +122,11 @@ function TheDay() {
 
 /* Sección de regalos (planes que la incluyen): solo un título, un texto y el botón que lleva a la página de regalos. No muestra regalos de la lista. */
 function GiftsPreview() {
-  const bg = useBg('regalos');
   const { giftsPath, giftsSection } = useSite();
   return (
-    <section className="iv-section iv-gifts" id="regalos" {...bg} aria-labelledby="iv-gifts-title">
+    <section className="iv-section iv-gifts" id="regalos" aria-labelledby="iv-gifts-title">
       <div className="iv-wrap">
+        <span className="iv-gifts-icon" aria-hidden="true"><GiftIcon size={44} strokeWidth={1.2} /></span>
         <h2 id="iv-gifts-title" className="iv-h2">{giftsSection.title}</h2>
         {giftsSection.text && <p className="iv-gifts-sub">{giftsSection.text}</p>}
         <Link to={giftsPath as never} className="iv-btn">{giftsSection.button}</Link>
@@ -143,10 +137,9 @@ function GiftsPreview() {
 
 /* Caja de texto libre: un título y un mensaje que la pareja escribe para lo que quiera contar. */
 function NoteBlock() {
-  const bg = useBg('texto');
   const { note } = useSite();
   return (
-    <section className="iv-section iv-note" id="texto" {...bg} aria-labelledby={note.title ? 'iv-note-title' : undefined} aria-label={note.title ? undefined : 'Mensaje'}>
+    <section className="iv-section iv-note" id="texto" aria-labelledby={note.title ? 'iv-note-title' : undefined} aria-label={note.title ? undefined : 'Mensaje'}>
       <div className="iv-wrap">
         {note.title && <h2 id="iv-note-title" className="iv-h2">{note.title}</h2>}
         {note.text && <p className="iv-note-text">{note.text}</p>}
@@ -157,11 +150,10 @@ function NoteBlock() {
 
 /* Confirmar asistencia: bloque a ancho completo, con la fecha límite visible. */
 function RsvpBand() {
-  const bg = useBg('rsvp');
   const rsvp = useRsvp();
   const site = useSite();
   return (
-    <section className="iv-band iv-rsvp" id="confirmar" {...bg} aria-labelledby="iv-rsvp-title">
+    <section className="iv-band iv-rsvp" id="confirmar" aria-labelledby="iv-rsvp-title">
       <div className="iv-wrap iv-rsvp-grid">
         <div>
           <h2 id="iv-rsvp-title" className="iv-h2">Confirmá tu asistencia</h2>
@@ -169,7 +161,6 @@ function RsvpBand() {
         </div>
         <div className="iv-rsvp-action">
           <button type="button" className="iv-btn" onClick={rsvp.open}>Confirmar asistencia</button>
-          {rsvp.sentCount > 0 && <p className="iv-status" role="status">Ya cargaste una confirmación en esta demostración.</p>}
         </div>
       </div>
     </section>
@@ -178,12 +169,11 @@ function RsvpBand() {
 
 /* Fotos: retratos con el mismo tratamiento que las historias de la landing; el hashtag es un detalle al pie. */
 function Photos() {
-  const bg = useBg('fotos');
   const { gallery } = useSite();
   return (
-    <section className="iv-section iv-photos" id="fotos" {...bg} aria-label="Fotos">
+    <section className="iv-section iv-photos" id="fotos" aria-label="Fotos">
       <div className="iv-wrap">
-        <div className="iv-mosaic">
+        <div className="iv-mosaic" data-n={gallery.photos.length > 6 ? 'many' : gallery.photos.length}>
           {gallery.photos.map((g, i) => (
             <figure key={`${g.src.slice(-24)}-${i}`} className="iv-shot">
               <img src={g.src} alt={g.alt} style={g.pos ? { objectPosition: g.pos } : undefined} loading="lazy" />
@@ -203,11 +193,10 @@ function Photos() {
 
 /* Dress code: una sola sección, centrada y con su paleta. */
 function Practical() {
-  const bg = useBg('dress');
   const { dressCode } = useSite();
   const note = dressCode.title && dressCode.text.startsWith(`${dressCode.title}. `) ? dressCode.text.slice(dressCode.title.length + 2) : dressCode.text;
   return (
-    <section className="iv-section iv-practical" id="dresscode" {...bg} aria-labelledby="iv-dress-title">
+    <section className="iv-section iv-practical" id="dresscode" aria-labelledby="iv-dress-title">
       <div className="iv-wrap iv-dress">
         <p className="iv-eyebrow">Dress code</p>
         <h2 id="iv-dress-title" className="iv-dress-title">{dressCode.title || 'Dress code'}</h2>
@@ -285,9 +274,8 @@ function Closing() {
 
 /* Playlist: el contenedor con el fondo que eligió la pareja. */
 function Participate() {
-  const bg = useBg('musica');
   return (
-    <section className="iv-section iv-participate" aria-label="Playlist" {...bg}>
+    <section className="iv-section iv-participate" aria-label="Playlist">
       <div className="iv-wrap"><PlaylistBlock /></div>
     </section>
   );

@@ -4,7 +4,7 @@ import { dressCode as demoDress, menus, type Category } from '@/lib/demo-wedding
 import { catalogGift, setGifts, type GiftSet } from './catalog';
 import { can, planFor, type Feature } from './plans';
 import type {
-  AppState, BlockId, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent, Swatch,
+  AppState, BlockId, EventIconId, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent, Swatch,
 } from './types';
 
 /* ------------------------------------------------------------------ utilidades */
@@ -171,25 +171,6 @@ export const DEFAULT_GIFTS_TEXT = 'Si querés sumarte con un regalo, esta es nue
 export const DEFAULT_GIFTS_BUTTON = 'Ver lista de regalos';
 /** Los cuatro círculos de colores sugeridos de fábrica (los mismos de siempre). Cada pareja puede cambiar el color y el nombre de cada uno. */
 export const defaultColors = (): Swatch[] => demoDress.palette.map(c => ({ ...c }));
-/** Fondos por sección: solo secciones conocidas y colores hexadecimales válidos. */
-export function cleanBgs(v: unknown): Partial<Record<BlockId, string>> {
-  const out: Partial<Record<BlockId, string>> = {};
-  if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-    for (const id of DEFAULT_ORDER) { const c = (v as Record<string, unknown>)[id]; if (isHexColor(c)) out[id] = c.toLowerCase(); }
-  }
-  return out;
-}
-
-/** ¿Conviene texto blanco sobre este fondo? (compara el contraste del blanco con el del gris oscuro del texto). */
-export function isDarkBg(hex: string): boolean {
-  if (!isHexColor(hex)) return false;
-  const lin = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
-  const L = 0.2126 * lin(parseInt(hex.slice(1, 3), 16)) + 0.7152 * lin(parseInt(hex.slice(3, 5), 16)) + 0.0722 * lin(parseInt(hex.slice(5, 7), 16));
-  const ink = 0.0452; // luminancia de #3b3c3a
-  // Se prefiere el texto blanco salvo que el oscuro lea claramente mejor (así los verdes de Weda siguen con texto blanco, como en el resto del sitio).
-  return 1.05 / (L + 0.05) >= 0.85 * ((L + 0.05) / (ink + 0.05));
-}
-
 export const isHexColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
 
 /** Dirección corta para la tarjeta: solo la calle y la altura, sin ciudad, código postal ni país ni coordenadas. «Cómo llegar» sigue usando la dirección completa. */
@@ -200,6 +181,10 @@ export function shortAddress(address: string): string {
   // Sin comas: se corta en el código postal (argentino, tipo C1425 o B1640ABC) y en todo lo que sigue.
   return first.replace(/\s+[A-Za-z]\d{4}[A-Za-z]{0,3}\b.*$/, '').replace(/\s+\(?\d{4}\)?\s+(?=[A-ZÁÉÍÓÚÑ]).*$/, '').trim();
 }
+
+/** Ícono de fábrica de cada momento del día. */
+export const DEFAULT_EVENT_ICON: Record<string, EventIconId> = { ceremonia: 'rings', recepcion: 'clink', fiesta: 'hall', civil: 'rings', brunch: 'dinner' };
+export const EVENT_ICON_IDS: EventIconId[] = ['rings', 'church', 'heart', 'clink', 'wine', 'dinner', 'cake', 'hall', 'music', 'sparkle', 'sun', 'camera'];
 
 /** Orden de fábrica de la invitación. */
 export const DEFAULT_ORDER: BlockId[] = ['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
@@ -231,12 +216,11 @@ export function moveBlock(order: BlockId[], id: BlockId, dir: -1 | 1, visible: (
 
 export const defaultSite = (): SiteConfig => ({
   order: [...DEFAULT_ORDER],
-  bgs: {},
   coverText: DEFAULT_COVER_TEXT,
   events: [
-    { key: 'ceremonia', enabled: true, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
-    { key: 'recepcion', enabled: false, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
-    { key: 'fiesta', enabled: false, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
+    { key: 'ceremonia', icon: 'rings', enabled: true, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
+    { key: 'recepcion', icon: 'clink', enabled: false, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
+    { key: 'fiesta', icon: 'hall', enabled: false, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
   ],
   countdown: true,
   rsvp: { enabled: true, deadline: '', menus: true },

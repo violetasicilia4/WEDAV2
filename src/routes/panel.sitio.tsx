@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowDown, ArrowLeft, Type, ArrowUp, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, MapPin, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
+import { EVENT_ICONS } from '@/components/event-icons';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { LiveCard, useKeyboardState } from '@/components/panel/live-card';
 import { SitePreview, type Device, type PreviewSection } from '@/components/panel/site-preview';
@@ -154,6 +155,17 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
         <div className="pn-ev-body" id={`ev-body-${ev.key}`}>
           {!ev.enabled ? <p className="pn-note">Este evento está oculto y tus invitados no lo ven. Lo que cargaste se conserva: activá «Mostrar» para volver a usarlo.</p> : <>
       <Field label="Nombre del evento">{a => <input id={a.id} type="text" value={ev.title} placeholder="Ceremonia, brindis, after beach…" onChange={e => set({ title: e.target.value })} />}</Field>
+      <fieldset className="ed-icons">
+        <legend>Ícono</legend>
+        <div className="ed-icons-grid" role="radiogroup" aria-label={`Ícono de ${title}`}>
+          {EVENT_ICONS.map(i => (
+            <label key={i.id} className={`ed-ico-opt${ev.icon === i.id ? ' on' : ''}`} title={i.label}>
+              <input type="radio" name={`ico-${ev.key}`} className="pn-sr" checked={ev.icon === i.id} onChange={() => set({ icon: i.id })} aria-label={i.label} />
+              <i.Icon size={30} strokeWidth={1.5} />
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <Field label="Nombre del lugar">{a => <input id={a.id} type="text" value={ev.name} placeholder="Parroquia San Isidro Labrador" onChange={e => set({ name: e.target.value })} />}</Field>
       <Field label="Dirección" hint={ev.address.trim() ? (shortAddress(ev.address) ? `En la tarjeta se ve «${shortAddress(ev.address)}». «Cómo llegar» abre Google Maps con la dirección completa.` : 'Una coordenada no se muestra en la tarjeta: «Cómo llegar» abre Google Maps en ese punto.') : 'Podés pegar la dirección tal como la copiás de Google Maps: en la tarjeta se ve solo la calle y la altura.'}>{a => <input id={a.id} type="text" value={ev.address} placeholder="Calle 123, Ciudad" onChange={e => set({ address: e.target.value })} aria-describedby={a.describedBy} />}</Field>
       <div className="ed-maps">
@@ -213,32 +225,6 @@ function setOn(id: SectionId, v: boolean) {
   });
 }
 const REMOVABLE: SectionId[] = ['regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
-
-/** Colores sugeridos para el fondo de una sección (la pareja puede elegir cualquier otro con el selector). */
-const BG_PRESETS: { name: string; color: string }[] = [
-  { name: 'Blanco', color: '#ffffff' }, { name: 'Crema', color: '#f3f0e8' }, { name: 'Verde claro', color: '#e4e3d0' }, { name: 'Arena', color: '#d9cdb8' },
-  { name: 'Oliva', color: '#959571' }, { name: 'Bosque', color: '#2b4045' }, { name: 'Grafito', color: '#3b3c3a' },
-];
-const BG_SECTIONS: SectionId[] = ['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
-
-/** Color de fondo de una sección: sugeridos, uno propio y «Sin color» (vuelve al de Weda). El texto se adapta solo para que se lea. */
-function BgPicker({ id, value }: { id: BlockId; value: string | undefined }) {
-  const set = (v?: string) => patchSite(x => { const bgs = { ...x.bgs }; if (v) bgs[id] = v.toLowerCase(); else delete bgs[id]; return { ...x, bgs }; });
-  return (
-    <fieldset className="ed-bg">
-      <legend>Color de fondo de esta sección</legend>
-      <div className="ed-bg-row">
-        {BG_PRESETS.map(c => (
-          <button key={c.color} type="button" className={`ed-sw${value === c.color ? ' on' : ''}`} style={{ background: c.color }} aria-label={c.name} aria-pressed={value === c.color} title={c.name} onClick={() => set(c.color)} />
-        ))}
-        <label className={`ed-sw is-custom${value && !BG_PRESETS.some(c => c.color === value) ? ' on' : ''}`} title="Elegir otro color">
-          <input type="color" value={value && isHexColor(value) ? value : '#ffffff'} aria-label="Elegir otro color de fondo" onChange={e => set(e.target.value)} />
-        </label>
-      </div>
-      <p className="pn-hint">{value ? 'El texto se adapta solo al color que elijas.' : 'Ahora usa el color de Weda.'} {value && <button type="button" className="pn-link" onClick={() => set()}>Sin color (volver al de Weda)</button>}</p>
-    </fieldset>
-  );
-}
 
 type Row = { id: SectionId; sec?: Sec; label: string; status: string; tone: Tone; movable: boolean; removable: boolean; fixed?: string };
 
@@ -527,7 +513,6 @@ function SiteEditor() {
         </Panel>
       )}
 
-                {BG_SECTIONS.includes(sel!) && !sec.locked && <BgPicker id={sel as BlockId} value={site.bgs[sel as BlockId]} />}
                 <div className="pn-actions"><button type="button" className="pn-btn" onClick={back}>Listo</button></div>
               </div>
             </>

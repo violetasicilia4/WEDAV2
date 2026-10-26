@@ -180,28 +180,6 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.locator('.iv-swatches')).toHaveCount(0);
   });
 
-  test('Flujo 4d: cada sección puede tener su color de fondo (el texto se adapta) y se puede volver al de Weda', async ({ page }) => {
-    await nav(page, 'Tu página').click();
-    await page.getByRole('button', { name: 'Agregar Dress code a la invitación' }).click();
-    await page.getByLabel('Título').fill('Elegante sport');
-    await page.getByRole('button', { name: 'Bosque' }).click();                 // oscuro → texto blanco
-    await page.getByRole('button', { name: 'Listo' }).click();
-    await page.getByRole('button', { name: 'Agregar Texto libre a la invitación' }).click();
-    await page.getByLabel('Título').fill('Un aviso');
-    await page.getByRole('button', { name: 'Arena' }).click();                  // claro → texto oscuro
-    await expect.poll(async () => (await stored(page)).site.bgs).toEqual({ dress: '#2b4045', texto: '#d9cdb8' });
-    await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
-    const dress = page.locator('#dresscode'), note = page.locator('#texto');
-    await expect(dress).toHaveCSS('background-color', 'rgb(43, 64, 69)');
-    await expect(dress.locator('h2')).toHaveCSS('color', 'rgb(255, 255, 255)');
-    await expect(note).toHaveCSS('background-color', 'rgb(217, 205, 184)');
-    await expect(note.locator('h2')).toHaveCSS('color', 'rgb(59, 60, 58)');
-    await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: /^Editar Dress code/ }).click();
-    await page.getByRole('button', { name: 'Sin color (volver al de Weda)' }).click();
-    await expect.poll(async () => (await stored(page)).site.bgs).toEqual({ texto: '#d9cdb8' });
-  });
-
   test('Tipografía: en la página pública ningún título se parte en dos renglones ni hay scroll horizontal, en celulares angostos y anchos', async ({ page }) => {
     for (const w of [320, 390, 430]) {
       await page.setViewportSize({ width: w, height: 844 });

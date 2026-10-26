@@ -183,9 +183,6 @@
   .dm-root .iv-rsvp-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 700px) {
-  .dm-root .iv-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .dm-root .iv-shot:first-child { grid-column: 1 / 3; }
-  .dm-root .iv-shot:first-child img { aspect-ratio: 4 / 3; }
   .dm-root .iv-form.is-inline { grid-template-columns: minmax(0, 1fr); }
   .dm-root .iv-count { gap: 24px; }
   .dm-root .iv-cover-actions { gap: 0 20px; }
@@ -701,18 +698,50 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 /* Títulos y nombres: una línea cuando se puede; si no entran, dos renglones parejos y sin palabras sueltas. */
 .dm-root :where(.iv-h2, .iv-dress-title, .iv-playlist-title, .iv-cover-title, .iv-welcome-date, .iv-card-place) { text-wrap: balance; overflow-wrap: break-word; }
 
-/* ===== Fondos elegidos por la pareja =====
-   El color lo pone la pareja; el tono del texto (claro u oscuro) se calcula con la luminosidad del fondo (data-tone) para que siempre se lea.
-   Las secciones traen fondos fijos con !important (la curva del día, el blanco de Weda): el elegido (--iv-bg) los reemplaza con mayor especificidad. */
-.dm-root main section.iv-section[data-tone][data-tone], .dm-root main section.iv-band[data-tone][data-tone] { background: var(--iv-bg) !important; }
-.dm-root [data-tone='dark'] { --iv-ink: #fff; --iv-muted: rgb(255 255 255 / .85); --iv-hair: rgb(255 255 255 / .35); color: #fff; }
-.dm-root [data-tone='dark'] .iv-btn:not(.is-paper) { background: #fff; color: #3b3c3a; }
-.dm-root [data-tone='dark'] .iv-btn:not(.is-paper):hover { background: var(--iv-paper); }
-.dm-root [data-tone='dark'] .iv-form input { color: #3b3c3a; }
-.dm-root [data-tone='dark'] .iv-eyebrow, .dm-root [data-tone='dark'] .iv-welcome-title { color: rgb(255 255 255 / .85); }
-.dm-root .iv-band[data-tone='light'] { --iv-ink: #3b3c3a; --iv-muted: #575757; color: #3b3c3a; }
-.dm-root .iv-band[data-tone='light'] :where(h2, h3, p, span, small, label, strong) { color: #3b3c3a; }
-.dm-root .iv-band[data-tone='light'] .iv-btn.is-paper { background: var(--iv-btn); color: #3b3c3a; }
 /* Los círculos de colores llevan un borde fino para que se vean aunque el fondo de la sección tenga su mismo color. */
 .dm-root .iv-swatches i { box-shadow: 0 0 0 1px rgb(59 60 58 / .22); }
-.dm-root [data-tone='dark'] .iv-swatches i { box-shadow: 0 0 0 1px rgb(255 255 255 / .55); }
+
+/* ===== Mosaico de fotos adaptable (2026-10-28) =====
+   El bloque de fotos es siempre un rectángulo completo, sin huecos, para cualquier cantidad (de 1 a 6; con más se reparte en columnas parejas).
+   Web: grilla de 6 columnas; el alto lo da la proporción de todo el mosaico (aspect-ratio) y las filas se reparten en partes iguales.
+   Celular: 2 columnas, con la primera foto a todo el ancho cuando hay una cantidad impar. Las fotos rellenan su celda (object-fit: cover). */
+.dm-root .iv-mosaic { gap: clamp(10px, 1.6vw, 18px); grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: auto; margin-inline: auto; }
+.dm-root .iv-shot { min-height: 0; height: 100%; }
+.dm-root .iv-shot img { height: 100%; aspect-ratio: auto; }
+.dm-root .iv-mosaic[data-n='many'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dm-root .iv-mosaic[data-n='many'] .iv-shot img { height: auto; aspect-ratio: .85; }
+.dm-root .iv-mosaic[data-n='1'] { grid-template-rows: 1fr; aspect-ratio: 4 / 3; max-width: 760px; }
+.dm-root .iv-mosaic[data-n='1'] .iv-shot { grid-column: span 6; }
+.dm-root .iv-mosaic[data-n='2'] { grid-template-rows: 1fr; aspect-ratio: 2 / 1; }
+.dm-root .iv-mosaic[data-n='2'] .iv-shot { grid-column: span 3; }
+.dm-root .iv-mosaic[data-n='3'] { grid-template-rows: repeat(2, 1fr); aspect-ratio: 3 / 2; }
+.dm-root .iv-mosaic[data-n='3'] .iv-shot { grid-column: span 3; }
+.dm-root .iv-mosaic[data-n='3'] .iv-shot:first-child { grid-row: span 2; }
+.dm-root .iv-mosaic[data-n='4'] { grid-template-rows: repeat(2, 1fr); aspect-ratio: 1 / 1; max-width: 860px; }
+.dm-root .iv-mosaic[data-n='4'] .iv-shot { grid-column: span 3; }
+.dm-root .iv-mosaic[data-n='5'] { grid-template-rows: repeat(2, 1fr); aspect-ratio: 3 / 2; }
+.dm-root .iv-mosaic[data-n='5'] .iv-shot { grid-column: span 2; }
+.dm-root .iv-mosaic[data-n='5'] .iv-shot:nth-child(-n + 2) { grid-column: span 3; }
+.dm-root .iv-mosaic[data-n='6'] { grid-template-rows: repeat(2, 1fr); aspect-ratio: 3 / 2; }
+.dm-root .iv-mosaic[data-n='6'] .iv-shot { grid-column: span 2; }
+@media (max-width: 700px) {
+  .dm-root .iv-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: none; }
+  .dm-root .iv-mosaic .iv-shot, .dm-root .iv-mosaic .iv-shot:nth-child(-n + 2), .dm-root .iv-mosaic .iv-shot:first-child { grid-column: span 1; grid-row: auto; }
+  .dm-root .iv-mosaic[data-n='1'] { grid-template-rows: 1fr; aspect-ratio: 4 / 5; }
+  .dm-root .iv-mosaic[data-n='1'] .iv-shot { grid-column: span 2; }
+  .dm-root .iv-mosaic[data-n='2'] { grid-template-rows: 1fr; aspect-ratio: 8 / 5; }
+  .dm-root .iv-mosaic[data-n='3'] { grid-template-rows: 1.35fr 1fr; aspect-ratio: 4 / 5; }
+  .dm-root .iv-mosaic[data-n='3'] .iv-shot:first-child { grid-column: span 2; grid-row: auto; }
+  .dm-root .iv-mosaic[data-n='4'] { grid-template-rows: repeat(2, 1fr); aspect-ratio: 5 / 6; }
+  .dm-root .iv-mosaic[data-n='5'] { grid-template-rows: 1.35fr 1fr 1fr; aspect-ratio: 1 / 1.75; }
+  .dm-root .iv-mosaic[data-n='5'] .iv-shot:first-child { grid-column: span 2; }
+  .dm-root .iv-mosaic[data-n='6'] { grid-template-rows: repeat(3, 1fr); aspect-ratio: 1 / 1.5; }
+  .dm-root .iv-mosaic[data-n='many'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dm-root .iv-mosaic[data-n='many'] .iv-shot:first-child { grid-column: span 2; }
+}
+
+/* ===== Sección de regalos: ícono, más ancha y de lectura más grande en la web ===== */
+.dm-root .iv-gifts-icon { display: grid; place-items: center; color: var(--iv-ink); }
+.dm-root .iv-gifts .iv-wrap { max-width: 1120px; }
+.dm-root .iv-gifts-sub { max-width: min(100%, 76ch) !important; font-size: clamp(17px, 1.1vw + 11.5px, 27px) !important; line-height: 1.45 !important; }
+.dm-root .iv-gifts .iv-h2 { font-size: clamp(32px, 3.2vw + 10px, 60px) !important; }

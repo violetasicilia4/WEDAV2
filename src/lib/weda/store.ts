@@ -3,9 +3,9 @@
 // - Se sincroniza entre pestañas y iframes (evento "storage"): así la vista previa del editor se actualiza sola.
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
 import { useRef, useSyncExternalStore } from 'react';
-import { cleanBgs, defaultColors, defaultGroup, defaultSite, emptyState, isHexColor, normalizeOrder } from './logic';
+import { defaultColors, defaultGroup, EVENT_ICON_IDS, defaultSite, emptyState, isHexColor, normalizeOrder } from './logic';
 import { isPlanId } from './plans';
-import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
+import type { AppState, EventIconId, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
 export const STORAGE_KEY = 'weda-app';
 export const STORAGE_VERSION = 2;
@@ -62,14 +62,13 @@ function site(v: unknown): SiteConfig {
   const evs = arr(v['events']).filter(isObj);
   const events = d.events.map(e => {
     const f = evs.find(x => x['key'] === e.key);
-    return f ? { key: e.key, enabled: bool(f['enabled'], e.enabled), title: typeof f['title'] === 'string' ? f['title'] : OLD_TITLE[e.key] ?? '', name: str(f['name']), address: str(f['address']), time: str(f['time']), note: str(f['note']), mapsUrl: str(f['mapsUrl']) } : e;
+    return f ? { key: e.key, icon: EVENT_ICON_IDS.includes(f['icon'] as never) ? (f['icon'] as EventIconId) : e.icon, enabled: bool(f['enabled'], e.enabled), title: typeof f['title'] === 'string' ? f['title'] : OLD_TITLE[e.key] ?? '', name: str(f['name']), address: str(f['address']), time: str(f['time']), note: str(f['note']), mapsUrl: str(f['mapsUrl']) } : e;
   });
   const r = isObj(v['rsvp']) ? v['rsvp'] : {}, dc = isObj(v['dressCode']) ? v['dressCode'] : {}, ga = isObj(v['gallery']) ? v['gallery'] : {};
   const pl = isObj(v['playlist']) ? v['playlist'] : {}, ms = isObj(v['message']) ? v['message'] : {};
   const gs = isObj(v['giftsSection']) ? v['giftsSection'] : {}, nt = isObj(v['note']) ? v['note'] : {};
   return {
     order: normalizeOrder(v['order']),
-    bgs: cleanBgs(v['bgs']),
     coverText: str(v['coverText'], d.coverText), events, countdown: bool(v['countdown'], d.countdown),
     rsvp: { enabled: bool(r['enabled'], d.rsvp.enabled), deadline: str(r['deadline']), menus: bool(r['menus'], d.rsvp.menus) },
     dressCode: { enabled: bool(dc['enabled'], false), title: str(dc['title']), text: str(dc['text']), showColors: bool(dc['showColors'], true), colors: swatches(dc['colors']) },

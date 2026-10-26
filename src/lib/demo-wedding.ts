@@ -14,6 +14,8 @@ export type EventKey = 'ceremonia' | 'recepcion' | 'fiesta' | 'civil' | 'brunch'
 
 export type WeddingEvent = {
   key: EventKey;
+  /** Ícono elegido (id de `EventIconId`); sin él se usa el de fábrica del momento. */
+  icon?: string;
   label: string;
   time: string;
   name: string;

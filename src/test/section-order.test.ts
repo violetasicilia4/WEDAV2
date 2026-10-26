@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanBgs, DEFAULT_ORDER, defaultColors, emptyState, isDarkBg, moveBlock, normalizeOrder, shortAddress } from '@/lib/weda/logic';
+import { DEFAULT_ORDER, defaultColors, emptyState, moveBlock, normalizeOrder, shortAddress } from '@/lib/weda/logic';
 import { sanitize } from '@/lib/weda/store';
 import { siteFromState } from '@/lib/weda/site-model';
 import { sectionGaps } from '@/lib/weda/journey';
@@ -131,29 +131,5 @@ describe('sección de regalos y texto libre', () => {
     expect(siteFromState(s).blocks.note).toBe(true);
     expect(siteFromState(s).note).toEqual({ title: 'Un aviso', text: 'Hay estacionamiento.' });
     expect(sectionGaps(s).map(g => g.id)).not.toContain('texto');
-  });
-});
-
-describe('fondo de cada sección', () => {
-  it('decide el tono del texto por el contraste: fondos oscuros llevan texto blanco, claros texto oscuro', () => {
-    for (const c of ['#2b4045', '#3b3c3a', '#000000', '#959571', '#1f2a5c']) expect(isDarkBg(c)).toBe(true);
-    for (const c of ['#ffffff', '#f3f0e8', '#d9cdb8', '#e4e3d0', '#ffd1dc']) expect(isDarkBg(c)).toBe(false);
-    expect(isDarkBg('rojo')).toBe(false);
-  });
-
-  it('solo se aceptan secciones conocidas y colores hexadecimales válidos', () => {
-    expect(cleanBgs({ dress: '#AABBCC', rsvp: 'azul', inventada: '#000000', fotos: 'javascript:1', eventos: '#fff' })).toEqual({ dress: '#aabbcc' });
-    expect(cleanBgs(null)).toEqual({});
-    expect(cleanBgs([1])).toEqual({});
-  });
-
-  it('se guarda, se lee y llega a la página pública; datos viejos sin fondos usan el de Weda', () => {
-    const base = JSON.parse(JSON.stringify(emptyState()));
-    delete base.site.bgs;
-    expect(sanitize(base).site.bgs).toEqual({});
-    base.site.bgs = { texto: '#E4E3D0', musica: 'no' };
-    expect(sanitize(base).site.bgs).toEqual({ texto: '#e4e3d0' });
-    const s = sanitize(base);
-    expect(siteFromState(s).bgs).toEqual({ texto: '#e4e3d0' });
   });
 });
