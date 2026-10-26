@@ -118,9 +118,66 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect.poll(order).toEqual(['confirmar', 'dresscode']);
     await page.getByRole('button', { name: 'Subir Dress code' }).click();
     await expect.poll(order).toEqual(['dresscode', 'confirmar']);
-    await expect.poll(async () => (await stored(page)).site.order.slice(0, 3)).toEqual(['eventos', 'dress', 'rsvp']);
+    await expect.poll(async () => (await stored(page)).site.order.slice(0, 4)).toEqual(['eventos', 'regalos', 'dress', 'rsvp']);
     await page.reload({ waitUntil: 'networkidle' });
     await expect.poll(order).toEqual(['dresscode', 'confirmar']);
+  });
+
+  test('Flujo 4c: dirección corta con «Cómo llegar» a Maps, dress code con colores propios, texto libre y acceso a regalos', async ({ page }) => {
+    await page.goto('/panel/regalos', { waitUntil: 'networkidle' });
+    await page.getByRole('tab', { name: 'Catálogo' }).click();
+    await page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) }).getByRole('button', { name: 'Agregar' }).click();
+    await nav(page, 'Tu página').click();
+
+    // Eventos: la tarjeta muestra solo calle y altura; «Cómo llegar» usa la dirección completa y hay un acceso a Google Maps para fijar el lugar.
+    await page.getByRole('button', { name: /^Editar Eventos/ }).click();
+    await page.getByLabel('Nombre del evento').fill('Ceremonia');
+    await page.getByLabel('Nombre del lugar').fill('Parroquia San Isidro');
+    await page.getByLabel('Dirección').fill('Av. del Libertador 1234, C1425 CABA, Argentina');
+    await page.getByLabel('Horario').fill('18:00');
+    await expect(page.getByText('En la tarjeta se ve «Av. del Libertador 1234»')).toBeVisible();
+    await expect(page.getByRole('link', { name: /Buscar el lugar en Google Maps/ })).toHaveAttribute('href', /google\.com\/maps\/search/);
+    await expect(page.getByLabel('Enlace de Google Maps')).toBeVisible();
+    await page.getByRole('button', { name: 'Listo' }).click();
+
+    // Dress code: círculos de colores que se pueden apagar y cuyo color elige la pareja.
+    await page.getByRole('button', { name: 'Agregar Dress code a la invitación' }).click();
+    await page.getByLabel('Título').fill('Elegante sport');
+    await page.getByLabel('Color del círculo 1').evaluate((el: HTMLInputElement) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, '#ff6699');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.getByLabel('Nombre del círculo 1').fill('Rosa');
+    await page.getByRole('button', { name: 'Listo' }).click();
+
+    // Texto libre y sección de regalos.
+    await page.getByRole('button', { name: 'Agregar Texto libre a la invitación' }).click();
+    await page.getByLabel('Título').fill('Un aviso');
+    await page.getByLabel('Mensaje').fill('Habrá estacionamiento en el lugar.');
+    await page.getByRole('button', { name: 'Listo' }).click();
+    await page.getByRole('button', { name: /^Editar Regalos/ }).click();
+    await page.getByLabel('Título').fill('Si querés regalarnos algo');
+    await page.getByLabel('Texto del botón').fill('Quiero regalar');
+    await page.getByRole('button', { name: 'Listo' }).click();
+    await expect.poll(async () => (await stored(page)).site.giftsSection.button).toBe('Quiero regalar');
+
+    await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
+    await expect(page.locator('.iv-card-addr').first()).toHaveText('Av. del Libertador 1234');
+    expect(decodeURIComponent((await page.locator('.iv-card-map').first().getAttribute('href')) ?? '')).toContain('C1425 CABA, Argentina');
+    await expect(page.locator('.iv-swatches li')).toHaveCount(4);
+    await expect(page.locator('.iv-swatches i').first()).toHaveCSS('background-color', 'rgb(255, 102, 153)');
+    await expect(page.locator('#texto')).toContainText('Habrá estacionamiento en el lugar.');
+    await expect(page.locator('#regalos h2')).toHaveText('Si querés regalarnos algo');
+    await page.getByRole('link', { name: 'Quiero regalar' }).click();
+    await expect(page).toHaveURL(/\/sitio\/lucia-y-violeta\/regalos/);
+
+    // Los círculos se pueden apagar y la página los saca.
+    await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: /^Editar Dress code/ }).click();
+    await page.getByLabel('Mostrar círculos de colores sugeridos').uncheck();
+    await expect.poll(async () => (await stored(page)).site.dressCode.showColors).toBe(false);
+    await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
+    await expect(page.locator('.iv-swatches')).toHaveCount(0);
   });
 
   test('Flujo 5: invitados → alta manual → importar (duplicados y errores) → exportar', async ({ page }) => {
@@ -182,7 +239,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByRole('list', { name: 'Mesas y grupos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Familia' }) })).toContainText('Marta Sosa');
   });
 
-  test('Publicar → «Ver link» de Invitación y de Completo muestran la lista de regalos, porque esos planes la incluyen', async ({ page }) => {
+  test('Publicar → «Ver link» de Invitación y de Completo muestran la sección de regalos con su botón, porque esos planes incluyen la lista', async ({ page }) => {
     await nav(page, 'Regalos').click();
     await page.getByRole('tab', { name: 'Catálogo' }).click();
     await page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) }).getByRole('button', { name: 'Agregar' }).click();
@@ -193,8 +250,9 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     for (const plan of ['Invitación', 'Completo']) {
       await page.goto(links[plan]!, { waitUntil: 'networkidle' });
       const sec = page.locator('#regalos');
-      await expect(sec.getByRole('heading', { name: 'Lista de regalos' })).toBeVisible();
-      await expect(sec.getByText('Pasaje luna de miel')).toBeVisible();
+      // Solo título, texto y botón: la invitación no muestra regalos de la lista; el botón lleva a la página de regalos.
+      await expect(sec.getByRole('heading', { name: '¿Querés regalarnos algo?' })).toBeVisible();
+      await expect(sec).not.toContainText('Pasaje luna de miel');
       await expect(sec.getByRole('link', { name: 'Ver lista de regalos' })).toHaveAttribute('href', /\/regalos/);
     }
     // El plan Regalos es solo la lista: el link abre directamente la página de regalos.

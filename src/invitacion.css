@@ -672,3 +672,7 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 .dm-root .iv-gifts-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dm-root .iv-gifts-name { font: 400 15px/1.3 var(--iv-font); color: var(--iv-ink); }
 .dm-root .iv-gifts-price { font: 400 14px/1.2 var(--iv-font); color: var(--iv-muted); }
+
+/* Caja de texto libre (título + mensaje que escribe la pareja): misma tipografía que el dress code. */
+.dm-root .iv-note .iv-wrap { max-width: 720px; margin: 0 auto; text-align: center; }
+.dm-root .iv-note-text { margin: 16px auto 0; max-width: 54ch; white-space: pre-line; overflow-wrap: anywhere; font: 400 clamp(16px, 1.4vw, 19px)/1.6 var(--iv-font); color: var(--iv-muted); }

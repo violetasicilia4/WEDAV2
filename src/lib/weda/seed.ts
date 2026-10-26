@@ -1,5 +1,5 @@
 // Escenario de ejemplo: Tomás y Martina. Todo es ficticio (nombres, lugares, direcciones, invitados e importes).
-import { DEFAULT_ORDER, emptyState } from './logic';
+import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, defaultColors, emptyState } from './logic';
 import type { AppState, Guest, GuestStatus, ListGift } from './types';
 import { catalogGift } from './catalog';
 
@@ -76,7 +76,9 @@ export function seedState(): AppState {
       ],
       countdown: true,
       rsvp: { enabled: true, deadline: '2027-03-17', menus: true },
-      dressCode: { enabled: true, title: 'Elegante sport', text: 'Elegante sport. Les pedimos evitar el blanco y el marfil.' },
+      dressCode: { enabled: true, title: 'Elegante sport', text: 'Elegante sport. Les pedimos evitar el blanco y el marfil.', showColors: true, colors: defaultColors() },
+      giftsSection: { enabled: true, title: DEFAULT_GIFTS_TITLE, text: DEFAULT_GIFTS_TEXT, button: DEFAULT_GIFTS_BUTTON },
+      note: { enabled: false, title: '', text: '' },
       gallery: { enabled: true, photos: SEED_SITE_PHOTOS, hashtag: '#TomasYMartina2027', handle: '@tomasymartina' },
       playlist: {
         enabled: true, name: 'Nuestra fiesta · Tomás & Martina',

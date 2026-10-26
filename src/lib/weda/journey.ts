@@ -39,6 +39,7 @@ export function sectionGaps(s: AppState): SectionGap[] {
   const out: SectionGap[] = [];
   for (const e of s.site.events) if (e.enabled && !eventComplete(e)) out.push({ id: e.key, label: e.title.trim() || e.name.trim() || `Evento ${s.site.events.indexOf(e) + 1}` });
   if (s.site.dressCode.enabled && s.site.dressCode.title.trim() === '' && s.site.dressCode.text.trim() === '') out.push({ id: 'dress', label: 'Dress code' });
+  if (s.site.note.enabled && s.site.note.title.trim() === '' && s.site.note.text.trim() === '') out.push({ id: 'texto', label: 'Texto libre' });
   if (s.site.gallery.enabled && s.site.gallery.photos.length === 0) out.push({ id: 'fotos', label: 'Fotos' });
   if (s.site.playlist.enabled && s.site.playlist.tracks.length === 0) out.push({ id: 'musica', label: 'Música de la fiesta' });
   return out;

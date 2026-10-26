@@ -69,7 +69,10 @@ export type SiteEvent = {
 export type SitePhoto = { id: string; src: string; alt: string };
 
 /** Secciones de la invitación que la pareja puede reordenar (la portada va siempre primero y el mensaje final siempre al cierre). */
-export type BlockId = 'eventos' | 'rsvp' | 'dress' | 'fotos' | 'musica';
+export type BlockId = 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica';
+
+/** Un círculo de color del dress code: el color y un nombre opcional. */
+export type Swatch = { name: string; color: string };
 
 export type SiteConfig = {
   /** Orden en que se muestran las secciones reordenables. Siempre contiene las cinco, también las ocultas (al volver a mostrarlas conservan su lugar). */
@@ -78,7 +81,12 @@ export type SiteConfig = {
   events: SiteEvent[];
   countdown: boolean;
   rsvp: { enabled: boolean; /** AAAA-MM-DD o vacío */ deadline: string; menus: boolean };
-  dressCode: { enabled: boolean; title: string; text: string };
+  /** `showColors`: si se muestran los círculos de colores sugeridos; `colors`: cuáles (cada color y su nombre los elige la pareja). */
+  dressCode: { enabled: boolean; title: string; text: string; showColors: boolean; colors: Swatch[] };
+  /** Acceso a la lista de regalos dentro de la invitación: título, texto y botón (que lleva a la página de regalos). La lista se arma en «Regalos». */
+  giftsSection: { enabled: boolean; title: string; text: string; button: string };
+  /** Caja de texto libre: un título y un mensaje para lo que la pareja quiera contar. */
+  note: { enabled: boolean; title: string; text: string };
   gallery: { enabled: boolean; photos: SitePhoto[]; hashtag: string; handle: string };
   playlist: { enabled: boolean; name: string; tracks: { title: string; artist: string }[] };
   message: { enabled: boolean; title: string; text: string };

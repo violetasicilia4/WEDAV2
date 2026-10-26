@@ -1,10 +1,10 @@
 // Lógica de negocio del frontend de Weda: funciones puras (sin React ni almacenamiento) para poder probarlas
 // y para que, cuando exista una API, se puedan reemplazar por llamadas al servidor sin tocar los componentes.
-import { menus, type Category } from '@/lib/demo-wedding';
+import { dressCode as demoDress, menus, type Category } from '@/lib/demo-wedding';
 import { catalogGift, setGifts, type GiftSet } from './catalog';
 import { can, planFor, type Feature } from './plans';
 import type {
-  AppState, BlockId, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent,
+  AppState, BlockId, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent, Swatch,
 } from './types';
 
 /* ------------------------------------------------------------------ utilidades */
@@ -166,16 +166,36 @@ export function mapsLink(ev: Pick<SiteEvent, 'name' | 'address' | 'mapsUrl'>): s
 /* ------------------------------------------------------------------ estado inicial */
 
 export const DEFAULT_COVER_TEXT = '¡Nos casamos!';
+export const DEFAULT_GIFTS_TITLE = '¿Querés regalarnos algo?';
+export const DEFAULT_GIFTS_TEXT = 'Si querés sumarte con un regalo, esta es nuestra lista.';
+export const DEFAULT_GIFTS_BUTTON = 'Ver lista de regalos';
+/** Los cuatro círculos de colores sugeridos de fábrica (los mismos de siempre). Cada pareja puede cambiar el color y el nombre de cada uno. */
+export const defaultColors = (): Swatch[] => demoDress.palette.map(c => ({ ...c }));
+export const isHexColor = (v: unknown): v is string => typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
 
-/** Orden de fábrica de la invitación: el mismo que tenía antes de poder reordenar. */
-export const DEFAULT_ORDER: BlockId[] = ['eventos', 'rsvp', 'dress', 'fotos', 'musica'];
+/** Dirección corta para la tarjeta: solo la calle y la altura, sin ciudad, código postal ni país ni coordenadas. «Cómo llegar» sigue usando la dirección completa. */
+export function shortAddress(address: string): string {
+  const a = address.trim();
+  if (!a || /^[-+]?\d{1,3}(\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(\.\d+)?$/.test(a)) return ''; // coordenadas: no se muestran
+  const first = (a.split(/[,;]/)[0] ?? a).trim();
+  // Sin comas: se corta en el código postal (argentino, tipo C1425 o B1640ABC) y en todo lo que sigue.
+  return first.replace(/\s+[A-Za-z]\d{4}[A-Za-z]{0,3}\b.*$/, '').replace(/\s+\(?\d{4}\)?\s+(?=[A-ZÁÉÍÓÚÑ]).*$/, '').trim();
+}
 
-/** Orden válido a partir de cualquier valor: sin repetidos ni desconocidos, y con las secciones que falten al final (en su orden de fábrica). */
+/** Orden de fábrica de la invitación. */
+export const DEFAULT_ORDER: BlockId[] = ['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
+
+/** Orden válido a partir de cualquier valor: sin repetidos ni desconocidos. Las secciones que falten (por ejemplo, las que se agregaron después de guardar el orden)
+ *  se ubican donde les corresponde según el orden de fábrica: justo después de la anterior que sí esté. */
 export function normalizeOrder(v: unknown): BlockId[] {
-  const seen = new Set<BlockId>();
-  if (Array.isArray(v)) for (const x of v) if ((DEFAULT_ORDER as unknown[]).includes(x)) seen.add(x as BlockId);
-  for (const id of DEFAULT_ORDER) seen.add(id);
-  return [...seen];
+  const out: BlockId[] = [];
+  if (Array.isArray(v)) for (const x of v) if ((DEFAULT_ORDER as unknown[]).includes(x) && !out.includes(x as BlockId)) out.push(x as BlockId);
+  DEFAULT_ORDER.forEach((id, i) => {
+    if (out.includes(id)) return;
+    const prev = [...DEFAULT_ORDER.slice(0, i)].reverse().find(p => out.includes(p));
+    out.splice(prev ? out.indexOf(prev) + 1 : 0, 0, id);
+  });
+  return out;
 }
 
 /** Mueve una sección una posición hacia arriba (-1) o hacia abajo (+1) entre las que se muestran; las ocultas no cuentan, así el movimiento siempre se nota. */
@@ -200,7 +220,9 @@ export const defaultSite = (): SiteConfig => ({
   ],
   countdown: true,
   rsvp: { enabled: true, deadline: '', menus: true },
-  dressCode: { enabled: false, title: '', text: '' },
+  dressCode: { enabled: false, title: '', text: '', showColors: true, colors: defaultColors() },
+  giftsSection: { enabled: true, title: DEFAULT_GIFTS_TITLE, text: DEFAULT_GIFTS_TEXT, button: DEFAULT_GIFTS_BUTTON },
+  note: { enabled: false, title: '', text: '' },
   gallery: { enabled: false, photos: [], hashtag: '', handle: '' },
   playlist: { enabled: false, name: '', tracks: [] },
   message: { enabled: true, title: 'Que vengas ya es un regalo.', text: '' },

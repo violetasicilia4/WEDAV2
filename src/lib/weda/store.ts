@@ -3,7 +3,7 @@
 // - Se sincroniza entre pestañas y iframes (evento "storage"): así la vista previa del editor se actualiza sola.
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
 import { useRef, useSyncExternalStore } from 'react';
-import { defaultGroup, defaultSite, emptyState, normalizeOrder } from './logic';
+import { defaultColors, defaultGroup, defaultSite, emptyState, isHexColor, normalizeOrder } from './logic';
 import { isPlanId } from './plans';
 import type { AppState, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
@@ -50,6 +50,12 @@ function guest(v: unknown): Guest | null {
   return { id: v['id'], first: v['first'], last: str(v['last']), status, menu: str(v['menu']), groupId: typeof v['groupId'] === 'string' ? v['groupId'] : null, source: v['source'] === 'rsvp' ? 'rsvp' : 'manual' };
 }
 
+/** Colores del dress code: de 1 a 6, cada uno con un color hexadecimal válido y un nombre corto; si no hay datos válidos, los cuatro de fábrica. */
+function swatches(v: unknown): { name: string; color: string }[] {
+  const list = arr(v).filter(isObj).filter(c => isHexColor(c['color'])).slice(0, 6).map(c => ({ name: str(c['name']).slice(0, 24), color: str(c['color']).toLowerCase() }));
+  return list.length ? list : defaultColors();
+}
+
 function site(v: unknown): SiteConfig {
   const d = defaultSite();
   if (!isObj(v)) return d;
@@ -60,11 +66,14 @@ function site(v: unknown): SiteConfig {
   });
   const r = isObj(v['rsvp']) ? v['rsvp'] : {}, dc = isObj(v['dressCode']) ? v['dressCode'] : {}, ga = isObj(v['gallery']) ? v['gallery'] : {};
   const pl = isObj(v['playlist']) ? v['playlist'] : {}, ms = isObj(v['message']) ? v['message'] : {};
+  const gs = isObj(v['giftsSection']) ? v['giftsSection'] : {}, nt = isObj(v['note']) ? v['note'] : {};
   return {
     order: normalizeOrder(v['order']),
     coverText: str(v['coverText'], d.coverText), events, countdown: bool(v['countdown'], d.countdown),
     rsvp: { enabled: bool(r['enabled'], d.rsvp.enabled), deadline: str(r['deadline']), menus: bool(r['menus'], d.rsvp.menus) },
-    dressCode: { enabled: bool(dc['enabled'], false), title: str(dc['title']), text: str(dc['text']) },
+    dressCode: { enabled: bool(dc['enabled'], false), title: str(dc['title']), text: str(dc['text']), showColors: bool(dc['showColors'], true), colors: swatches(dc['colors']) },
+    giftsSection: { enabled: bool(gs['enabled'], d.giftsSection.enabled), title: str(gs['title'], d.giftsSection.title), text: str(gs['text'], d.giftsSection.text), button: str(gs['button'], d.giftsSection.button) },
+    note: { enabled: bool(nt['enabled'], false), title: str(nt['title']), text: str(nt['text']) },
     gallery: {
       enabled: bool(ga['enabled'], false), hashtag: str(ga['hashtag']), handle: str(ga['handle']),
       photos: arr(ga['photos']).filter(isObj).filter(p => typeof p['src'] === 'string').map(p => ({ id: str(p['id'], str(p['src']).slice(-12)), src: str(p['src']), alt: str(p['alt']) })),

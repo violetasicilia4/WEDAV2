@@ -1725,3 +1725,15 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
   .ed-side { scroll-margin-top: 0; }
 }
 @media (max-width: 639px) { .ed-hint { display: none; } .ed-view-bar { justify-content: space-between; } }
+
+/* Editor: conexión con Google Maps y colores del dress code. */
+.ed-maps { display: grid; gap: 6px; justify-items: start; }
+.ed-maps .pn-btn { text-decoration: none; }
+.ed-maps .pn-btn.is-disabled { opacity: .45; pointer-events: none; }
+.ed-colors-box { display: grid; gap: 10px; justify-items: start; }
+.ed-colors { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; width: 100%; }
+.ed-colors li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; align-items: center; }
+.ed-colors input[type='color'] { width: 48px; height: 48px; padding: 3px; border: 1px solid var(--pn-line-s); border-radius: 50%; background: #fff; cursor: pointer; }
+.ed-colors input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
+.ed-colors input[type='color']::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.ed-colors input[type='color']::-moz-color-swatch { border: 0; border-radius: 50%; }

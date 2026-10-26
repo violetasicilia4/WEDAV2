@@ -389,7 +389,7 @@ describe('recorrido guiado (journey)', () => {
   });
   it('prender una sección sin datos mínimos no la deja lista', () => {
     const s = seedState();
-    const st = { ...s, site: { ...s.site, dressCode: { enabled: true, title: '', text: '' } } };
+    const st = { ...s, site: { ...s.site, dressCode: { ...s.site.dressCode, enabled: true, title: '', text: '' } } };
     expect(stages(st)[1]!.status).toBe('review');
     expect(stages(st)[1]!.detail).toContain('Dress code');
   });
@@ -417,7 +417,7 @@ describe('reglas de secciones (sectionGaps)', () => {
   });
   it('dress code, fotos y música prendidos sin datos son pendientes; un momento necesita nombre propio y lugar o dirección', () => {
     const s = seedState();
-    const site = { ...s.site, dressCode: { enabled: true, title: '', text: '' }, gallery: { ...s.site.gallery, enabled: true, photos: [] }, playlist: { ...s.site.playlist, enabled: true, tracks: [] } };
+    const site = { ...s.site, dressCode: { ...s.site.dressCode, enabled: true, title: '', text: '' }, gallery: { ...s.site.gallery, enabled: true, photos: [] }, playlist: { ...s.site.playlist, enabled: true, tracks: [] } };
     expect(sectionGaps({ ...s, site }).map(g => g.id)).toEqual(expect.arrayContaining(['dress', 'fotos', 'musica']));
     const ev = s.site.events[0]!;
     expect(eventComplete({ ...ev, enabled: true, title: 'Ceremonia', name: 'Parroquia', address: '' })).toBe(true);

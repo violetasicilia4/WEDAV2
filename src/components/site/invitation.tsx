@@ -3,13 +3,12 @@
 // Es la MISMA página para /ejemplo y para el sitio de cada pareja: todo viene de useSite().
 import { Fragment, useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { CalendarPlus, Gift as GiftIcon, Plus } from 'lucide-react';
+import { CalendarPlus, Plus } from 'lucide-react';
 import { ClinkIcon, HallIcon, RingsIcon } from '@/components/hand-icons';
 import { useRsvp } from '@/components/rsvp-dialog';
 import { SiteCover } from './site-cover';
 import { buildIcs, downloadIcs, parseTime } from '@/lib/ics';
 import { getCountdown, type Countdown } from '@/lib/countdown';
-import { formatARS } from '@/lib/demo-wedding';
 import { DEFAULT_ORDER } from '@/lib/weda/logic';
 import type { BlockId } from '@/lib/weda/types';
 import { useSessionState } from '@/lib/demo-session';
@@ -120,25 +119,28 @@ function TheDay() {
   );
 }
 
-/* Lista de regalos (planes que la incluyen): una muestra de la lista y el acceso a la lista completa. */
+/* Sección de regalos (planes que la incluyen): solo un título, un texto y el botón que lleva a la página de regalos. No muestra regalos de la lista. */
 function GiftsPreview() {
-  const { gifts, giftsPath } = useSite();
-  const sample = gifts.slice(0, 4);
+  const { giftsPath, giftsSection } = useSite();
   return (
     <section className="iv-section iv-gifts" id="regalos" aria-labelledby="iv-gifts-title">
       <div className="iv-wrap">
-        <h2 id="iv-gifts-title" className="iv-h2">Lista de regalos</h2>
-        <p className="iv-gifts-sub">Si querés sumarte con un regalo, esta es nuestra lista.</p>
-        <ul className="iv-gifts-grid">
-          {sample.map(g => (
-            <li key={g.id}>
-              <span className="iv-gifts-photo" aria-hidden="true">{g.image ? <img src={g.image} alt="" loading="lazy" style={g.pos || g.zoom ? { objectPosition: g.pos, ...(g.zoom ? { transform: `scale(${g.zoom.scale})`, transformOrigin: g.zoom.origin } : {}) } : undefined} /> : <GiftIcon size={28} strokeWidth={1.3} />}</span>
-              <span className="iv-gifts-name">{g.name}</span>
-              <span className="iv-gifts-price">{formatARS(g.amount)}</span>
-            </li>
-          ))}
-        </ul>
-        <Link to={giftsPath as never} className="iv-btn">Ver lista de regalos</Link>
+        <h2 id="iv-gifts-title" className="iv-h2">{giftsSection.title}</h2>
+        {giftsSection.text && <p className="iv-gifts-sub">{giftsSection.text}</p>}
+        <Link to={giftsPath as never} className="iv-btn">{giftsSection.button}</Link>
+      </div>
+    </section>
+  );
+}
+
+/* Caja de texto libre: un título y un mensaje que la pareja escribe para lo que quiera contar. */
+function NoteBlock() {
+  const { note } = useSite();
+  return (
+    <section className="iv-section iv-note" id="texto" aria-labelledby={note.title ? 'iv-note-title' : undefined} aria-label={note.title ? undefined : 'Mensaje'}>
+      <div className="iv-wrap">
+        {note.title && <h2 id="iv-note-title" className="iv-h2">{note.title}</h2>}
+        {note.text && <p className="iv-note-text">{note.text}</p>}
       </div>
     </section>
   );
@@ -198,9 +200,11 @@ function Practical() {
         <p className="iv-eyebrow">Dress code</p>
         <h2 id="iv-dress-title" className="iv-dress-title">{dressCode.title || 'Dress code'}</h2>
         {note && <p className="iv-dress-text">{note}</p>}
-        <ul className="iv-swatches" aria-label="Colores sugeridos">
-          {dressCode.palette.map(c => <li key={c.name}><i style={{ background: c.color }} aria-hidden="true" /><span>{c.name}</span></li>)}
-        </ul>
+        {dressCode.palette.length > 0 && (
+          <ul className="iv-swatches" aria-label="Colores sugeridos">
+            {dressCode.palette.map((c, i) => <li key={`${c.color}-${i}`}><i style={{ background: c.color }} aria-hidden="true" />{c.name && <span>{c.name}</span>}</li>)}
+          </ul>
+        )}
       </div>
     </section>
   );
@@ -269,9 +273,11 @@ function Closing() {
 
 export function Invitation() {
   const { blocks, order = DEFAULT_ORDER } = useSite(); // los sitios publicados antes de poder reordenar no traen `order`
-  // Cada sección reordenable sabe si se muestra y cómo; «Regalos» acompaña siempre a los eventos y el mensaje final cierra la página.
+  // Cada sección reordenable sabe si se muestra y cómo; la portada va primero y el mensaje final cierra la página.
   const render: Record<BlockId, React.ReactNode> = {
-    eventos: blocks.day || blocks.gifts ? <>{blocks.day && <TheDay />}{blocks.gifts && <GiftsPreview />}</> : null,
+    eventos: blocks.day ? <TheDay /> : null,
+    regalos: blocks.giftsSection ? <GiftsPreview /> : null,
+    texto: blocks.note ? <NoteBlock /> : null,
     rsvp: blocks.rsvp ? <RsvpBand /> : null,
     dress: blocks.dress ? <Practical /> : null,
     fotos: blocks.photos ? <Photos /> : null,
