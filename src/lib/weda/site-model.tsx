@@ -48,12 +48,17 @@ export type SiteData = {
 };
 
 export type RsvpEntry = { first: string; last: string; attending: boolean; menu: string };
+/** Lo necesario para enviar un aporte de verdad: el comprobante y una clave de reintento (la misma en cada reintento: evita duplicados). */
+export type GiftSubmission = { proof: File | null; attempt: { key: string; token: string } };
 export type SiteActions = {
   /** Regalos ya elegidos por invitados. */
   given: GivenGift[];
-  recordGift: (gifts: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }) => void;
+  /** Si el sitio es real, devuelve una promesa que falla (con un mensaje para la persona) cuando el servidor no confirma. */
+  recordGift: (gifts: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }, extra?: GiftSubmission) => void | Promise<void>;
+  /** true cuando el sitio es el publicado en el servidor: ahí los envíos son reales (estado «pendiente de revisión»), no una demostración. */
+  remote?: boolean;
   /** Respuestas de asistencia enviadas desde el formulario público. */
-  recordRsvp: (people: RsvpEntry[]) => void;
+  recordRsvp: (people: RsvpEntry[]) => void | Promise<void>;
 };
 
 const SLOT: Record<string, number> = { ceremonia: 1, recepcion: 2, fiesta: 3, civil: 4, brunch: 5 };

@@ -122,6 +122,7 @@ function build(raw: Record<string, unknown>, from: number): AppState {
     site: site(raw['site']),
     seeded: bool(raw['seeded'], false),
     publication: publication(raw['publication']),
+    ...(str(raw['slug']) ? { slug: str(raw['slug']) } : {}),
   };
 }
 
@@ -215,6 +216,9 @@ export function reset() {
   storageFull = false;
   emit();
 }
+
+/** Avisa cada vez que cambia el estado (lo usa la sincronización con el servidor). */
+export const subscribeState = (l: () => void) => { ensureLoaded(); listeners.add(l); return () => { listeners.delete(l); }; };
 
 const subscribe = (l: () => void) => { ensureLoaded(); listeners.add(l); return () => { listeners.delete(l); }; };
 

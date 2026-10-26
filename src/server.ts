@@ -3,6 +3,8 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { buildRobots, buildSitemap } from "./lib/site";
+import { handleApi } from "./server/api";
+import { loadConfig } from "./server/config";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -70,9 +72,15 @@ function withRobotsHeader(request: Request, response: Response): Response {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+let config: ReturnType<typeof loadConfig> | undefined;
+const apiConfig = () => (config ??= loadConfig());
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // API propia (cuentas, casamiento, publicación, RSVP, aportes): src/server/api.ts. Las respuestas nunca se indexan.
+      const api = await handleApi(request, apiConfig());
+      if (api) return api;
       const seo = staticSeoResponse(new URL(request.url).pathname);
       if (seo) return seo;
       const handler = await getServerEntry();

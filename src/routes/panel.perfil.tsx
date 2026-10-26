@@ -5,6 +5,7 @@ import { CoupleForm } from '@/components/panel/couple-form';
 import { Field, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { isEmail, strongPassword } from '@/lib/weda/logic';
+import { logout, useRemote } from '@/lib/weda/remote';
 import { update, useAppSelector } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/panel/perfil')({ component: Profile });
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/panel/perfil')({ component: Profile });
    sin borrar lo cargado. Cuando haya backend, esta pantalla ya tiene los lugares para conectarlo. */
 function Profile() {
   const email = useAppSelector(s => s.email);
+  const remote = useRemote();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<'email' | 'pass' | null>(null);
   const close = () => setDialog(null);
@@ -45,18 +47,20 @@ function Profile() {
           <div className="pf-row">
             <dt>Correo electrónico</dt>
             <dd className={email ? undefined : 'is-empty'}>{email || 'Todavía no cargaste un correo'}</dd>
-            <button type="button" className="pn-btn is-ghost is-small" onClick={() => setDialog('email')}>{email ? 'Cambiar' : 'Agregar'}</button>
+            {!remote.user && <button type="button" className="pn-btn is-ghost is-small" onClick={() => setDialog('email')}>{email ? 'Cambiar' : 'Agregar'}</button>}
           </div>
           <div className="pf-row">
             <dt>Clave</dt>
             <dd aria-label="Clave oculta">••••••••</dd>
-            <button type="button" className="pn-btn is-ghost is-small" onClick={() => setDialog('pass')}>Cambiar</button>
+            {!remote.user && <button type="button" className="pn-btn is-ghost is-small" onClick={() => setDialog('pass')}>Cambiar</button>}
           </div>
         </dl>
-        <p className="pn-note">Todavía no hay cuentas reales: el correo se guarda solo en este navegador y la clave no se guarda en ningún lado.</p>
+        {remote.user
+          ? <p className="pn-note">Tu casamiento se guarda en tu cuenta: podés abrirlo desde otro dispositivo. Cambiar el correo o la clave todavía no está disponible.</p>
+          : <p className="pn-note">Estás en modo demostración: sin cuenta, tu casamiento se guarda solo en este navegador. Creá una cuenta o ingresá para guardarlo en Weda y abrirlo desde otro dispositivo.</p>}
         <div className="pf-out">
-          <button type="button" className="pn-btn is-ghost" onClick={() => { void navigate({ to: '/crear/cuenta', search: { modo: 'ingresar' } }); }}><LogOut size={16} aria-hidden="true" />Cerrar sesión</button>
-          <p className="pn-hint">Tus datos quedan guardados en este navegador: cuando vuelvas a ingresar, está todo como lo dejaste.</p>
+          <button type="button" className="pn-btn is-ghost" onClick={() => { void (remote.user ? logout() : Promise.resolve()).then(() => navigate({ to: '/crear/cuenta', search: { modo: 'ingresar' } })); }}><LogOut size={16} aria-hidden="true" />{remote.user ? 'Cerrar sesión' : 'Ingresar con una cuenta'}</button>
+          <p className="pn-hint">{remote.user ? 'Al cerrar sesión se borra de este navegador la copia de tu casamiento; en tu cuenta sigue guardado.' : 'Tus datos quedan guardados en este navegador.'}</p>
         </div>
       </section>
 

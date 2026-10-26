@@ -106,4 +106,6 @@ export type AppState = {
   seeded: boolean;
   /** Publicación (simulada) con su historial de pagos, o null si todavía no se publicó. */
   publication: Publication | null;
+  /** Dirección pública definitiva (/sitio/{slug}) que asignó el servidor al publicar. Sin cuenta, se deriva de los nombres. */
+  slug?: string | undefined;
 };

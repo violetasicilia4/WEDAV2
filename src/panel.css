@@ -1671,3 +1671,4 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
    y el botón nunca se encoge ni sale del aviso. Sin esto, «Deshacer» quedaba fuera de la pantalla. */
 .pn-toast { max-width: 100%; box-sizing: border-box; }
 .pn-toast > span { min-width: 0; overflow-wrap: anywhere; }
+.pn-banner.is-info { background: #f2f2f2; color: #4a4a4a; }

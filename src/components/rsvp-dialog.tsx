@@ -27,7 +27,8 @@ function isValidContact(value: string): boolean {
 
 /**
  * Formulario de confirmación en pop-up: una persona por vez, con su menú.
- * Es una SIMULACIÓN: nada sale del navegador. Las personas cargadas y las "enviadas" se guardan en sessionStorage.
+ * En /ejemplo y sin servidor es una SIMULACIÓN (nada sale del navegador; sessionStorage). En un sitio publicado, `recordRsvp` llama al servidor:
+ * si falla, no se marca como enviada y se puede reintentar.
  */
 export function RsvpProvider({ children }: { children: ReactNode }) {
   const site = useSite();
@@ -57,11 +58,22 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
     setView(people.length > 0 ? 'review' : sentList.length > 0 ? 'sent' : 'form');
     setOpen(true);
   };
-  const send = () => {
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const send = async () => {
     // Un doble clic no debe duplicar la respuesta: la segunda vez ya no quedan personas por enviar.
     if (people.length === 0 || sending.current) return;
     sending.current = true;
-    recordRsvp(people.map(p => ({ first: p.first || p.name.split(' ')[0] || p.name, last: p.last || p.name.split(' ').slice(1).join(' '), attending: p.attending, menu: p.menu })));
+    setSendError(null); setBusy(true);
+    try {
+      await recordRsvp(people.map(p => ({ first: p.first || p.name.split(' ')[0] || p.name, last: p.last || p.name.split(' ').slice(1).join(' '), attending: p.attending, menu: p.menu })));
+    } catch (e) {
+      // No se simula el envío: las personas siguen cargadas para reintentar.
+      sending.current = false; setBusy(false);
+      setSendError(e instanceof Error && e.message ? e.message : 'No pudimos enviar tu confirmación. Revisá tu conexión y probá de nuevo.');
+      return;
+    }
+    setBusy(false);
     setSentList(prev => [...prev, ...people]);
     setPeople([]);
     setView('sent');
@@ -130,7 +142,10 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
               </ul>
               <p className="dm-demo-note">Es una demostración: al enviar no se manda nada a nadie.</p>
               <div className="dm-rsvp-actions">
-                <button type="button" className="dm-solid" onClick={send}>{people.length === 1 ? 'Enviar confirmación' : `Enviar las ${people.length} confirmaciones`}</button>
+                <>
+                  {sendError && <p className="dm-error" role="alert">{sendError}</p>}
+                  <button type="button" className="dm-solid" disabled={busy} aria-busy={busy} onClick={() => { void send(); }}>{busy ? 'Enviando…' : sendError ? 'Reintentar' : people.length === 1 ? 'Enviar confirmación' : `Enviar las ${people.length} confirmaciones`}</button>
+                </>
                 <button type="button" className="dm-ghost" onClick={() => setView('form')}>Cargar otra persona</button>
               </div>
             </div>

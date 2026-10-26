@@ -418,7 +418,8 @@ export function readiness(s: AppState) {
 /** Qué páginas públicas existen según el plan (el plan Regalos solo tiene la lista de regalos). */
 export const publicPages = (planId: PlanId | null) => ({ invitation: can(planId, 'site'), gifts: can(planId, 'gifts') });
 
-export const sitePath = (s: AppState) => `/sitio/${slugify(s.couple.first, s.couple.second)}`;
+export const siteSlug = (s: AppState) => s.slug || slugify(s.couple.first, s.couple.second);
+export const sitePath = (s: AppState) => `/sitio/${siteSlug(s)}`;
 
 export type ReceivedGift = { id: string; giver: string; message: string; giftName: string; amount: number; how: 'alias' | 'tarjeta' | null; at: number | null };
 

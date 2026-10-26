@@ -1,8 +1,8 @@
 import { expect, fillNamesAndContinue, onboard, stored, test } from './helpers';
 import type { Page } from '@playwright/test';
 
-// La cuenta es una simulación (frontend-only): estos tests verifican que registrarse o ingresar NUNCA borra el evento guardado
-// y que «empezar de cero» es una decisión explícita. No prueban autenticación real.
+// Cuenta real (servidor): estos tests verifican que registrarse o ingresar NUNCA borra el evento guardado en este navegador
+// y que «empezar de cero» es una decisión explícita. La autenticación y el aislamiento entre cuentas se prueban en e2e/backend.spec.ts.
 
 const signupByEmail = async (page: Page, mail = 'nueva@example.com') => {
   await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
@@ -53,7 +53,7 @@ test.describe('Cuenta simulada · el evento guardado se conserva', () => {
     await onboard(page);
     await page.goto('/crear/cuenta?modo=ingresar', { waitUntil: 'networkidle' });
     await page.fill('#ac-email', 'lucia@example.com');
-    await page.fill('#ac-pass', 'cualquiera');
+    await page.fill('#ac-pass', 'Clave1234');
     await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
     await page.waitForURL(/\/panel/);
     await expect(page.locator('#on-first')).toHaveCount(0);
@@ -62,7 +62,7 @@ test.describe('Cuenta simulada · el evento guardado se conserva', () => {
     await expect(page).toHaveURL(/\/panel/);
   });
 
-  test('6. sin evento previo → registro simulado: el flujo de creación sigue funcionando', async ({ page }) => {
+  test('6. sin evento previo → registro: el flujo de creación sigue funcionando', async ({ page }) => {
     await signupByEmail(page);
     await page.waitForURL(/\/crear$/);
     await expect(page.locator('#on-first')).toBeVisible();

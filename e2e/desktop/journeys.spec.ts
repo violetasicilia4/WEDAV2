@@ -96,7 +96,7 @@ test.describe('Perfiles B/D · quien explora el ejemplo puede empezar el suyo si
       await expect(page).toHaveURL(/\/crear\/cuenta/);
     }
     await onboard(page);
-    await page.goto('/sitio/lucia-y-violeta', { waitUntil: 'networkidle' });
+    await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
     await expect(page.getByRole('link', { name: 'Crear mi evento gratis' })).toHaveCount(0);
   });
 });
@@ -119,7 +119,7 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
     expect(pv).not.toMatch(/\bundefined\b|\bnull\b|NaN/);
     await closePreview(page);
     // Sitio público: igual que la vista previa.
-    await page.goto('/sitio/lucia-y-violeta', { waitUntil: 'networkidle' });
+    await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
     await expect(page.locator('body')).toContainText(/Fecha a confirmar/i);
     await expect(page.locator('body')).not.toContainText(/undefined|NaN/);
     // Publicación: la fecha figura como pendiente con acceso directo.
@@ -263,7 +263,7 @@ test.describe('Perfil D/E · regalos: elegir, quitar y ver el resultado en la p�
     expect(await previewText(page)).not.toContain('Pasaje luna de miel');
     await closePreview(page);
     // La página pública de regalos usa el mismo estado (sin duplicar datos).
-    await page.goto('/sitio/lucia-y-violeta/regalos', { waitUntil: 'networkidle' });
+    await page.goto('/sitio/lucia-y-violeta/regalos?borrador', { waitUntil: 'networkidle' });
     await expect(page.getByText('Noche en hotel boutique').first()).toBeVisible();
     await expect(page.getByText('Pasaje luna de miel')).toHaveCount(0);
   });
@@ -313,7 +313,7 @@ test.describe('Perfil E · invitados: alta, edición, confirmación desde el sit
   test('la confirmación hecha en el sitio público llega a la lista de invitados, y enviarla dos veces no duplica a la persona', async ({ page }) => {
     await onboard(page);
     const confirm = async () => {
-      await page.goto('/sitio/lucia-y-violeta', { waitUntil: 'networkidle' });
+      await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
       await page.getByRole('button', { name: 'Confirmá asistencia' }).first().click();
       const dlg = page.getByRole('dialog');
       // Si ya se envió una confirmación en esta sesión, el diálogo reabre en el agradecimiento: se pasa a «Cargar otra persona».
@@ -435,8 +435,9 @@ test.describe('Perfil J · publicar cuanto antes', () => {
     await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();
     await page.reload({ waitUntil: 'networkidle' });
     await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();
-    // El link público abre el sitio con los nombres de la pareja.
-    await page.goto('/sitio/lucia-y-violeta', { waitUntil: 'networkidle' });
+    // El link público (con el slug que asignó el servidor, que lleva un sufijo si otra pareja ya publicó los mismos nombres) abre lo PUBLICADO.
+    await expect.poll(async () => (await stored(page)).slug).toMatch(/^lucia-y-violeta(-\d+)?$/);
+    await page.goto(`/sitio/${(await stored(page)).slug}`, { waitUntil: 'networkidle' });
     await expect(page.locator('body')).toContainText(/Luc[ií]a/i);
   });
 });

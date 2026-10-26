@@ -11,7 +11,7 @@ import { useRsvp } from '@/components/rsvp-dialog';
 import { SiteCover } from './site-cover';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { formatARS, type Category, type Gift, type IconKey } from '@/lib/demo-wedding';
-import { useSite, useSiteActions } from '@/lib/weda/site-model';
+import { useSite, useSiteActions, type GiftSubmission } from '@/lib/weda/site-model';
 
 const icons: Record<IconKey, LucideIcon> = {
   utensils: Utensils, bed: BedDouble, chef: ChefHat, plane: Plane, sofa: Sofa, lamp: Lamp, wine: Wine,
@@ -47,12 +47,13 @@ function Thumb({ gift }: { gift: Gift }) {
 /* Pop-up de varios regalos: tu regalo (lista, quitar, total) → cómo pagar → alias → nombre, apellido y comprobante → Enviar → agradecimiento.
    «Agregar otro regalo» vuelve a la lista sin perder lo elegido. */
 type DialogView = 'cart' | 'pay';
-function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onSent: (gs: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }) => void; returnFocus: { current: HTMLElement | null } }) {
+function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onSent: (gs: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
   const [view, setView] = useState<DialogView>('cart');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const { remote } = useSiteActions();
   const [proof, setProof] = useState<File | null>(null);
   const [how, setHow] = useState<'alias' | 'tarjeta'>('alias');
   const [copied, setCopied] = useState(false);
@@ -61,7 +62,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
   // Lo enviado se guarda aparte: al enviar, el carrito se vacía pero el agradecimiento sigue mostrando esos regalos.
   const [sent, setSent] = useState<{ first: string; gifts: Gift[] } | null>(null);
   const total = items.reduce((n, g) => n + g.amount, 0);
-  const reset = () => { setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
+  const reset = () => { attempt.current = null; setSendError(null); setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
   // Para poder enviar: nombre, apellido y, si transfiere por alias, el comprobante cargado. El correo es opcional (si se completa, se valida).
   const cardSelected = site.acceptCard && how === 'tarjeta';
   const noAlias = !cardSelected && !alias;
@@ -78,11 +79,25 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
     try { if (alias) await navigator.clipboard.writeText(alias); } catch { /* sin portapapeles: el alias igual queda a la vista */ }
     setCopied(true); window.setTimeout(() => setCopied(false), 2200);
   };
-  const submit = (e: React.FormEvent) => {
+  // La clave de reintento se crea una vez por envío y se reutiliza si falla la red: el servidor no duplica el aporte.
+  const attempt = useRef<{ key: string; token: string } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (blocked || missing.length || items.length === 0) return;
+    if (blocked || missing.length || items.length === 0 || sending) return;
+    attempt.current ??= { key: crypto.randomUUID(), token: `${crypto.randomUUID()}${crypto.randomUUID()}` };
+    setSending(true); setSendError(null);
+    try {
+      await onSent(items, { name: `${name.trim()} ${surname.trim()}`, message: message.trim(), how }, { proof, attempt: attempt.current });
+    } catch (err) {
+      setSending(false);
+      setSendError(err instanceof Error && err.message ? err.message : 'No pudimos enviar tu regalo. Revisá tu conexión y probá de nuevo.');
+      return;
+    }
+    setSending(false);
+    attempt.current = null;
     setSent({ first: name.trim().split(/\s+/)[0] ?? name.trim(), gifts: items });
-    onSent(items, { name: `${name.trim()} ${surname.trim()}`, message: message.trim(), how });
   };
   const remove = (g: Gift) => { onRemove(g); if (items.length <= 1) { onClose(); window.setTimeout(() => setView('cart'), 200); } };
   return (
@@ -92,7 +107,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
           <div className="rg-thanks">
             <span className="rg-check" aria-hidden="true"><Check size={22} strokeWidth={1.8} /></span>
             <DialogTitle>¡Gracias, {sent.first}!</DialogTitle>
-            <DialogDescription>Así se vería la confirmación de {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Es una demostración: no se realizó ningún cobro ni se envió nada.</DialogDescription>
+            <DialogDescription>{remote ? <>Registramos {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Los novios van a revisar tu comprobante: figura como pendiente hasta que ellos lo confirmen.</> : <>Así se vería la confirmación de {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Es una demostración: no se realizó ningún cobro ni se envió nada.</>}</DialogDescription>
             <ul className="rg-sent">{sent.gifts.map(g => <li key={g.id}>{g.name}<span>{formatARS(g.amount)}</span></li>)}</ul>
             <button type="button" className="dm-solid" onClick={close}>Volver a la lista</button>
           </div>
@@ -123,7 +138,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
             </div>
           </div>
         ) : (
-          <form onSubmit={submit} noValidate className="rg-form">
+          <form onSubmit={e => { void submit(e); }} noValidate className="rg-form">
             <header className="rg-head">
               <div>
                 <p className="rg-kicker">Regalo para {site.names}</p>
@@ -194,8 +209,9 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
               <textarea id="rg-message" rows={2} value={message} onChange={e => setMessage(e.target.value)} />
             </div>
 
-            {!blocked && <p className="rg-help">Es una demostración: no se cobra ni se envía nada.</p>}
-            <button type="submit" className="dm-solid rg-send" disabled={blocked || missing.length > 0}>Enviar</button>
+            {!blocked && <p className="rg-help">{remote ? 'Tu regalo queda informado a los novios; ellos revisan tu comprobante para confirmarlo. Weda no cobra ni mueve dinero.' : 'Es una demostración: no se cobra ni se envía nada.'}</p>}
+            {sendError && <p className="dm-error" role="alert">{sendError}</p>}
+            <button type="submit" className="dm-solid rg-send" disabled={blocked || missing.length > 0 || sending} aria-busy={sending}>{sending ? 'Enviando…' : sendError ? 'Reintentar' : 'Enviar'}</button>
             <button type="button" className="dm-ghost" onClick={() => setView('cart')}>Volver a mis regalos</button>
             {noAlias && <p className="rg-missing" aria-live="polite">Todavía no se puede enviar: los novios no cargaron su alias.</p>}
             {missing.length > 0 && <p className="rg-missing" aria-live="polite">Para enviar falta: {missing.join(', ')}.</p>}
@@ -312,7 +328,7 @@ export function GiftsPage() {
       gifts={cart}
       onClose={() => setCartOpen(false)}
       onRemove={g => setCart(c => c.filter(x => x.id !== g.id))}
-      onSent={(gs, who) => { recordGift(gs, who); setCart([]); }}
+      onSent={async (gs, who, extra) => { await recordGift(gs, who, extra); setCart([]); }}
       returnFocus={returnFocus}
     />
   </>;

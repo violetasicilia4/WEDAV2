@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { createFileRoute, Outlet, useRouterState } from '@tanstack/react-router';
+import { ensureRemote } from '@/lib/weda/remote';
 import '@/panel.css';
 
 export const Route = createFileRoute('/crear')({
@@ -16,6 +18,8 @@ export const Route = createFileRoute('/crear')({
 const ONBOARDING = ['/crear', '/crear/fecha', '/crear/foto'];
 
 function CreateLayout() {
+  // Si ya hay sesión, el casamiento que se arma en estas pantallas se guarda también en la cuenta.
+  useEffect(() => { void ensureRemote(); }, []);
   // El registro (/crear/cuenta) va sobre la landing oscurecida; las pantallas para empezar, sobre blanco.
   const onboarding = useRouterState({ select: s => ONBOARDING.includes(s.location.pathname.replace(/\/$/, '')) });
   return (

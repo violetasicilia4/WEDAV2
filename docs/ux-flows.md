@@ -191,3 +191,16 @@ Detalle en [product-journey-audit.md](product-journey-audit.md), [conversion-opp
 - **Pendiente «Definí la fecha» del diálogo de publicar:** el botón «Definir la fecha» lleva a `/panel?editar=datos`, que abre «Datos del casamiento» (el parámetro se limpia al cerrar).
 - **Ejemplo (`/ejemplo`, `/ejemplo/regalos`):** el pie ofrece «Crear mi evento gratis» (→ `/crear/cuenta`). Solo en la demo: los sitios de las parejas no lo muestran.
 - **Pendiente (decisión comercial):** la interfaz de publicar dice «pago único» y «publicada 1 año», que §3 y §10 dicen que no están definidos; se puede pagar una página sin contenido; los testimonios de la landing tienen nombres y fotos inventados.
+
+## Cuenta, guardado y sitio publicado reales (2026-10-26)
+
+Hay servidor y base de datos (detalle en [backend-readiness.md](backend-readiness.md)). Cambios de recorrido:
+
+- **Registrarse / ingresar con correo y clave es real** (sesión en el servidor). «Google» y «Apple» siguen siendo botones de simulación: continúan sin cuenta, en modo demostración.
+- **Sin cuenta, todo sigue como antes** (borrador solo en este navegador). Con cuenta, el panel guarda en segundo plano y muestra el estado: avisa si no pudo guardar (con «Reintentar ahora»), y si otro dispositivo guardó antes ofrece «Recargar lo guardado» en vez de pisarlo.
+- **Primer ingreso con un borrador en este navegador:** si la cuenta no tenía casamiento, se sube. Si ya tenía uno, se abre ese y el borrador local queda guardado aparte (con un aviso). Cerrar sesión borra del navegador la copia del casamiento.
+- **Publicar con cuenta publica de verdad** (`/sitio/{slug}` abierto para cualquiera con el link). El cobro sigue siendo de prueba; el cartel lo aclara. Si el servidor falla, no se marca como publicada. Bajar la página la cierra para los invitados; «Volver a publicar» la abre de nuevo.
+- **Vista previa ≠ publicado:** la vista previa del panel usa el borrador (`?borrador`); la dirección sin parámetros muestra solo lo publicado.
+- **Invitados:** la confirmación desde el sitio publicado llega al servidor; si falla la red, no se marca como enviada y se puede reintentar. El correo/teléfono del formulario no se guarda.
+- **Regalos en un sitio publicado:** el invitado informa su regalo y sube el comprobante; queda **«pendiente de revisión»** (no es dinero recibido). Un regalo ya elegido por otra persona se muestra como «Ya elegido». **Pendiente:** el panel de la pareja todavía no lista estos aportes reales ni permite confirmarlos o rechazarlos (hoy solo por API).
+- **Supuestos que siguen abiertos (decisión comercial):** vigencia de la publicación (el servidor no la aplica; el año del flujo de prueba es solo visual), reembolsos, qué significa «confirmado» en un aporte, tarjeta (no disponible), indexación de invitaciones (siguen `noindex`).

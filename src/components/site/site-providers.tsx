@@ -1,10 +1,12 @@
 // Quién provee los datos de la página pública:
 //  - DemoSite: /ejemplo (Ignacio & Martina). Los regalos elegidos duran lo que dure la sesión del navegador.
 //  - AppSite: /sitio/$slug y la vista previa. Lee y escribe el estado local de la pareja (lista, invitados, respuestas).
-import { useEffect, useMemo, type ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Link, useRouterState } from '@tanstack/react-router';
+import { sendGift, sendRsvp } from '@/lib/weda/public-api';
+import type { PublicLookup } from '@/lib/weda/public-site';
 import { useSessionState } from '@/lib/demo-session';
-import { applyRsvp, slugify } from '@/lib/weda/logic';
+import { applyRsvp, siteSlug } from '@/lib/weda/logic';
 import { isLive } from '@/lib/weda/payments';
 import { isPlanId } from '@/lib/weda/plans';
 import { demoSiteData, siteFromState, SiteProvider, type SiteActions } from '@/lib/weda/site-model';
@@ -46,10 +48,42 @@ function readPlanOverride(): PlanId | null {
   return planOverride;
 }
 
-export function AppSite({ slug, children }: { slug: string; children: ReactNode }) {
+/** La vista previa del panel (iframe, «cómo queda con este plan» o «borrador») muestra el borrador local; el resto del mundo ve lo publicado en el servidor. */
+const isPreviewSearch = (search: string) => { const q = new URLSearchParams(search); return q.has('ventana') || q.has('plan') || q.has('borrador'); };
+// Una vez que la página se abrió como vista previa sigue siéndolo aunque la navegación interna (Invitación ↔ Regalos) pierda el parámetro.
+let stickyPreview = false;
+
+/* Sitio publicado en el servidor: lo ve cualquier invitado, sin sesión y sin depender del navegador de la pareja. Los envíos son reales. */
+function PublishedSite({ slug, lookup, children }: { slug: string; lookup: Extract<PublicLookup, { status: 'live' }>; children: ReactNode }) {
+  const [taken, setTaken] = useState<string[]>(lookup.takenGiftIds);
+  const actions = useMemo<SiteActions>(() => ({
+    remote: true,
+    given: [],
+    recordRsvp: people => sendRsvp(slug, people),
+    recordGift: async (gs, who, extra) => {
+      if (!extra) throw new Error('No pudimos completar el envío. Probá de nuevo en un rato.');
+      await sendGift(slug, gs, who, extra);
+      setTaken(t => [...new Set([...t, ...gs.map(g => g.id)])]);
+    },
+  }), [slug, taken]);
+  // Los regalos que otro invitado ya eligió se ven como «Ya elegido».
+  const data = useMemo(() => ({ ...lookup.site, gifts: lookup.site.gifts.map(g => (taken.includes(g.id) ? { ...g, taken: true } : g)) }), [lookup.site, taken]);
+  return <SiteProvider data={data} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
+}
+
+export function AppSite({ slug, remote, children }: { slug: string; remote?: PublicLookup | undefined; children: ReactNode }) {
+  const search = useRouterState({ select: s => s.location.searchStr });
+  const preview = isPreviewSearch(search) || stickyPreview;
+  if (preview && typeof window !== 'undefined') stickyPreview = true;
+  if (remote?.status === 'live' && !preview) return <PublishedSite slug={slug} lookup={remote}>{children}</PublishedSite>;
+  if (remote?.status === 'unpublished' && !preview) return <Notice title="Esta página no está publicada" text="Sus dueños la bajaron por ahora. Volvé a probar más tarde." to="/" cta="Ir a Weda" />;
+  return <LocalSite slug={slug}>{children}</LocalSite>;
+}
+
+function LocalSite({ slug, children }: { slug: string; children: ReactNode }) {
   const state = useAppState();
   const hydrated = useHydrated();
-  const mine = state.onboarded && slugify(state.couple.first, state.couple.second) === slug;
+  const mine = state.onboarded && siteSlug(state) === slug;
   const data = useMemo(() => {
     if (!mine) return null;
     const as = readPlanOverride();

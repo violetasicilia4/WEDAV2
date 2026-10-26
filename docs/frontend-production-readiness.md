@@ -74,6 +74,8 @@ Pendiente de menor prioridad: `hero.mp4` (3,7 MB) ya se carga diferido y respeta
 
 **No ejecutado:** producción real, WhatsApp/Facebook Debugger, Google Search Console, Lighthouse/Core Web Vitals en dispositivo, pruebas en Safari/Firefox, escaneo de dependencias (`npm audit`).
 
+> **Actualización 2026-10-26:** desde esta fecha existen servidor, base de datos, cuentas y sitios publicados reales. Esta sección describe el estado **de la auditoría de frontend** y quedó superada en lo que respecta a persistencia, autenticación y publicación; el estado actual está en [backend-readiness.md](backend-readiness.md). Los riesgos de pagos y de confirmación de aportes siguen vigentes.
+
 ## 6. Limitaciones por falta de backend (no se resuelven desde el frontend)
 
 **Persistencia y datos.** Todo el estado vive en el navegador de quien lo crea:

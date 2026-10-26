@@ -49,6 +49,7 @@ Antes de compartir un cambio: `npm run typecheck && npm run lint && npm test && 
 Ninguna es obligatoria. Copiá `.env.example` a `.env.local` si querés usarlas.
 
 - `VITE_SITE_URL`: URL pública del sitio (sin barra final), **se lee al compilar**. Con ella la landing emite `canonical`, `og:url` y `og:image` absolutos, y el servidor publica `/sitemap.xml` y la línea `Sitemap:` de `/robots.txt`. Sin ella no se inventa ningún dominio: rutas relativas y sin sitemap (404).
+- `WEDA_DB_PATH`, `WEDA_DATA_DIR`, `WEDA_COOKIE_SECURE`, `WEDA_REQUIRE_PAID_ORDER`, `WEDA_ALLOWED_ORIGINS` (solo servidor): base SQLite, comprobantes privados y reglas de publicación. Ver [docs/backend-readiness.md](docs/backend-readiness.md). Necesita Node 22 o más (`node:sqlite`).
 - `CHROMIUM_PATH`: ruta a un Chromium para las pruebas E2E.
 
 ## Estructura

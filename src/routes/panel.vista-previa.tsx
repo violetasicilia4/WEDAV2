@@ -37,7 +37,7 @@ function Preview() {
       </header>
 
       <div className="pn-preview-bar">
-        <a className="pn-link" href={path} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
+        <a className="pn-link" href={`${path}?borrador`} target="_blank" rel="noopener noreferrer">Abrir vista limpia <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>
       </div>
 
       <PreviewFrame path={path} device={device} />

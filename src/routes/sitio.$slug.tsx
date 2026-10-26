@@ -1,24 +1,32 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { AppSite } from '@/components/site/site-providers';
 import { pageMeta } from '@/lib/site';
+import { loadPublicSite } from '@/lib/weda/public-site';
 
-// Página pública SIMULADA de una pareja (la que se arma desde el panel). No está publicada en Internet: vive en el navegador
-// de quien la creó. Es la misma página que /ejemplo, con los datos de la pareja.
+// Página pública de una pareja. Si está publicada en el servidor, se arma con lo publicado (HTML y metadatos de la pareja, también para WhatsApp);
+// si no, queda el comportamiento anterior (simulación local del dueño). Las invitaciones siguen con noindex: indexarlas es una decisión de privacidad pendiente.
 export const Route = createFileRoute('/sitio/$slug')({
-  head: () => ({
-    // El HTML de este sitio es igual para todas las parejas: sus datos viven en el navegador de quien lo creó (ver docs/frontend-production-readiness.md).
-    meta: [
-      ...pageMeta({ title: 'Sitio de casamiento • Weda', description: 'Un casamiento organizado con Weda: fecha, lugares, lista de regalos y confirmación de asistencia.' }).meta,
-      { name: 'robots', content: 'noindex, nofollow' },
-    ],
-    links: [
-      { rel: 'preload', href: '/fonts/cormorant/cormorant-garamond-latin-wght-normal.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
-    ],
-  }),
+  loader: ({ params }) => loadPublicSite({ data: params.slug }),
+  head: ({ loaderData }) => {
+    const live = loaderData?.status === 'live' ? loaderData.site : null;
+    const names = live?.names ?? '';
+    // Una foto subida vive como dato en el borrador (no es una URL): para compartir se usa la tarjeta de Weda hasta tener almacenamiento de archivos.
+    const photo = live?.coverPhoto && live.coverPhoto.startsWith('/') ? live.coverPhoto : undefined;
+    const { meta } = pageMeta({
+      title: names ? `${names} • Casamiento` : 'Sitio de casamiento • Weda',
+      description: names ? `Invitación al casamiento de ${names}${live?.dateLabel ? `, el ${live.dateLabel}` : ''}: información del evento, lista de regalos y confirmación de asistencia.` : 'Un casamiento organizado con Weda: fecha, lugares, lista de regalos y confirmación de asistencia.',
+      ...(photo ? { image: photo, imageAlt: `${names}` } : {}),
+    });
+    return {
+      meta: [...meta, { name: 'robots', content: 'noindex, nofollow' }],
+      links: [{ rel: 'preload', href: '/fonts/cormorant/cormorant-garamond-latin-wght-normal.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' }],
+    };
+  },
   component: SiteLayout,
 });
 
 function SiteLayout() {
   const { slug } = Route.useParams();
-  return <AppSite slug={slug}><Outlet /></AppSite>;
+  const remote = Route.useLoaderData();
+  return <AppSite slug={slug} remote={remote}><Outlet /></AppSite>;
 }

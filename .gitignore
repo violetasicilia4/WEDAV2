@@ -49,3 +49,6 @@ playwright-report/
 .impeccable/hook.*
 capturas/
 explore-results
+
+# Datos locales del servidor (base SQLite y comprobantes)
+.data/

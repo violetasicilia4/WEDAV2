@@ -162,7 +162,7 @@ export function PreviewFrame({ path, device, anchor, jump }: { path: string; dev
   useEffect(go, [go]);
   return (
     <div className={`pn-frame is-${device}`}>
-      <iframe ref={ref} key={path} title="Vista previa de la página para invitados" src={path} loading="lazy" onLoad={go} />
+      <iframe ref={ref} key={path} title="Vista previa de la página para invitados" src={`${path}${path.includes('?') ? '&' : '?'}borrador`} loading="lazy" onLoad={go} />
     </div>
   );
 }

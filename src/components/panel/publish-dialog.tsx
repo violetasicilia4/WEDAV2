@@ -1,5 +1,7 @@
 // Publicar: elegir el producto → revisar y pagar (pago SIMULADO, no se cobra nada) → página publicada. Con una publicación hecha, el mismo botón
-// abre «Tu publicación»: ver el link, mejorar de plan (se paga solo la diferencia) o bajar la página. Todo vive en este navegador.
+// abre «Tu publicación»: ver el link, mejorar de plan (se paga solo la diferencia) o bajar la página.
+// Sin cuenta, la publicación es una simulación en este navegador. Con cuenta, publicar/bajar/volver a publicar llaman al servidor (la página se abre de verdad
+// para cualquiera con el link) y, si el servidor falla, no se marca nada como publicado. El cobro sigue siendo de prueba: no hay proveedor de pagos.
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { BadgeCheck, CalendarCheck, CalendarClock, Check, ChevronDown, CreditCard, ExternalLink, Gift, Globe, Images, Link2, Loader2, MailOpen, Music, Plus, ReceiptText, Sparkles, Users, type LucideIcon } from 'lucide-react';
@@ -8,7 +10,8 @@ import { dateLabel, draftsFor, sitePath } from '@/lib/weda/logic';
 import { isLive, publishPaid, republish, takeDown, totalPaid, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
 import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
 import { formatPrice, PLANS, planById, PRICE_UNIT, PUBLICATION_TERM, type HighlightIcon } from '@/lib/weda/plans';
-import { update, useAppState } from '@/lib/weda/store';
+import { errorText, publishRemote, unpublishRemote, useRemote } from '@/lib/weda/remote';
+import { getState, update, useAppState } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
 
 const HIGHLIGHT_ICON: Record<HighlightIcon, LucideIcon> = { gift: Gift, card: CreditCard, receipt: ReceiptText, link: Link2, globe: Globe, check: CalendarCheck, users: Users, music: Music, photos: Images, heart: Check };
@@ -19,6 +22,8 @@ type Step = 'choose' | 'review' | 'paying' | 'done' | 'manage';
 
 export function PublishDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const state = useAppState();
+  const online = !!useRemote().user;
+  const [error, setError] = useState<string | null>(null);
   const pub = state.publication;
   const [step, setStep] = useState<Step>(pub ? 'manage' : 'choose');
   const [picked, setPicked] = useState<PlanId | null>(null);
@@ -40,8 +45,22 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
   const pay = () => {
     if (!picked) return;
     const id = picked, up = upgrading;
-    setStep('paying');
-    timer.current = window.setTimeout(() => { update(s => (up ? upgradePaid(s, id) : publishPaid(s, id))); setStep('done'); }, PAYING_MS);
+    setStep('paying'); setError(null);
+    timer.current = window.setTimeout(() => {
+      const before = getState();
+      update(s => (up ? upgradePaid(s, id) : publishPaid(s, id)));
+      if (!online) { setStep('done'); return; }
+      // Con cuenta: se publica de verdad en el servidor. Si falla, se deshace y no se muestra como publicada.
+      void publishRemote().then(r => {
+        if (r.ok) { setStep('done'); return; }
+        update(s => ({ ...s, publication: before.publication, planId: before.planId }));
+        setError(errorText(r.code)); setStep('review');
+      });
+    }, PAYING_MS);
+  };
+  const runRemote = (job: () => Promise<{ ok: boolean; code?: string }>, apply: () => void) => {
+    setError(null);
+    void job().then(r => { if (r.ok) apply(); else setError(errorText(r.code ?? null)); });
   };
   const copyLink = () => {
     const url = new URL(path, window.location.origin).toString();
@@ -130,7 +149,8 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               {upgrading && pub && <div><dt>Ya pagaste</dt><dd>{formatPrice(totalPaid(pub))}</dd></div>}
               <div className="is-total"><dt>{upgrading ? 'Pagás la diferencia' : 'Total'}</dt><dd>{formatPrice(amount)} · {PRICE_UNIT}</dd></div>
             </dl>
-            <p className="pn-note" role="status"><strong>Pago de prueba.</strong> No se cobra nada ni se guardan datos de pago. Tu página se publica solo en este navegador.</p>
+            {error && <p className="pn-banner" role="alert">No se pudo publicar: {error}</p>}
+            <p className="pn-note" role="status"><strong>Pago de prueba.</strong> No se cobra nada ni se guardan datos de pago. {online ? 'La página sí se publica: cualquiera que tenga el link la va a poder abrir.' : 'Tu página se publica solo en este navegador.'}</p>
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" disabled={step === 'paying'} onClick={() => setStep(pub ? 'manage' : 'choose')}>Volver</button>
               <button type="button" className="pn-btn" disabled={step === 'paying'} aria-busy={step === 'paying'} onClick={pay}>
@@ -153,7 +173,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               <a className="pn-btn" href={path} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> Ver mi página<span className="pn-sr"> (se abre en otra pestaña)</span></a>
               <button type="button" className="pn-btn is-ghost" onClick={copyLink}>{copied ? 'Link copiado' : 'Copiar link'}</button>
             </div>
-            <p className="pn-note"><strong>Pago de prueba.</strong> No se cobró nada: tu página está publicada solo en este navegador. Desde «Publicada» podés mejorar tu plan o bajar la página cuando quieras.</p>
+            <p className="pn-note"><strong>Pago de prueba.</strong> No se cobró nada{online ? '. Tu página está publicada de verdad: cualquiera con el link la puede abrir' : ': tu página está publicada solo en este navegador'}. Desde «Publicada» podés mejorar tu plan o bajar la página cuando quieras.</p>
             <div className="pn-actions is-end"><button type="button" className="pn-btn is-ghost" onClick={onClose}>Listo</button></div>
           </>
         )}
@@ -166,7 +186,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               <div><dt>Plan</dt><dd>{planById(pub.planId)?.name}</dd></div>
               <div><dt>Publicada desde</dt><dd>{since}</dd></div>
               <div><dt>Vigente hasta</dt><dd>{until}</dd></div>
-              <div><dt>Total pagado</dt><dd>{formatPrice(totalPaid(pub))} · {PRICE_UNIT}</dd></div>
+              {pub.payments.length > 0 && <div><dt>Total pagado</dt><dd>{formatPrice(totalPaid(pub))} · {PRICE_UNIT}</dd></div>}
               {live && <div><dt>Tu link</dt><dd><code>{path}</code></dd></div>}
             </dl>
             {live && (
@@ -193,18 +213,19 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
                 <p><strong>¿Bajar tu página?</strong> Deja de estar publicada. No se devuelve el pago y tu plan sigue vigente hasta el {until}: podés volver a publicarla sin pagar de nuevo.</p>
                 <div className="pn-actions is-end">
                   <button type="button" className="pn-btn is-ghost" onClick={() => setConfirmDown(false)}>Cancelar</button>
-                  <button type="button" className="pn-btn is-danger" onClick={() => { update(takeDown); setConfirmDown(false); }}>Sí, bajar la página</button>
+                  <button type="button" className="pn-btn is-danger" onClick={() => { const apply = () => { update(takeDown); setConfirmDown(false); }; if (online) runRemote(unpublishRemote, apply); else apply(); }}>Sí, bajar la página</button>
                 </div>
               </div>
             ) : (
               <div className="pn-actions is-end">
                 {live
                   ? <button type="button" className="pn-btn is-ghost" onClick={() => setConfirmDown(true)}>Bajar la página</button>
-                  : <button type="button" className="pn-btn" onClick={() => update(republish)}>Volver a publicar</button>}
+                  : <button type="button" className="pn-btn" onClick={() => { const apply = () => update(republish); if (online) runRemote(publishRemote, apply); else apply(); }}>Volver a publicar</button>}
                 <button type="button" className="pn-btn is-ghost" onClick={onClose}>Cerrar</button>
               </div>
             )}
-            <p className="pn-hint">Pago de prueba: no hay cobro real ni publicación en Internet.</p>
+            {error && <p className="pn-banner" role="alert">{error}</p>}
+            <p className="pn-hint">{online ? 'Pago de prueba: no hay cobro real. La publicación sí es real.' : 'Pago de prueba: no hay cobro real ni publicación en Internet.'}</p>
           </>
         )}
       </DialogContent>

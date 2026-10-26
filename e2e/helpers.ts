@@ -1,7 +1,25 @@
 import { expect, test as base, type Page } from '@playwright/test';
 
 /** Cada test falla si la consola del navegador registra errores. */
-export const test = base.extend<{ consoleErrors: string[] }>({
+export const test = base.extend<{ consoleErrors: string[]; uniqueAccounts: void }>({
+  // Las cuentas ahora son reales (servidor + base de datos): un mismo correo no se puede registrar dos veces. Cada test recibe un sufijo propio en el
+  // correo (lucia@example.com → lucia+<tag>@example.com) al registrarse o ingresar, así los recorridos no chocan entre sí ni con corridas anteriores.
+  uniqueAccounts: [async ({ context }, use, testInfo) => {
+    const tag = `w${testInfo.workerIndex}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+    await context.route('**/api/auth/*', async route => {
+      const req = route.request();
+      if (req.method() !== 'POST') return route.continue();
+      try {
+        const body = JSON.parse(req.postData() ?? '{}');
+        if (typeof body.email === 'string' && body.email.includes('@')) {
+          const [local, domain] = body.email.split('@');
+          return route.continue({ postData: JSON.stringify({ ...body, email: `${local}+${tag}@${domain}` }) });
+        }
+      } catch { /* cuerpo que no es JSON: se deja pasar */ }
+      return route.continue();
+    });
+    await use();
+  }, { auto: true }],
   consoleErrors: [async ({ page }, use) => {
     const errors: string[] = [];
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });

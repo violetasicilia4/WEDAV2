@@ -7,6 +7,7 @@ import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/componen
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
 import { can, type Feature } from '@/lib/weda/plans';
+import { ensureRemote, errorText, hasUnsaved, dismissNotice, reloadFromServer, retrySave, useRemote } from '@/lib/weda/remote';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import { isLive } from '@/lib/weda/payments';
 import '@/panel.css';
@@ -117,6 +118,20 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+/* Estado del guardado en la cuenta: nunca dice «guardado» sin que el servidor lo haya confirmado. Sin sesión no muestra nada (modo demostración). */
+function SyncBanner() {
+  const r = useRemote();
+  if (r.save === 'conflict') return (
+    <p className="pn-banner" role="alert">{errorText('revision_conflict')} Para no pisar esos cambios, dejamos de guardar acá. <button type="button" className="pn-link" onClick={() => { void reloadFromServer(); }}>Recargar lo guardado</button></p>
+  );
+  if (r.save === 'error') return (
+    <p className="pn-banner" role="alert">No pudimos guardar tus últimos cambios en tu cuenta ({errorText(r.error)}) Siguen en este navegador y vamos a reintentar. <button type="button" className="pn-link" onClick={retrySave}>Reintentar ahora</button></p>
+  );
+  if (r.notice) return <p className="pn-banner is-info" role="status">{r.notice} <button type="button" className="pn-link" onClick={dismissNotice}>Entendido</button></p>;
+  if (r.user) return <p className="pn-sr" role="status" aria-live="polite">{r.save === 'saving' ? 'Guardando…' : r.save === 'saved' ? 'Cambios guardados en tu cuenta' : ''}</p>;
+  return null;
+}
+
 function PanelLayout() {
   const navigate = useNavigate();
   // Solo lo que usa el contenedor: así escribir en el editor o los invitados no lo vuelve a dibujar.
@@ -139,11 +154,20 @@ function PanelLayout() {
   const onGifts = pathname === '/panel/regalos';
 
   // Sin evento no hay panel: se vuelve a crearlo. El plan no hace falta para entrar: se elige al publicar.
+  // Primero se sabe si hay sesión (y se trae el casamiento de la cuenta): recién ahí se decide si falta crearlo.
+  const remote = useRemote();
+  useEffect(() => { void ensureRemote(); }, []);
   useEffect(() => {
-    if (hydrated && !onboarded) void navigate({ to: '/crear', replace: true });
-  }, [hydrated, onboarded, navigate]);
+    if (hydrated && remote.settled && !onboarded) void navigate({ to: '/crear', replace: true });
+  }, [hydrated, remote.settled, onboarded, navigate]);
+  // Cambios sin confirmar por el servidor: avisa antes de cerrar la pestaña.
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => { if (hasUnsaved()) { e.preventDefault(); e.returnValue = ''; } };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, []);
 
-  if (!hydrated || !onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
+  if (!hydrated || !remote.settled || !onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
 
   return (
     <ToastProvider>
@@ -184,6 +208,7 @@ function PanelLayout() {
         </aside>
 
         <main id="main" className="pn-main">
+          <SyncBanner />
           {full && <p className="pn-banner" role="alert">No hay más lugar para guardar fotos en este navegador. Quitá alguna foto: los últimos cambios no se guardaron.</p>}
           <Outlet />
         </main>

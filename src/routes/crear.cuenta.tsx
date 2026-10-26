@@ -4,7 +4,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Field, FlowClose } from '@/components/panel/ui';
 import { accountDestination, hasEvent } from '@/lib/weda/account';
 import { isEmail, strongPassword } from '@/lib/weda/logic';
-import { update, useAppState, useHydrated } from '@/lib/weda/store';
+import { errorText, login, register } from '@/lib/weda/remote';
+import { getState, useAppState, useHydrated } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/crear/cuenta')({
   // «?modo=ingresar» abre la pantalla en «Ingresá a Weda» (el botón «Iniciar sesión» de la landing).
@@ -28,8 +29,9 @@ const AppleMark = () => (
   </svg>
 );
 
-/* Paso 1: cuenta. Todavía no hay backend: no se crea ninguna cuenta ni se guarda la clave (la pantalla no lo anuncia). El correo se recuerda solo en este navegador
-   (se muestra en el perfil). Registrarse o ingresar, con correo, Google o Apple, NUNCA borra el evento guardado: lo conserva y sigue donde corresponda.
+/* Paso 1: cuenta. Con correo y clave se crea la cuenta o se ingresa de verdad (sesión en el servidor, src/lib/weda/remote.ts). El borrador de este navegador nunca se
+   borra: si la cuenta no tenía casamiento se sube; si ya tenía uno, se abre ese y el borrador local queda guardado aparte. «Google» y «Apple» siguen siendo una simulación
+   (no hay OAuth): continúan sin cuenta, en modo demostración.
    Sin avisos: la pantalla no menciona el evento guardado. */
 function Account() {
   const navigate = useNavigate();
@@ -40,6 +42,8 @@ function Account() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState<string | undefined>();
   const [errors, setErrors] = useState<{ email?: string | undefined; password?: string | undefined }>({});
   const signup = mode === 'signup';
   const saved = hydrated && hasEvent(state);
@@ -54,8 +58,14 @@ function Account() {
     if (signup ? !strongPassword(password) : !password) found.password = signup ? 'Usá 8 o más caracteres, con mayúsculas, minúsculas y un número.' : 'Ingresá tu clave.';
     setErrors(found);
     if (found.email || found.password) { document.getElementById(found.email ? 'ac-email' : 'ac-pass')?.focus(); return; }
-    update(s => ({ ...s, email: email.trim() }));
-    next();
+    setBusy(true); setFormError(undefined);
+    void (signup ? register : login)(email.trim(), password).then(r => {
+      setBusy(false);
+      if (r.ok) { const s = getState(); void navigate({ to: hasEvent(s) ? accountDestination(s) : '/crear' }); return; }
+      if (r.code === 'email_taken' || r.code === 'invalid_email') setErrors({ email: errorText(r.code) });
+      else if (r.code === 'invalid_credentials' || r.code === 'weak_password') setErrors({ password: errorText(r.code) });
+      else setFormError(errorText(r.code));
+    });
   };
 
   return (
@@ -82,7 +92,8 @@ function Account() {
           )}
         </Field>
         {signup && <p className="pn-terms">Al registrarte, aceptás los <strong>Términos de uso</strong> y la <strong>Política de privacidad</strong> de Weda.</p>}
-        <button type="submit" className="pn-btn pn-block">{signup ? 'Registrarme' : 'Ingresar'}</button>
+        {formError && <p className="pn-banner" role="alert">{formError}</p>}
+        <button type="submit" className="pn-btn pn-block" disabled={busy} aria-busy={busy}>{busy ? 'Un momento…' : signup ? 'Registrarme' : 'Ingresar'}</button>
       </form>
 
       <p className="pn-or" aria-hidden="true"><span>o</span></p>
