@@ -187,7 +187,7 @@ export const DEFAULT_EVENT_ICON: Record<string, EventIconId> = { ceremonia: 'rin
 export const EVENT_ICON_IDS: EventIconId[] = ['rings', 'church', 'heart', 'clink', 'wine', 'dinner', 'hall', 'music', 'sparkle', 'sun'];
 
 /** Orden de fábrica de la invitación. */
-export const DEFAULT_ORDER: BlockId[] = ['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
+export const DEFAULT_ORDER: BlockId[] = ['fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
 
 /** Orden válido a partir de cualquier valor: sin repetidos ni desconocidos. Las secciones que falten (por ejemplo, las que se agregaron después de guardar el orden)
  *  se ubican donde les corresponde según el orden de fábrica: justo después de la anterior que sí esté. */

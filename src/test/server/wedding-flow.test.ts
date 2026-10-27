@@ -88,9 +88,9 @@ describe('publicación y sitio público', () => {
     const owner = env.client(); await signUp(owner, 'orden@correo.com');
     const base = draftFor('Olga', 'Raúl');
     await saveDraft(owner, { ...base, site: { ...base.site, order: ['musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos'] } });
-    expect((await owner.get('/api/wedding')).body.draft.site.order).toEqual(['musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);
+    expect((await owner.get('/api/wedding')).body.draft.site.order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);   // el orden se normaliza al guardar: «Save the date» entra primero si no estaba
     const slug = (await owner.post('/api/wedding/publish')).body.slug;
-    expect((await env.client().get(`/api/public/${slug}`)).body.site.order).toEqual(['musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);
+    expect((await env.client().get(`/api/public/${slug}`)).body.site.order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);
   });
 
   it('slug inexistente → 404; despublicada → 410; republicar la vuelve a abrir', async () => {

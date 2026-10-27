@@ -168,6 +168,7 @@ Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avi
 - **Alta y datos del casamiento (2026-10-23):** fecha y lugar son campos opcionales («· opcional») sin interruptores; el diálogo de publicar enlaza «Definir la fecha» a `/panel?editar=datos`. El pie de `/ejemplo*` suma el enlace de texto `.iv-footer-cta` («Crear mi evento gratis»), solo en la demo.
 
 ## Editor de la invitación (2026-10-27)
+- **«Save the date» en la estructura:** fila reordenable como las demás (sin «Quitar»); aparece solo con fecha. Detalle en `ux-flows.md` §15.
 - **Estructura numerada** (`.ed-rows`, `.ed-row`): fila = número + ícono + nombre y estado (ícono + texto) + acciones (`Subir`, `Bajar`, `Quitar` de 40 px). Las filas fijas dicen por qué («Siempre primera», «Siempre al final», «Va con los eventos»). «Para agregar» usa la misma fila con borde, sin relleno, y un botón `Agregar`.
 - **Vista previa escalada** (`SitePreview`, `.sp-stage` / `.sp-device`): iframe al ancho lógico del dispositivo con `transform: scale`; selección con borde de 3 px del verde de la invitación (`#959571`) y borde punteado al pasar; no se usan sombras ni colores nuevos. Selector Celular / Compu con `.pn-switch`.
 - **Mover/quitar:** siempre reversibles (botones + «Deshacer»), con el foco devuelto al botón y anuncio por `aria-live`.

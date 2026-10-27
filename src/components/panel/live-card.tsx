@@ -3,7 +3,7 @@ import { ArrowUpRight, X } from 'lucide-react';
 import { sitePath } from '@/lib/weda/logic';
 import type { AppState, SiteEvent } from '@/lib/weda/types';
 
-export type LiveSection = 'portada' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'mensaje' | 'musica';
+export type LiveSection = 'portada' | 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'mensaje' | 'musica';
 
 /** Estado del teclado virtual: con poco alto visible, la ventana se achica o pasa a una tira. */
 export type KeyboardState = 'off' | 'compact' | 'tight';
@@ -16,6 +16,7 @@ export type KeyboardState = 'off' | 'compact' | 'tight';
 const targetOf = (doc: Document, section: LiveSection, openEvent: SiteEvent['key'] | null): Element | null => {
   switch (section) {
     case 'portada': return doc.querySelector('.iv-cover-group');
+    case 'fecha': return doc.getElementById('save-the-date');
     // Desde el título del evento (sin el ícono): así entran título, fecha, horario y lugar en una ventana chica.
     case 'eventos': return (openEvent && doc.querySelector(`#ev-${openEvent} h3`)) || doc.querySelector('#dia h3') || doc.getElementById('dia');
     case 'regalos': return doc.getElementById('regalos');
@@ -31,6 +32,7 @@ const targetOf = (doc: Document, section: LiveSection, openEvent: SiteEvent['key
 
 const EMPTY: Record<LiveSection, string> = {
   portada: 'Cargando tu portada…',
+  fecha: 'Definí la fecha del casamiento y acá aparece el «Save the date» con su cuenta regresiva.',
   eventos: 'Prendé un evento y cargá el lugar: acá ves cómo lo leen tus invitados.',
   regalos: 'Elegí regalos en «Regalos»: la sección aparece cuando hay una lista.',
   texto: 'Escribí un título o un mensaje para verlo acá.',

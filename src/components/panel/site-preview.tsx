@@ -5,12 +5,12 @@
 // Además conecta la página con el editor: tocar una sección de la vista previa la elige en el editor, y la sección que se está editando queda marcada.
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export type PreviewSection = 'portada' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica' | 'mensaje';
+export type PreviewSection = 'portada' | 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica' | 'mensaje';
 export type Device = 'mobile' | 'desktop';
 
 /** Dónde vive cada sección en la página pública (selectores del DOM real). */
 const TARGETS: [string, PreviewSection][] = [
-  ['.iv-cover', 'portada'], ['#nos-casamos', 'portada'], ['#dia', 'eventos'], ['#regalos', 'regalos'], ['#confirmar', 'rsvp'],
+  ['.iv-cover', 'portada'], ['#save-the-date', 'fecha'], ['#dia', 'eventos'], ['#regalos', 'regalos'], ['#confirmar', 'rsvp'],
   ['#dresscode', 'dress'], ['#texto', 'texto'], ['#fotos', 'fotos'], ['.iv-participate', 'musica'], ['.iv-closing', 'mensaje'],
 ];
 const SIZE: Record<Device, number> = { mobile: 390, desktop: 1280 };

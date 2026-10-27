@@ -118,7 +118,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect.poll(order).toEqual(['confirmar', 'dresscode']);
     await page.getByRole('button', { name: 'Subir Dress code' }).click();
     await expect.poll(order).toEqual(['dresscode', 'confirmar']);
-    await expect.poll(async () => (await stored(page)).site.order.slice(0, 4)).toEqual(['eventos', 'regalos', 'dress', 'rsvp']);
+    await expect.poll(async () => (await stored(page)).site.order.slice(0, 5)).toEqual(['fecha', 'eventos', 'regalos', 'dress', 'rsvp']);   // «Save the date» va primero por defecto
     await page.reload({ waitUntil: 'networkidle' });
     await expect.poll(order).toEqual(['dresscode', 'confirmar']);
   });

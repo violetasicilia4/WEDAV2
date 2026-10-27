@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowLeft, Type, ArrowUp, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, MapPin, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, Type, ArrowUp, CalendarClock, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, MapPin, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
 import { EVENT_ICONS } from '@/components/event-icons';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { LiveCard, useKeyboardState } from '@/components/panel/live-card';
@@ -30,21 +30,21 @@ const tagFor = (f: Feature): string | undefined => {
 const patchSite = (fn: (s: SiteConfig) => SiteConfig) => update(x => ({ ...x, site: fn(x.site) }));
 
 /** Secciones del editor. «Eventos» agrupa los momentos del día (ceremonia, recepción…): cada uno se prende y edita por separado. */
-type SectionId = 'portada' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'mensaje' | 'musica';
+type SectionId = 'portada' | 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'mensaje' | 'musica';
 type Tone = 'ok' | 'todo' | 'off';
 type Sec = { id: SectionId; label: string; title: string; status: string; tone: Tone; locked?: Feature };
-const ICON: Record<SectionId, LucideIcon> = { portada: ImageIcon, eventos: CalendarDays, regalos: GiftIcon, rsvp: UserCheck, dress: Shirt, texto: Type, fotos: Images, mensaje: MessageSquareText, musica: Music };
+const ICON: Record<SectionId, LucideIcon> = { portada: ImageIcon, fecha: CalendarClock, eventos: CalendarDays, regalos: GiftIcon, rsvp: UserCheck, dress: Shirt, texto: Type, fotos: Images, mensaje: MessageSquareText, musica: Music };
 /** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
-const ANCHOR: Record<SectionId, string> = { portada: '', eventos: 'dia', regalos: 'regalos', rsvp: 'confirmar', dress: 'dresscode', texto: 'texto', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
+const ANCHOR: Record<SectionId, string> = { portada: '', fecha: 'save-the-date', eventos: 'dia', regalos: 'regalos', rsvp: 'confirmar', dress: 'dresscode', texto: 'texto', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
 /** Estado de la sección con forma además de color: tilde = lista, aviso = falta algo, ojo tachado = oculta o fuera del plan. */
 const STATUS_ICON: Record<Tone, LucideIcon> = { ok: Check, todo: CircleAlert, off: EyeOff };
 /** Para qué sirve cada sección, en una línea (se muestra en «Para agregar»). */
 const PURPOSE: Record<SectionId, string> = {
-  portada: 'Foto, nombres y fecha', eventos: 'Horarios y lugares, con mapa', regalos: 'Un acceso a tu lista de regalos', texto: 'Un título y un mensaje para lo que quieran contar', rsvp: 'Tus invitados responden desde la página', dress: 'Cómo vestirse ese día',
+  portada: 'Foto, nombres y fecha', fecha: 'La fecha con su cuenta regresiva', eventos: 'Horarios y lugares, con mapa', regalos: 'Un acceso a tu lista de regalos', texto: 'Un título y un mensaje para lo que quieran contar', rsvp: 'Tus invitados responden desde la página', dress: 'Cómo vestirse ese día',
   fotos: 'Una galería con su hashtag', mensaje: 'Unas palabras para cerrar', musica: 'La playlist de la fiesta',
 };
 /** Las secciones que se pueden reordenar y su id en el orden guardado. */
-const BLOCK_SECTION: Record<BlockId, SectionId> = { eventos: 'eventos', regalos: 'regalos', rsvp: 'rsvp', dress: 'dress', texto: 'texto', fotos: 'fotos', musica: 'musica' };
+const BLOCK_SECTION: Record<BlockId, SectionId> = { fecha: 'fecha', eventos: 'eventos', regalos: 'regalos', rsvp: 'rsvp', dress: 'dress', texto: 'texto', fotos: 'fotos', musica: 'musica' };
 const photoWord = (n: number) => `${n} ${n === 1 ? 'foto' : 'fotos'}`;
 
 /** Estado de cada sección, derivado de los datos reales (misma regla que el Inicio: eventComplete/sectionGaps). */
@@ -56,6 +56,7 @@ function sectionsOf(s: AppState): Sec[] {
   const dressOk = site.dressCode.title.trim() !== '' || site.dressCode.text.trim() !== '';
   const list: Sec[] = [
     { id: 'portada', label: 'Portada', title: 'Portada', status: s.date ? 'Completa' : 'Falta la fecha', tone: s.date ? 'ok' : 'todo' },
+    { id: 'fecha', label: 'Save the date', title: 'Save the date y cuenta regresiva', status: s.date ? (site.countdown ? 'Con cuenta regresiva' : 'Sin cuenta regresiva') : 'Aparece al definir la fecha', tone: s.date ? 'ok' : 'off' },
     { id: 'eventos', label: 'Eventos', title: 'Eventos', status: on.length === 0 ? 'Sin eventos' : gaps.length > 0 ? 'Falta completar' : `${done.length} ${done.length === 1 ? 'listo' : 'listos'}`, tone: on.length === 0 ? 'off' : gaps.length > 0 ? 'todo' : 'ok' },
     { id: 'rsvp', label: 'Confirmación', title: 'Confirmación de asistencia', status: site.rsvp.enabled ? 'Visible' : 'Oculta', tone: site.rsvp.enabled ? 'ok' : 'off' },
     { id: 'dress', label: 'Dress code', title: 'Dress code', status: !site.dressCode.enabled ? 'Oculta' : dressOk ? 'Completa' : 'Falta completar', tone: !site.dressCode.enabled ? 'off' : dressOk ? 'ok' : 'todo' },
@@ -76,7 +77,7 @@ function sectionsOf(s: AppState): Sec[] {
     ? { id: 'musica', label: 'Música', title: 'Música de la fiesta', status: site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta', tone: site.playlist.enabled ? 'ok' : 'off' }
     : { id: 'musica', label: 'Música', title: 'Música de la fiesta', status: `Plan ${planFor('playlist')?.name}`, tone: 'off', locked: 'playlist' });
   // Mismo orden de fábrica que la página: así «Para agregar» las muestra donde van.
-  const rank: SectionId[] = ['portada', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
+  const rank: SectionId[] = ['portada', 'fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
   return list.sort((a, b) => rank.indexOf(a.id) - rank.indexOf(b.id));
 }
 
@@ -200,6 +201,7 @@ function isOn(s: AppState, id: SectionId): boolean {
   const site = s.site;
   switch (id) {
     case 'portada': return true;
+    case 'fecha': return !!s.date;                 // sin fecha no hay «Save the date»
     case 'eventos': return site.events.some(e => e.enabled);
     case 'regalos': return site.giftsSection.enabled && can(s.planId, 'gifts');
     case 'texto': return site.note.enabled;
@@ -261,7 +263,8 @@ function SiteEditor() {
   }
   if (isOn(s, 'mensaje')) rows.push({ id: 'mensaje', sec: byId('mensaje'), label: 'Mensaje final', status: byId('mensaje').status, tone: byId('mensaje').tone, movable: false, removable: true, fixed: 'Siempre al final' });
   const movableIds = rows.filter(r => r.movable).map(r => r.id);
-  const addable = sections.filter(x => x.id !== 'portada' && !isOn(s, x.id));
+  // «Save the date» no se agrega ni se quita: aparece cuando hay fecha y la pareja solo elige dónde va.
+  const addable = sections.filter(x => x.id !== 'portada' && x.id !== 'fecha' && !isOn(s, x.id));
   const visibleCount = rows.length;
   const sec = sel ? byId(sel) : null;
   const hiddenNow = sel ? !isOn(s, sel) : false;
@@ -414,8 +417,13 @@ function SiteEditor() {
       {sel === 'portada' && (
         <Panel sec={sec}>
           <CoverFields />
+          {!s.date && <p className="pn-hint">Cuando definas la fecha aparece «Save the date» con su cuenta regresiva, y vas a poder elegir en qué lugar de la página va.</p>}
+        </Panel>
+      )}
+      {sel === 'fecha' && (
+        <Panel sec={sec}>
+          <p className="pn-hint">Muestra la fecha del casamiento y, si querés, cuánto falta. La fecha se cambia en Portada. Para moverla de lugar, usá «Subir» y «Bajar» en «Tu invitación».</p>
           <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
-          {!s.date && <p className="pn-hint">La cuenta regresiva aparece cuando definas la fecha.</p>}
         </Panel>
       )}
       {sel === 'eventos' && (

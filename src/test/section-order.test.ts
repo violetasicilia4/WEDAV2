@@ -6,30 +6,30 @@ import { sectionGaps } from '@/lib/weda/journey';
 import type { BlockId } from '@/lib/weda/types';
 
 describe('orden de las secciones', () => {
-  it('el orden de fábrica incluye los regalos tras los eventos y el texto libre tras el dress code', () => {
-    expect(DEFAULT_ORDER).toEqual(['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica']);
+  it('el orden de fábrica: «Save the date» primero (como siempre), los regalos tras los eventos y el texto libre tras el dress code', () => {
+    expect(DEFAULT_ORDER).toEqual(['fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica']);
     expect(emptyState().site.order).toEqual(DEFAULT_ORDER);
   });
 
   it('normaliza cualquier valor: sin repetidos ni desconocidos, y las secciones nuevas se ubican donde les corresponde', () => {
     expect(normalizeOrder(undefined)).toEqual(DEFAULT_ORDER);
     expect(normalizeOrder('x')).toEqual(DEFAULT_ORDER);
-    expect(normalizeOrder(['musica', 'musica', 'inventada', 'rsvp'])).toEqual(['eventos', 'regalos', 'musica', 'rsvp', 'dress', 'texto', 'fotos']);
+    expect(normalizeOrder(['musica', 'musica', 'inventada', 'rsvp'])).toEqual(['fecha', 'eventos', 'regalos', 'musica', 'rsvp', 'dress', 'texto', 'fotos']);
     // Un orden guardado antes de existir «regalos» y «texto»: la sección nueva entra justo después de la que la antecede en el orden de fábrica.
     expect(normalizeOrder(['eventos', 'rsvp', 'dress', 'fotos', 'musica'])).toEqual(DEFAULT_ORDER);
-    expect(normalizeOrder(['musica', 'fotos', 'dress', 'rsvp', 'eventos'])).toEqual(['musica', 'fotos', 'dress', 'texto', 'rsvp', 'eventos', 'regalos']);
+    expect(normalizeOrder(['musica', 'fotos', 'dress', 'rsvp', 'eventos'])).toEqual(['fecha', 'musica', 'fotos', 'dress', 'texto', 'rsvp', 'eventos', 'regalos']);
   });
 
   it('mover cambia solo con las secciones visibles: una oculta no «consume» el movimiento', () => {
     const visible = (b: BlockId) => b === 'eventos' || b === 'rsvp' || b === 'fotos';
-    expect(moveBlock(DEFAULT_ORDER, 'fotos', -1, visible)).toEqual(['eventos', 'regalos', 'fotos', 'dress', 'texto', 'rsvp', 'musica']);
+    expect(moveBlock(DEFAULT_ORDER, 'fotos', -1, visible)).toEqual(['fecha', 'eventos', 'regalos', 'fotos', 'dress', 'texto', 'rsvp', 'musica']);
   });
 
   it('los extremos no se mueven y devolver el mismo orden no cambia nada', () => {
     const all = () => true;
-    expect(moveBlock(DEFAULT_ORDER, 'eventos', -1, all)).toBe(DEFAULT_ORDER);
+    expect(moveBlock(DEFAULT_ORDER, 'fecha', -1, all)).toBe(DEFAULT_ORDER);
     expect(moveBlock(DEFAULT_ORDER, 'musica', 1, all)).toBe(DEFAULT_ORDER);
-    expect(moveBlock(DEFAULT_ORDER, 'regalos', 1, all)).toEqual(['eventos', 'rsvp', 'regalos', 'dress', 'texto', 'fotos', 'musica']);
+    expect(moveBlock(DEFAULT_ORDER, 'regalos', 1, all)).toEqual(['fecha', 'eventos', 'rsvp', 'regalos', 'dress', 'texto', 'fotos', 'musica']);
   });
 
   it('el orden se guarda y se lee: datos viejos sin orden usan el de fábrica; uno inválido se corrige', () => {
@@ -37,13 +37,41 @@ describe('orden de las secciones', () => {
     delete base.site.order;
     expect(sanitize(base).site.order).toEqual(DEFAULT_ORDER);
     base.site.order = ['musica', 'fotos', 'zzz', 'musica'];
-    expect(sanitize(base).site.order).toEqual(['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'musica', 'fotos']);
+    expect(sanitize(base).site.order).toEqual(['fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'musica', 'fotos']);
   });
 
   it('la página pública recibe el orden de la pareja', () => {
     const s = emptyState();
     s.site.order = ['musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos'];
-    expect(siteFromState(s).order).toEqual(['musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);
+    expect(siteFromState(s).order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);
+  });
+});
+
+describe('«Save the date» es una sección más del orden (la portada sigue siempre primera)', () => {
+  it('por defecto va primero, y un orden guardado antes de que existiera lo recibe en el mismo lugar de siempre (debajo de la portada)', () => {
+    expect(DEFAULT_ORDER[0]).toBe('fecha');
+    expect(normalizeOrder(['eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'])[0]).toBe('fecha');
+    expect(normalizeOrder(['musica', 'eventos'])[0]).toBe('fecha');
+    expect(DEFAULT_ORDER.filter(b => b === 'fecha')).toHaveLength(1);
+  });
+
+  it('se mueve entre las secciones visibles y deja a las demás en su orden; subir en el extremo no hace nada', () => {
+    const visible = (b: BlockId) => b !== 'texto' && b !== 'musica';                // «texto» y «música» están ocultas
+    let o = moveBlock(DEFAULT_ORDER, 'fecha', 1, visible);
+    expect(o.filter(visible)).toEqual(['eventos', 'fecha', 'regalos', 'rsvp', 'dress', 'fotos']);
+    o = moveBlock(o, 'fecha', 1, visible);
+    expect(o.filter(visible)).toEqual(['eventos', 'regalos', 'fecha', 'rsvp', 'dress', 'fotos']);
+    expect(moveBlock(o, 'fecha', -1, visible).filter(visible)).toEqual(['eventos', 'fecha', 'regalos', 'rsvp', 'dress', 'fotos']);
+    expect(moveBlock(DEFAULT_ORDER, 'fecha', -1, visible)).toBe(DEFAULT_ORDER);
+    expect(new Set(o).size).toBe(o.length);
+  });
+
+  it('el orden con «Save the date» movido se guarda, se lee y llega a la página pública', () => {
+    const s = emptyState();
+    s.site.order = moveBlock(DEFAULT_ORDER, 'fecha', 1, () => true);
+    const back = sanitize(JSON.parse(JSON.stringify(s)));
+    expect(back.site.order.slice(0, 3)).toEqual(['eventos', 'fecha', 'regalos']);
+    expect(siteFromState(back).order.slice(0, 3)).toEqual(['eventos', 'fecha', 'regalos']);
   });
 });
 

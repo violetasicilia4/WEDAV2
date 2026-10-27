@@ -61,6 +61,8 @@ Las «acciones omitidas» son pasos que la secuencia eligió y no podía ejecuta
 | `mobile-journeys.spec.ts` (12) | Flujos 1–7: Inicio → regalos (pack, catálogo, quitar y deshacer), cobro opcional, editor de eventos con vista previa, mostrar/ocultar secciones, invitados (alta, **importación con duplicados y errores**, exportación), mesas y grupos, publicar (ver link por plan, pagar, mejorar, bajar, volver a publicar) y sin scroll horizontal en 320/360/390/430 px |
 | `panel-ui-phase.spec.ts` (19) | Catálogo y packs en 320–430 px, «Ver qué incluye», editar y quitar regalos, invitados (filas, hoja de edición, eliminar y deshacer), mesas, editor por secciones, diálogos con botones a la vista, publicar |
 | `toast-long-names.spec.ts` (6) | **Nuevo:** regresión del defecto D1 (aviso con «Deshacer» y nombres largos) en 320, 390 y 1280 px |
+| `save-the-date-order.spec.ts` (8) | **Nuevo (2026-10-27):** «Save the date» como sección reordenable en «Tu invitación» (390 y 1280 px): sube y baja entre las secciones y la página pública lo refleja, la portada queda primera y única, el mensaje final cierra, no se quita, el orden sobrevive a recargar, la cuenta regresiva se cambia desde su panel y sin fecha no aparece (ni en la lista ni en «Para agregar»). Parte de un estado local, sin cuenta |
+| `gallery-mosaic.spec.ts` (5) | **Nuevo:** mosaico de fotos de la página pública con 1 a 8 fotos en 320, 390, 700, 701 y 1280 px: cada foto con tamaño real, dentro del mosaico y sin superponerse (regresión de las fotos «apiladas» en celular; falla sin la corrección) |
 
 ### 3.3 E2E de escritorio (25 pruebas, 1280 × 800) — `e2e/desktop/journeys.spec.ts`, nuevo
 

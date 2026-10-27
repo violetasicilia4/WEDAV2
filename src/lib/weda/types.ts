@@ -73,8 +73,9 @@ export type SiteEvent = {
 
 export type SitePhoto = { id: string; src: string; alt: string };
 
-/** Secciones de la invitación que la pareja puede reordenar (la portada va siempre primero y el mensaje final siempre al cierre). */
-export type BlockId = 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica';
+/** Secciones de la invitación que la pareja puede reordenar (la portada va siempre primero y el mensaje final siempre al cierre).
+ *  `fecha` es «Save the date»: la fecha con su cuenta regresiva (solo se muestra si hay fecha). */
+export type BlockId = 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica';
 
 /** Un círculo de color del dress code: el color y un nombre opcional. */
 export type Swatch = { name: string; color: string };

@@ -36,19 +36,19 @@ function CountdownRow({ start }: { start: string }) {
   );
 }
 
-/* Bienvenida: va justo después de la foto. */
+/* «Save the date»: la fecha con su cuenta regresiva. Es una sección reordenable más (por defecto va justo después de la portada). */
 function Welcome() {
   const site = useSite();
   const canSave = !!site.eventDate && site.events.some(e => parseTime(e.time));
-  // Sin fecha, la portada ya dice «Fecha a confirmar»: no se repite. El marcador (#nos-casamos) activa la tipografía de la invitación.
-  if (!site.eventDate) return <span id="nos-casamos" hidden />;
+  // Sin fecha, la portada ya dice «Fecha a confirmar»: no se repite.
+  if (!site.eventDate) return null;
   const save = () => {
     if (!site.eventDate) return;
     const file = site.kind === 'demo' ? 'casamiento-ignacio-y-martina.ics' : `casamiento-${slugify(site.names.split('&')[0] ?? '', site.names.split('&')[1] ?? '')}.ics`;
     downloadIcs(buildIcs({ events: site.events, date: site.eventDate, offset: site.eventOffset, title: site.calendarTitle }), file);
   };
   return (
-    <section className="iv-welcome" id="nos-casamos" aria-labelledby="iv-welcome-title">
+    <section className="iv-welcome" id="save-the-date" aria-labelledby="iv-welcome-title">
       <div className="iv-wrap">
         <h2 id="iv-welcome-title" className="iv-welcome-title">Save the date</h2>
         <p className="iv-welcome-date">{site.dateLabel ?? 'Fecha a confirmar'}</p>
@@ -285,6 +285,7 @@ export function Invitation() {
   const { blocks, order = DEFAULT_ORDER } = useSite(); // los sitios publicados antes de poder reordenar no traen `order`
   // Cada sección reordenable sabe si se muestra y cómo; la portada va primero y el mensaje final cierra la página.
   const render: Record<BlockId, React.ReactNode> = {
+    fecha: <Welcome />,
     eventos: blocks.day ? <TheDay /> : null,
     regalos: blocks.giftsSection ? <GiftsPreview /> : null,
     texto: blocks.note ? <NoteBlock /> : null,
@@ -295,7 +296,8 @@ export function Invitation() {
   };
   return <>
     <SiteCover variant="home" next="#nos-casamos" />
-    <Welcome />
+    {/* Marcador fijo justo debajo de la portada: lo usan la flecha de la portada y «Invitación» de la barra, y activa la tipografía de la invitación (:has(#nos-casamos)). No ocupa lugar. */}
+    <span id="nos-casamos" aria-hidden="true" style={{ display: 'block', height: 0 }} />
     {order.map(id => <Fragment key={id}>{render[id]}</Fragment>)}
     {blocks.message && <Closing />}
   </>;
