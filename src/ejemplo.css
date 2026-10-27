@@ -223,7 +223,6 @@
 
 /* títulos */
 .dm-root h1, .dm-root h2, .dm-root h3, .rg-dialog h2, .dm-rsvp h2 { font-weight: 400 !important; font-style: normal !important; -webkit-text-stroke: 0 !important; letter-spacing: -.01em; }
-.dm-root .ej-block h2:not(.ej-statement) { font-size: clamp(26px, 2.8vw, 40px) !important; line-height: 1.1 !important; }
 .dm-root .rg-card h3 { font-size: clamp(17px, 1.6vw, 22px); line-height: 1.2; letter-spacing: 0; }
 .rg-dialog h2, .dm-rsvp h2 { font-size: 24px !important; line-height: 1.15 !important; }
 .rg-thanks h2, .dm-rsvp-done h2 { font-size: clamp(26px, 6vw, 32px) !important; }
@@ -326,9 +325,6 @@
 /* PRUEBA · solo sombra, sin delineado */
 .rg-card { box-shadow: 0 3px 16px rgb(59 60 58 / .10); }
 .rg-card:hover { box-shadow: 0 14px 34px rgb(59 60 58 / .14); }
-
-/* Luna de miel: segunda fila de chips con el destino. */
-.rg-filters:has(+ .rg-dest) { margin-bottom: 12px; }
 
 /* Pop-up de regalo: nombre + apellido, comprobante y envío bloqueado hasta completar. */
 .rg-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

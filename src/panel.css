@@ -70,9 +70,6 @@
 .pn-cover-pick.on span { font-weight: var(--w-semibold); }
 
 /* ---------- flujo de creación (/crear) ---------- */
-.pn-flow-head { display: flex; align-items: center; justify-content: space-between; width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 12px 0; }
-.pn-flow-head.is-account { justify-content: flex-end; padding: 8px 0 0; }
-.pn-flow-step { font-size: var(--t-label); font-weight: var(--w-medium); color: var(--pn-muted); white-space: nowrap; flex: none; }
 .pn-flow { display: flex; flex-direction: column; }
 .pn-flow-main { flex: 1; display: flex; flex-direction: column; width: min(calc(100% - 40px), 1080px); margin: 0 auto; padding: 4px 0 max(32px, env(safe-area-inset-bottom)); }
 @media (min-width: 768px) { .pn-flow-main { padding-bottom: 64px; } }
@@ -98,14 +95,6 @@
 @media (hover: hover) { .pn-account .pn-btn.is-ghost:hover { background: rgb(59 60 58 / .06); } }
 @media (hover: none) { .pn-account .pn-btn.is-ghost:hover { background: #fff; } }
 .pn-block { width: 100%; }
-.pn-toggle { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px; cursor: pointer; position: relative; }
-.pn-toggle input { -webkit-appearance: none; appearance: none; position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; border: 0; background: none; cursor: pointer; }
-.pn-toggle-track { position: relative; flex: none; width: 52px; height: 32px; border-radius: 999px; background: rgb(59 60 58 / .16); transition: background-color .2s ease; }
-.pn-toggle-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: transform .2s ease; }
-.pn-toggle input:checked + .pn-toggle-track { background: var(--pn-slate-d); }
-.pn-toggle input:checked + .pn-toggle-track::after { transform: translateX(20px); }
-.pn-toggle input:focus-visible + .pn-toggle-track { outline: 2px solid var(--pn-slate-d); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .pn-toggle-track, .pn-toggle-track::after { transition: none; } }
 .pn-pass { position: relative; }
 .pn-pass input { padding-right: 52px; }
 .pn-pass-toggle { position: absolute; top: 0; right: 0; width: 48px; height: 48px; display: grid; place-items: center; border: 0; background: none; color: var(--pn-muted); cursor: pointer; border-radius: 12px; }
@@ -157,8 +146,6 @@
 .pn-note { font-size: 14px; color: var(--pn-muted); }
 .pn-chip { justify-self: start; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--pn-line-s); font-size: 13px; background: #fff; }
 .pn-chip.is-ok { background: #e7efe4; border-color: #b9cdb2; color: #34502c; }
-.pn-next { font-size: 15px; }
-.pn-next .pn-link { margin-left: 4px; }
 .pn-page-foot { padding-top: 8px; font-size: 13px; color: var(--pn-muted); border-top: 1px solid var(--pn-line); }
 .pn-page-foot p { padding-top: 16px; }
 .pn-page code, .pn-dialog code { padding: 2px 8px; border-radius: 8px; background: rgb(59 60 58 / .07); font-size: 13px; }
@@ -250,13 +237,7 @@
 .pn-switch button { min-height: 40px; padding: 0 20px; border: 0; border-radius: 999px; background: none; color: var(--pn-muted); font-size: 14px; cursor: pointer; }
 .pn-switch button.on { background: var(--pn-slate); color: #fff; }
 .pn-switch.is-small button { min-height: 34px; padding: 0 14px; font-size: 13px; }
-.pn-editor-grid { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
-.pn-editor-pane { display: grid; align-content: start; gap: 0; border-top: 1px solid var(--pn-line); min-width: 0; }
-.pn-editor-pane.is-hidden { display: none; }
 .pn-preview-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-@media (min-width: 1100px) {
-  .pn-editor-pane.is-hidden { display: grid; }
-}
 .pn-block { border-bottom: 1px solid var(--pn-line); }
 .pn-block summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; cursor: pointer; list-style: none; font-size: 16px; }
 .pn-block summary::-webkit-details-marker { display: none; }
@@ -314,9 +295,6 @@ body:has(.pn-root) { background: #fff; }
 .pn-config { display: grid; gap: 28px; padding: 20px 0; max-width: 620px; }
 .pn-cfg-block { display: grid; gap: 16px; padding: 22px; border: 1px solid var(--pn-line); border-radius: 16px; background: #fff; }
 .pn-cfg-block h2 { font-size: 20px; font-weight: var(--w-semibold); }
-.pn-alias-card { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%; padding: 12px 14px; border: 1px solid var(--pn-line-s); border-radius: 12px; }
-.pn-alias-card code { font-family: inherit; font-size: 18px; flex: 1; overflow-wrap: anywhere; }
-.pn-alias-card code { background: none; padding: 0; }
 
 /* ---------- inicio: guía, avance y pasos ---------- */
 .pn-chip.is-done { background: #e7efe4; border-color: #b9cdb2; color: #34502c; }
@@ -333,10 +311,6 @@ body:has(.pn-root) { background: #fff; }
 @media (max-width: 899px) { .pn-top { flex-wrap: wrap; row-gap: 2px; } }
 
 /* ---------- regalos: sets simples, lista ordenable, cobro ---------- */
-.pn-settile { position: relative; min-height: 120px; border-radius: 16px; background: #4a4a4a center / cover no-repeat; overflow: hidden; isolation: isolate; }
-.pn-settile::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(30 34 38 / .05) 0%, rgb(30 34 38 / .45) 45%, rgb(30 34 38 / .86) 100%); }
-.pn-settile.is-on { box-shadow: inset 0 0 0 3px #fff; }
-.pn-settile .pn-gcheck { background: #fff; color: var(--pn-slate-d); }
 .pn-dialog.is-wide { max-width: 760px !important; }
 .pn-ggrid.is-dialog { padding: 12px 0 16px; }
 .pn-gactions { align-items: center; }
@@ -369,13 +343,9 @@ body:has(.pn-root) { background: #fff; }
 .pn-block-head h2 { font-size: 20px; font-weight: var(--w-semibold); }
 .pn-count.is-todo { background: #fbf0dc; color: #6b4a10; border-color: #e5c98f; font-size: 12px; }
 .pn-pick { display: grid; gap: 24px; }
-.pn-selbar { position: fixed; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 25; padding: 8px 16px; background: #fff; border-top: 1px solid var(--pn-line); }
-.pn-selbar .pn-btn { width: 100%; justify-content: space-between; gap: 12px; }
-.pn-selbar-text { display: inline-flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .pn-pick { padding-bottom: 80px; }
 @media (min-width: 1024px) {
   .pn-pick { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; padding-bottom: 0; }
-  .pn-selbar { display: none; }
 }
 
 /* Editor del sitio: etiqueta de plan discreta y controles solo para el celular. */
@@ -387,9 +357,6 @@ body:has(.pn-root) { background: #fff; }
 /* Resumen de publicación. */
 .pn-publish { display: grid; gap: 8px; margin-top: 12px; }
 .pn-plan-items.is-plain { border-top: 0; padding-top: 0; }
-/* La barra de selección de Regalos (celular) no tapa los avisos. */
-body:has(.pn-selbar) .pn-toast-region { bottom: 140px; }
-@media (min-width: 1024px) { body:has(.pn-selbar) .pn-toast-region { bottom: 28px; } }
 
 /* Vista previa: qué está configurado, incluido o requiere otro plan. */
 .pn-sec-sum { display: grid; gap: 8px; max-width: 560px; margin: 0 auto; width: 100%; }
@@ -414,10 +381,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .pn-tab-short { display: inline; }
 }
 .pn-ggrid.is-list { margin-top: 4px; }
-.pn-gcard-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-.pn-gcard-foot { margin-top: auto; }
-.pn-gcard-actions { display: flex; margin-right: -8px; }
-.pn-gcard-actions .pn-icon { color: var(--pn-muted); }
 
 /* Editor de la página: «Más opciones» plegable dentro de cada evento. */
 .pn-more { border-top: 1px solid var(--pn-line); }
@@ -431,23 +394,13 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 
 /* Las fotos de los regalos no se abren ni se pueden guardar al mantenerlas apretadas (menú de imagen de iOS/Android). */
 .pn-gphoto img, .pn-ownphoto-btn img, .pn-photos img { pointer-events: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
-.pn-settile, .pn-gphoto { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.pn-gphoto { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* Onboarding · paso de la foto: portada a la vista con los nombres, subir foto como acción principal y «Ahora no» discreto. */
-.pn-photo-step { gap: 16px; }
-.pn-cover-preview { position: relative; height: auto; width: 100%; aspect-ratio: 1 / 1; max-width: 100%; margin: 0 auto; border-radius: var(--pn-r-card); overflow: hidden; background: var(--pn-surface-2); }
-.pn-cover-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.pn-cover-preview img, .pn-gphoto img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-
-/* Paso de la foto: título en un solo renglón (≈12,45 em de ancho); la foto va sola, chica y centrada, sin texto encima. */
-.pn-photo-step .pn-account-head h1 { font-size: min(var(--t-page), calc((100vw - 84px) / 12.8)); white-space: nowrap; }
-/* Pantallas bajas: la foto sigue cuadrada pero un poco más chica para que los botones queden a la vista. */
-@media (max-height: 700px) { .pn-cover-preview { width: min(100%, 40dvh); } }
+.pn-gphoto img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* Regalos en pantallas muy angostas (320 px): la barra de selección y las solapas no se cortan ni parten. */
 @media (max-width: 360px) {
-  .pn-selbar .pn-btn { padding: 0 12px; font-size: var(--t-label); }
-  .pn-selbar-text svg { display: none; }
   .pn-tabs button { white-space: nowrap; font-size: 14px; }
   .pn-tabs .pn-count { display: none; }
 }
@@ -456,7 +409,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 @media (max-width: 760px) {
   .pn-table tr { padding: 8px 0; gap: 0; min-height: 68px; align-content: center; }
   .pn-table tbody th { padding-right: 52px; font-size: 16px; font-weight: var(--w-semibold); line-height: 1.3; }
-  .pn-table td:not(.pn-g-sum, .pn-row-actions) { display: none; }
 }
 
 /* Hoja inferior (celular): formularios cortos que se editan sin perder de vista la lista. */
@@ -509,22 +461,12 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 }
 
 /* Regalos · categorías como píldoras (seleccionada = pizarra sólida) y tarjetas sobre superficie tintada. */
-.pn-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px; scrollbar-width: none; scroll-snap-type: x proximity; }
-.pn-chips::-webkit-scrollbar { display: none; }
-@media (min-width: 900px) { .pn-chips { flex-wrap: wrap; overflow: visible; margin: 0; padding: 0; } }
-.pn-chipbtn { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--pn-surface); color: var(--pn-ink); font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; }
-.pn-chipbtn:hover:not(.on) { background: var(--pn-surface-2); }
-.pn-chipbtn.on { background: var(--pn-slate-d); color: #fff; }
 .pn-gcard { padding: 6px; border-radius: var(--pn-r-card); background: var(--pn-surface); }
 .pn-gphoto { border-radius: 12px; }
 .pn-gcard h3 { margin: 10px 8px 0; }
-.pn-gcard-foot { padding: 0 0 2px 0; }
 .pn-gcard > .pn-btn { margin: auto 2px 2px; width: calc(100% - 4px); }
 .pn-gcard > .pn-btn.is-white { border-color: transparent; background: #fff; }
-.pn-gcard-actions .pn-icon:hover:not(:disabled) { background: #fff; }
 @media (max-width: 1023px) {
-  .pn-selbar { background: transparent; border-top: 0; padding: 0 16px 8px; pointer-events: none; }
-  .pn-selbar .pn-btn { pointer-events: auto; background: var(--pn-slate-d); box-shadow: 0 6px 20px rgb(0 0 0 / .26); }
   .pn-pick { padding-bottom: 92px; }
 }
 
@@ -547,11 +489,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 }
 
 /* Selección unificada también en planes y totales de invitados: superficie tintada; elegido = aro de pizarra (sin dobles contornos). */
-/* «Tu lista» en pantallas angostas: el monto y las acciones no entran en un renglón; el monto ocupa el suyo. */
-@media (max-width: 380px) {
-  .pn-gcard-foot { flex-wrap: wrap; }
-  .pn-gcard-actions { margin-left: auto; }
-}
 
 
 /* ===== Editor por secciones =====
@@ -559,21 +496,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
    Escritorio: secciones | campos | vista previa, las tres a la vez. */
 .pn-page-head.is-compact { flex-wrap: nowrap; align-items: center; }
 .pn-page-head.is-compact .pn-btn { flex: none; }
-.pn-editor-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: start; }
-.pn-snav { position: sticky; top: 0; z-index: 15; margin: 0 calc(-1 * clamp(16px, 4vw, 32px)); padding: 8px clamp(16px, 4vw, 32px); background: #fff; }
-.pn-snav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-.pn-snav ul::-webkit-scrollbar { display: none; }
-.pn-snav-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--pn-surface); color: var(--pn-ink); font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; }
-.pn-snav-btn:hover:not(.on) { background: var(--pn-surface-2); }
-.pn-snav-btn.on { background: var(--pn-slate-d); color: #fff; }
 /* Estado de cada sección: ícono (tilde / aviso / ojo tachado) y color; nunca solo el color. */
-.pn-sdot { flex: none; display: inline-grid; place-items: center; width: 16px; height: 16px; color: var(--pn-muted); }
-.pn-sdot.is-ok { color: #3f7236; }
-.pn-sdot.is-todo { color: #8f5b00; }
-.pn-snav-btn.on .pn-sdot { color: #e3e8ec; }
-.pn-snav-btn.on .pn-sdot.is-ok { color: #b8e0ae; }
-.pn-snav-btn.on .pn-sdot.is-todo { color: #ffd98a; }
-.pn-editor-pane { display: grid; align-content: start; gap: 0; border-top: 0; min-width: 0; scroll-margin-top: 64px; }
 .pn-spanel { display: grid; gap: 16px; padding: 8px 0 24px; }
 .pn-spanel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .pn-spanel-head h2 { font-size: 18px; font-weight: var(--w-semibold); }
@@ -590,21 +513,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-spanel .pn-ev .pn-field input, .pn-spanel .pn-ev .pn-field textarea { background: #fff; }
 .pn-spanel.is-locked .pn-note { display: block; }
 
-/* Vista previa a pantalla completa (celular). */
-
-@media (min-width: 1280px) {
-  .pn-editor-grid { grid-template-columns: 168px minmax(0, 1fr) minmax(280px, 340px); gap: 28px; }
-  .pn-snav { top: 16px; margin: 0; padding: 0; background: transparent; align-self: start; }
-  .pn-snav ul { flex-direction: column; overflow: visible; gap: 2px; }
-  .pn-snav-btn { width: 100%; border-radius: 12px; background: transparent; padding: 0 12px; }
-  .pn-snav-btn:hover:not(.on) { background: rgb(59 60 58 / .05); }
-  .pn-snav-btn.on { background: var(--pn-surface-2); color: var(--pn-ink); font-weight: var(--w-semibold); }
-  .pn-snav-btn.on .pn-sdot { color: var(--pn-muted); }
-  .pn-snav-btn.on .pn-sdot.is-ok { color: #3f7236; }
-  .pn-snav-btn.on .pn-sdot.is-todo { color: #8f5b00; }
-  .pn-editor-pane { scroll-margin-top: 0; }
-}
-
 /* ===== Jerarquía de acciones (panel y diálogos) =====
    Primaria: pizarra oscura, texto en negrita, esquinas de 12 px.  Secundaria (`is-ghost`): superficie tintada, sin borde.
    Terciaria: enlace de texto (`pn-link`).  Destructiva: rojo (`is-danger`).  Las píldoras quedan para filtros, solapas y la barra flotante. */
@@ -616,18 +524,12 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-app .pn-btn.is-danger, .pn-dialog .pn-btn.is-danger { background: #b3402f; }
 .pn-app .pn-btn.is-small, .pn-dialog .pn-btn.is-small { min-height: 40px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
 .pn-app .pn-btn:disabled, .pn-dialog .pn-btn:disabled { background: var(--pn-surface-2); color: var(--pn-muted); opacity: 1; }
-.pn-app .pn-selbar .pn-btn { border-radius: 999px; background: var(--pn-slate-d); color: #fff; }
 .pn-app .pn-gcard > .pn-btn.is-white { background: #fff; }
 .pn-app .pn-preview-btn { min-height: 40px; border-radius: 999px; padding: 0 14px; }
 @media (pointer: coarse) { .pn-app .pn-btn.is-small, .pn-dialog .pn-btn.is-small { min-height: 44px; } }
 
 /* ===== Inicio: pareja, siguiente paso, estado y accesos ===== */
 .pn-journey { gap: 20px; max-width: 720px; }
-.pn-label-s { margin: 0; font-size: var(--t-label); font-weight: var(--w-medium); color: var(--pn-muted); }
-.pn-next { display: grid; gap: 8px; justify-items: start; padding: 18px; border-radius: var(--pn-r-card); background: var(--pn-surface); }
-.pn-next h2 { font-size: 20px; font-weight: var(--w-semibold); line-height: 1.25; }
-.pn-next .pn-muted { font-size: 15px; }
-.pn-next .pn-btn { margin-top: 6px; }
 
 /* Invitados: estado vacío compacto, filtros como píldoras y acciones secundarias discretas. */
 .pn-empty.is-compact { display: grid; justify-items: center; gap: 8px; padding: 28px 16px; text-align: center; border: 0; border-radius: var(--pn-r-card); background: var(--pn-surface); }
@@ -635,7 +537,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-empty.is-compact p { max-width: 34ch; font-size: 14px; color: var(--pn-muted); }
 .pn-empty-ico { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #fff; color: var(--pn-slate-d); }
 .pn-actions.is-center { justify-content: center; margin-top: 4px; }
-.pn-chipn { margin-left: 4px; font-size: 12px; opacity: .75; }
 
 /* Encabezados compactos: la acción principal es chica y no hace saltar el título. */
 .pn-page-head.is-compact .pn-btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
@@ -652,11 +553,9 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-app .pn-btn, .pn-dialog .pn-btn { font-size: var(--t-btn); font-weight: var(--w-medium); }
 .pn-app .pn-btn.is-small, .pn-dialog .pn-btn.is-small { font-size: var(--t-small); }
 .pn-app .pn-btn.is-ghost, .pn-dialog .pn-btn.is-ghost, .pn-app .pn-btn.is-white, .pn-dialog .pn-btn.is-white { font-weight: var(--w-medium); }
-.pn-nav-link[aria-current='page'], .pn-tabs button.on, .pn-snav-btn.on, .pn-chipbtn.on { font-weight: var(--w-medium); }
-.pn-chipn, .pn-count { font-variant-numeric: tabular-nums; }
+.pn-nav-link[aria-current='page'], .pn-tabs button.on { font-weight: var(--w-medium); }
+.pn-count { font-variant-numeric: tabular-nums; }
 .pn-app h1, .pn-flow h1 { text-wrap: balance; }
-@media (max-width: 360px) { .pn-selbar-text { font-weight: var(--w-regular); letter-spacing: -.01em; gap: 6px; } }
-@media (max-width: 360px) { .pn-app .pn-selbar .pn-btn { font-size: var(--t-label); padding: 0 12px; } }
 
 /* ===== Alta (registro, datos y foto): foto de fondo y tarjeta clara =====
    Fondo fotográfico a pantalla completa y, encima, una tarjeta blanca casi opaca con los campos. Sin sombras ni colores nuevos. */
@@ -667,7 +566,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-flow .pn-account { padding: 28px 24px; border-radius: var(--pn-r-sheet); background: #fff; transform: none; }
 @media (max-width: 640px) {
   .pn-flow .pn-account { padding: 22px 18px; }
-  .pn-flow .pn-photo-step { padding: 18px 16px; margin-top: 4px; }
 }
 
 /* Alta: botones en la gama de blancos y grises (gris claro neutro con texto oscuro), sin azul ni negro. */
@@ -677,7 +575,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-flow .pn-btn:disabled { background: #f2f3f3; color: var(--pn-muted); }
 .pn-flow .pn-btn.is-ghost, .pn-flow .pn-account .pn-btn.is-ghost { background: #fff; color: var(--pn-ink); border-color: var(--pn-line-s); }
 .pn-flow .pn-btn.is-ghost:hover:not(:disabled) { background: rgb(59 60 58 / .06); }
-.pn-flow .pn-toggle input:checked + .pn-toggle-track { background: #9a9d9f; }
 .pn-flow :where(a, button, input, select, textarea):focus-visible { outline-color: var(--pn-ink); }
 
 /* ===== Rediseño del panel: luz, aire y líneas finas =====
@@ -698,18 +595,14 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 /* Inicio */
 .pn-journey, .pn-journey > * { min-width: 0; }
 .pn-journey { max-width: 920px; gap: 28px; }
-.pn-next { padding: 24px; border: 0; border-radius: var(--pn-r-sheet); background: var(--pn-soft); }
-.pn-next .pn-btn { background: #fff; border-color: var(--pn-line-s); }
-.pn-next .pn-btn:hover:not(:disabled) { background: #fff; border-color: var(--pn-ink); }
 @media (min-width: 1100px) {
   .pn-journey { max-width: 1040px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); column-gap: 48px; align-items: start; }
   .pn-journey > .pn-cover, .pn-journey > .pn-page-foot { grid-column: 1 / -1; }
 }
 
 /* ===== Versión web (≥ 1024 px): todo blanco, barra lateral agrupada, barra superior de una línea ===== */
-.pn-snav-ico, .pn-side-logo { display: none; }
+.pn-side-logo { display: none; }
 .pn-nav-group { display: contents; }
-@media (min-width: 1024px) and (max-width: 1279px) { .pn-snav { margin: 0; padding: 8px 0; } }
 @media (min-width: 1024px) {
   body:has(.pn-app) { background: #fff; }
   .pn-app { background: #fff; grid-template-columns: 248px minmax(0, 1fr); grid-template-rows: 64px 1fr; }
@@ -743,14 +636,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .pn-cfg-block, .pn-group { padding: 24px 0; border: 0; border-top: 1px solid var(--pn-hair); border-radius: 0; background: transparent; }
   .pn-group { margin-top: 0; }
   .pn-cfg-block h2, .pn-group h2 { font-size: var(--t-subtitle); }
-  .pn-snav-ico { display: inline-block; flex: none; }
-}
-@media (min-width: 1280px) {
-  .pn-snav-ico { color: var(--pn-muted); }
-  .pn-snav-btn.on .pn-snav-ico { color: var(--pn-ink); }
-  .pn-snav-btn { gap: 10px; min-height: 44px; }
-  .pn-snav-btn.on { background: var(--pn-soft); }
-  .pn-snav-btn .pn-sdot { margin-left: auto; order: 2; }
 }
 
 /* ===== Portada de la pareja: la foto elegida con los nombres y la fecha, en Inicio y en Regalos ===== */
@@ -893,8 +778,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
   .ob-form .pn-two { grid-template-columns: 1fr 1fr; gap: 12px; }
   .ob-form .pn-field > label { font-size: 14px; }
   .ob-amp { margin: 0; font-size: 32px; text-align: left; }
-  .ob-form .pn-toggle { min-height: 44px; }
-  .ob-form .pn-toggle + .pn-field { margin-top: 12px; }
   .ob-foot { position: sticky; bottom: 0; z-index: 3; gap: 12px; padding: 12px 0 max(16px, env(safe-area-inset-bottom)); background: #fff; }
   .ob-foot .pn-btn { flex: 1.2; width: auto; min-height: 52px; font-size: 16px; }
   .ob-foot .pn-btn.is-ghost { flex: 0.8; }
@@ -957,9 +840,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .rg-pack-cover h3 { font-size: 22px; line-height: 1.15; letter-spacing: var(--ls-title); }
 .rg-pack-body { display: grid; flex: 1; align-content: start; gap: 12px; padding: 20px; }
 .rg-pack-body .rg-foot { align-self: end; }
-.rg-pack-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.rg-pack-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 12px; background: var(--pn-soft); font-size: 15px; }
-.rg-pack-list b { font-weight: var(--w-medium); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Aportes recibidos */
 .rg-total { padding: 8px 16px; border-radius: 999px; background: var(--pn-soft); font-size: 15px; font-weight: var(--w-medium); font-variant-numeric: tabular-nums; }
@@ -1016,10 +896,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .rg-pack-cover { min-height: 220px; }
 .rg-pack-actions { display: flex; gap: 10px; margin-top: auto; }
 .rg-pack-actions .pn-btn { flex: 1 1 0; min-width: 0; padding: 0 14px; }
-.rg-pack-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--pn-hair); }
-.rg-pack-total span { font-size: 14px; color: var(--pn-muted); }
-.rg-pack-total strong { font-size: 20px; font-weight: var(--w-semibold); font-variant-numeric: tabular-nums; }
-.pn-dialog .rg-pack-list { max-height: 40svh; overflow-y: auto; }
 .pn-dialog .rg-label { margin-top: 4px; margin-bottom: 8px; }
 
 /* ===== Invitados: bloques de totales, filtros y una fila por persona ===== */
@@ -1283,9 +1159,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
    La ventana es la página pública REAL (iframe de /sitio/…?ventana), recortada y alineada a la sección que se edita; no se redibuja nada a mano.
    Celular: los chips y la ventana quedan fijos arriba y el formulario corre debajo. Con el teclado abierto la ventana se achica (data-kb) y, si queda muy poco alto, pasa a una tira.
    ≥ 1280 px: sección | formulario | ventana fija a la derecha, siempre en la misma pantalla. */
-.pn-editor-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
 .pn-live { position: sticky; top: 60px; z-index: 14; margin: 0 calc(-1 * clamp(16px, 4vw, 32px)); padding: 0 clamp(16px, 4vw, 32px) 10px; background: #fff; border-bottom: 1px solid var(--pn-line); }
-.pn-editor-pane { scroll-margin-top: 240px; padding-top: 14px; }
 .lc { display: grid; max-width: 430px; margin: 0 auto; }
 .lc-window { position: relative; height: var(--lc-h, clamp(140px, 22dvh, 200px)); overflow: hidden; border-radius: 16px; background: #f3f0e8; }
 .lc-frame { position: absolute; left: 0; top: 0; width: 100%; height: 640px; border: 0; background: #fff; pointer-events: none; }
@@ -1296,9 +1170,6 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .lc-pill { display: inline-flex; align-items: center; gap: 3px; min-height: 30px; padding: 0 10px; border-radius: 999px; background: rgb(255 255 255 / .94); box-shadow: 0 0 0 1px rgb(59 60 58 / .16); color: var(--pn-ink); font-size: 13px; font-weight: var(--w-medium); }
 .lc-hide { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 48px; height: 48px; border: 0; background: transparent; color: var(--pn-ink); cursor: pointer; }
 .lc-hide span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgb(255 255 255 / .94); box-shadow: 0 0 0 1px rgb(59 60 58 / .16); }
-.lc-collapsed { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
-.lc-cap { margin: 0; font-size: 13px; color: var(--pn-muted); }
-.lc-collapsed .pn-link { min-height: 44px; font-size: 14px; }
 .lc-strip { display: none; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
 .lc-strip p { margin: 0; font-size: 14px; color: var(--pn-muted); }
 .lc-strip strong { color: var(--pn-ink); font-weight: var(--w-semibold); }
@@ -1307,19 +1178,14 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 [data-kb='compact'] .lc-window { --lc-h: 96px; }
 [data-kb='tight'] .lc-window { display: none; }
 [data-kb='tight'] .lc-strip { display: flex; }
-[data-kb='tight'] .pn-snav { display: none; }
 [data-kb='tight'] .pn-live { top: 0; padding-bottom: 0; }
 @media (min-width: 1280px) {
-  .pn-editor-grid { grid-template-columns: 168px minmax(0, 1fr) 380px; gap: 28px; }
-  .pn-snav { grid-column: 1; grid-row: 1; }
-  .pn-editor-pane { grid-column: 2; grid-row: 1; padding-top: 0; scroll-margin-top: 0; }
   .pn-live { grid-column: 3; grid-row: 1; top: 16px; align-self: start; margin: 0; padding: 0; background: transparent; border: 0; }
   .lc { max-width: none; }
   .lc-window { --lc-h: min(calc(100dvh - 140px), 640px); }
   .lc-hide { display: none; }
 }
 @media (min-width: 640px) and (max-width: 1279px) { .lc-window { --lc-h: clamp(160px, 26dvh, 260px); } }
-@media (max-width: 639px) { .pn-editor-pane { scroll-margin-top: 200px; } }
 @media (prefers-reduced-motion: no-preference) { .lc-window[data-off] .lc-frame { transition: opacity .15s ease; } }
 /* Publicar: tres cuadrados (uno por producto) lado a lado, visuales y con poco texto; el detalle va en «Ver más». Ancho mayor solo en el paso de elegir; el resumen vuelve al ancho normal. */
 .pn-dialog.pn-plans-dialog.is-products { max-width: 1080px !important; }
@@ -1353,8 +1219,7 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
    Con puntero grueso (celular y tablet) todo lo que se toca llega a 44 px. Varias reglas de componentes fijaban 40 px (pestañas, selectores, botones chicos, enlaces sueltos)
    y 32–36 px (íconos); esta regla va al final para ganarles sin `!important`. Con mouse (puntero fino) no cambia nada. */
 @media (pointer: coarse) {
-  .pn-app .pn-btn, .pn-app .pn-btn.is-small, .pn-app .pn-preview-btn, .pn-app .pn-link, .pn-app .pn-tabs button, .pn-app .pn-switch button, .pn-app .pn-select, .pn-app .pn-snav-btn, .pn-app .pn-chipbtn,
-  .pn-dialog .pn-btn, .pn-dialog .pn-btn.is-small, .pn-dialog .pn-link, .pn-dialog .pn-select, .pn-root select.pn-select { min-height: 44px; }
+  .pn-app .pn-btn, .pn-app .pn-btn.is-small, .pn-app .pn-preview-btn, .pn-app .pn-link, .pn-app .pn-tabs button, .pn-app .pn-switch button, .pn-app .pn-select, .pn-dialog .pn-btn, .pn-dialog .pn-btn.is-small, .pn-dialog .pn-link, .pn-dialog .pn-select, .pn-root select.pn-select { min-height: 44px; }
   .pn-app .pn-icon, .pn-dialog .pn-icon { min-width: 44px; min-height: 44px; }
 }
 
@@ -1705,7 +1570,6 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .ed-acts .pn-icon:hover { background: rgb(59 60 58 / .08); color: var(--pn-ink); }
 .ed-acts .pn-icon:disabled { opacity: .35; cursor: default; }
 .ed-fixed { max-width: 92px; padding: 0 4px; font-size: 12px; line-height: 1.2; text-align: right; color: var(--pn-muted); }
-.ed-go { padding-right: 10px; font-size: 13px; text-decoration: underline; white-space: nowrap; color: var(--pn-muted); }
 .is-add .ed-row { background: transparent; box-shadow: inset 0 0 0 1px var(--pn-line-s); }
 .ed-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ed-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: var(--w-semibold); cursor: pointer; }

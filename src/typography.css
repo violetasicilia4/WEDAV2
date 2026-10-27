@@ -33,4 +33,4 @@
   :root { --t-display-xl: 64px; --t-display-l: 48px; --t-page: 32px; --t-section: 24px; --t-subtitle: 20px; }
 }
 html { font-family: var(--font-ui); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; text-rendering: optimizeLegibility; font-optical-sizing: auto; }
-.num, .tabular { font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; }

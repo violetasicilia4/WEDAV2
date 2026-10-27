@@ -20,7 +20,7 @@
   --color-popover-foreground: var(--foreground);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: var(--primary);
+  --color-ring: var(--foreground);
   --color-destructive: var(--destructive);
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -30,15 +30,15 @@
   --background: oklch(0.948 0.008 106);
   --ink: #3b3c3a;
   --foreground: var(--ink);
-  --primary: oklch(0.277 0.074 136);
-  --primary-foreground: oklch(0.98 0.006 106);
+  --primary: #c0bfa4;
+  --primary-foreground: var(--ink);
   --secondary: oklch(0.912 0.011 106);
   --muted: oklch(0.895 0.012 106);
   --muted-foreground: oklch(0.44 0.005 100);
-  --accent: oklch(0.935 0.139 122);
+  --accent: #dfdecc;
   --border: rgb(59 60 58 / 22%);
   --destructive: oklch(0.55 0.18 26);
-  --overlay: oklch(0.15 0.02 136 / 23%);
+  --overlay: rgb(30 30 28 / 23%);
   --seed-pill-radius: 999px;
 }
 * { box-sizing: border-box; border-color: var(--border); }
@@ -47,7 +47,7 @@ body { margin: 0; background: var(--background); color: var(--foreground); font-
 a { color: inherit; text-decoration: none; }
 button, input { font: inherit; }
 .seed-button { background: var(--primary); color: var(--primary-foreground); border-radius: var(--seed-pill-radius); height: 48px; padding: 0 24px; font-size: var(--t-small); font-weight: var(--w-medium); box-shadow: none; }
-.seed-button:hover { background: color-mix(in oklab,var(--primary),var(--accent) 16%); }
+.seed-button:hover { background: color-mix(in oklab, var(--primary), #000 6%); }
 .seed-link-button { background: transparent; color: inherit; border-radius: 0; padding: 0; height: 40px; font-size: 14px; font-weight: 500; }
 .seed-link-button span { border-bottom: 1px solid currentColor; padding-bottom: 5px; }
 .seed-nav-button { color: inherit; background: transparent; height: 42px; padding: 0 12px; font-size: 13px; font-weight: var(--w-medium); }
@@ -80,31 +80,19 @@ button, input { font: inherit; }
 .hero-actions .seed-button { height: 42px; padding: 0 20px; font-size: 13px; }
 .section-inner { max-width: 1800px; width: 92%; margin: 0 auto; }
 h2 { font-weight: var(--w-medium); letter-spacing: var(--ls-title); font-size: clamp(var(--t-page), 3.4vw, var(--t-display-l)); line-height: 1.08; margin: 0; }
-:root { --curve: clamp(24px, 3.5vw, 48px); --paper: #f5f2eb; --olive: #b6b46e; --forest: #2b4045; --section: #f3f0e8; --slate: #959571; --duo-pad: clamp(36px, 6svh, 72px); }
+:root { --curve: clamp(24px, 3.5vw, 48px); --paper: #f5f2eb; --section: #f3f0e8; --slate: #959571; --duo-pad: clamp(36px, 6svh, 72px); }
 .products-section { background: var(--section); color: var(--foreground); padding: 58px 0 calc(58px + var(--curve)); }
 .duo-section { position: relative; margin-top: calc(var(--curve) * -1); background: var(--slate); color: #fff; border-radius: var(--curve) var(--curve) 0 0; padding: var(--duo-pad) 0; }
 .eyebrow { font-size: 12px; margin: 0 0 24px; }
 .duo-section .seed-button { background: var(--paper); color: var(--foreground); }
 .duo-section .seed-button:hover { background: #fff; }
-.duo-media { display: flex; flex-direction: column; width: 100%; max-width: 620px; justify-self: end; height: clamp(380px, calc(100svh - var(--duo-pad) * 2 - var(--curve)), 680px); }
 .viacap-section { background: var(--secondary); padding: 70px 0; }
-.bookends { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-bottom: 80px; }
-.bookend { position: relative; min-height: 500px; color: var(--primary-foreground); overflow: hidden; border-radius: 8px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
-.bookend-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.bookend-content { position: relative; z-index: 1; }
-.bookend .location { position: absolute; z-index: 1; top: 25px; font-size: 11px; }
-.bookend h2 { font-size: clamp(var(--t-page), 3.4vw, var(--t-display-l)); }
-.bookend p { line-height: 1.4; font-size: 18px; }
-.bookend .seed-button { background: var(--background); color: var(--foreground); }
-.bookend-product { width: 190px; height: 120px; object-fit: contain; margin-bottom: 20px; }
-.bookend:last-child h2 { font-size: clamp(var(--t-section), 6.6vw, var(--t-page)); max-width: 340px; }
 .seed-footer { background: var(--slate); color: #fff; padding: 65px 0 25px; }
 .footer-top { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; margin-bottom: 60px; }
 .footer-top .seed-logo { font-size: 38px; }
 .footer-top .seed-logo i { width: 31px; height: 29px; }
 .footer-mission { font-size: 25px; line-height: 1.2; max-width: 340px; }
 .footer-top small { font-size: 10px; opacity: .85; display: block; margin-top: 14px; }
-.awaken-image { width: 100%; height: 170px; object-fit: contain; }
 .footer-bottom { display: flex; justify-content: space-between; font-size: 10px; padding-top: 30px; }
 @media(min-width:1600px) { .hero-copy p { font-size: 16px; max-width: 440px; } .hero-copy { width: 500px; } .hero-inner { padding-top: 220px; } .announcement { height: 40px; font-size: 13px; } }
 @media(max-width:1000px) { .hero-copy { max-width: 47%; } .footer-top { gap: 40px; } }
@@ -121,11 +109,8 @@ h2 { font-weight: var(--w-medium); letter-spacing: var(--ls-title); font-size: c
  h2 { font-size: clamp(var(--t-section), 6.6vw, var(--t-page)); }
  .products-section { padding: 40px 0 calc(40px + var(--curve)); }
  .duo-section,.viacap-section { padding: 50px 0; }
- .bookends { grid-template-columns: 1fr; padding-bottom: 45px; }
- .bookend { min-height: 420px; }
  .footer-top { grid-template-columns: 1fr; gap: 30px; margin-bottom: 40px; }
  .seed-footer { padding-top: 45px; }
- .awaken-image { height: 100px; }
 }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
 
@@ -135,7 +120,6 @@ h2 { font-weight: var(--w-medium); letter-spacing: var(--ls-title); font-size: c
 @media(max-width:640px) {
   .duo-section { padding: 30px 0 34px; }
   .duo-section .seed-button { height: 42px; padding: 0 20px; font-size: 13px; display: flex; width: fit-content; margin-left: auto; }
-  .duo-media { display: block; height: auto; }
 }
 
 /* Celulares de pantalla baja: compacta un poco más las fotos para que el bloque siga entrando */
@@ -319,7 +303,6 @@ html { scroll-padding-top: 80px; }
 /* Web: bloque de regalos más compacto (menos aire arriba y abajo y foto grande más baja); las fotos de abajo no cambian de tamaño */
 @media(min-width:641px) {
   :root { --duo-pad: clamp(24px, 3.4svh, 40px); }
-  .duo-media { height: clamp(380px, calc(100svh - var(--duo-pad) * 2 - var(--curve) - 110px), 580px); }
 }
 
 /* Web: proporciones del bloque de regalos como la sección de Seed (texto a la izquierda, foto a la derecha):
@@ -334,12 +317,6 @@ html { scroll-padding-top: 80px; }
    para que arranque apenas por encima de "REGALOS". */
 @media(min-width:1001px) {
   :root { --duo-pad: clamp(24px, 3.4svh, 40px); --duo-drop: clamp(48px, 9svh, 90px); }
-  .duo-media { margin-top: var(--duo-drop); }
-}
-
-/* Web: la foto grande sube un poco (24px) y el texto se queda donde estaba */
-@media(min-width:1001px) {
-  .duo-media { margin-top: calc(var(--duo-drop) - 24px); }
 }
 
 /* Sección "Most probiotics…": foto de fondo en blanco y negro, algo desenfocada */
@@ -545,17 +522,6 @@ html { scroll-padding-top: 80px; }
 /* Carrusel de testimonios dentro del panel de vidrio */
 .tm { display: flex; flex-direction: column; gap: clamp(28px, 4vw, 52px); }
 .tm .eyebrow { margin: 0; }
-.tm-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; outline-offset: 6px; }
-.tm-track::-webkit-scrollbar { display: none; }
-.tm-slide { flex: 0 0 100%; scroll-snap-align: start; margin: 0; display: flex; flex-direction: column; justify-content: space-between; gap: clamp(24px, 3.4vw, 44px); min-height: clamp(220px, 24vw, 300px); }
-.tm-slide blockquote { margin: 0; max-width: 26ch; font-size: clamp(26px, 3.6vw, 52px); line-height: 1.14; letter-spacing: -.01em; font-weight: 400; text-wrap: balance; }
-.tm-slide figcaption { font-size: 15px; letter-spacing: .02em; color: var(--muted-foreground); }
-.tm-dots { display: flex; gap: 10px; }
-.tm-dots button { position: relative; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; cursor: pointer; }
-.tm-dots button::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: rgb(59 60 58 / .35); transition: width .3s, margin .3s, background-color .3s, border-radius .3s; }
-.tm-dots button.on::after { width: 24px; margin-left: -12px; border-radius: 99px; background: var(--foreground); }
-@media(max-width: 640px) { .tm-slide { min-height: 260px; } .tm-slide blockquote { font-size: 25px; } }
-@media(prefers-reduced-motion: reduce) { .tm-dots button::after { transition: none; } }
 
 /* Planes: tres tarjetas con el mismo sistema que las funcionalidades (superficie tonal, radio 24, sin sombras) */
 .plans-section { background: #fff; padding: clamp(64px, 9vw, 120px) 0; }
@@ -795,8 +761,6 @@ a:not([href]) { cursor: default; }
 
 /* Landing: áreas de toque de 44 px sin alterar el aspecto. */
 .announcement { min-height: 44px; }
-.tm-dots button { position: relative; }
-.tm-dots button::after { content: ''; position: absolute; inset: -9px; }
 .seed-button, .seed-link-button { min-height: 44px; }
 .seed-logo { position: relative; }
 .seed-logo::after { content: ''; position: absolute; inset: -6px -4px; }
@@ -831,7 +795,6 @@ a:not([href]) { cursor: default; }
 /* Testimonios: el texto vive sobre la superficie de cristal, no sobre el velo de la foto. Se le da un poco más de cuerpo
    al cristal (y un gris de autor algo más oscuro) para llegar a ≥ 4,5:1 sin tocar la fotografía. */
 .viacap-section .section-inner { background: rgb(246 244 238 / .7); }
-.tm-slide figcaption { color: var(--foreground); }
 
 /* Foco visible de dos tonos, legible sobre fondos claros y oscuros (baja especificidad) */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 4px #3b3c3a; }
@@ -1120,10 +1083,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (min-width: 768px) {
   .seed-hero .hero-copy p { white-space: normal !important; max-width: 700px !important; margin-inline: auto; text-wrap: balance; }
 }
-/* Planes: aclaración de que la contratación aún no existe */
-.plans-note { margin: 28px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted-foreground); }
-.plans-note a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
-.plans-note a:focus-visible { outline: 2px solid var(--slate); outline-offset: 3px; border-radius: 4px; }
 /* Poster mientras carga el video: el hero nunca queda vacío */
 .seed-hero { background: #2b2d2b; }
 
@@ -1136,68 +1095,28 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 /* Demo de regalos: el nombre del regalo va siempre en un solo renglón ("Noche en hotel boutique" ya no se parte en dos) */
 .fd-gm-card b { white-space: nowrap; overflow: visible; text-wrap: nowrap; margin-inline: 1.2cqw; font-size: 2.6cqw; }
 
-/* Testimonios más largos: tamaño de lectura (no de titular) y medida cómoda */
-.tm-slide blockquote { max-width: 56ch; font-size: clamp(18px, 1.9vw, 27px); line-height: 1.38; letter-spacing: 0; text-wrap: pretty; }
-.tm-slide { min-height: clamp(240px, 22vw, 300px); }
-@media (max-width: 640px) { .tm-slide blockquote { font-size: 17px; line-height: 1.45; } .tm-slide { min-height: 340px; } }
-
 /* Testimonios en bloques: título centrado, tarjetas blancas con foto de la pareja, citas y lugar; la vecina asoma a los costados */
 .viacap-section .section-inner { overflow: hidden; }
 .tm { align-items: stretch; gap: clamp(24px, 3vw, 40px); }
-.tm-head { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
-.tm-head h2 { margin: 0; font-size: clamp(26px, 2.7vw, 38px); line-height: 1.12; font-weight: 400; text-wrap: balance; }
-.tm-track { position: relative; gap: 18px; padding-block: 6px; scroll-snap-type: x mandatory; margin-inline: calc(-1 * clamp(28px, 4.2vw, 64px)); padding-inline: calc(50% - min(300px, 41%)); }
-.tm-slide { flex: 0 0 min(600px, 82%); scroll-snap-align: center; min-height: 0; justify-content: flex-start; gap: 18px; padding: clamp(22px, 2.4vw, 32px); border-radius: 22px; background: #fff; box-shadow: 0 1px 0 rgb(59 60 58 / .04), 0 10px 30px rgb(59 60 58 / .08); }
-.tm-top { display: flex; align-items: center; gap: 14px; }
-.tm-top img { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; }
-.tm-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--slate); color: #fff; font-size: 26px; line-height: 1; padding-top: 9px; }
-.tm-slide blockquote { max-width: none; font-size: clamp(16px, 1.25vw, 18px); line-height: 1.55; color: var(--foreground); text-wrap: pretty; flex: 1; }
-.tm-slide figcaption { display: flex; flex-direction: column; gap: 2px; font-size: 14px; letter-spacing: 0; color: var(--muted-foreground); }
-.tm-slide figcaption strong { font-weight: 500; font-size: 15px; color: var(--foreground); }
-.tm-dots { align-self: center; }
-@media (max-width: 640px) {
-  .tm-track { margin-inline: -20px; padding-inline: 20px; gap: 12px; }
-  .tm-slide { flex-basis: 86%; min-height: 0; padding: 20px; }
-  .tm-slide blockquote { font-size: 15.5px; line-height: 1.5; }
-}
-.tm-mark { font-size: 34px; padding-top: 14px; font-family: Georgia, 'Times New Roman', serif; }
 
 /* Testimonios: el panel pasa a vidrio neutro y translúcido (sin el tono crema/amarillento) y el carrusel no usa snap forzado mientras se reubica */
 .viacap-section .section-inner { background: rgb(255 255 255 / .30); -webkit-backdrop-filter: blur(28px) saturate(.85); backdrop-filter: blur(28px) saturate(.85); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .45), 0 12px 40px rgb(0 0 0 / .10); }
-.tm-head h2, .tm-head .eyebrow { color: #2f302e; }
-.tm-dots { align-self: stretch; justify-content: center; }
 
 /* Testimonios: sin caja translúcida. Título y tarjetas van directo sobre la foto de fondo, todo en una sola sección. */
 .viacap-section .section-inner { background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; border-radius: 0; overflow: visible; width: min(100%, 1400px); padding-inline: 0; }
 .viacap-section::after { content: ""; position: absolute; inset: 0; z-index: -1; background: rgb(255 255 255 / .22); }
-.viacap-section .tm-track { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - min(300px, 41vw)); }
 @media (max-width: 640px) {
   .viacap-section .section-inner { width: 100%; padding: 0; }
-  .viacap-section .tm-head { padding-inline: 20px; }
-  .viacap-section .tm-track { padding-inline: 7vw; }
 }
 
 /* Testimonios compactos: lo mínimo indispensable de alto; título y etiqueta en blanco sobre un velo oscuro suave */
 .viacap-section { padding: clamp(28px, 3.4vw, 48px) 0; }
 .viacap-section::after { background: rgb(24 26 24 / .42); }
 .tm { gap: clamp(16px, 2vw, 22px); }
-.tm-head { gap: 6px; }
-.tm-head h2, .tm-head .eyebrow { color: #fff; }
-.tm-head h2 { font-size: clamp(22px, 2vw, 28px); }
-.tm-slide { gap: 12px; padding: 18px 20px; border-radius: 18px; }
-.tm-top { gap: 12px; }
-.tm-top img { width: 48px; height: 48px; border-radius: 50%; flex: none; }
-.tm-top figcaption { flex: 1; min-width: 0; }
-.tm-mark { margin-left: auto; width: 30px; height: 30px; font-size: 30px; padding-top: 12px; }
-.tm-slide blockquote { font-size: clamp(14.5px, 1.1vw, 16px); line-height: 1.5; flex: 0 1 auto; }
 @media (max-width: 640px) {
   .viacap-section { padding: 28px 0; }
-  .tm-slide { padding: 16px; }
-  .tm-slide blockquote { font-size: 14.5px; line-height: 1.45; }
 }
 .viacap-section .section-inner { padding-block: 0; }
-.tm-dots button::after { background: rgb(255 255 255 / .5); }
-.tm-dots button.on::after { background: #fff; }
 .viacap-section { padding-block: clamp(24px, 2.8vw, 40px); }
 
 /* Landing, celular: «Todo para compartir su casamiento.» en un solo renglón y centrado.
@@ -1218,7 +1137,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .plan-price { justify-content: center; }
   .plan-card .seed-button { align-self: center; }
     .plan-card .seed-button { align-self: center; }
-  .plans-note { text-align: center; margin-left: auto; margin-right: auto; }
   .seed-footer .footer-top, .seed-footer .footer-bottom { text-align: center; justify-items: center; justify-content: center; }
   .seed-footer .footer-nav { align-items: center; justify-content: center; }
   /* Hero: «Tu gran día empieza acá.» en un solo renglón (≈11,3 em de ancho: 7,6 vw entra en el 88 % desde 320 px). */
@@ -1247,14 +1165,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 
   /* Testimonios: el principal se lee entero y la siguiente tarjeta asoma; el resto se atenúa. */
   .viacap-section { padding: 22px 0 20px; }
-  .tm-track { overscroll-behavior-x: contain; }
-  .tm-slide { width: min(84%, 320px); padding: 18px; gap: 10px; opacity: .6; transition: opacity .2s ease; }
-  .tm-slide.is-on { opacity: 1; }
-  .tm-top img { width: 44px; height: 44px; }
-  .tm-top strong { font-size: 15px; }
-  .tm-mark { font-size: 40px; opacity: .35; }
-  .tm-slide blockquote { font-size: 15px; line-height: 1.5; }
-  @media (prefers-reduced-motion: reduce) { .tm-slide { transition: none; } }
 
   /* Planes: tarjetas verticales más compactas, lo que suma cada plan se destaca y el botón queda siempre al pie, a lo ancho. */
   .plans-section { padding-top: 44px; padding-bottom: 44px; }
@@ -1271,11 +1181,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .plan-card .seed-button { align-self: stretch; width: 100%; margin-top: auto; background: #959571; }
   /* Botón de plan en el verde de Weda. */
   .plan-card .seed-button { align-self: stretch; width: 100%; margin-top: auto; background: #959571; }
-  .plans-note { margin-top: 22px; font-size: 13px; line-height: 1.5; }
-
-  /* Objetivos táctiles de 44 px: puntos del carrusel (la zona de toque se amplía sin agrandar lo que se ve). */
-  .tm-dots { gap: 0; }
-  .tm-dots button { width: 44px; height: 44px; }
 
   /* Cierre: el footer sube con la misma curva que la sección de regalos y respira menos. */
   .seed-footer { border-radius: 24px 24px 0 0; padding-top: 36px; }
@@ -1319,18 +1224,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 /* Testimonios: la sección gana jerarquía; alta como la pantalla, título grande y tarjetas con aire. */
 .viacap-section { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; min-height: max(100svh, 720px); padding-block: clamp(80px, 14svh, 160px); }
 .viacap-section .tm { gap: clamp(36px, 5vw, 68px); }
-.viacap-section .tm-head { gap: 14px; }
-.viacap-section .tm-head .eyebrow { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
-.viacap-section .tm-head h2 { font-size: clamp(30px, 4.6vw, 58px); line-height: 1.1; }
-@media (min-width: 641px) {
-  .viacap-section .tm-slide { flex-basis: min(760px, 82%); gap: 22px; padding: clamp(28px, 3vw, 44px); border-radius: 28px; opacity: 1; }
-  .viacap-section .tm-track { padding-inline: calc(50vw - min(380px, 41vw)); gap: 24px; }
-  .viacap-section .tm-top { gap: 16px; }
-  .viacap-section .tm-top img { width: 68px; height: 68px; }
-  .viacap-section .tm-top strong { font-size: 18px; }
-  .viacap-section .tm-mark { width: 40px; height: 40px; font-size: 40px; padding-top: 16px; }
-  .viacap-section .tm-slide blockquote { font-size: clamp(18px, 1.6vw, 23px); line-height: 1.5; }
-}
 @media (max-width: 640px) { .viacap-section { min-height: 0; padding-block: clamp(56px, 9svh, 80px); } }
 
 /* Primera pantalla: el título explica qué es Weda y puede ocupar dos líneas. */
@@ -1360,7 +1253,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .float-cta::after, .float-link::after { content: ''; position: absolute; inset: -4px 0; }
   .float-left .seed-logo { min-height: 44px; }
 }
-@media (pointer: coarse) { .tm-dots { gap: 0; } .tm-dots button { width: 44px; height: 44px; } }
 
 /* Landing · paleta verde: franja "¿Invitado?" y footer en el verde oscuro; sección de beneficios en el verde claro (texto oscuro) */
 .announcement { background: #c2c18c; color: var(--foreground); }

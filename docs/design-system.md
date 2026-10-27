@@ -31,7 +31,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 
 **Base común (landing y panel):** tinta `#3b3c3a`, texto secundario `#575757`, líneas `rgb(59 60 58 / .16–.30)`.
 
-**Landing (`styles.css`):** fondo `oklch(0.948 0.008 106)`; `--primary` `oklch(0.277 0.074 136)`; `--accent` `oklch(0.935 0.139 122)`; `--destructive` `oklch(0.55 0.18 26)`; además `--paper #f5f2eb`, `--slate #707d87`, `--forest #2b4045`, `--olive #b6b46e`, `--section #f3f0e8`.
+**Landing (`styles.css`):** fondo `oklch(0.948 0.008 106)`; `--primary` `#c0bfa4` (verde clarito de Weda, con texto `--ink`); `--accent` `#dfdecc`; anillo de foco (`--color-ring`) en `--foreground`; `--destructive` `oklch(0.55 0.18 26)`; además `--paper #f5f2eb`, `--slate #959571`, `--section #f3f0e8`. El verde oscuro y el lima heredados de la plantilla original ya no se usan.
 
 **Panel (`panel.css`, variables `--pn-*`):**
 - grises neutros del panel (sin azul, decisión de la dueña 2026-10-21): `--pn-slate #6b6b6b` (acentos y estados activos), `--pn-slate-d #4a4a4a` (botones primarios, énfasis), `--pn-slate-l #9a9a9a`; superficies tintadas `rgb(60 60 60 / .08)`;
@@ -154,7 +154,7 @@ Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avi
 
 - No existe una **escala tipográfica** ni una **escala de espaciado** formal; cada componente fija sus valores.
 - Los **puntos de corte** no están centralizados. En `panel.css` se usan, entre otros, 560, 720, 900 y 1100 px; en el resto de los archivos otros valores.
-- No hay una definición del **color primario de Weda**: la landing usa `--primary` verde oscuro (`oklch(0.277 0.074 136)`) y el panel usa grises neutros (`#4a4a4a`). Ambos coexisten tal como están; no se unificaron.
+- **Color primario de Weda:** la landing usa `--primary` verde clarito (`#c0bfa4`; `#dfdecc` en fondos y en «Publicar») y el panel usa grises neutros (`#4a4a4a`). Los verdes de estado del panel (`#34502c`, `#3f7236` = completo / confirmado) son semánticos y se mantienen.
 - No hay guía de **iconografía** más allá del uso de `lucide-react`, ni de **ilustración** ni de **animación** (solo transiciones puntuales).
 - No hay modo oscuro.
 - La cobertura de `prefers-reduced-motion` en el panel no está auditada.

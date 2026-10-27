@@ -24,5 +24,5 @@ Tres contextos que no se mezclan: **landing** (`styles.css`), **administración*
 - Interfaz en español rioplatense (voseo). Sin `alert` del navegador y sin botones decorativos: cada botón hace algo real.
 - Sin backend: no simules cuentas, pagos, publicación, correos ni sincronización. Guardado local, y la interfaz lo dice así.
 - **No hagas commit, push, merge ni deploy** salvo que se pida explícitamente («push»). Nunca force-push sin autorización. No subas `.claude/`, `analisis-confites-top50.md`, `luna-de-miel-confites.md`, `capturas/` ni las fotos sin usar de `public/` (`pareja-portada-3…7.webp`, `pareja-portada-10.png`).
-- Verificá lo que construyas: `npx tsc --noEmit`, `npx vitest run`, `npm run build` y, para cambios visibles, el flujo real en el navegador (móvil y desktop). Informá qué se verificó y qué no; no afirmes pruebas que no ejecutaste. El servidor de desarrollo corre en el puerto 8080 (`preview_start` «seed-clone-buddy»).
+- Verificá lo que construyas: `npx tsc --noEmit`, `npx vitest run`, `npm run build` y, para cambios visibles, el flujo real en el navegador (móvil y desktop). Informá qué se verificó y qué no; no afirmes pruebas que no ejecutaste. El servidor de desarrollo corre en el puerto 8080 (`preview_start` «weda»).
 - Si cambiás un patrón o un flujo, actualizá `docs/design-system.md` o `docs/ux-flows.md` en la misma tarea.
