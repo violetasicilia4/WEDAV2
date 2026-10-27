@@ -726,9 +726,11 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 .dm-root .iv-mosaic[data-n='6'] .iv-shot { grid-column: span 2; }
 @media (max-width: 700px) {
   .dm-root .iv-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: none; }
-  .dm-root .iv-mosaic .iv-shot, .dm-root .iv-mosaic .iv-shot:nth-child(-n + 2), .dm-root .iv-mosaic .iv-shot:first-child { grid-column: span 1; grid-row: auto; }
+  /* Reinicio de las reglas de escritorio (span 2 o 3, filas dobles): con esta especificidad (igual que las de [data-n] y más tarde en el archivo) ganan en celular.
+     Antes quedaban fotos de 0 px de alto o más anchas que la grilla de 2 columnas, y parecían «apiladas». */
+  .dm-root .iv-mosaic[data-n] .iv-shot:nth-child(n) { grid-column: span 1; grid-row: auto; }
   .dm-root .iv-mosaic[data-n='1'] { grid-template-rows: 1fr; aspect-ratio: 4 / 5; }
-  .dm-root .iv-mosaic[data-n='1'] .iv-shot { grid-column: span 2; }
+  .dm-root .iv-mosaic[data-n='1'] .iv-shot:nth-child(n) { grid-column: span 2; }
   .dm-root .iv-mosaic[data-n='2'] { grid-template-rows: 1fr; aspect-ratio: 8 / 5; }
   .dm-root .iv-mosaic[data-n='3'] { grid-template-rows: 1.35fr 1fr; aspect-ratio: 4 / 5; }
   .dm-root .iv-mosaic[data-n='3'] .iv-shot:first-child { grid-column: span 2; grid-row: auto; }
