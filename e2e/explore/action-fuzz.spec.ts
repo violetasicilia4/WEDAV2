@@ -123,7 +123,7 @@ const actions: Action[] = [
   } },
   { name: 'editar los datos de la pareja', run: async ({ page, r }) => {
     await nav(page, 'Inicio').click(); await settle(page);
-    const open = page.getByRole('button', { name: 'Editar datos' }); need(await visible(open), 'sin botón');
+    const open = { click: () => page.goto('/panel?editar=datos', { waitUntil: 'networkidle' }) };
     const before = (await stored(page)).couple.first; await open.click(); const dlg = page.getByRole('dialog', { name: 'Datos del casamiento' }); const ok = r.chance(0.6);
     const nv = ok ? r.pick(NAMES_OK) : r.pick(NAMES_BAD); await dlg.getByLabel('Tu nombre').fill(nv); await dlg.getByRole('button', { name: 'Guardar' }).click(); await afterSubmit(page, dlg);
     if (await dlg.count()) { expect(await dlg.locator('.pn-error').count(), 'datos rechazados deben explicar por qué').toBeGreaterThan(0); expect((await stored(page)).couple.first).toBe(before); await page.keyboard.press('Escape'); return 'rechazado'; }

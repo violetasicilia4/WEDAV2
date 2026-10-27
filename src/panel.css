@@ -1743,3 +1743,40 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .ed-ico-opt:hover { background: rgb(59 60 58 / .05); }
 .ed-ico-opt.on { box-shadow: inset 0 0 0 2px var(--pn-ink); }
 .ed-ico-opt:has(input:focus-visible) { outline: 2px solid var(--pn-ink); outline-offset: 2px; }
+
+/* ===== Inicio: banner «Primeros pasos» (regalos → micrositio → publicación) ===== */
+.gs { --gs-bg: #ecebe2; --gs-tab: rgb(255 255 255 / .55); display: grid; gap: 0; border-radius: var(--pn-r-sheet); background: var(--gs-bg); overflow: hidden; }
+.pn-journey > .gs { grid-column: 1 / -1; }
+.gs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 20px 8px; }
+.gs-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; font-weight: var(--w-semibold); }
+.gs-count { font-size: 13px; font-weight: 400; color: var(--pn-muted); }
+.gs-head-actions { display: inline-flex; align-items: center; gap: 16px; }
+.gs-head-actions .pn-link { min-height: 36px; text-decoration: none; }
+.gs-head-actions .pn-link:hover { color: var(--pn-ink); text-decoration: underline; }
+.gs-head-actions .is-up { transform: rotate(180deg); }
+.gs-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 12px; padding: 4px; border-radius: 14px; background: var(--gs-tab); }
+.gs-tab { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 6px 8px; border: 0; border-radius: 11px; background: none; color: var(--pn-muted); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+.gs-tab:hover:not(.on) { color: var(--pn-ink); background: rgb(255 255 255 / .5); }
+.gs-tab.on { background: #fff; color: var(--pn-ink); font-weight: var(--w-semibold); }
+.gs-num { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--pn-ink); font-size: 13px; font-weight: var(--w-semibold); }
+.gs-tab.on .gs-num { background: var(--pn-ink); color: #fff; }
+.gs-tab.is-done .gs-num { background: var(--pn-slate-d); color: #fff; }
+.gs-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: center; padding: 28px 24px 28px; }
+.gs-copy { display: grid; gap: 10px; justify-items: start; min-width: 0; }
+.gs-copy h3 { margin: 0; font-size: clamp(22px, 3vw, 28px); line-height: 1.15; letter-spacing: var(--ls-title); text-wrap: balance; }
+.gs-copy p { margin: 0; max-width: 52ch; color: var(--pn-ink); font-size: 16px; }
+.gs-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.gs-actions .pn-btn.is-ghost { background: rgb(255 255 255 / .6); }
+.gs-art { display: none; }
+@media (max-width: 559px) {
+  .gs-tabs { margin: 0 8px; gap: 4px; }
+  .gs-tab { flex-direction: column; gap: 4px; min-height: 64px; padding: 8px 4px; font-size: 13px; text-align: center; }
+}
+@media (min-width: 760px) {
+  .gs-panel { grid-template-columns: minmax(0, 1fr) minmax(180px, 280px); gap: 32px; padding: 36px 40px 40px; }
+  .gs-art { display: grid; place-items: center; min-height: 160px; border-radius: 18px; background: rgb(255 255 255 / .6); color: var(--pn-slate-d); }
+}
+.gs .gs-actions .pn-btn:not(.is-ghost) { background: var(--pn-ink); border-color: var(--pn-ink); color: #fff; }
+.gs .gs-actions .pn-btn:not(.is-ghost):hover:not(:disabled) { background: #000; border-color: #000; }
+.gs-id { display: grid; gap: 2px; min-width: 0; }
+.gs-couple { margin: 0 0 0 26px; font-size: 14px; color: var(--pn-muted); }

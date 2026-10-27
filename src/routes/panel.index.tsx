@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ArrowRight, Eye, Gift, Globe, LayoutGrid, Lock, Pencil, Users } from 'lucide-react';
+import { ArrowRight, Eye, Gift, Globe, LayoutGrid, Lock, Users } from 'lucide-react';
 import { CoupleDialog } from '@/components/panel/couple-form';
-import { ConfirmDialog, CoupleCover } from '@/components/panel/ui';
-import { nextAction } from '@/lib/weda/journey';
+import { GetStarted } from '@/components/panel/get-started';
+import { ConfirmDialog } from '@/components/panel/ui';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { reset, useAppState } from '@/lib/weda/store';
@@ -24,7 +24,6 @@ function Home() {
   useEffect(() => { if (editar === 'datos') setEditing(true); }, [editar]);
   const closeEditing = () => { setEditing(false); if (editar) void navigate({ to: '/panel', search: {}, replace: true }); };
   const [confirmReset, setConfirmReset] = useState(false);
-  const next = nextAction(s);
 
   type Tile = { key: string; title: string; text: string; Icon: typeof Gift; to?: string; search?: Record<string, string>; feature?: Feature; onClick?: () => void };
   /* Lo que arma la página que se publica. */
@@ -59,16 +58,7 @@ function Home() {
 
   return (
     <div className="pn-page pn-journey">
-      <CoupleCover eyebrow="Tu casamiento">
-        <button type="button" className="pn-btn is-small" onClick={() => setEditing(true)}><Pencil size={14} aria-hidden="true" /> Editar datos</button>
-      </CoupleCover>
-
-      <section className="pn-next" aria-labelledby="pn-next-title">
-        <p className="pn-label-s">Siguiente paso</p>
-        <h2 id="pn-next-title">{next.title}</h2>
-        <p className="pn-muted">{next.text}</p>
-        <Link to={next.to as never} {...(next.search ? { search: next.search as never } : {})} className="pn-btn">{next.cta}<ArrowRight size={16} aria-hidden="true" /></Link>
-      </section>
+      <GetStarted />
 
       <section className="hm-path" aria-labelledby="hm-path-title">
         <div className="hm-head">

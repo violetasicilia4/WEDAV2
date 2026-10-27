@@ -152,7 +152,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
   test('Diálogos: «Datos del casamiento» deja sus botones a la vista aunque el contenido sea largo', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 640 });
     await page.goto('/panel', { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: /Editar datos/ }).click();
+    await page.goto('/panel?editar=datos', { waitUntil: 'networkidle' });
     const save = page.getByRole('dialog').getByRole('button', { name: 'Guardar' });
     const b = (await save.boundingBox())!;
     expect(b.y + b.height).toBeLessThanOrEqual(640);

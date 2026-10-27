@@ -239,3 +239,10 @@ Hay servidor y base de datos (detalle en [backend-readiness.md](backend-readines
 - **Fotos:** el mosaico se adapta a la cantidad (1 a 6 y "muchas") para llenar siempre el cuadrado, en web y mobile (`data-n` en `.iv-mosaic`).
 - **Regalos:** ícono de regalo minimalista sobre el título; subtítulo más ancho y grande para que entre en un renglón en web.
 - **Confirmación de asistencia:** se quitó la línea "Ya cargaste una confirmación en esta demostración".
+
+## Inicio: banner «Primeros pasos» (2026-10-27)
+- **Pedido de la dueña:** en el lugar de la foto de portada, un banner con pasos, al estilo «Get started» (pestañas de pasos que se van completando), con color de fondo.
+- **Qué hay hoy** (`src/components/panel/get-started.tsx`): reemplaza la foto «Tu casamiento» y la tarjeta «Siguiente paso». Tres pasos: **Lista de regalos**, **Sitio de casamiento** y **Publicación**. Muestra el panel del primer paso pendiente (se puede tocar cualquier pestaña para verlo). Cada paso se marca solo, con los mismos datos de `giftsStage` / `siteStage` (`journey.ts`): regalos está completo con al menos un regalo y alias de cobro; micrositio, cuando todos los momentos y secciones prendidas están completos. Los textos y accesos son los que ya usaba «Siguiente paso» («Elegir regalos», «Configurar aportes», «Terminá tu invitación»).
+- **Publicación nunca se marca completa:** no existe publicación real. Su panel abre «Publicar» (planes) y «Vista previa», y dice que es una demostración.
+- La cabecera conserva los nombres y la fecha («Fecha por definir» si falta); ya no tiene «Editar datos» (los datos se editan desde el perfil, el avatar o la tarjeta de la pareja, y el pendiente «Definí la fecha» abre el diálogo con `?editar=datos`). «Ocultar / Mostrar» pliega el banner (se recuerda en el navegador, `weda-home-steps`). Fondo arena `#ecebe2` (solo en este banner); botón principal en gris oscuro, sin azul.
+- Supuesto: la foto elegida de la pareja ya no se ve en Inicio (sigue en la barra lateral, la vista previa y la página pública).

@@ -30,8 +30,8 @@ test.describe('Perfil A · pareja apurada: de la landing al panel en el menor n�
     await page.waitForURL(/\/crear\/foto/);
     await page.getByRole('button', { name: 'Omitir por ahora' }).click();
     await page.waitForURL(/\/panel/);
-    await expect(page.getByRole('heading', { name: 'Camila & Juan' })).toBeVisible();
-    await expect(page.getByText('Fecha por definir')).toBeVisible();
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Camila & Juan')).toBeVisible();
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toBeVisible();
     const s = await stored(page);
     expect(s.couple).toMatchObject({ first: 'Camila', second: 'Juan' });
     expect(s.date).toBeNull();
@@ -69,7 +69,7 @@ test.describe('Perfil C · pareja que empieza desde cero', () => {
     await expect(page).toHaveURL(/\/panel$/);          // el parámetro se limpia: recargar no vuelve a abrir el diálogo
     await expect(page.getByText('Datos guardados.')).toBeVisible();
     await expect.poll(async () => (await stored(page)).date).toBe('2030-05-18');
-    await expect(page.getByText('Sábado 18 de mayo de 2030')).toBeVisible();
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Sábado 18 de mayo de 2030')).toBeVisible();
     await topPublish(page).click();
     await publishDialog(page).getByRole('button', { name: 'Publicar Invitación' }).click();
     await expect(publishDialog(page).getByText('Definí la fecha del casamiento.')).toHaveCount(0);
@@ -105,7 +105,7 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
   test('sin fecha ni lugar: portada del panel, editor, vista previa, sitio público y publicación lo dicen sin romperse; al definirlos todo se actualiza', async ({ page }) => {
     await onboard(page, 'Lucía', 'Violeta');
     // Portada del panel.
-    await expect(page.getByText('Fecha por definir')).toBeVisible();
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toBeVisible();
     // El siguiente paso no depende de la fecha ni del lugar.
     await expect(page.getByRole('heading', { name: 'Armá tu lista de regalos' })).toBeVisible();
     // Editor: la portada marca la fecha como pendiente y los eventos no inventan un lugar.
@@ -133,8 +133,8 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
     await dlg.getByLabel('Fecha del casamiento').fill('2031-03-15');
     await dlg.getByLabel('Lugar del casamiento').fill('Estancia La Dorotea');
     await dlg.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByText('Fecha por definir')).toHaveCount(0);
-    await expect(page.locator('.pn-cover-date')).toContainText('2031');
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toHaveCount(0);
+    await expect(page.getByRole('region', { name: /Primeros pasos/ })).toContainText('2031');
     await expect.poll(async () => (await stored(page)).site.events[0].name).toBe('Estancia La Dorotea');
     await openPreview(page);
     await expect.poll(() => previewText(page)).toContain('Estancia La Dorotea');
@@ -387,21 +387,21 @@ test.describe('Mesas', () => {
 });
 
 test.describe('Perfil G · cambia de idea', () => {
-  test('cambiar los nombres y la fecha desde «Editar datos» se refleja en el Inicio, el estado y la vista previa', async ({ page }) => {
+  test('cambiar los nombres y la fecha desde «Datos del casamiento» se refleja en el Inicio, el estado y la vista previa', async ({ page }) => {
     await onboard(page, 'Lucía', 'Violeta');
-    await page.getByRole('button', { name: 'Editar datos' }).click();
+    await page.goto('/panel?editar=datos', { waitUntil: 'networkidle' });
     const dlg = page.getByRole('dialog', { name: 'Datos del casamiento' });
     await dlg.getByLabel('Tu nombre').fill('Lucila');
     await dlg.getByLabel('Nombre de tu pareja').fill('Vera');
     await dlg.getByLabel('Fecha del casamiento').fill('2030-09-14');
     await dlg.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByRole('heading', { name: 'Lucila & Vera' })).toBeVisible();
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Lucila & Vera')).toBeVisible();
     await expect.poll(async () => (await stored(page)).couple.second).toBe('Vera');
     // Cambiar la fecha otra vez y vaciarla: queda «Fecha por definir».
-    await page.getByRole('button', { name: 'Editar datos' }).click();
+    await page.goto('/panel?editar=datos', { waitUntil: 'networkidle' });
     await dlg.getByLabel('Fecha del casamiento').fill('');
     await dlg.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByText('Fecha por definir')).toBeVisible();
+    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toBeVisible();
     await expect.poll(async () => (await stored(page)).date).toBeNull();
     await openPreview(page);
     await expect.poll(() => previewText(page)).toMatch(/Lucila/i);
@@ -446,7 +446,7 @@ test.describe('Perfil J · publicar cuanto antes', () => {
 test.describe('Persistencia y datos extremos', () => {
   test('nombres con emoji, etiquetas HTML o más de 40 letras se rechazan con un mensaje y no cambian nada', async ({ page }) => {
     await onboard(page);
-    await page.getByRole('button', { name: 'Editar datos' }).click();
+    await page.goto('/panel?editar=datos', { waitUntil: 'networkidle' });
     const dlg = page.getByRole('dialog', { name: 'Datos del casamiento' });
     for (const [bad, msg] of [['<b>negrita</b>', 'Usá solo letras'], ['Ñandú 🎉', 'Usá solo letras'], ['A'.repeat(60), 'demasiado largo']] as const) {
       await dlg.getByLabel('Tu nombre').fill(bad);
