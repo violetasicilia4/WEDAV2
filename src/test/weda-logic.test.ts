@@ -36,8 +36,8 @@ describe('slug y onboarding', () => {
 
 describe('planes', () => {
   it('define los tres planes acumulativos con sus precios en un solo lugar', () => {
-    expect(PLANS.map(p => p.name)).toEqual(['Regalos', 'Invitación', 'Completo']);
-    expect(PLANS.map(p => p.price)).toEqual([95000, 180000, 320000]);
+    expect(PLANS.map(p => p.name)).toEqual(['Regalos', 'Celebración', 'Celebración Plus']);
+    expect(PLANS.map(p => p.price)).toEqual([95000, 140000, 150000]);
     expect(formatPrice(95000)).toBe('ARS 95.000');
     // cada plan incluye todas las funciones del anterior y suma al menos una
     PLANS.slice(1).forEach((p, i) => {
@@ -61,7 +61,7 @@ describe('planes', () => {
   it('sin plan elegido (prueba gratuita) todo está disponible', () => {
     PLANS.flatMap(p => p.features).forEach(f => expect(can(null, f)).toBe(true));
   });
-  it('el plan Regalos no publica el sitio; Invitación sí, sin música, galería ni mensaje final', () => {
+  it('el plan Regalos no publica el sitio; Celebración sí, sin música, galería ni mensaje final', () => {
     const s = { ...seedState(), planId: 'regalos' as const };
     expect(siteFromState(s).blocks.invitation).toBe(false);
     const inv = siteFromState({ ...s, planId: 'invitacion' }).blocks;
@@ -72,7 +72,7 @@ describe('planes', () => {
     expect(full.photos).toBe(seedState().site.gallery.photos.length > 0);
     expect(full.message).toBe(true);
   });
-  it('bajar de Completo a Invitación oculta lo extra sin borrarlo y lo informa como borrador', () => {
+  it('bajar de Celebración Plus a Celebración oculta lo extra sin borrarlo y lo informa como borrador', () => {
     const p = { ...seedState(), planId: 'completo' as const };
     const n = p.site.playlist.tracks.length;
     const down = setPlan(p, 'invitacion');
@@ -428,7 +428,7 @@ describe('reglas de secciones (sectionGaps)', () => {
 import { publishSummary } from '@/lib/weda/publish';
 
 describe('resumen de publicación', () => {
-  it('con Completo se publica todo lo que tiene contenido', () => {
+  it('con Celebración Plus se publica todo lo que tiene contenido', () => {
     const r = publishSummary(seedState(), 'completo');
     expect(r.drafts).toEqual([]);
     expect(r.published.map(i => i.feature)).toEqual(expect.arrayContaining(['gifts', 'site', 'rsvp']));
@@ -438,7 +438,7 @@ describe('resumen de publicación', () => {
     const before = JSON.stringify(s);
     const r = publishSummary(s, 'regalos');
     expect(r.published.map(i => i.feature)).toEqual(['gifts']);
-    expect(r.drafts.find(i => i.feature === 'site')?.plan).toBe('Invitación');
+    expect(r.drafts.find(i => i.feature === 'site')?.plan).toBe('Celebración');
     expect(JSON.stringify(s)).toBe(before);
   });
   it('avisa si falta el cobro, sin bloquear', () => {
@@ -475,7 +475,7 @@ describe('mesas con lugares', () => {
 import { publishedPagesText } from '@/lib/weda/publish';
 
 describe('qué se publica con cada plan (publishedPagesText)', () => {
-  it('Regalos: solo la lista; Invitación: invitación + lista; Completo: el sitio completo', () => {
+  it('Regalos: solo la lista; Celebración: invitación + lista; Celebración Plus: el sitio completo', () => {
     expect(publishedPagesText('regalos')).toBe('solo la lista de regalos.');
     expect(publishedPagesText('invitacion')).toContain('la invitación');
     expect(publishedPagesText('invitacion')).not.toContain('música');

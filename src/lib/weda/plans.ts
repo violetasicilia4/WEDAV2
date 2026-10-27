@@ -1,8 +1,8 @@
 // Planes de Weda: ÚNICA fuente de nombres, precios y funciones por plan. La landing, el panel y la página pública leen de acá.
 // Los planes son acumulativos: cada uno incluye lo del anterior y suma funciones.
 //   Regalos    → lista de regalos
-//   Invitación → + micrositio, confirmación de asistencia (RSVP), invitados y mesas
-//   Completo   → + música de la fiesta, galería de fotos con hashtag y mensaje final
+//   Celebración → + micrositio, confirmación de asistencia (RSVP), invitados y mesas
+//   Celebración Plus → + música de la fiesta, galería de fotos con hashtag y mensaje final
 // Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante UN AÑO (definiciones comerciales de la
 // autora, 2026-10-21). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
 // Mientras no se elige plan (planId null) la pareja prueba todo: el plan se elige al publicar. Cambiar de plan nunca borra datos:
@@ -21,8 +21,6 @@ export type Plan = {
   name: string;
   /** Frase corta de la tarjeta. */
   tagline: string;
-  /** Para quién es, en una línea. */
-  summary: string;
   /** Qué es, como producto, en pocas palabras: la que encabeza cada cuadrado al elegir qué publicar. */
   product: string;
   /** Lo concreto que suma este plan (sin repetir lo heredado), corto y con ícono, para el cuadrado de «Publicar». El detalle completo está en `items`. */
@@ -45,7 +43,6 @@ export const HIGHLIGHTS = 3;
 export const PLANS: Plan[] = [
   {
     id: 'regalos', name: 'Regalos', tagline: 'Tu lista de regalos, lista para compartir.',
-    summary: 'Para quienes quieren una lista de regalos para sus invitados.',
     product: 'Solo la lista de regalos',
     highlights: [
       { icon: 'gift', label: 'Lista de regalos' },
@@ -64,17 +61,16 @@ export const PLANS: Plan[] = [
     features: ['gifts'],
   },
   {
-    id: 'invitacion', name: 'Invitación', tagline: 'Tu invitación digital, con todo lo esencial para tus invitados.',
-    summary: 'Para quienes quieren invitación digital, regalos y confirmaciones en un solo lugar.',
-    product: 'La invitación y tus invitados',
+    id: 'invitacion', name: 'Celebración', tagline: 'Tu invitación digital, con todo lo esencial para tus invitados.',
+    product: 'Sitio básico, RSVP y regalos',
     highlights: [
       { icon: 'globe', label: 'Página con los datos de la fiesta' },
       { icon: 'check', label: 'Confirmación de asistencia' },
       { icon: 'users', label: 'Invitados, mesas y grupos' },
     ],
-    price: 180000, inherits: 'regalos',
+    price: 140000, inherits: 'regalos',
     items: [
-      'Micrositio con portada, nombres y fecha',
+      'Sitio con portada, nombres y fecha',
       'Ceremonia y recepción, con ubicación en Google Maps',
       'Confirmación de asistencia (RSVP) online',
       'Panel para ver las respuestas y organizar a tus invitados',
@@ -86,15 +82,14 @@ export const PLANS: Plan[] = [
     features: ['gifts', 'site', 'rsvp', 'guests', 'groups'],
   },
   {
-    id: 'completo', name: 'Completo', tagline: 'Cada detalle de su historia, en una experiencia para compartir.',
-    summary: 'Para quienes quieren un micrositio más completo y personal.',
-    product: 'El micrositio completo',
+    id: 'completo', name: 'Celebración Plus', tagline: 'Cada detalle de su historia, en una experiencia para compartir.',
+    product: 'Sitio plus, RSVP y regalos',
     highlights: [
       { icon: 'music', label: 'Música de la fiesta' },
       { icon: 'photos', label: 'Galería de fotos' },
       { icon: 'heart', label: 'Mensaje final' },
     ],
-    price: 320000, inherits: 'invitacion',
+    price: 150000, inherits: 'invitacion',
     items: [
       'Música de la fiesta: tus invitados suman las canciones',
       'Galería de fotos con hashtag e Instagram',
@@ -106,7 +101,7 @@ export const PLANS: Plan[] = [
 
 export const planById = (id: PlanId | null): Plan | undefined => PLANS.find(p => p.id === id);
 
-/** «ARS 180.000». */
+/** «ARS 140.000». */
 export const formatPrice = (n: number) => `${CURRENCY} ${new Intl.NumberFormat('es-AR').format(n)}`;
 
 /** Sin plan elegido (prueba gratuita) todo está disponible: el plan se elige al publicar. */

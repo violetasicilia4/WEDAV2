@@ -46,7 +46,7 @@ test.describe('Perfil A · pareja apurada: de la landing al panel en el menor n�
     // Publicar está siempre a mano y abre la elección de producto.
     await topPublish(page).click();
     await expect(publishDialog(page).getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
-    await expect(publishDialog(page).getByRole('button', { name: /^Publicar (Regalos|Invitación|Completo)$/ })).toHaveCount(3);
+    await expect(publishDialog(page).getByRole('button', { name: /^Publicar (Regalos|Celebración|Celebración Plus)$/ })).toHaveCount(3);
   });
 });
 
@@ -54,7 +54,7 @@ test.describe('Perfil C · pareja que empieza desde cero', () => {
   test('sin fecha ni lugar: el panel lo dice y el pendiente «Definir la fecha» abre los datos y la guarda', async ({ page }) => {
     await onboard(page);
     await topPublish(page).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Invitación' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     // «Antes de publicar» nombra lo que falta con un acceso directo a cada cosa.
     await expect(publishDialog(page).getByText('Definí la fecha del casamiento.')).toBeVisible();
     await expect(publishDialog(page).getByText('Elegí al menos un regalo para tu lista.')).toBeVisible();
@@ -71,7 +71,7 @@ test.describe('Perfil C · pareja que empieza desde cero', () => {
     await expect.poll(async () => (await stored(page)).date).toBe('2030-05-18');
     await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Sábado 18 de mayo de 2030')).toBeVisible();
     await topPublish(page).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Invitación' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     await expect(publishDialog(page).getByText('Definí la fecha del casamiento.')).toHaveCount(0);
   });
 
@@ -90,14 +90,14 @@ test.describe('Perfiles B/D · quien explora el ejemplo puede empezar el suyo si
   test('el pie de /ejemplo y /ejemplo/regalos ofrece crear el evento y lleva al registro; los sitios de parejas no lo muestran', async ({ page }) => {
     for (const route of ['/ejemplo', '/ejemplo/regalos']) {
       await page.goto(route, { waitUntil: 'networkidle' });
-      const cta = page.getByRole('link', { name: 'Crear mi evento gratis' });
+      const cta = page.getByRole('link', { name: 'Empezar gratis' });
       await expect(cta).toBeVisible();
       await cta.click();
       await expect(page).toHaveURL(/\/crear\/cuenta/);
     }
     await onboard(page);
     await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('link', { name: 'Crear mi evento gratis' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Empezar gratis' })).toHaveCount(0);
   });
 });
 
@@ -125,7 +125,7 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
     // Publicación: la fecha figura como pendiente con acceso directo.
     await page.goto('/panel', { waitUntil: 'networkidle' });
     await topPublish(page).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Invitación' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     await expect(publishDialog(page).getByText('Todavía no definiste la fecha', { exact: false }).or(publishDialog(page).getByText('Definí la fecha del casamiento.'))).toBeVisible();
     await publishDialog(page).getByRole('link', { name: 'Definir la fecha' }).click();
     // Definir fecha y lugar desde el diálogo.
@@ -141,7 +141,7 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
     expect(await previewText(page)).not.toMatch(/Fecha a confirmar/i);
     await closePreview(page);
     await topPublish(page).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Invitación' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     await expect(publishDialog(page).getByText('Definí la fecha del casamiento.')).toHaveCount(0);
   });
 });
@@ -414,7 +414,7 @@ test.describe('Perfil G · cambia de idea', () => {
     await publishDialog(page).getByRole('button', { name: 'Publicar Regalos' }).click();
     await expect(publishDialog(page).getByText('No se cobra nada ni se guardan datos de pago.')).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Volver', exact: true }).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Completo' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración Plus' }).click();
     await expect(publishDialog(page).getByRole('button', { name: /^Pagar ARS 320\.000/ })).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Cerrar' }).click();
     expect((await stored(page)).publication).toBeNull();
@@ -425,12 +425,12 @@ test.describe('Perfil G · cambia de idea', () => {
 });
 
 test.describe('Perfil J · publicar cuanto antes', () => {
-  test('publicar con el plan Invitación: pago de prueba, link, estado «Publicada» y persistencia tras recargar', async ({ page }) => {
+  test('publicar con el plan Celebración: pago de prueba, link, estado «Publicada» y persistencia tras recargar', async ({ page }) => {
     await onboard(page);
     await topPublish(page).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Invitación' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     await publishDialog(page).getByRole('button', { name: /^Pagar / }).click();
-    await expect(publishDialog(page).getByRole('heading', { name: '¡Pagaste tu plan Invitación!' })).toBeVisible({ timeout: 10000 });
+    await expect(publishDialog(page).getByRole('heading', { name: '¡Pagaste tu plan Celebración!' })).toBeVisible({ timeout: 10000 });
     await expect(publishDialog(page).getByText(/\/sitio\/lucia-y-violeta/)).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Listo' }).click();
     await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();

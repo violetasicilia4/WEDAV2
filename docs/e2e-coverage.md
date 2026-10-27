@@ -70,7 +70,7 @@ Las «acciones omitidas» son pasos que la secuencia eligió y no podía ejecuta
 |---|---|
 | A · pareja apurada (2) | Landing → registro → nombres → fecha y lugar vacíos → foto omitida → panel con su portada y el estado guardado; siguiente paso único y «Publicar» siempre a mano con tres productos |
 | C · empieza de cero (2) | Sin fecha ni lugar: el pendiente «Definir la fecha» abre «Datos del casamiento», guarda la fecha, limpia el parámetro y el pendiente desaparece; estados vacíos de invitados y regalos |
-| B/D · el ejemplo (1) | El pie de `/ejemplo` y `/ejemplo/regalos` ofrece «Crear mi evento gratis» y lleva al registro; los sitios de parejas no lo muestran |
+| B/D · el ejemplo (1) | El pie de `/ejemplo` y `/ejemplo/regalos` ofrece «Empezar gratis» y lleva al registro; los sitios de parejas no lo muestran |
 | Fecha y lugar opcionales (1) | Portada del panel («Fecha por definir»), editor («Falta la fecha»), vista previa y sitio público («Fecha a confirmar», sin «Guardar la fecha» ni valores `undefined`/`NaN`), pendiente de publicación; al definirlos todo se actualiza |
 | Validaciones del alta (3) | Correo y clave con foco en el primer inválido; nombres vacíos; fecha pasada con mensaje propio y fecha futura con lugar guardado |
 | H · abandona y regresa (2) | Atrás y adelante en el alta conservan lo cargado; salir a la landing y regresar retoma; atrás/adelante entre secciones del panel y recarga |
@@ -79,7 +79,7 @@ Las «acciones omitidas» son pasos que la secuencia eligió y no podía ejecuta
 | E · invitados (3) | Alta, edición de asistencia y baja con «Deshacer»; **confirmación hecha en el sitio público** llega a la lista (origen RSVP) y enviarla dos veces no duplica; importación con errores (filas 2, 3 y 4 nombradas, nada cambia hasta confirmar, reintento con planilla válida) |
 | Mesas (1) | Crear una mesa, asignarle una persona y eliminar la mesa deja a esa persona sin lugar (no la borra) |
 | G · cambia de idea (2) | Cambiar nombres y fecha desde «Editar datos» se refleja en Inicio, estado y vista previa, y vaciar la fecha vuelve a «Fecha por definir»; elegir un plan, volver y elegir otro no cobra ni publica |
-| J · publicar (1) | Publicar con Invitación (pago de prueba), link, «Publicada» tras recargar y sitio público con los nombres |
+| J · publicar (1) | Publicar con Celebración (pago de prueba), link, «Publicada» tras recargar y sitio público con los nombres |
 | Datos extremos (3) | Nombres con emoji, HTML o más de 40 letras se rechazan con mensaje; texto libre con HTML y emoji se muestra como texto sin romper el ancho; guardado corrupto o de versión desconocida vuelve al alta |
 
 ### 3.4 Exploratorias con semilla
@@ -120,7 +120,7 @@ Declaro como **no cubierto** lo que no tiene una prueba que lo demuestre:
 - **Importar un `.xlsx` real:** en E2E solo se importa `.csv`; la lectura de `.xlsx` está en pruebas unitarias (`guests-io.test.ts`), pero no con una planilla hecha en Excel.
 - **Editor de «Tu página»**: eventos (mobile Flow 3), mostrar/ocultar (Flow 4) y texto de portada están cubiertos; **sin prueba**: galería de fotos, música, dress code, mensaje final, fecha límite de confirmación y cuenta regresiva con fecha y horarios.
 - **Regalar como invitado** (elegir regalos → pagar → agradecimiento) y **pestañas de cobro** (alias, tarjeta) más allá de configurar el alias: sin prueba E2E.
-- **Publicar en escritorio:** cubierto el pago con Invitación y el cambio de idea; **mejorar de plan, bajar y volver a publicar solo se prueban en celular** (Flow 7).
+- **Publicar en escritorio:** cubierto el pago con Celebración y el cambio de idea; **mejorar de plan, bajar y volver a publicar solo se prueban en celular** (Flow 7).
 - **Rutas sin recorrido E2E propio:** `/encontrar`, `/ejemplo` y `/crear/*` en 1024/1440 px, `/panel/perfil`, 404 y pantalla de error. Se midieron con un barrido manual de desbordes (informe en `ui-audit.md`), que no es una prueba automática repetible.
 - **Teclado y lectores de pantalla:** solo se prueba el foco en el primer campo inválido y el cierre con Escape. Orden de foco, trampa de foco en diálogos y anuncios no tienen prueba.
 - **Regresión visual:** no hay capturas de referencia. Los cambios de CSS se verifican por medidas (posición, ancho, desborde), no por imagen.

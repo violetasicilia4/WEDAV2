@@ -6,7 +6,7 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 
 | Ruta | Función |
 |---|---|
-| `/` | Landing. Los botones «Crear mi evento», «Crear mi lista de regalos» y «Crear mi evento gratis» (en cada plan) llevan a `/crear/cuenta`. La sección de planes (`src/components/landing-plans.tsx`) muestra nombre, precio, 4–5 funciones y «Ver todo lo que incluye» sin pedir elegir plan. |
+| `/` | Landing. Los botones «Crear mi evento», «Crear mi lista de regalos» y «Empezar gratis» (en cada plan) llevan a `/crear/cuenta`. La sección de planes (`src/components/landing-plans.tsx`) muestra nombre, precio, 4–5 funciones y «Ver todo lo que incluye» sin pedir elegir plan. |
 | `/ejemplo`, `/ejemplo/regalos` | Casamiento de demostración (invitación y lista de regalos). |
 | `/encontrar` | Buscador de invitados (demo: cuatro parejas de ejemplo en `src/lib/demo-couples.ts`, que abren la lista de regalos de ejemplo; no consulta ningún servicio ni directorio real). |
 | `/crear/cuenta` | Paso 1: registro o ingreso con correo y clave, o con Google / Apple. Es solo la interfaz: sin backend no se crea ninguna cuenta ni se guarda la clave, (la pantalla no lo anuncia). Encabezado «¡Bienvenidos!», línea de términos y privacidad (sin páginas todavía: es texto, no enlaces) y «¿Ya sos miembro? Ingresá». **Registrarse o ingresar (correo, Google o Apple) nunca borra el evento guardado en el navegador** (`src/lib/weda/account.ts`): con el onboarding terminado se sigue a `/panel`; con nombres cargados pero sin terminar, o sin evento, a `/crear` (que conserva lo cargado). La pantalla no muestra ningún aviso sobre el evento guardado ni ofrece borrarlo (para empezar de cero está «Reiniciar la demo» en el Inicio del panel). |
@@ -30,10 +30,10 @@ Describe los recorridos **implementados** en el frontend sin backend. No describ
 
 ## 3. Planes (fuente: `src/lib/weda/plans.ts`)
 
-| Función | Regalos (ARS 95.000) | Invitación (ARS 180.000) | Completo (ARS 320.000) |
+| Función | Regalos (ARS 95.000) | Celebración (ARS 140.000) | Celebración Plus (ARS 150.000) |
 |---|---|---|---|
 | Lista de regalos, alias/tarjeta y registro de regalos recibidos | sí | sí | sí |
-| Micrositio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
+| Sitio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
 | Confirmación de asistencia (RSVP) | no | sí | sí |
 | Invitados (panel de respuestas) y mesas/grupos | no | sí | sí |
 | Música de la fiesta (solo configuración y vista previa; sin conexión real a Spotify) | no | no | sí |
@@ -65,11 +65,11 @@ Una función fuera del plan muestra qué es y en qué plan está (`Locked`), sin
 
 ## 6. Tu página web (`/panel/sitio`)
 
-- Una lista de secciones: Portada, Evento 1, 2 y 3 (opcionales, con nombre que elige la pareja; sin nombre se llaman «Evento 1/2/3»), Confirmación de asistencia, Dress code, Fotos, Mensaje final y Música (plan Completo). Cada una muestra su estado y tiene «Mostrar». Ocultar no borra lo cargado. Solo hay una sección abierta a la vez.
+- Una lista de secciones: Portada, Evento 1, 2 y 3 (opcionales, con nombre que elige la pareja; sin nombre se llaman «Evento 1/2/3»), Confirmación de asistencia, Dress code, Fotos, Mensaje final y Música (plan Celebración Plus). Cada una muestra su estado y tiene «Mostrar». Ocultar no borra lo cargado. Solo hay una sección abierta a la vez.
 - Portada: foto, nombres, fecha y «texto sobre los nombres» (puede quedar vacío).
 - Confirmación de asistencia: solo mostrar u ocultar.
 - Desktop (≥1100 px): dos áreas, edición al 45 % y vista previa al 55 %, con la página pública real en formato celular y scroll propio; al abrir una sección la vista previa se desplaza hasta ella (también si la sección aparece después, por ejemplo un evento recién cargado) y cada cambio se ve al instante (mismo estado). Celular (<1100 px): la vista previa queda **fija arriba** (≈34 % del alto, entre 170 y 280 px) y las secciones se editan debajo; al abrir una se la acerca bajo la vista previa. «Ampliar vista» la agranda y oculta los campos; «Seguir editando» vuelve sin perder nada. Cada sección termina con «Listo» (vuelve a la vista general) y «Ver en la vista previa». Con menos de 520 px de alto (apaisado) la vista previa no queda fija. En eventos, «Nota» y «Enlace de Maps» van en «Más opciones» (se abre solo si ya tienen contenido). Un solo acceso a la **vista limpia** («Abrir vista limpia», pestaña nueva, sin controles). «Vista previa» (arriba) abre la vista previa a pantalla completa; el cambio celular/compu es una herramienta secundaria ahí.
-- Cada sección muestra su descripción, estado y «Mostrar». Etiqueta discreta «Incluido en Completo» solo en Fotos, Mensaje final y Música (lo que diferencia los planes, derivado de `planFor`).
+- Cada sección muestra su descripción, estado y «Mostrar». Etiqueta discreta «Incluido en Celebración Plus» solo en Fotos, Mensaje final y Música (lo que diferencia los planes, derivado de `planFor`).
 - Cambios guardados al instante y aviso «Cambios guardados en este dispositivo». Si falta algo, un renglón discreto «Falta completar: …» lleva a cada sección. Una sección «lista» no es solo «Mostrar» prendido: la regla vive en `sectionGaps` (`journey.ts`) y la usan el editor y el Inicio: un momento necesita nombre propio y lugar o dirección; dress code, título o texto; fotos, al menos una; música, al menos un tema. El mensaje final vacío no es pendiente (usa el cierre por defecto).
 - Contenido incompleto en la página pública: sin fecha, «Fecha a confirmar» aparece solo en la portada; sin regalos no se muestran «Regalá» ni «Ver lista de regalos» y la lista pública muestra «Esta lista todavía se está armando».
 
@@ -101,7 +101,7 @@ Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila
 ## 10. Vacíos y supuestos (a confirmar con la autora antes de tratarlos como reglas)
 
 - **Precios, comisiones, plazos y condiciones de publicación:** no definidos. La interfaz dice que el precio se informa al publicar.
-- **Qué hay en «Completo»:** la diferencia con Invitación son música de la fiesta, galería de fotos con hashtag y mensaje final (las tres se restringen de verdad por plan). Spotify real y más secciones no existen todavía. Los datos guardados con los nombres viejos de plan se migran (versión 1 → 2: completo→invitacion, premium→completo).
+- **Qué hay en «Celebración Plus»:** la diferencia con Celebración son música de la fiesta, galería de fotos con hashtag y mensaje final (las tres se restringen de verdad por plan). Spotify real y más secciones no existen todavía. Los datos guardados con los nombres viejos de plan se migran (versión 1 → 2: completo→invitacion, premium→completo).
 - **Qué sucede después del pago** y qué incluye cada plan más allá de la matriz anterior: sin definir.
 - **Mercado Pago y cobro con tarjeta:** sin desarrollar.
 - **Analytics:** no existe infraestructura; no hay eventos definidos.
@@ -150,15 +150,15 @@ Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila
 
 ## Publicar: tres cuadrados, uno por producto (2026-10-21)
 - **Problema:** no se entendía qué se publica con cada plan (solo regalos, invitación, sitio completo) y las primeras versiones (lista de opciones, luego tarjetas con mucho texto y botones «Elegir …») se descartaron por indicación de la autora: tienen que ser **concretas, visuales y con detalle a pedido**.
-- Al tocar **Publicar**, el diálogo **«¿Qué querés publicar?»** muestra **tres cuadrados lado a lado** (apilados en celular), pensados como producto y no como plan: **Regalos**, **Invitación** y **Completo**. Cada uno trae, en este orden: ícono y nombre con una frase corta (`product` en `plans.ts`), **precio**, **«Pago único» y «Publicada 1 año»**, entre 3 y 4 puntos con ícono (`highlights` en `plans.ts`), **«Ver más»** (plegado: el detalle completo de `items` y, si algo cargado quedaría como borrador, el aviso), **«Ver link»** y **«Publicar»**.
+- Al tocar **Publicar**, el diálogo **«¿Qué querés publicar?»** muestra **tres cuadrados lado a lado** (apilados en celular), pensados como producto y no como plan: **Regalos**, **Celebración** y **Celebración Plus**. Cada uno trae, en este orden: ícono y nombre con una frase corta (`product` en `plans.ts`), **precio**, **«Pago único» y «Publicada 1 año»**, entre 3 y 4 puntos con ícono (`highlights` en `plans.ts`), **«Ver más»** (plegado: el detalle completo de `items` y, si algo cargado quedaría como borrador, el aviso), **«Ver link»** y **«Publicar»**.
   - **Regalos:** lista de regalos, alias y tarjeta para recibir, regalos recibidos y quién los hizo, link para compartir. Nada más.
-  - **Invitación:** «Todo lo de Regalos» + página con los datos de la fiesta, confirmación de asistencia, invitados, mesas y grupos.
-  - **Completo:** «Todo lo de Invitación» + música de la fiesta, galería de fotos y mensaje final.
+  - **Celebración:** «Todo lo de Regalos» + página con los datos de la fiesta, confirmación de asistencia, invitados, mesas y grupos.
+  - **Celebración Plus:** «Todo lo de Celebración» + música de la fiesta, galería de fotos y mensaje final.
 - **Definición comercial nueva (la autora, 2026-10-21): la página queda publicada 1 año con cualquiera de los tres** (`PUBLICATION_TERM` en `plans.ts`). Antes la duración no estaba definida. Hoy es solo un texto: no hay publicación real, así que nada se publica ni vence. No se definió qué pasa al cumplirse el año (renovación, baja, precio): no se afirma nada al respecto.
 - **No se prometió «validar» regalos:** la app no verifica pagos (el panel de aportes lo dice). Se muestra «Regalos recibidos y quién los hizo», que es lo que existe.
 - **«Publicar»** (en lugar de «Elegir {plan}», que se confundía con elegir regalos) lleva al resumen. Lo que se publica ya está armado: el resumen empieza con **«Se publica: …»** (`publishedPagesText()` en `publish.ts`, derivado de la matriz), lista pendientes sin bloquear y mantiene «Pagar y publicar (sin conexión)» deshabilitado. «Volver a las opciones» regresa a los tres cuadrados. «Ver mi sitio con este plan» sigue siendo lo único que aplica el plan.
-- **«Ver link»** abre en otra pestaña la página pública REAL con los datos de la pareja, armada como se vería con ese producto (Regalos → solo `/regalos`; Invitación y Completo → la invitación). **No cambia el plan guardado.** Mecanismo: `/sitio/$slug[/regalos]?plan=…`; `AppSite` (`site-providers.tsx`) lee el parámetro una sola vez y llama a `siteFromState` con ese plan. Como todavía no hay publicación, el link vive solo en este navegador.
-- **Supuesto a confirmar:** según `plans.ts`, Invitación incluye la lista de regalos (los planes son acumulativos). Si la intención es que Invitación NO incluya regalos, es una definición comercial que hay que decidir.
+- **«Ver link»** abre en otra pestaña la página pública REAL con los datos de la pareja, armada como se vería con ese producto (Regalos → solo `/regalos`; Celebración y Celebración Plus → la invitación). **No cambia el plan guardado.** Mecanismo: `/sitio/$slug[/regalos]?plan=…`; `AppSite` (`site-providers.tsx`) lee el parámetro una sola vez y llama a `siteFromState` con ese plan. Como todavía no hay publicación, el link vive solo en este navegador.
+- **Supuesto a confirmar:** según `plans.ts`, Celebración incluye la lista de regalos (los planes son acumulativos). Si la intención es que Celebración NO incluya regalos, es una definición comercial que hay que decidir.
 
 ## Regalos: cuatro solapas, «Mis regalos» como entrada (2026-10-21)
 - **Problema:** la pantalla abría en «1. Cómo funciona», un tutorial con cuatro pasos, y numeraba cinco solapas como si fueran un recorrido obligatorio. En el celular la quinta quedaba fuera de vista, y la pareja que volvía a editar su lista tenía que salir primero de la guía.
@@ -189,7 +189,7 @@ Nota de la mejora visual (2026-10): en celular la lista de invitados es una fila
 Detalle en [product-journey-audit.md](product-journey-audit.md), [conversion-opportunities.md](conversion-opportunities.md) y [e2e-coverage.md](e2e-coverage.md). Cambios de flujo:
 - **Fecha y lugar opcionales** en el alta y en «Datos del casamiento» (vacío = «todavía no»). Consecuencias verificadas por prueba: la portada del panel dice «Fecha por definir»; el editor marca la portada como «Falta la fecha»; la vista previa y el sitio público dicen «Fecha a confirmar», sin cuenta regresiva ni «Guardar la fecha»; el diálogo de publicar lista «Definí la fecha del casamiento» entre los pendientes (solo con planes que publican la invitación); el siguiente paso del Inicio y los pasos de armado no dependen de ellos.
 - **Pendiente «Definí la fecha» del diálogo de publicar:** el botón «Definir la fecha» lleva a `/panel?editar=datos`, que abre «Datos del casamiento» (el parámetro se limpia al cerrar).
-- **Ejemplo (`/ejemplo`, `/ejemplo/regalos`):** el pie ofrece «Crear mi evento gratis» (→ `/crear/cuenta`). Solo en la demo: los sitios de las parejas no lo muestran.
+- **Ejemplo (`/ejemplo`, `/ejemplo/regalos`):** el pie ofrece «Empezar gratis» (→ `/crear/cuenta`). Solo en la demo: los sitios de las parejas no lo muestran.
 - **Pendiente (decisión comercial):** la interfaz de publicar dice «pago único» y «publicada 1 año», que §3 y §10 dicen que no están definidos; se puede pagar una página sin contenido; los testimonios de la landing tienen nombres y fotos inventados.
 
 ## Cuenta, guardado y sitio publicado reales (2026-10-26)
@@ -213,7 +213,7 @@ Hay servidor y base de datos (detalle en [backend-readiness.md](backend-readines
 
 - **Estructura («Tu invitación»):** la lista numerada de lo que ve hoy un invitado, de arriba abajo: Portada (siempre primera), **Save the date** (la fecha con su cuenta regresiva; solo si hay fecha), Eventos, Lista de regalos (informativa: «va con los eventos», se arma en Regalos), Confirmación, Dress code, Fotos, Música y Mensaje final (siempre al final). Cada fila muestra su estado con ícono y texto (nunca solo color).
 - **Reordenar:** botones «Subir» / «Bajar» por fila (accesibles con teclado y tacto; el foco queda en el botón; se anuncia la nueva posición). Se pueden mover Save the date, Eventos, Confirmación, Dress code, Fotos y Música; las ocultas no cuentan como lugar. El orden se guarda en `site.order` (`BlockId[]`, con todas las secciones siempre, también las ocultas, para que al volver conserven su lugar) y lo respeta la página pública, la vista previa y lo publicado (`SiteData.order`).
-- **Agregar / quitar:** «Para agregar» lista las secciones que no están, con su propósito y «Agregar» (abre su edición). «Quitar» (en la fila y dentro de la edición) las saca de la página **sin borrar lo cargado** y muestra «Deshacer». Las que no incluye el plan aparecen con «Plan Completo» y «Ver plan». Eventos no se quita (cada momento se muestra u oculta dentro de Eventos).
+- **Agregar / quitar:** «Para agregar» lista las secciones que no están, con su propósito y «Agregar» (abre su edición). «Quitar» (en la fila y dentro de la edición) las saca de la página **sin borrar lo cargado** y muestra «Deshacer». Las que no incluye el plan aparecen con «Plan Celebración Plus» y «Ver plan». Eventos no se quita (cada momento se muestra u oculta dentro de Eventos).
 - **Edición:** tocar una fila abre solo los campos de esa sección, con «← Tu invitación», «Quitar de la invitación» y «Listo». Ya no hay interruptor «Mostrar» por sección.
 - **Vista previa:** la página pública real (`?borrador`), a su tamaño lógico (celular 390 px o compu 1280 px) escalado para entrar, con selector **Celular / Compu**. Se actualiza al instante (evento `storage`, ≈150 ms) y se desplaza hasta la sección que se edita, que queda **marcada** con un borde. **Tocar una sección en la vista previa la abre en el editor**; dentro de la vista previa no navega ni abre diálogos. «Ver completa» abre el pop-up de siempre.
 - **Desktop (≥ 1100 px):** estructura/edición a la izquierda y vista previa fija a la derecha, siempre a la vista. **Celular:** se alternan «Editar» y «Cómo queda» (la vista previa a pantalla completa); al editar una sección, la ventana en vivo sigue fija arriba. Tocar una sección en «Cómo queda» vuelve a «Editar» en esa sección.

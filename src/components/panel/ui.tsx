@@ -120,7 +120,7 @@ export function Locked({ feature, children }: { feature: Feature; children?: Rea
   return (
     <div className="pn-locked">
       <span className="pn-locked-icon" aria-hidden="true"><Lock size={22} strokeWidth={1.5} /></span>
-      <h2>{FEATURE_NAMES[feature]} se activa con el plan {plan?.name ?? 'Completo'}</h2>
+      <h2>{FEATURE_NAMES[feature]} se activa con el plan {plan?.name ?? 'Celebración Plus'}</h2>
       <p>{children ?? 'Lo que ya cargaste se conserva como borrador. Podés cambiar de plan cuando quieras: no se cobra nada al elegirlo.'}</p>
       <div className="pn-actions is-tight">
         <button type="button" className="pn-btn" onClick={plans.open}>Ver los planes</button>

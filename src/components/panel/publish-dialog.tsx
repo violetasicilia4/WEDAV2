@@ -4,7 +4,8 @@
 // para cualquiera con el link) y, si el servidor falla, no se marca nada como publicado. El cobro sigue siendo de prueba: no hay proveedor de pagos.
 import { useEffect, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { BadgeCheck, CalendarCheck, CalendarClock, Check, ChevronDown, CreditCard, ExternalLink, Gift, Globe, Images, Link2, Loader2, MailOpen, Music, Plus, ReceiptText, Sparkles, Users, type LucideIcon } from 'lucide-react';
+import { BadgeCheck, CalendarClock, Check, ChevronDown, ExternalLink, Loader2, Plus } from 'lucide-react';
+import { HIGHLIGHT_ICON, PLAN_ICON } from '@/components/plan-icons';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { dateLabel, draftsFor, sitePath } from '@/lib/weda/logic';
 import { isLive, publishPaid, republish, takeDown, totalPaid, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
@@ -14,8 +15,6 @@ import { errorText, publishRemote, unpublishRemote, useRemote } from '@/lib/weda
 import { getState, update, useAppState } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
 
-const HIGHLIGHT_ICON: Record<HighlightIcon, LucideIcon> = { gift: Gift, card: CreditCard, receipt: ReceiptText, link: Link2, globe: Globe, check: CalendarCheck, users: Users, music: Music, photos: Images, heart: Check };
-const PLAN_ICON: Record<PlanId, LucideIcon> = { regalos: Gift, invitacion: MailOpen, completo: Sparkles };
 const PAYING_MS = 1400;
 
 type Step = 'choose' | 'review' | 'paying' | 'done' | 'manage';

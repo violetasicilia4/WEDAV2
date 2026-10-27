@@ -254,15 +254,15 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByRole('list', { name: 'Mesas y grupos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Familia' }) })).toContainText('Marta Sosa');
   });
 
-  test('Publicar → «Ver link» de Invitación y de Completo muestran la sección de regalos con su botón, porque esos planes incluyen la lista', async ({ page }) => {
+  test('Publicar → «Ver link» de Celebración y de Celebración Plus muestran la sección de regalos con su botón, porque esos planes incluyen la lista', async ({ page }) => {
     await nav(page, 'Regalos').click();
     await page.getByRole('tab', { name: 'Catálogo' }).click();
     await page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) }).getByRole('button', { name: 'Agregar' }).click();
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     const links: Record<string, string> = {};
-    for (const plan of ['Regalos', 'Invitación', 'Completo']) links[plan] = (await page.getByRole('link', { name: new RegExp(`Ver el link de ${plan}`) }).getAttribute('href'))!;
+    for (const plan of ['Regalos', 'Celebración', 'Celebración Plus']) links[plan] = (await page.getByRole('link', { name: new RegExp(`Ver el link de ${plan} \\(`) }).getAttribute('href'))!;
     await page.keyboard.press('Escape');
-    for (const plan of ['Invitación', 'Completo']) {
+    for (const plan of ['Celebración', 'Celebración Plus']) {
       await page.goto(links[plan]!, { waitUntil: 'networkidle' });
       const sec = page.locator('#regalos');
       // Solo título, texto y botón: la invitación no muestra regalos de la lista; el botón lleva a la página de regalos.
@@ -281,14 +281,14 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByText('Todavía no está publicada')).toBeVisible();
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
-    await page.getByRole('button', { name: 'Publicar Invitación' }).click();
+    await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     // Revisión: aclara que es un pago de prueba y no cambia nada hasta pagar.
     await expect(page.getByText('No se cobra nada ni se guardan datos de pago.')).toBeVisible();
     expect((await stored(page)).publication).toBeNull();
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
-    await page.getByRole('button', { name: 'Publicar Invitación' }).click();
+    await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     await page.getByRole('button', { name: /^Pagar / }).click();
-    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Invitación!' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Celebración!' })).toBeVisible({ timeout: 10000 });
     await expect.poll(async () => ((await stored(page)) as { planId: string }).planId).toBe('invitacion');
     const first = (await stored(page)) as { planId: string; publication: { live: boolean; planId: string; payments: { kind: string; amount: number }[] } };
     expect(first.planId).toBe('invitacion');
@@ -299,11 +299,11 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     const head = page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true });
     await head.click();
     await expect(page.getByRole('heading', { name: 'Tu publicación' })).toBeVisible();
-    // Mejorar a Completo: solo la diferencia.
-    await page.getByRole('button', { name: 'Mejorar a Completo' }).click();
+    // Mejorar a Celebración Plus: solo la diferencia.
+    await page.getByRole('button', { name: 'Mejorar a Celebración Plus' }).click();
     await expect(page.getByText('Pagás la diferencia')).toBeVisible();
     await page.getByRole('button', { name: /^Pagar / }).click();
-    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Completo!' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Celebración Plus!' })).toBeVisible({ timeout: 10000 });
     await expect.poll(async () => ((await stored(page)) as { planId: string }).planId).toBe('completo');
     const up = (await stored(page)) as { planId: string; publication: { payments: { kind: string; amount: number }[] } };
     expect(up.planId).toBe('completo');

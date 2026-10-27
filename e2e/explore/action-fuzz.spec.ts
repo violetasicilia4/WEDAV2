@@ -132,7 +132,7 @@ const actions: Action[] = [
   { name: 'mirar los productos de publicación y cerrar', run: async ({ page, r }) => {
     const pub = page.locator('.pn-top').getByRole('button', { name: /^Publicar$|^Publicada$/ }); need(await visible(pub), 'sin botón');
     await pub.first().click(); const dlg = page.getByRole('dialog'); await expect(dlg).toBeVisible();
-    const plan = dlg.getByRole('button', { name: /^Publicar (Regalos|Invitación|Completo)$/ });
+    const plan = dlg.getByRole('button', { name: /^Publicar (Regalos|Celebración|Celebración Plus)$/ });
     if (await plan.count() && r.chance(0.6)) { await plan.nth(r.int(0, 2)).click(); await expect(dlg.getByText('Pago de prueba')).toBeVisible(); await dlg.getByRole('button', { name: 'Volver', exact: true }).click(); }
     await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
   } },

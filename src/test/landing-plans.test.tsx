@@ -28,30 +28,30 @@ describe('Planes en la landing', () => {
       const card = within(cards[i]!);
       expect(card.getByRole('heading', { level: 3, name: plan.name })).toBeTruthy();
       expect(card.getByText(formatPrice(plan.price))).toBeTruthy();
-      expect(card.getByText('pago único')).toBeTruthy();
-      expect(card.getByText(plan.tagline)).toBeTruthy();
+      expect(card.getByText('Pago único')).toBeTruthy();
+      expect(card.getByText(plan.product)).toBeTruthy();
     });
     expect(screen.getByText(/Armá tu casamiento gratis/)).toBeTruthy();
-    expect(screen.getByText(/Sin tarjeta y sin elegir un plan por adelantado/)).toBeTruthy();
   });
 
   it('cada tarjeta lleva al registro con el mismo CTA gratuito, sin elegir plan', async () => {
     await renderPlans();
-    const ctas = screen.getAllByRole('link', { name: 'Crear mi evento gratis' });
+    const ctas = screen.getAllByRole('link', { name: 'Empezar gratis' });
     expect(ctas).toHaveLength(3);
     ctas.forEach(a => expect(a.getAttribute('href')).toBe('/crear/cuenta'));
   });
 
   it('cada plan despliega el detalle y los planes siguientes muestran lo heredado', async () => {
     await renderPlans();
-    expect(screen.getAllByText('Ver todo lo que incluye')).toHaveLength(3);
+    expect(screen.getAllByText('Ver lo que incluye')).toHaveLength(3);
     const [, invitacion, completo] = screen.getAllByRole('article').map(a => within(a));
     expect(invitacion!.getByText('Todo lo de Regalos')).toBeTruthy();
-    expect(completo!.getByText('Todo lo de Invitación')).toBeTruthy();
+    expect(completo!.getByText('Todo lo de Celebración')).toBeTruthy();
   });
 
-  it('no promete ausencia de suscripción ni duración', async () => {
+  it('destaca el pago único y que la página queda publicada un año, sin hablar de suscripción', async () => {
     await renderPlans();
-    expect(document.body.textContent).not.toMatch(/sin suscripci|suscripción|meses|años/i);
+    expect(screen.getAllByText('Publicada 1 año')).toHaveLength(3);
+    expect(document.body.textContent).not.toMatch(/suscripci|meses/i);
   });
 });

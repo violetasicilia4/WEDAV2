@@ -1,11 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRight, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
 import { LandingPlans } from '@/components/landing-plans';
 import { pageMeta } from '@/lib/site';
+import { useSmoothScroll } from '@/lib/smooth-scroll';
 
 export const Route = createFileRoute('/')({
   head: () => {
@@ -50,27 +51,35 @@ const testimonials = [
   { quote: 'Nos sirvió para organizarnos con los invitados. Cada uno podía confirmar desde la página y nosotros ir viendo las respuestas sin tener que revisar todos los chats.', who: 'Mica & Agus', photo: '/parejas/mica-agus.jpg' },
 ];
 function Testimonials() {
-  // Tres testimonios a la vista: uno al lado del otro en pantallas grandes y uno debajo del otro en celular (sin carrusel ni scroll).
+  // Una cita a la vez, en grande, con flechas para pasar de una a otra. Todas las citas ocupan la misma celda: la sección no cambia de alto al pasar.
+  const [i, setI] = useState(0);
+  const n = testimonials.length;
+  const go = (d: number) => setI(v => (v + d + n) % n);
+  const t = testimonials[i]!;
+  const num = (v: number) => String(v).padStart(2, '0');
   return (
-    <div className="tg">
-      <div className="tm-head">
-        <p className="eyebrow">● Testimonios</p>
-        <h2>Lo que dicen las parejas</h2>
+    <div className="tq" role="group" aria-roledescription="carrusel" aria-label="Testimonios">
+      <p className="tq-label">/Testimonios</p>
+      <span className="tq-mark" aria-hidden="true">“</span>
+      <div className="tq-quotes">
+        {testimonials.map((q, k) => <blockquote key={q.who} className={k === i ? 'on' : undefined} aria-hidden={k === i ? undefined : true}>{q.quote}</blockquote>)}
       </div>
-      <ul className="tg-grid" aria-label="Testimonios">
-        {testimonials.slice(0, 3).map(t => (
-          <li key={t.who}>
-            <figure className="tg-card">
-              <blockquote>{t.quote}</blockquote>
-              <figcaption><img src={t.photo} alt="" width={48} height={48} loading="lazy" /><strong>{t.who}</strong></figcaption>
-            </figure>
-          </li>
-        ))}
-      </ul>
+      <div className="tq-rule" aria-hidden="true"><i style={{ width: `${100 / n}%`, transform: `translateX(${i * 100}%)` }} /></div>
+      <div className="tq-foot">
+        <figure className="tq-who" aria-live="polite">
+          <img key={t.who} src={t.photo} alt="" width={48} height={48} loading="lazy" />
+          <figcaption><strong>{t.who}</strong><span>{num(i + 1)} / {num(n)}</span></figcaption>
+        </figure>
+        <div className="tq-nav">
+          <button type="button" onClick={() => go(-1)} aria-label="Testimonio anterior"><ArrowLeft size={18} aria-hidden="true" /></button>
+          <button type="button" onClick={() => go(1)} aria-label="Testimonio siguiente"><ArrowRight size={18} aria-hidden="true" /></button>
+        </div>
+      </div>
     </div>
   );
 }
 function Index() {
+  useSmoothScroll();
   const heroVideo = useRef<HTMLVideoElement>(null);
   // El video (3,6 MB) se pide recién cuando la página terminó de cargar y el navegador está libre: la portada (póster) es lo primero que se ve
   // y no compite con el resto. Con movimiento reducido, ahorro de datos o conexión lenta no se descarga: queda el póster.

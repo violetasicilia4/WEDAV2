@@ -20,7 +20,7 @@ export const Route = createFileRoute('/panel/sitio')({ component: SiteEditor });
 const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
 const MAX_PHOTOS = 6;
 
-/** «Incluido en Completo»: solo para funciones que NO están en el plan base del sitio (lo que realmente diferencia los planes). */
+/** «Incluido en Celebración Plus»: solo para funciones que NO están en el plan base del sitio (lo que realmente diferencia los planes). */
 const tagFor = (f: Feature): string | undefined => {
   const p = planFor(f), base = planFor('site');
   return p && base && p.id !== base.id ? `Incluido en ${p.name}` : undefined;

@@ -8,7 +8,7 @@ Todo funciona **sin backend**: el estado vive en `localStorage` de este navegado
 - TanStack Start/Router (rutas por archivo) + React 19 + Vite + Tailwind 4 + Radix Dialog + shadcn (`src/components/ui` conserva solo `button` y `dialog`, que son los que se usan; el resto se puede volver a agregar con `npx shadcn add`).
 - `/` landing; `/ejemplo`, `/ejemplo/regalos` casamiento ficticio (Ignacio & Martina); `/encontrar` buscador de invitados.
 - Datos de la demo en `src/lib/demo-wedding.ts` (catálogo de 26 regalos, 4 categorías, menús, eventos, dress code…).
-- Planes (`src/lib/weda/plans.ts`, única fuente; la landing los muestra en `src/components/landing-plans.tsx`): **Regalos** ARS 95.000, **Invitación** ARS 180.000, **Completo** ARS 320.000, por evento y acumulativos.
+- Planes (`src/lib/weda/plans.ts`, única fuente; la landing los muestra en `src/components/landing-plans.tsx`): **Regalos** ARS 95.000, **Celebración** ARS 140.000, **Celebración Plus** ARS 150.000, por evento y acumulativos.
 - No existía ningún flujo de registro ni de creación de evento, ni panel.
 
 ## 2. Rutas
@@ -62,10 +62,10 @@ src/lib/weda/
 
 ## 5. Matriz de planes (y su supuesto)
 
-| Función | Regalos | Invitación | Completo |
+| Función | Regalos | Celebración | Celebración Plus |
 |---|---|---|---|
 | Lista de regalos, alias/tarjeta y registro de regalos recibidos | sí | sí | sí |
-| Micrositio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
+| Sitio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
 | Confirmación de asistencia (RSVP) | no | sí | sí |
 | Invitados (panel de respuestas) y mesas/grupos | no | sí | sí |
 | Música de la fiesta (solo configuración y vista previa; sin conexión real a Spotify) | no | no | sí |

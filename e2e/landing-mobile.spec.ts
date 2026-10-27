@@ -85,45 +85,56 @@ test.describe('Landing · celular 390 px', () => {
     expect(imgs[0]!.h).toBeGreaterThan(200);
   });
 
-  test('planes: precios intactos, «Ver todo lo que incluye» se abre y el CTA queda al pie de cada tarjeta', async ({ page }) => {
+  test('planes: precios intactos, «Ver lo que incluye» se abre y el CTA queda al pie de cada tarjeta', async ({ page }) => {
     await goLanding(page);
     const cards = page.locator('.plan-card');
     await expect(cards).toHaveCount(3);
     const prices = await cards.locator('.plan-price strong').allInnerTexts();
-    expect(prices.map(p => p.replace(/\s/g, ' '))).toEqual(['ARS 95.000', 'ARS 180.000', 'ARS 320.000']);
+    expect(prices.map(p => p.replace(/\s/g, ' '))).toEqual(['ARS 95.000', 'ARS 140.000', 'ARS 150.000']);
     for (let i = 0; i < 3; i++) {
       const card = cards.nth(i);
-      const m = await card.evaluate(c => { const cr = c.getBoundingClientRect(), b = c.querySelector('.seed-button')!.getBoundingClientRect(), s = c.querySelector('summary')!.getBoundingClientRect(); return { gapBottom: cr.bottom - b.bottom, btnH: b.height, btnW: b.width, cardW: cr.width, sumH: s.height, sumAbove: b.top > s.bottom }; });
+      const m = await card.evaluate(c => { const cr = c.getBoundingClientRect(), b = c.querySelector('.seed-button')!.getBoundingClientRect(), s = c.querySelector('.plan-more-btn')!.getBoundingClientRect(); return { gapBottom: cr.bottom - b.bottom, btnH: b.height, btnW: b.width, cardW: cr.width, sumH: s.height, sumAbove: b.top > s.bottom }; });
       expect(m.gapBottom).toBeLessThan(40);                 // el botón es lo último de la tarjeta
       expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.btnW).toBeGreaterThan(m.cardW * 0.8);
       expect(m.sumH).toBeGreaterThanOrEqual(44); expect(m.sumAbove).toBe(true);
-      await expect(card.getByRole('link', { name: 'Crear mi evento gratis' })).toHaveAttribute('href', '/crear/cuenta');
+      await expect(card.getByRole('link', { name: 'Empezar gratis' })).toHaveAttribute('href', '/crear/cuenta');
     }
-    const more = cards.nth(1).locator('details');
-    await cards.nth(1).locator('summary').click();
-    await expect(more).toHaveAttribute('open', '');
-    await expect(more.locator('h4').first()).toBeVisible();   // el desplegable muestra el detalle de cada plan incluido
+    await cards.nth(1).getByRole('button', { name: 'Ver lo que incluye' }).click();
+    const dlg = page.getByRole('dialog');
+    await expect(dlg).toBeVisible();                         // el detalle abre en una ventana: la tarjeta no crece
+    await expect(dlg).toContainText('Incluye todo lo de Regalos');   // lo heredado va en una línea, no repetido
+    expect(await dlg.evaluate(d => d.scrollHeight <= d.clientHeight)).toBe(true);   // todo entra en pantalla: sin scroll
+    await expect(dlg.getByRole('link', { name: 'Empezar gratis' })).toBeInViewport();
+    await expect(dlg.getByRole('link', { name: 'Empezar gratis' })).toHaveAttribute('href', '/crear/cuenta');
+    for (const t of ['Sitio con portada, nombres y fecha', 'Confirmación de asistencia (RSVP) online']) await expect(dlg).toContainText(t);
+    await page.keyboard.press('Escape');
+    await expect(dlg).toHaveCount(0);
     await expect(cards.nth(1).locator('.plan-inherit')).toContainText('Todo lo de Regalos');
     // Funcionalidades de los tres planes presentes (no se elimina ninguna).
     const all = await cards.allInnerTexts();
-    for (const t of ['Lista de regalos personalizada', 'Confirmación de asistencia (RSVP)', 'Música de la fiesta', 'Galería de fotos con hashtag e Instagram', 'Mensaje final personalizado']) expect(all.join('\n')).toContain(t);
+    for (const t of ['Lista de regalos', 'Confirmación de asistencia', 'Música de la fiesta', 'Galería de fotos', 'Mensaje final', 'Pago único', 'Publicada 1 año']) expect(all.join('\n')).toContain(t);
   });
 
-  test('testimonios: tres tarjetas a la vista, una debajo de la otra en celular, con la cita arriba y la foto y el nombre de la pareja abajo', async ({ page }) => {
+  test('testimonios: una cita grande a la vez, con pareja, contador y flechas que la cambian', async ({ page }) => {
     await goLanding(page);
-    const cards = page.locator('.tg-card');
-    await cards.first().scrollIntoViewIfNeeded();
-    await expect(cards).toHaveCount(3);
-    await expect(page.locator('.tm, .tm-track, .tm-dots')).toHaveCount(0);                 // sin carrusel ni puntos
-    const boxes = await cards.evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); const q = e.querySelector('blockquote')!.getBoundingClientRect(); const f = e.querySelector('figcaption')!.getBoundingClientRect(); return { top: r.top, left: r.left, right: r.right, quoteTop: q.top, capTop: f.top, name: e.querySelector('figcaption strong')!.textContent, hasImg: !!e.querySelector('figcaption img'), figText: e.querySelector('figcaption')!.textContent, vw: innerWidth }; }));
-    for (const b of boxes) {
-      expect(b.quoteTop).toBeLessThan(b.capTop);                                           // la cita va arriba y la pareja abajo
-      expect(b.hasImg).toBe(true);
-      expect(b.figText).toBe(b.name);                                                      // solo el nombre de la pareja: sin cargo ni rol
-      expect(b.left).toBeGreaterThanOrEqual(0); expect(b.right).toBeLessThanOrEqual(b.vw);
-    }
-    expect(boxes[1]!.top).toBeGreaterThan(boxes[0]!.top + 40);                            // en celular quedan en columna
-    expect(boxes[2]!.top).toBeGreaterThan(boxes[1]!.top + 40);
+    const tq = page.locator('.tq');
+    await tq.scrollIntoViewIfNeeded();
+    await expect(tq.getByText('/Testimonios')).toBeVisible();
+    await expect(page.locator('.tq-quotes blockquote.on')).toHaveCount(1);                 // una sola cita visible
+    const first = await page.locator('.tq-quotes blockquote.on').innerText();
+    await expect(tq.locator('.tq-who strong')).toHaveText('Camila & Lucas');               // solo el nombre de la pareja y su foto
+    await expect(tq.locator('.tq-who span')).toHaveText('01 / 04');
+    const m = await tq.evaluate(el => { const r = el.getBoundingClientRect(), q = el.querySelector('blockquote.on')!.getBoundingClientRect(), f = el.querySelector('.tq-foot')!.getBoundingClientRect(); return { left: q.left, right: innerWidth - q.right, quoteAbove: q.bottom <= f.top, vw: innerWidth, h: r.height }; });
+    expect(m.left).toBeGreaterThanOrEqual(12); expect(m.right).toBeGreaterThanOrEqual(12);   // la cita deja borde a cada costado
+    expect(m.quoteAbove).toBe(true);
+    await tq.getByRole('button', { name: 'Testimonio siguiente' }).click();
+    await expect(tq.locator('.tq-who strong')).toHaveText('Valentina & Mariano');
+    expect(await page.locator('.tq-quotes blockquote.on').innerText()).not.toBe(first);
+    await tq.getByRole('button', { name: 'Testimonio anterior' }).click();
+    await tq.getByRole('button', { name: 'Testimonio anterior' }).click();                  // da la vuelta al principio
+    await expect(tq.locator('.tq-who span')).toHaveText('04 / 04');
+    const btn = await tq.getByRole('button', { name: 'Testimonio siguiente' }).boundingBox();
+    expect(btn!.width).toBeGreaterThanOrEqual(44); expect(btn!.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });
 });

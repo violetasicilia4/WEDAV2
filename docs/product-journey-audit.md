@@ -17,7 +17,7 @@ La falta de servidor no es tema de este documento: se evalúa el recorrido como 
 
 - Titular de la landing: «Tu casamiento empieza antes del gran día.» Bajada: crear el sitio del casamiento, armar la lista de regalos y organizar las confirmaciones **[C]**.
 - Tres piezas que se muestran juntas: **lista de regalos simbólicos**, **sitio del casamiento** y **confirmación de asistencia**; invitados y mesas aparecen como gestión que «no se publica» **[C]**.
-- Promesa comercial: «Armá tu casamiento gratis. Publicalo cuando estés listo.» y tres planes acumulativos (Regalos, Invitación, Completo) con el precio en el diálogo de publicar **[C]**.
+- Promesa comercial: «Armá tu casamiento gratis. Publicalo cuando estés listo.» y tres planes acumulativos (Regalos, Celebración, Celebración Plus) con el precio en el diálogo de publicar **[C]**.
 - Modelo implícito: se construye gratis, **se paga al publicar**, el plan define qué ve el invitado y lo que queda afuera se conserva como borrador **[C]** (`plans.ts`, `publish.ts`).
 
 ## 2. Embudo reconstruido
@@ -26,7 +26,7 @@ Rutas reales: `/` → `/crear/cuenta` → `/crear` → `/crear/fecha` → `/crea
 
 | # | Etapa | Objetivo y pregunta | Acción principal | Qué necesita para decidir | Fricción o duda que introduce la interfaz | Para avanzar | Errores y recuperación | Próximo paso | Posible efecto |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | Landing | «¿Qué es y es para mí?» | «Crear mi evento» (7 enlaces con 3 textos —«Crear mi evento», «Crear mi lista de regalos», «Crear mi evento gratis»— al mismo destino) | Qué hace, cuánto cuesta, cómo se ve | Una sola promesa y un solo destino: consistente. Precios recién en el diálogo de publicar. Testimonios con nombres y fotos inventados (ver J8). | Un clic | — | Registro | Entrada al embudo |
+| 1 | Landing | «¿Qué es y es para mí?» | «Crear mi evento» (7 enlaces con 3 textos —«Crear mi evento», «Crear mi lista de regalos», «Empezar gratis»— al mismo destino) | Qué hace, cuánto cuesta, cómo se ve | Una sola promesa y un solo destino: consistente. Precios recién en el diálogo de publicar. Testimonios con nombres y fotos inventados (ver J8). | Un clic | — | Registro | Entrada al embudo |
 | 2 | Propuesta de valor | «¿Resuelve mi problema?» | Leer; mirar las tres demos | Relación sitio ↔ regalos ↔ invitados | La lista de regalos tiene su propio bloque con foto; la confirmación de asistencia aparece solo en una demo y el pie | — | — | Ejemplo o CTA | Comprensión |
 | 3 | Ejemplo | «¿Cómo quedaría el mío?» | «Ver ejemplo» → `/ejemplo` | Que se parezca a su casamiento | **Callejón sin CTA**: en el ejemplo solo hay «Volver a Weda» y el logo del pie (J6) | Volver a la landing | — | Landing otra vez | Fuga de intención |
 | 4 | CTA | «¿Qué pasa si hago clic?» | Clic | Que sea gratis y sin tarjeta | No se dice «sin tarjeta» antes del registro; sí «gratis» en el botón de los planes | Un clic | — | `/crear/cuenta` | Paso 1 del embudo |
@@ -57,7 +57,7 @@ Severidad: crítica / alta / media / baja. **Confianza** = qué tan sólida es l
 | J3 | Se puede pagar y publicar una página totalmente vacía (sin regalos, sin eventos, sin fecha). La lista de pendientes dice «hoy ninguna impide publicar». | **[C]** sonda: «Incluida en tu plan, pero todavía sin contenido» y botón «Pagar» activo | J, A | Media | Alta | Decisión comercial: ¿bloquear, advertir más fuerte o dejar libre? | S–M | Experimento: variante con confirmación explícita | ? |
 | J4 | El diálogo promete «pago único» y «publicada 1 año»; `ux-flows.md` §3 y §10 dicen que no están definidos. | **[C]** `publish-dialog.tsx` y docs | D, J | Alta (confianza) | Alta | Confirmar la regla comercial y alinear docs o interfaz. No inventar. | S | Revisión del dueño | ? |
 | J5 | Pared de cuenta antes de ver algo propio: cuenta con clave fuerte → 3 pantallas → recién entonces el panel. | **[C]** rutas y `crear.cuenta.tsx` | A, B, D | Alta | Media | Alternativa a evaluar: nombres y portada primero, cuenta al guardar/publicar. Cambia el modelo: no implementado. | L | Experimento A/B con tasa de paso 1→panel | ? |
-| J6 | `/ejemplo` y `/ejemplo/regalos` no tienen forma de empezar el propio sin volver a la landing. | **[C]** `site-shell.tsx`; **[R]** «desde el ejemplo…» | B, D | Media | Alta | Enlace «Crear mi evento gratis» en el pie del ejemplo (solo en la demo, no en los sitios de parejas ni en la vista previa) | S | Prueba citada; métrica: clics ejemplo → registro | ✔ |
+| J6 | `/ejemplo` y `/ejemplo/regalos` no tienen forma de empezar el propio sin volver a la landing. | **[C]** `site-shell.tsx`; **[R]** «desde el ejemplo…» | B, D | Media | Alta | Enlace «Empezar gratis» en el pie del ejemplo (solo en la demo, no en los sitios de parejas ni en la vista previa) | S | Prueba citada; métrica: clics ejemplo → registro | ✔ |
 | J7 | «Vista previa» es un pop-up en el encabezado y también una página completa (`/panel/vista-previa`) a la que lleva el último «Siguiente paso»; la página repite «Publicar». | **[C]** `panel.index.tsx`, `journey.ts`, `panel.vista-previa.tsx` | F | Baja–media | Media | Unificar en una sola superficie | M | Prueba de tareas con personas | ? (I6 de `ui-audit.md`) |
 | J8 | «Lo que dicen las parejas» muestra testimonios con nombres y fotos inventados («Parejas ficticias de la demo» en el código). | **[C]** `routes/index.tsx` líneas 57–63 | D | Alta (confianza) | Alta | Etiquetar como ejemplo o reemplazar por testimonios reales con permiso. Contenido de la dueña: no se tocó. | S | Revisión del dueño | ? |
 | J9 | Qué falta para publicar solo se ve dentro del diálogo y después de elegir un plan; el Inicio no muestra pendientes. | **[C]** `publish.ts` depende del plan | J, F | Media | Media | Mostrar los pendientes comunes antes de elegir plan | M | Métrica: abandono del diálogo en el paso «elegir» | ○ |
@@ -76,7 +76,7 @@ Severidad: crítica / alta / media / baja. **Confianza** = qué tan sólida es l
 |---|---|---|
 | Fecha y lugar opcionales en el alta y en «Datos del casamiento» (sin interruptores) | `crear.fecha.tsx`, `couple-form.tsx` | `desktop/journeys.spec.ts` (alta apurada, fecha pasada, cambia de idea) |
 | El pendiente de la fecha abre los datos | `publish.ts`, `panel.index.tsx` | «sin fecha ni lugar…» |
-| CTA «Crear mi evento gratis» en el pie del ejemplo | `site-shell.tsx`, `invitacion.css` | «desde el ejemplo…» |
+| CTA «Empezar gratis» en el pie del ejemplo | `site-shell.tsx`, `invitacion.css` | «desde el ejemplo…» |
 
 Cada cambio de flujo se hizo con la prueba escrita primero o a la par y se repitió la suite afectada. Detalle en [e2e-coverage.md](e2e-coverage.md).
 

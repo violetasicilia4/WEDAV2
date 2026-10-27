@@ -1,33 +1,51 @@
 import { Link } from '@tanstack/react-router';
-import { Check } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { formatPrice, HIGHLIGHTS, PLANS, planById, PRICE_UNIT, type Plan } from '@/lib/weda/plans';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { HIGHLIGHT_ICON } from '@/components/plan-icons';
+import type { PlanId } from '@/lib/weda/types';
+import { formatPrice, PLANS, planById, PUBLICATION_TERM, type Plan } from '@/lib/weda/plans';
 
 /** Lo que incluye un plan, de más básico a más completo: cada plan suma lo suyo a lo del anterior. */
 const chain = (plan: Plan): Plan[] => (plan.inherits ? [...chain(planById(plan.inherits) as Plan), plan] : [plan]);
 
+/** Foto de fondo de la cabecera de cada plan (en /public): va desenfocada y suave, solo de ambiente. */
+const PLAN_PHOTO: Record<PlanId, string> = { regalos: '/plan-regalos.webp', invitacion: '/plan-celebracion.webp', completo: '/plan-celebracion-plus.webp' };
+
 function PlanCard({ plan }: { plan: Plan }) {
   const base = plan.inherits ? planById(plan.inherits) : undefined;
+  const [open, setOpen] = useState(false);
   return (
     <article className="plan-card" aria-labelledby={`plan-${plan.id}`}>
-      <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
-      <p className="plan-sub">{plan.tagline}</p>
-      <p className="plan-price"><strong>{formatPrice(plan.price)}</strong><span>{PRICE_UNIT}</span></p>
-      <p className="plan-for-line">{plan.summary}</p>
+      <header className="plan-media" style={{ ['--plan-photo' as string]: `url(${PLAN_PHOTO[plan.id]})` }}>
+        <div className="plan-media-top">
+          <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
+          <p className="plan-sub">{plan.product}</p>
+        </div>
+        <div className="plan-media-bottom">
+          <p className="plan-price"><strong>{formatPrice(plan.price)}</strong></p>
+          <p className="plan-term"><b>Pago único</b> · <span>Publicada {PUBLICATION_TERM}</span></p>
+        </div>
+      </header>
       <ul>
-        {base && <li className="plan-inherit"><Check size={18} strokeWidth={1.6} aria-hidden="true" /><span><strong>Todo lo de {base.name}</strong>, y además:</span></li>}
-        {plan.items.slice(0, HIGHLIGHTS).map(it => <li key={it}><Check size={18} strokeWidth={1.6} aria-hidden="true" /><span>{it}</span></li>)}
+        {base && <li className="plan-inherit"><Plus size={18} strokeWidth={1.6} aria-hidden="true" /><span><strong>Todo lo de {base.name}</strong>, y además:</span></li>}
+        {plan.highlights.map(h => {
+          const Icon = HIGHLIGHT_ICON[h.icon];
+          return <li key={h.label}><Icon size={18} strokeWidth={1.5} aria-hidden="true" /><span>{h.label}</span></li>;
+        })}
       </ul>
-      <details className="plan-more">
-        <summary>Ver todo lo que incluye</summary>
-        {chain(plan).map(p => (
-          <div key={p.id}>
-            <h4>{p.name}</h4>
-            <ul>{p.items.map(it => <li key={it}>{it}</li>)}</ul>
-          </div>
-        ))}
-      </details>
-      <Button variant="seed" asChild><Link to="/crear/cuenta">Crear mi evento gratis</Link></Button>
+      <button type="button" className="plan-more-btn" onClick={() => setOpen(true)} aria-haspopup="dialog">Ver lo que incluye</button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="plan-dialog">
+          <DialogTitle>{plan.name}: lo que incluye</DialogTitle>
+          <DialogDescription>{formatPrice(plan.price)} · Pago único · Publicada {PUBLICATION_TERM}</DialogDescription>
+          {base && <p className="plan-dialog-base"><Plus size={16} strokeWidth={1.6} aria-hidden="true" /><span>Incluye todo lo de {chain(plan).slice(0, -1).map(p => p.name).join(' y ')}</span></p>}
+          <ul>{plan.items.map(it => <li key={it}>{it}</li>)}</ul>
+          <Button variant="seed" asChild><Link to="/crear/cuenta">Empezar gratis</Link></Button>
+        </DialogContent>
+      </Dialog>
+      <Button variant="seed" asChild><Link to="/crear/cuenta">Empezar gratis</Link></Button>
     </article>
   );
 }
@@ -39,7 +57,7 @@ export function LandingPlans() {
       <div className="section-inner">
         <div className="plans-head">
           <h2>Armá tu casamiento gratis. Publicalo cuando estés listo.</h2>
-          <p>Creá tu evento, personalizá tu micrositio y probá las herramientas de Weda. Sin tarjeta y sin elegir un plan por adelantado.</p>
+          <p>Creá tu evento, personalizá tu sitio y probá las herramientas de Weda.</p>
         </div>
         <div className="plans-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
       </div>

@@ -57,7 +57,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 | `ConfirmDialog` | Confirmación de acciones destructivas (eliminar invitado, grupo, reiniciar la demo). |
 | `Locked`, `LockedBlock` | Función no incluida en el plan elegido: qué es, en qué plan está y que lo cargado se conserva como borrador; el botón «Ver los planes» abre el diálogo de planes. Sin upsell en el resto de las pantallas. |
 | `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. |
-| Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver todo lo que incluye» en `<details>`, CTA «Crear mi evento gratis»). Sin plan «recomendado». Todo sale de `plans.ts`. |
+| Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver todo lo que incluye» en `<details>`, CTA «Empezar gratis»). Sin plan «recomendado». Todo sale de `plans.ts`. |
 | `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`; `jump` repite el pedido para la misma sección y espera si la sección todavía no existe). |
 | `PublishDialog` (`panel/publish-dialog.tsx`) | Elegir → revisar y pagar (pago de prueba) → publicada; con publicación existente, «Tu publicación» (mejorar pagando la diferencia, bajar, volver a publicar). Clases `.pn-pay` (lista de datos), `.pn-upgrade`, `.pn-spin`. Ver `ux-flows.md`. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |
@@ -165,7 +165,7 @@ Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avi
 
 - **Auditoría de UI (2026-10-23, ver [ui-audit.md](ui-audit.md)):** en `.pn-page-head.is-compact` (≥ 561 px) el texto cede ancho y las acciones (`.pn-head-actions`, `.rg-head-actions`) se quedan en una sola fila. El 404 y la pantalla de error usan `seed-button` / `seed-link-button` y el token de título de página (no utilidades de Tailwind para el color del botón: `a { color: inherit }` las anula). El panel ya no usa tamaños de fuente a medio píxel: solo la escala 12 · 13 · 14 · 15 · 16 · 18 · 20 · 22 · 24 · 26 · 28 px. El scrim de `.pn-cover` es más marcado (20 % → .62) para que la etiqueta y la fecha se lean sobre fotos claras.
 
-- **Alta y datos del casamiento (2026-10-23):** fecha y lugar son campos opcionales («· opcional») sin interruptores; el diálogo de publicar enlaza «Definir la fecha» a `/panel?editar=datos`. El pie de `/ejemplo*` suma el enlace de texto `.iv-footer-cta` («Crear mi evento gratis»), solo en la demo.
+- **Alta y datos del casamiento (2026-10-23):** fecha y lugar son campos opcionales («· opcional») sin interruptores; el diálogo de publicar enlaza «Definir la fecha» a `/panel?editar=datos`. El pie de `/ejemplo*` suma el enlace de texto `.iv-footer-cta` («Empezar gratis»), solo en la demo.
 
 ## Editor de la invitación (2026-10-27)
 - **«Save the date» en la estructura:** fila reordenable como las demás (sin «Quitar»); aparece solo con fecha. Detalle en `ux-flows.md` §15.
