@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Check, ChevronRight, Copy, Eye, Gift as GiftIcon, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
 import { Field, Locked, useToast } from '@/components/panel/ui';
@@ -129,71 +129,121 @@ function BankFields({ bank, cbu, alias }: { bank: string; cbu: string; alias: st
 }
 
 /* Ordenar las tarjetas arrastrándolas: con el mouse se agarran y se llevan; con el dedo, se mantienen apretadas un instante y se llevan (así el scroll de la página sigue andando).
-   Tocar una tarjeta (sin arrastrar) abre su edición. Con el teclado: Alt + flechas mueven la tarjeta enfocada. */
+   Tocar una tarjeta (sin arrastrar) abre su edición. Con el teclado: Alt + flechas mueven la tarjeta enfocada.
+   Fluidez: la tarjeta que se lleva sigue al puntero por transform directo (sin pasar por el render), las demás se deslizan a su nuevo lugar (FLIP) y al soltar la tarjeta se asienta en su hueco.
+   El lugar nuevo se decide con la grilla sin transformaciones (offsets), no con lo que se ve en pantalla, para que las animaciones no la confundan. */
+const SETTLE_MS = 170;
 function SortableGrid({ items, onMove, onOpen, renderCard }: { items: ListGift[]; onMove: (id: string, to: number) => void; onOpen: (g: ListGift) => void; renderCard: (g: ListGift, i: number) => React.ReactNode }) {
   const listRef = useRef<HTMLUListElement>(null);
-  const [drag, setDrag] = useState<{ id: string; dx: number; dy: number } | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
   const [order, setOrder] = useState<string[] | null>(null);
   const justDragged = useRef(false);
-  const st = useRef<{ id: string; pointerId: number; startX: number; startY: number; grabX: number; grabY: number; timer: number | null; active: boolean; touch: boolean; order: string[] } | null>(null);
+  const raf = useRef(0);
+  const before = useRef<Map<string, DOMRect>>(new Map());
+  const st = useRef<{ id: string; pointerId: number; startX: number; startY: number; grabX: number; grabY: number; x: number; y: number; timer: number | null; active: boolean; touch: boolean; order: string[] } | null>(null);
 
   const shown = order ? order.map(id => items.find(g => g.id === id)).filter((g): g is ListGift => !!g) : items;
+  const cardEl = useCallback((id: string) => listRef.current?.querySelector<HTMLElement>(`[data-id="${id}"]`) ?? null, []);
+
+  // La tarjeta llevada queda exactamente donde está el puntero (menos el punto por el que se la agarró).
+  const place = useCallback(() => {
+    const cur = st.current, list = listRef.current; if (!cur?.active || !list) return;
+    const li = cardEl(cur.id); if (!li) return;
+    const box = list.getBoundingClientRect();
+    li.style.transform = `translate(${cur.x - box.left - cur.grabX - li.offsetLeft}px, ${cur.y - box.top - cur.grabY - li.offsetTop}px) scale(1.03)`;
+  }, [cardEl]);
+  // Decide el lugar según la tarjeta (en la grilla, sin transformaciones) sobre la que está el puntero; una zona central evita que salte de ida y vuelta.
+  const retarget = () => {
+    const cur = st.current, list = listRef.current; if (!cur?.active || !list) return;
+    const box = list.getBoundingClientRect(); const px = cur.x - box.left, py = cur.y - box.top;
+    const cards = [...list.children] as HTMLElement[];
+    const over = cards.find(c => {
+      if (c.dataset['id'] === cur.id) return false;
+      const mx = c.offsetWidth * 0.2, my = c.offsetHeight * 0.2;
+      return px >= c.offsetLeft + mx && px <= c.offsetLeft + c.offsetWidth - mx && py >= c.offsetTop + my && py <= c.offsetTop + c.offsetHeight - my;
+    });
+    if (!over) return;
+    const target = cur.order.indexOf(over.dataset['id'] ?? ''), from = cur.order.indexOf(cur.id);
+    if (target < 0 || target === from) return;
+    // Posiciones de antes (con lo que ya se ve): sirven para deslizar cada tarjeta desde donde estaba.
+    before.current = new Map(cards.map(c => [c.dataset['id'] ?? '', c.getBoundingClientRect()]));
+    const next = [...cur.order]; next.splice(from, 1); next.splice(target, 0, cur.id); cur.order = next; setOrder(next);
+  };
+  // Después de reordenar: las demás tarjetas se deslizan de su lugar anterior al nuevo, y la llevada se vuelve a pegar al puntero.
+  useLayoutEffect(() => {
+    const list = listRef.current; if (!list || !st.current?.active) return;
+    for (const el of [...list.children] as HTMLElement[]) {
+      const id = el.dataset['id'] ?? ''; if (id === st.current.id) continue;
+      const old = before.current.get(id); if (!old) continue;
+      const now = el.getBoundingClientRect(); const dx = old.left - now.left, dy = old.top - now.top;
+      if (!dx && !dy) continue;
+      el.style.transition = 'none'; el.style.transform = `translate(${dx}px, ${dy}px)`;
+      el.getBoundingClientRect();
+      el.style.transition = `transform ${SETTLE_MS + 30}ms cubic-bezier(.2, .8, .2, 1)`; el.style.transform = '';
+    }
+    before.current = new Map();
+    place();
+  }, [order, place]);
+
+  const clearStyles = () => { for (const el of [...(listRef.current?.children ?? [])] as HTMLElement[]) { el.style.transform = ''; el.style.transition = ''; } };
+  const loop = () => {
+    const cur = st.current; if (!cur?.active) { raf.current = 0; return; }
+    // Cerca del borde de la pantalla, la página acompaña (y la tarjeta sigue pegada al puntero).
+    if (cur.y < 90) window.scrollBy(0, -12); else if (cur.y > window.innerHeight - 90) window.scrollBy(0, 12);
+    place(); retarget();
+    raf.current = window.requestAnimationFrame(loop);
+  };
 
   const finish = (commit: boolean) => {
     const cur = st.current;
     if (cur?.timer) window.clearTimeout(cur.timer);
-    if (cur?.active) {
-      if (commit) onMove(cur.id, cur.order.indexOf(cur.id));
-      // El «click» que sigue al soltar no tiene que abrir la edición.
-      justDragged.current = true; window.setTimeout(() => { justDragged.current = false; }, 0);
-    }
-    st.current = null; setDrag(null); setOrder(null);
+    window.cancelAnimationFrame(raf.current); raf.current = 0;
+    if (!cur?.active) { st.current = null; return; }
+    st.current = null;
+    // El «click» que sigue al soltar no tiene que abrir la edición.
+    justDragged.current = true; window.setTimeout(() => { justDragged.current = false; }, 0);
+    if (commit) onMove(cur.id, cur.order.indexOf(cur.id));
+    // La tarjeta se asienta en su hueco y recién después se suelta todo.
+    const li = cardEl(cur.id);
+    if (li) { li.style.transition = `transform ${SETTLE_MS}ms cubic-bezier(.2, .8, .2, 1)`; li.style.transform = 'translate(0, 0) scale(1)'; }
+    window.setTimeout(() => { clearStyles(); setDragId(null); setOrder(null); }, SETTLE_MS + 10);
   };
 
   const begin = (id: string) => {
     const cur = st.current; if (!cur) return;
     cur.active = true; cur.order = items.map(g => g.id);
-    setOrder(cur.order); setDrag({ id, dx: 0, dy: 0 });
-    try { (listRef.current?.querySelector(`[data-id="${id}"]`) as HTMLElement | null)?.setPointerCapture(cur.pointerId); } catch { /* sin captura */ }
+    setOrder(cur.order); setDragId(id);
+    try { cardEl(id)?.setPointerCapture(cur.pointerId); } catch { /* sin captura */ }
+    if (typeof navigator !== 'undefined' && cur.touch) navigator.vibrate?.(8);
+    window.requestAnimationFrame(() => { place(); raf.current = window.requestAnimationFrame(loop); });
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLLIElement>, id: string) => {
+    if (st.current) return;
     if ((e.target as HTMLElement).closest('.rg-actions')) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const li = e.currentTarget; const r = li.getBoundingClientRect();
-    const touch = e.pointerType !== 'mouse';
-    st.current = { id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, grabX: e.clientX - r.left, grabY: e.clientY - r.top, timer: null, active: false, touch, order: items.map(g => g.id) };
+    const r = e.currentTarget.getBoundingClientRect(); const touch = e.pointerType !== 'mouse';
+    st.current = { id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, grabX: e.clientX - r.left, grabY: e.clientY - r.top, x: e.clientX, y: e.clientY, timer: null, active: false, touch, order: items.map(g => g.id) };
     if (touch) st.current.timer = window.setTimeout(() => begin(id), 280);
   };
   const onPointerMove = (e: React.PointerEvent<HTMLLIElement>) => {
     const cur = st.current; if (!cur || cur.pointerId !== e.pointerId) return;
+    cur.x = e.clientX; cur.y = e.clientY;
     if (!cur.active) {
       const moved = Math.hypot(e.clientX - cur.startX, e.clientY - cur.startY);
       // Con el dedo, moverse antes de tiempo es un scroll: se cancela el arrastre.
       if (cur.touch) { if (moved > 8 && cur.timer) { window.clearTimeout(cur.timer); st.current = null; } return; }
-      if (moved > 5) begin(cur.id); else return;
+      if (moved > 5) begin(cur.id);
+      return;
     }
-    const list = listRef.current; if (!list) return;
-    const li = list.querySelector(`[data-id="${cur.id}"]`) as HTMLElement | null; if (!li) return;
-    const box = list.getBoundingClientRect();
-    // La tarjeta sigue al puntero: su desplazamiento es la diferencia con el lugar que le toca en la grilla.
-    setDrag({ id: cur.id, dx: e.clientX - box.left - cur.grabX - li.offsetLeft, dy: e.clientY - box.top - cur.grabY - li.offsetTop });
-    // El lugar nuevo es el de la tarjeta sobre la que está el puntero.
-    const cards = [...list.children] as HTMLElement[];
-    const over = cards.find(c => { if (c === li) return false; const r = c.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; });
-    if (over) {
-      const target = cur.order.indexOf(over.dataset['id'] ?? ''); const from = cur.order.indexOf(cur.id);
-      if (target >= 0 && target !== from) { const next = [...cur.order]; next.splice(from, 1); next.splice(target, 0, cur.id); cur.order = next; setOrder(next); }
-    }
-    // Cerca del borde de la pantalla, la página acompaña.
-    if (e.clientY < 90) window.scrollBy(0, -14); else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 14);
+    place(); retarget();
   };
   // Mientras se arrastra con el dedo no tiene que scrollear la página.
   useEffect(() => {
     const el = listRef.current; if (!el) return;
     const stop = (e: TouchEvent) => { if (st.current?.active) e.preventDefault(); };
     el.addEventListener('touchmove', stop, { passive: false });
-    return () => el.removeEventListener('touchmove', stop);
+    return () => { el.removeEventListener('touchmove', stop); window.cancelAnimationFrame(raf.current); };
   }, []);
 
   const keyMove = (e: React.KeyboardEvent<HTMLLIElement>, id: string) => {
@@ -202,26 +252,23 @@ function SortableGrid({ items, onMove, onOpen, renderCard }: { items: ListGift[]
     const i = items.findIndex(x => x.id === id);
     onMove(id, i + (e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1));
     // Después de reordenar el foco sigue en la misma tarjeta.
-    window.requestAnimationFrame(() => (listRef.current?.querySelector(`[data-id="${id}"]`) as HTMLElement | null)?.focus());
+    window.requestAnimationFrame(() => cardEl(id)?.focus());
   };
 
   return (
     <>
       <p id="pn-sort-help" className="pn-sr">Para cambiar el orden con el teclado, mantené Alt y usá las flechas.</p>
-      <ul ref={listRef} className={`rg-grid rg-sortable${drag ? ' is-dragging' : ''}`} aria-label="Regalos de tu lista (podés ordenarlos arrastrando)">
-        {shown.map((g, i) => {
-          const dragging = drag?.id === g.id;
-          return (
-            <li key={g.id} data-id={g.id} className={`rg-card${dragging ? ' is-drag' : ''}`} style={dragging ? { transform: `translate(${drag!.dx}px, ${drag!.dy}px)` } : undefined} tabIndex={0}
-              aria-roledescription="elemento ordenable" aria-describedby="pn-sort-help"
-              onPointerDown={e => onPointerDown(e, g.id)} onPointerMove={onPointerMove} onPointerUp={() => finish(true)} onPointerCancel={() => finish(false)}
-              onContextMenu={e => { if (st.current?.touch) e.preventDefault(); }}
-              onClick={e => { if (justDragged.current || (e.target as HTMLElement).closest('.rg-actions')) return; onOpen(g); }}
-              onKeyDown={e => { keyMove(e, g.id); if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onOpen(g); } }}>
-              {renderCard(g, i)}
-            </li>
-          );
-        })}
+      <ul ref={listRef} className={`rg-grid rg-sortable${dragId ? ' is-dragging' : ''}`} aria-label="Regalos de tu lista (podés ordenarlos arrastrando)">
+        {shown.map((g, i) => (
+          <li key={g.id} data-id={g.id} className={`rg-card${dragId === g.id ? ' is-drag' : ''}`} tabIndex={0}
+            aria-roledescription="elemento ordenable" aria-describedby="pn-sort-help"
+            onPointerDown={e => onPointerDown(e, g.id)} onPointerMove={onPointerMove} onPointerUp={() => finish(true)} onPointerCancel={() => finish(false)}
+            onContextMenu={e => { if (st.current?.touch) e.preventDefault(); }}
+            onClick={e => { if (justDragged.current || (e.target as HTMLElement).closest('.rg-actions')) return; onOpen(g); }}
+            onKeyDown={e => { keyMove(e, g.id); if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onOpen(g); } }}>
+            {renderCard(g, i)}
+          </li>
+        ))}
       </ul>
     </>
   );

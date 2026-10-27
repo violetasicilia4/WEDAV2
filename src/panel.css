@@ -1564,7 +1564,9 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .rg-sortable .rg-card img { pointer-events: none; -webkit-user-drag: none; }
 .rg-sortable.is-dragging, .rg-sortable.is-dragging .rg-card { cursor: grabbing; }
 /* La tarjeta que se lleva se levanta por encima de las demás. */
-.rg-sortable .rg-card.is-drag { z-index: 5; box-shadow: 0 14px 34px rgb(59 60 58 / .25); }
+.rg-sortable .rg-card.is-drag { z-index: 5; box-shadow: 0 14px 34px rgb(59 60 58 / .25); will-change: transform; }
+.rg-sortable.is-dragging .rg-card:not(.is-drag) { will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .rg-sortable .rg-card { transition: none !important; } }
 
 /* Aportes recibidos: el bloque de abajo (vacío o con la lista) se separa de los tres totales. */
 .pn-tabpanel .gl-stats + * { margin-top: 24px; }
