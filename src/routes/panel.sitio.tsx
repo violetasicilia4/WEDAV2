@@ -239,7 +239,7 @@ function SiteEditor() {
   // `null` = la estructura de la invitación; una sección = su edición.
   const [sel, setSel] = useState<SectionId | null>(null);
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
-  const [device, setDevice] = useState<Device>(() => (typeof window !== 'undefined' && window.matchMedia('(min-width: 1100px)').matches ? 'desktop' : 'mobile'));
+  const [device, setDevice] = useState<Device>(() => (typeof window !== 'undefined' && window.matchMedia('(min-width: 1280px)').matches ? 'desktop' : 'mobile'));
   const [jump, setJump] = useState(0);
   const [announce, setAnnounce] = useState('');
   const [openEv, setOpenEv] = useState<SiteEvent['key'] | null>(() => s.site.events.find(e => e.enabled)?.key ?? null);
@@ -324,7 +324,7 @@ function SiteEditor() {
 
 
   return (
-    <div className="pn-page pn-editor ed-page" data-kb={kb} data-tab={tab}>
+    <div className="pn-page pn-editor ed-page" data-kb={kb} data-tab={tab} data-sel={sel ?? undefined}>
       <header className="pn-page-head is-compact">
         <div>
           <h1>Tu página</h1>
@@ -403,15 +403,20 @@ function SiteEditor() {
             </>
           ) : (
             <>
-              <div className="ed-bar">
-                <button type="button" className="ed-back" onClick={back}><ArrowLeft size={16} aria-hidden="true" />Tu invitación</button>
-                {REMOVABLE.includes(sel!) && !sec.locked && !hiddenNow && <button type="button" className="pn-btn is-ghost is-small" onClick={() => remove(sel!, sec.label)}>Quitar de la invitación</button>}
-              </div>
-              {!sec.locked && (
-                <div className="pn-live ed-live">
-                  <LiveCard s={s} section={sel!} label={sec.title} hidden={hiddenNow} openEvent={openEv} keyboard={kb} onSeeFull={() => setTab('preview')} />
+              {/* Barra fija mientras se edita: dónde estoy (la sección), cómo vuelvo (flecha) y «Listo», siempre a la vista aunque el formulario sea largo.
+                  En el celular la ventana en vivo va pegada debajo, en el mismo bloque fijo, para que nada del formulario asome por encima. */}
+              <div className="ed-stick">
+                <div className="ed-bar">
+                  <button type="button" className="ed-back" onClick={back} aria-label="Volver a Tu invitación"><ArrowLeft size={18} aria-hidden="true" /><span className="ed-back-txt">Tu invitación</span></button>
+                  <p className="ed-now" aria-hidden="true">{(() => { const Icon = ICON[sel!]; return <Icon size={16} strokeWidth={1.7} />; })()}<span>{sec.label}</span></p>
+                  <button type="button" className="pn-btn is-small ed-done" onClick={back}>Listo</button>
                 </div>
-              )}
+                {!sec.locked && (
+                  <div className="pn-live ed-live">
+                    <LiveCard s={s} section={sel!} label={sec.title} hidden={hiddenNow} openEvent={openEv} keyboard={kb} onSeeFull={() => setTab('preview')} />
+                  </div>
+                )}
+              </div>
               <div className="ed-form">
 
       {sel === 'portada' && (
@@ -523,7 +528,9 @@ function SiteEditor() {
         </Panel>
       )}
 
-                <div className="pn-actions"><button type="button" className="pn-btn" onClick={back}>Listo</button></div>
+                {REMOVABLE.includes(sel!) && !sec.locked && !hiddenNow && (
+                  <div className="pn-actions ed-remove-row"><button type="button" className="pn-btn is-ghost is-small" onClick={() => remove(sel!, sec.label)}>Quitar de la invitación</button><span className="pn-hint">Lo que cargaste se guarda.</span></div>
+                )}
               </div>
             </>
           )}
@@ -535,7 +542,9 @@ function SiteEditor() {
               <button type="button" className={device === 'mobile' ? 'on' : ''} aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Celular</button>
               <button type="button" className={device === 'desktop' ? 'on' : ''} aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Compu</button>
             </div>
-            <p className="ed-hint">Tocá una sección para editarla</p>
+            {sec && tab === 'preview'
+              ? <button type="button" className="ed-resume" onClick={() => { setTab('edit'); setJump(j => j + 1); }}><ArrowLeft size={16} aria-hidden="true" />Seguir editando {sec.label}</button>
+              : <p className="ed-hint">Tocá una sección para editarla</p>}
             <button type="button" className="pn-link" onClick={() => openPreview('home', anchor)}>Ver completa</button>
           </div>
           <SitePreview path={path} device={device} anchor={anchor} jump={jump} active={sel && sel !== 'portada' ? sel : sel} onSelect={fromPreview} label="Vista previa de tu invitación, tal como la ven tus invitados" />

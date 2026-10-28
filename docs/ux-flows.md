@@ -255,3 +255,14 @@ Hay servidor y base de datos (detalle en [backend-readiness.md](backend-readines
 - **Supuesto (a confirmar):** puede quedar en cualquier lugar, incluso después de las fotos o la música; no se pidió poder ocultarla.
 - **Fotos en celular (≤ 700 px):** corregido el mosaico (se veían apiladas: con 3 a 6 fotos algunas quedaban de 0 px de alto o fuera de la grilla de 2 columnas por reglas de escritorio más específicas). Ver `invitacion.css` y `e2e/gallery-mosaic.spec.ts`.
 
+
+## Tu página: barra de contexto al editar y dos columnas desde 1024 px (2026-10-28)
+
+Detalle, mediciones y alternativas en [ui-iteration-audit.md](ui-iteration-audit.md).
+
+- **Mientras se edita una sección, una barra fija dice dónde estás y cómo volver:** flecha («Volver a Tu invitación»), ícono + nombre de la sección y «Listo», siempre a la vista aunque el formulario sea largo. Antes, «Listo» quedaba al final y la flecha al principio del formulario, y con Eventos uno de los dos estaba siempre fuera de la pantalla.
+- **Celular:** la ventana en vivo va pegada debajo de la barra, en el mismo bloque fijo y opaco, para que el formulario no asome por encima. Mientras se edita, del encabezado de la página queda solo «Editar | Cómo queda». En «Cómo queda», «← Seguir editando {sección}» vuelve a la misma sección. Los campos enfocados no quedan tapados por el bloque fijo, que se achica con el teclado.
+- **«Quitar de la invitación»** pasó de la barra de arriba al pie del formulario, separado de «Listo», con «Lo que cargaste se guarda». Quitar desde la fila de «Tu invitación» (✕, con «Deshacer») no cambió.
+- **Filas en ≤ 420 px:** sin el número de orden, para que los nombres no se corten (el ícono y la posición dan el orden).
+- **Compu:** dos columnas desde 1024 px (antes 1100). Entre 1024 y 1279 px se reparten por igual (formulario ≥ 340 px, invitación ≥ 320 px). La vista previa arranca en «Compu» desde 1280 px.
+- **Sin cambios de modelo:** las mismas secciones, el mismo orden, el mismo guardado y el mismo «Mostrar» por evento. Esto último queda como decisión abierta (H12 en la auditoría).

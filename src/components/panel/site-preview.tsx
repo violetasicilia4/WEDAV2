@@ -67,6 +67,14 @@ export function SitePreview({ path, device, anchor, jump, active, onSelect, labe
   const frameH = device === 'mobile' ? Math.min(box.h, 860) : box.h;
   const outerW = W * scale;
 
+  /** Grosor del marcado en píxeles de la página (no de la pantalla): ≈ 3 px visibles aunque la página esté achicada.
+   *  Va en una hoja de estilo propia y no en `style` del <html>: tocar atributos del <html> antes de que React hidrate la página da error de hidratación. */
+  const setWidth = useCallback((doc: Document) => {
+    let st = doc.getElementById('ed-width');
+    if (!st) { st = doc.createElement('style'); st.id = 'ed-width'; doc.head.appendChild(st); }
+    st.textContent = `:root { --ed-w: ${Math.max(3, 3 / scale)}px; }`;
+  }, [scale]);
+
   /** Marca las secciones tocables y la que se está editando. Idempotente: solo toca el DOM si algo falta. */
   const mark = useCallback(() => {
     const doc = frame.current?.contentDocument;
@@ -116,14 +124,12 @@ export function SitePreview({ path, device, anchor, jump, active, onSelect, labe
     }, true);
     let queued = false;
     new MutationObserver(() => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; mark(); }); }).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-    doc.documentElement.style.setProperty('--ed-w', `${Math.max(3, 3 / scale)}px`);
+    setWidth(doc);
     mark();
     scrollTo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mark, scrollTo]);
+  }, [mark, scrollTo, setWidth]);
 
-  // Grosor del marcado en píxeles de la página (no de la pantalla): ≈ 3 px visibles aunque la página esté achicada.
-  useEffect(() => { frame.current?.contentDocument?.documentElement.style.setProperty('--ed-w', `${Math.max(3, 3 / scale)}px`); }, [scale, device]);
+  useEffect(() => { const doc = frame.current?.contentDocument; if (doc?.head) setWidth(doc); }, [setWidth]);
   useEffect(mark, [active, mark]);
   useEffect(scrollTo, [scrollTo]);
   useEffect(() => () => watch.current?.disconnect(), []);

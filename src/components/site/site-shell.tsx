@@ -89,7 +89,8 @@ function useFitOneLine(root: RefObject<HTMLElement | null>, selector: string, mi
         n.style.whiteSpace = 'nowrap';
         if (n.scrollWidth > n.clientWidth + 1) {
           const base = parseFloat(getComputedStyle(n).fontSize);
-          n.style.fontSize = `${Math.floor(base * Math.max(minScale, n.clientWidth / n.scrollWidth) * 100) / 100}px`;
+          // Con prioridad: varios títulos fijan su tamaño con !important en invitacion.css y un estilo en línea común no les ganaría.
+          n.style.setProperty('font-size', `${Math.floor(base * Math.max(minScale, n.clientWidth / n.scrollWidth) * 100) / 100}px`, 'important');
           if (n.scrollWidth > n.clientWidth + 1) n.style.whiteSpace = ''; // sigue sin entrar: se parte en dos renglones parejos
         }
       });

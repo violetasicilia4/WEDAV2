@@ -415,7 +415,7 @@ test.describe('Perfil G · cambia de idea', () => {
     await expect(publishDialog(page).getByText('No se cobra nada ni se guardan datos de pago.')).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Volver', exact: true }).click();
     await publishDialog(page).getByRole('button', { name: 'Publicar Celebración Plus' }).click();
-    await expect(publishDialog(page).getByRole('button', { name: /^Pagar ARS 320\.000/ })).toBeVisible();
+    await expect(publishDialog(page).getByRole('button', { name: /^Pagar ARS 150\.000/ })).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Cerrar' }).click();
     expect((await stored(page)).publication).toBeNull();
     // Reabrir el diálogo vuelve a la elección de producto, no al paso de pago.

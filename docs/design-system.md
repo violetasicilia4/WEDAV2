@@ -90,7 +90,7 @@ Detalle y causas en [auditorias/auditoria-landing-mobile-2026-10-19.md](auditori
 
 Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigentes en `src/panel.css` (se agregaron como tokens `--pn-r-*` en `.pn-root`/`.pn-dialog`):
 
-- **Radios:** controles 12 px (`--pn-r-ctl`), tarjetas y fotos 16 px (`--pn-r-card`), diálogos y hojas 20 px (`--pn-r-sheet`), píldoras 999 px, círculos 50 %. Excepciones deliberadas: el marco del celular de la vista previa  (copia la invitación).
+- **Radios:** controles 12 px (`--pn-r-ctl`), tarjetas y fotos 16 px (`--pn-r-card`), diálogos y hojas 20 px (`--pn-r-sheet`), píldoras 999 px, círculos 50 %. Excepciones deliberadas: el marco del celular de la vista previa  (copia la invitación). Lista completa de tokens en §4c-bis.
 - **Tipografía (panel):** 12 · 13 · 14 · 15 · 16 · 18 · 20 · 26 px. Se unificaron 11.5/12.5/14.5/17/19/22.
 - **Estado «seleccionado» en regalos:** tilde circular arriba a la izquierda de la foto (pizarra en tarjetas, blanco sobre las fotos de los sets) + aro interior de 3 px. Se reemplazan los halos dobles y las sombras.
 - **Tarjeta de regalo** (`.pn-gcard`): sin caja ni sombra; foto cuadrada, nombre (2 renglones), monto en negrita pizarra y una sola acción. En «Tu lista» las acciones son íconos de 44 px (`Editar`, `Quitar`), sin borde.
@@ -110,6 +110,30 @@ Dirección: mismo Arial, misma paleta pizarra, menos contenedores. Valores vigen
   - Mesas: cada grupo es una tarjeta sobre superficie. Editor: cada sección es una tarjeta; la abierta lleva aro. Inicio: cada etapa es una tarjeta; la siguiente lleva aro.
   - Estados deshabilitados: el botón «Elegí un plan» explica el motivo; al llegar al máximo de fotos, el texto dice qué hacer.
 - **Cabecera:** botón «Vista previa» de 44 px y bajadas (`.pn-sub`) de 15 px en celular.
+
+## 4c-bis. Tokens del panel (`panel.css`, 2026-10-28)
+
+Se definen en `.pn-root, .pn-dialog` (arriba de `panel.css`). Solo valen dentro del panel y del alta: no se usan en la landing ni en la página pública. Un valor literal igual a un token **no** se reemplaza si cumple otra función (por ejemplo, el cuadrado de un ícono de 44 px no es un objetivo táctil).
+
+| Token | Valor | Para qué se usa |
+|---|---|---|
+| `--pn-r-ctl` | 12 px | Controles: campos, botones del panel, selector segmentado, botones de la barra lateral, opciones de ícono. Los anidados restan su margen: botón chico `calc(var(--pn-r-ctl) - 2px)`, opción dentro de la pista de `.pn-switch` `- 3px` |
+| `--pn-r-note` | 12 px | Avisos y cajas chicas dentro de una pantalla o diálogo: `.pn-banner`, resultado de importar, `.mg-empty`, cita de un regalo recibido, nota de la ventana en vivo, `.pn-pay`, opciones de `.pn-upgrade` |
+| `--pn-r-card` | 16 px | Tarjetas y bloques: `.pn-cfg-block`, `.mg-card`, totales y herramientas de Invitados, perfil de la barra lateral, ventana en vivo, escenario de la vista previa, foto de regalo propio |
+| `--pn-r-gift` | 22 px (18 px a ≤ 640 px en `.rg-grid` y `.pn-catalog`) | Tarjetas de regalo (`.rg-card`, `.pn-gcard` del catálogo, «Regalo propio»). La foto interior usa `calc(var(--pn-r-gift) - 5px)` y sigue sola el cambio de celular |
+| `--pn-r-sheet` | 20 px | Diálogos y hojas inferiores |
+| `--pn-h-ctl` | 48 px | Campo de texto y control grande: inputs, buscador de Invitados, botón del alta, solapas, `summary` de «Más opciones» y de ayuda, filas de navegación del celular |
+| `--pn-h-touch` | 44 px | Mínimo táctil: botón del panel y de los diálogos, casillas, enlaces y botones chicos con `pointer: coarse`, «Volver»/«Listo» del constructor |
+| `--pn-h-small` | 40 px | Control chico con mouse: `.pn-btn.is-small`, `.pn-link`, selectores, opciones de `.pn-switch`, «Vista previa» y «Publicar» de la cabecera |
+| `--pn-fs-label` | 14 px | Rótulo de un campo (`.pn-field > label`, `legend`, `.pn-label`) |
+| `--pn-fs-help` | 13 px | Ayuda, error y detalle debajo de un campo o fila: `.pn-hint`, `.pn-error`, `.pn-terms`, `.pn-status-line`, `.ed-hint`, estado de una fila del constructor, detalle de `.pn-upgrade` |
+| `--pn-hover` | `rgb(59 60 58 / .05)` | Hover de filas y opciones (navegación lateral, filas y opciones de ícono del constructor) |
+| `--pn-hover-ghost` | `rgb(59 60 58 / .06)` | Hover del botón con borde (`is-ghost`) fuera de la jerarquía del panel (alta y cuenta) |
+| `--pn-disabled` | .5 | Opacidad de `.pn-btn` y `.pn-link` deshabilitados (una sola regla). Los íconos (`.pn-icon`) usan .3 a propósito: sin texto, el estado se lee por el contraste |
+
+- **Foco:** una sola regla para todo el panel y los diálogos: `outline` 2 px `--pn-slate-d` con 2 px de separación (`:focus-visible`); en el alta, el contorno usa `--pn-ink`.
+- **`.pn-label` vs. `.pn-group-label`:** `.pn-label` es el rótulo de un campo. El título de grupo del diálogo «Publicar» («Se publica», «Antes de publicar», «Mejorar tu plan») es `.pn-group-label` (13 px, semibold, `--pn-slate-d`). Antes compartían clase y la regla de «Publicar» le ganaba a todo el panel.
+- **Excepción:** el aviso breve (`.pn-toast`) se dibuja fuera de `.pn-root` y no puede usar los tokens; lleva los mismos valores escritos a mano (12 px, 44 px).
 
 ## 4d. Rediseño de la arquitectura del panel (2026-10)
 
@@ -146,16 +170,20 @@ Tomado del ejemplo de dashboard del 2026-10, con la tipografía y la paleta de W
 
 Los componentes de la página pública son **los mismos** para `/ejemplo` y `/sitio/$slug`: `src/components/site/{invitation,gifts-page,site-cover,site-shell,site-providers}.tsx`, alimentados por `useSite()` (`demoSiteData` o `siteFromState`). No se crea una segunda versión de la página. El formulario de confirmación es `src/components/rsvp-dialog.tsx`.
 
+- **Títulos de un renglón (`useFitOneLine`, `site-shell.tsx`):** el hook mide el título con `nowrap` y lo achica si no entra. Por eso el contenedor no puede crecer con el texto: un bloque centrado con grilla (`display: grid; justify-items: center`) necesita `grid-template-columns: minmax(0, 1fr)` y el título `justify-self: stretch` (el texto ya va centrado). El hook aplica el tamaño con prioridad (`!important` en línea), porque varios títulos fijan el suyo con `!important`. Así se arreglaron la playlist y el cierre (2026-10-28). Cualquier bloque nuevo con uno de esos títulos sigue la misma regla.
+
 ## 6. Accesibilidad vigente
 
 Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avisos de estado, foco visible (`outline` 2 px), etiquetas asociadas a cada campo, nombres accesibles en botones con ícono, contraste de texto blanco sobre la pizarra pública ≥ 4,5:1. `prefers-reduced-motion` está contemplado en `styles.css`, `ejemplo.css` e `invitacion.css`; en `panel.css` hay una sola regla.
 
 ## 7. Vacíos (no definidos en el código ni en la documentación)
 
-- No existe una **escala tipográfica** ni una **escala de espaciado** formal; cada componente fija sus valores.
+- No existe una **escala de espaciado** formal; cada componente fija sus valores. En el panel hay tokens de radio, alto de control, rótulo/ayuda y estados (§4c-bis), pero el resto de los tamaños de texto se escribe a mano dentro de la escala de §4c.
 - Los **puntos de corte** no están centralizados. En `panel.css` se usan, entre otros, 560, 720, 900 y 1100 px; en el resto de los archivos otros valores.
 - **Color primario de Weda:** la landing usa `--primary` verde clarito (`#c0bfa4`; `#dfdecc` en fondos y en «Publicar») y el panel usa grises neutros (`#4a4a4a`). Los verdes de estado del panel (`#34502c`, `#3f7236` = completo / confirmado) son semánticos y se mantienen.
 - No hay guía de **iconografía** más allá del uso de `lucide-react`, ni de **ilustración** ni de **animación** (solo transiciones puntuales).
+- **`!important` en la página pública (`invitacion.css`):** quedan 44 (eran 129), cada uno con su causa en `ui-iteration-audit.md` §10.2. Regla para lo nuevo: no sumar `!important` para pisar una capa anterior del mismo archivo. Se edita la regla existente o se sube la especificidad. Antes de quitar uno, verificar con estilos calculados en todas las vistas: varios se respaldan entre sí.
+- **Barra de contexto al editar (panel):** en una edición larga (hoy, cada sección de «Tu página»), una barra fija arriba con flecha para volver (nombre accesible «Volver a …»), ícono + nombre de lo que se edita (en celular) y «Listo». Es opaca, va pegada al borde (top: 0) y, en el celular, lleva debajo la ventana en vivo en el mismo bloque. Las acciones que sacan algo («Quitar de la invitación») van al pie, lejos de «Listo». Los campos de la edición llevan `scroll-margin-top` igual al alto del bloque fijo. Clases: `.ed-stick`, `.ed-bar`, `.ed-now`, `.ed-done` (`panel.css`).
 - **Movimiento en la landing:** scroll suave con inercia (Lenis, `src/lib/smooth-scroll.ts`, `lerp 0.075`; solo con mouse/trackpad, el táctil queda nativo); al cargar, el fondo del hero entra con fundido y leve acercamiento y el texto sube escalonado; al scrollear, los bloques (`src/lib/reveal.ts`) suben 28 px y se funden (0,8 s, escalonado de 90 ms entre tarjetas). Con «reducir movimiento» no se anima nada y sin JavaScript todo queda visible.
 - No hay modo oscuro.
 - La cobertura de `prefers-reduced-motion` en el panel no está auditada.

@@ -34,7 +34,7 @@ test.describe('Onboarding: foto de la pareja', () => {
     // La página del casamiento usa esa foto como portada.
     await page.getByRole('link', { name: /Tu página/ }).click();
     await openPreview(page);
-    await expect.poll(() => previewText(page)).toMatch(/luc[ií]a y violeta/i);
+    await expect.poll(() => previewText(page)).toMatch(/luc[ií]a (y|&) violeta/i);
     const cover = await previewFrame(page).locator('.iv-cover-img').getAttribute('src');
     expect(cover).toBe(saved.photo.src);
   });

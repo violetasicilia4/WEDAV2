@@ -131,10 +131,10 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             <DialogDescription>{upgrading ? `Pagás solo la diferencia con tu plan actual. La vigencia no cambia: sigue hasta el ${until}.` : `${formatPrice(plan.price)} ${PRICE_UNIT} · publicada ${PUBLICATION_TERM}. Esto es lo que se publica.`}</DialogDescription>
             {summary && (
               <div className="pn-publish">
-                {summary.published.length > 0 && (<><p className="pn-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
-                {summary.empty.length > 0 && (<><p className="pn-label">Incluido, pero vacío</p><ul className="pn-plan-items is-plain">{summary.empty.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
-                {summary.drafts.length > 0 && (<><p className="pn-label">Queda como borrador</p><ul className="pn-plan-items is-plain">{summary.drafts.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail} Se publica desde el plan {i.plan}.</span></li>)}</ul></>)}
-                <p className="pn-label">Antes de publicar</p>
+                {summary.published.length > 0 && (<><p className="pn-group-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
+                {summary.empty.length > 0 && (<><p className="pn-group-label">Incluido, pero vacío</p><ul className="pn-plan-items is-plain">{summary.empty.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
+                {summary.drafts.length > 0 && (<><p className="pn-group-label">Queda como borrador</p><ul className="pn-plan-items is-plain">{summary.drafts.map(i => <li key={i.feature}><span><strong>{i.label}</strong> · {i.detail} Se publica desde el plan {i.plan}.</span></li>)}</ul></>)}
+                <p className="pn-group-label">Antes de publicar</p>
                 {summary.todo.length === 0
                   ? <p className="pn-note">No te falta nada de lo que Weda puede verificar. Los detalles de estilo (fotos, galería, mensaje) son opcionales.</p>
                   : <ul className="pn-plan-items is-plain pn-todo">{summary.todo.map(t => <li key={t.text}><span>{t.text}</span><Link to={t.to as never} {...(t.search ? { search: t.search as never } : {})} className="pn-link" onClick={close}>{t.cta}</Link></li>)}</ul>}
@@ -196,7 +196,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             )}
             {upgradeOptions(pub.planId).length > 0 && (
               <div className="pn-upgrade">
-                <p className="pn-label">Mejorar tu plan</p>
+                <p className="pn-group-label">Mejorar tu plan</p>
                 <ul>
                   {upgradeOptions(pub.planId).map(p => (
                     <li key={p.id}>

@@ -19,10 +19,10 @@ test.describe('Landing · celular 390 px', () => {
     expect(top.menuAnchored).toBe('fixed');
     await page.evaluate(() => window.scrollTo(0, 700));
     await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeGreaterThanOrEqual(698);
-    await page.waitForTimeout(250);
+    // El vidrio entra con una transición: se espera a que esté armado en vez de un tiempo fijo (con la máquina cargada, 250 ms a veces no alcanzaban).
+    await expect.poll(async () => (await read()).blur, { timeout: 3000 }).toContain('blur(20px)');   // al scrollear se arma el «globo» de vidrio
     const scrolled = await read();
     expect(scrolled.pills).toBe(2);
-    expect(scrolled.blur).toContain('blur(20px)');       // al scrollear se arma el «globo» de vidrio
     expect(scrolled.bg).not.toBe('rgba(255, 255, 255, 0)');
     expect(scrolled.navTop).toBe(8);                      // sigue pegada arriba en todo el recorrido
   });
