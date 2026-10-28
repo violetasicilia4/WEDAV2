@@ -1325,15 +1325,13 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 /* Cabecera con foto (reemplaza al ícono): nombre arriba y precio abajo sobre la foto; debajo, para quién es, funciones y botón. */
 .plans-grid .plan-card { padding: 12px 12px clamp(20px, 2.4vw, 28px); background: #fff; border: 1px solid rgb(59 60 58 / .08); }
 .plans-grid .plan-card > :not(.plan-media) { margin-inline: clamp(10px, 1.6vw, 18px); }
-.plan-media { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 190px; padding: 18px 20px; border-radius: 20px; color: #fff; background: #6f6f58; overflow: hidden; }
-.plan-media::before { content: ''; position: absolute; inset: -6px; z-index: -2; background: var(--plan-photo) center / cover no-repeat; filter: blur(1.5px); }
-/* Sombra de lectura: más oscura a la izquierda y abajo (donde van el nombre y el precio) y casi transparente arriba a la derecha, para que la foto se vea. */
-.plan-media::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(18 18 15 / .5) 0%, rgb(18 18 15 / .22) 55%, rgb(18 18 15 / 0) 100%), linear-gradient(0deg, rgb(18 18 15 / .36), rgb(18 18 15 / 0) 55%); }
-.plans-grid .plan-media h3 { margin: 0; color: #fff; text-align: left; font-size: clamp(22px, 2vw, 28px); }
-.plans-grid .plan-media .plan-sub { margin: 6px 0 0; min-height: 0; color: rgb(255 255 255 / .88); text-align: left; font-size: 14px; }
+/* Cabecera del plan: gris muy claro y liso, sin foto, para que el precio sea lo principal. */
+.plan-media { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 190px; padding: 18px 20px; border-radius: 20px; color: var(--foreground); background: #f2f2f0; }
+.plans-grid .plan-media h3 { margin: 0; color: var(--foreground); text-align: left; font-size: clamp(22px, 2vw, 28px); }
+.plans-grid .plan-media .plan-sub { margin: 6px 0 0; min-height: 0; color: var(--muted-foreground); text-align: left; font-size: 14px; }
 .plans-grid .plan-media .plan-price { margin: 0; justify-content: flex-start; }
-.plans-grid .plan-media .plan-price strong { color: #fff; font-size: clamp(32px, 3vw, 42px); }
-.plans-grid .plan-media .plan-term { margin: 6px 0 0; color: #fff; text-align: left; font-size: 14px; }
+.plans-grid .plan-media .plan-price strong { color: var(--foreground); font-size: clamp(32px, 3vw, 42px); }
+.plans-grid .plan-media .plan-term { margin: 6px 0 0; color: var(--foreground); text-align: left; font-size: 14px; }
 .plans-grid .plan-card ul { margin-top: 18px; padding-top: 18px; }
 @media (max-width: 900px) { .plans-grid .plan-card { padding-bottom: 20px; } .plans-grid .plan-card ul { text-align: left; } .plan-media { min-height: 180px; } }
 /* Botón a todo el ancho de la tarjeta, al pie. */
@@ -1367,7 +1365,7 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .tq-rule i { position: absolute; left: 0; top: -1px; height: 3px; background: #fff; transition: transform .35s ease; }
 .tq-foot { grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
 .tq-who { display: flex; align-items: center; gap: 14px; margin: 0; min-width: 0; }
-.tq-who img { flex: none; width: 48px; height: 48px; border-radius: 6px; object-fit: cover; }
+.tq-who img { flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none; }
 .tq-who figcaption { display: grid; gap: 2px; min-width: 0; }
 .tq-who strong { font-size: clamp(17px, 1.6vw, 21px); font-weight: var(--w-medium); line-height: 1.15; }
 .tq-who span { font-size: 12px; letter-spacing: .08em; color: rgb(255 255 255 / .75); font-variant-numeric: tabular-nums; }
@@ -1399,3 +1397,23 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: clip; }
+
+/* Carga suave de la landing: el fondo del hero entra con un fundido y un leve acercamiento; el texto sube escalonado. */
+@media (prefers-reduced-motion: no-preference) {
+  .seed-hero .hero-image { animation: hero-bg-in 1.6s cubic-bezier(.2, .7, .2, 1) both; }
+  .seed-hero .hero-copy > * { animation: hero-copy-in .9s cubic-bezier(.2, .7, .2, 1) both; }
+  .seed-hero .hero-copy > :nth-child(1) { animation-delay: .15s; }
+  .seed-hero .hero-copy > :nth-child(2) { animation-delay: .3s; }
+  .seed-hero .hero-copy > :nth-child(3) { animation-delay: .45s; }
+  /* Aparición al scrollear (src/lib/reveal.ts): solo se ocultan bloques que todavía no están a la vista. */
+  .rv { opacity: 0; translate: 0 28px; transition: opacity .8s cubic-bezier(.2, .7, .2, 1) var(--rv-delay, 0ms), translate .8s cubic-bezier(.2, .7, .2, 1) var(--rv-delay, 0ms); }
+  .rv.rv-in { opacity: 1; translate: 0 0; }
+}
+@keyframes hero-bg-in { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: scale(1); } }
+@keyframes hero-copy-in { from { opacity: 0; translate: 0 18px; } to { opacity: 1; translate: 0 0; } }
+
+/* Testimonios: el velo oscuro va en la misma capa que la foto (antes era otra capa y a veces el navegador dejaba
+   una franja clara sin velo al pie de la sección). El fondo de reserva también es oscuro. */
+.viacap-section { background-color: #4a4b47; contain: paint; }
+.viacap-section::before { background: linear-gradient(rgb(24 26 24 / .42), rgb(24 26 24 / .42)), url("/fondo-ramo.jpg") center / cover no-repeat; }
+.viacap-section::after { content: none; }

@@ -4,21 +4,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { HIGHLIGHT_ICON } from '@/components/plan-icons';
-import type { PlanId } from '@/lib/weda/types';
 import { formatPrice, PLANS, planById, PUBLICATION_TERM, type Plan } from '@/lib/weda/plans';
 
 /** Lo que incluye un plan, de más básico a más completo: cada plan suma lo suyo a lo del anterior. */
 const chain = (plan: Plan): Plan[] => (plan.inherits ? [...chain(planById(plan.inherits) as Plan), plan] : [plan]);
-
-/** Foto de fondo de la cabecera de cada plan (en /public): va desenfocada y suave, solo de ambiente. */
-const PLAN_PHOTO: Record<PlanId, string> = { regalos: '/plan-regalos.webp', invitacion: '/plan-celebracion.webp', completo: '/plan-celebracion-plus.webp' };
 
 function PlanCard({ plan }: { plan: Plan }) {
   const base = plan.inherits ? planById(plan.inherits) : undefined;
   const [open, setOpen] = useState(false);
   return (
     <article className="plan-card" aria-labelledby={`plan-${plan.id}`}>
-      <header className="plan-media" style={{ ['--plan-photo' as string]: `url(${PLAN_PHOTO[plan.id]})` }}>
+      <header className="plan-media">
         <div className="plan-media-top">
           <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
           <p className="plan-sub">{plan.product}</p>

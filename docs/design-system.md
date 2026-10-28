@@ -156,6 +156,7 @@ Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avi
 - Los **puntos de corte** no están centralizados. En `panel.css` se usan, entre otros, 560, 720, 900 y 1100 px; en el resto de los archivos otros valores.
 - **Color primario de Weda:** la landing usa `--primary` verde clarito (`#c0bfa4`; `#dfdecc` en fondos y en «Publicar») y el panel usa grises neutros (`#4a4a4a`). Los verdes de estado del panel (`#34502c`, `#3f7236` = completo / confirmado) son semánticos y se mantienen.
 - No hay guía de **iconografía** más allá del uso de `lucide-react`, ni de **ilustración** ni de **animación** (solo transiciones puntuales).
+- **Movimiento en la landing:** scroll suave con inercia (Lenis, `src/lib/smooth-scroll.ts`, `lerp 0.075`; solo con mouse/trackpad, el táctil queda nativo); al cargar, el fondo del hero entra con fundido y leve acercamiento y el texto sube escalonado; al scrollear, los bloques (`src/lib/reveal.ts`) suben 28 px y se funden (0,8 s, escalonado de 90 ms entre tarjetas). Con «reducir movimiento» no se anima nada y sin JavaScript todo queda visible.
 - No hay modo oscuro.
 - La cobertura de `prefers-reduced-motion` en el panel no está auditada.
 - No hay biblioteca de componentes documentada (Storybook o similar); la fuente es el código.

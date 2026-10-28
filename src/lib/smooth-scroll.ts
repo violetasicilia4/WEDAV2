@@ -11,7 +11,7 @@ export function useSmoothScroll() {
     const start = async () => {
       const { default: Lenis } = await import('lenis');
       if (cancelled) return;
-      const lenis = new Lenis({ lerp: 0.12, wheelMultiplier: 1, anchors: { offset: -64 } });
+      const lenis = new Lenis({ lerp: 0.075, wheelMultiplier: 0.9, anchors: { offset: -64 } });
       let raf = requestAnimationFrame(function tick(t) { lenis.raf(t); raf = requestAnimationFrame(tick); });
       const sync = () => { if (document.body.hasAttribute('data-scroll-locked')) lenis.stop(); else lenis.start(); };
       const mo = new MutationObserver(sync);
@@ -19,7 +19,7 @@ export function useSmoothScroll() {
       stop = () => { cancelAnimationFrame(raf); mo.disconnect(); lenis.destroy(); };
     };
     const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-    const id = ric ? ric.call(window, () => { void start(); }, { timeout: 2000 }) : window.setTimeout(() => { void start(); }, 600);
+    const id = ric ? ric.call(window, () => { void start(); }, { timeout: 700 }) : window.setTimeout(() => { void start(); }, 300);
     return () => { cancelled = true; if (!ric) window.clearTimeout(id); stop?.(); };
   }, []);
 }
