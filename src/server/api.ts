@@ -76,6 +76,12 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
   try {
     if (method !== 'GET' && method !== 'HEAD' && !originOk(req, cfg)) throw new ApiError(403, 'bad_origin');
     if (a0(parts) === 'health') return json(200, { ok: true });
+    // Baja de novedades desde el enlace del correo (sin sesión). Responde una página simple, no JSON.
+    if (a0(parts) === 'unsubscribe' && method === 'GET') {
+      const ok = (injected ?? openService(cfg)).unsubscribe(url.searchParams.get('t') ?? '');
+      const msg = ok ? 'Listo: no vas a recibir más novedades de Weda.' : 'Este enlace no es válido. Escribinos a hola@weda.app y te damos de baja.';
+      return new Response(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Novedades de Weda</title></head><body style="margin:0;font-family:Arial,Helvetica,sans-serif;color:#3b3c3a;background:#f5f5f3"><main style="max-width:480px;margin:15vh auto;padding:28px;background:#fff;border-radius:16px"><h1 style="font-size:22px;margin:0 0 12px">Novedades de Weda</h1><p style="font-size:16px;line-height:1.5;margin:0">${msg}</p></main></body></html>`, { status: ok ? 200 : 400, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+    }
     const svc = injected ?? openService(cfg);
     const session = (): Session => svc.requireSession(svc.sessionFromToken(cookieOf(req, COOKIE)));
     const [a, b, c, d] = parts;
@@ -122,6 +128,7 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
         const body = await readJson(req);
         return json(200, svc.setContributionStatus(session().userId, b, body['status'], body['note']));
       }
+      if (b && c === 'remind' && method === 'POST') return json(200, await svc.remindReceipt(session().userId, b));
       if (b && c === 'receipt' && method === 'GET') {
         const r = svc.readReceipt(session().userId, b);
         return new Response(new Uint8Array(r.bytes), { status: 200, headers: { 'content-type': r.mime, 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff', 'content-security-policy': "sandbox; default-src 'none'", 'content-disposition': 'inline' } });
@@ -152,7 +159,7 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
       if (b && c === 'rsvp' && method === 'POST') {
         if (!publicWriteLimiter.take(`rsvp|${clientIp(req)}|${b}`)) throw new ApiError(429, 'too_many_requests');
         const body = await readJson(req);
-        return json(200, svc.submitRsvp(b, body['people']));
+        return json(200, svc.submitRsvp(b, body['people'], body['contact']));
       }
       if (b && c === 'contributions' && method === 'POST') {
         if (!publicWriteLimiter.take(`apo|${clientIp(req)}|${b}`)) throw new ApiError(429, 'too_many_requests');

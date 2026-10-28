@@ -59,7 +59,7 @@ function PublishedSite({ slug, lookup, children }: { slug: string; lookup: Extra
   const actions = useMemo<SiteActions>(() => ({
     remote: true,
     given: [],
-    recordRsvp: people => sendRsvp(slug, people),
+    recordRsvp: (people, contact) => sendRsvp(slug, people, contact),
     recordGift: async (gs, who, extra) => {
       if (!extra) throw new Error('No pudimos completar el envío. Probá de nuevo en un rato.');
       await sendGift(slug, gs, who, extra);
@@ -92,7 +92,7 @@ function LocalSite({ slug, children }: { slug: string; children: ReactNode }) {
   const actions = useMemo<SiteActions>(() => ({
     given: state.gifts.given,
     recordGift: (gs, who) => update(s => ({
-      ...s, gifts: { ...s.gifts, given: [...s.gifts.given.filter(x => !gs.some(g => g.id === x.id)), ...gs.map(g => ({ id: g.id, name: who.name, message: who.message, how: who.how, giftName: g.name, amount: g.amount, at: Date.now() }))] },
+      ...s, gifts: { ...s.gifts, given: [...s.gifts.given.filter(x => !gs.some(g => g.id === x.id)), ...(() => { const ref = `env-${Date.now().toString(36)}`; return gs.map(g => ({ id: g.id, name: who.name, message: who.message, how: who.how, giftName: g.name, amount: g.amount, at: Date.now(), email: who.email, ref })); })()] },
     })),
     recordRsvp: people => update(s => applyRsvp(s, people)),
   }), [state.gifts.given]);
@@ -108,6 +108,6 @@ function LocalSite({ slug, children }: { slug: string; children: ReactNode }) {
   // Página dada de baja: solo la ve su dueño dentro de la vista previa del panel (iframe o «cómo queda con este plan»).
   const takenDown = mine && !!state.publication && !isLive(state) && !readPlanOverride() && !(typeof window !== 'undefined' && window.self !== window.top);
   if (takenDown) return <Notice title="Esta página no está publicada" text="Su dueño la bajó por ahora. Volvé a probar más tarde." to="/" cta="Ir a Weda" />;
-  if (!data) return <Notice title="Este sitio no está disponible" text="Esta es una demostración: los sitios se guardan solo en el navegador de quien los creó. Podés crear el tuyo o recorrer el ejemplo." to="/crear/cuenta" cta="Crear mi evento" />;
+  if (!data) return <Notice title="Este sitio no está disponible" text="Puede que el link esté mal escrito o que la página todavía no esté publicada. Podés crear la tuya o recorrer el ejemplo." to="/crear/cuenta" cta="Crear mi evento" />;
   return <SiteProvider data={data} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
 }

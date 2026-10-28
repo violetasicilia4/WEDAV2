@@ -1,7 +1,7 @@
 // Acciones de un invitado sobre un sitio publicado: confirmar asistencia y avisar un regalo (con su comprobante). Sin sesión.
 // Cada función falla con un Error cuyo mensaje es un texto para la persona; nunca se simula un envío exitoso.
 import { api, ApiFailure } from './remote';
-import type { GiftSubmission, RsvpEntry } from './site-model';
+import type { GiftSubmission, Giver, GuestContact, RsvpEntry } from './site-model';
 import type { Gift } from '@/lib/demo-wedding';
 
 const TEXT: Record<string, string> = {
@@ -15,26 +15,33 @@ const TEXT: Record<string, string> = {
   unsupported_file_type: 'El comprobante tiene que ser una imagen (JPG, PNG o WebP) o un PDF.',
   card_not_available: 'El pago con tarjeta todavía no está disponible. Elegí «Alias».',
   invalid_name: 'Revisá el nombre y el apellido.',
+  invalid_giver_email: 'Revisá tu correo electrónico.',
+  receipt_required: 'Adjuntá el comprobante de la transferencia para enviar tu regalo.',
 };
 const messageFor = (e: unknown) => (e instanceof ApiFailure ? TEXT[e.code] : undefined) ?? 'No pudimos completar el envío. Probá de nuevo en un rato.';
 
-export async function sendRsvp(slug: string, people: RsvpEntry[]): Promise<void> {
-  try { await api('POST', `/api/public/${encodeURIComponent(slug)}/rsvp`, { people }); }
+export async function sendRsvp(slug: string, people: RsvpEntry[], contact?: GuestContact): Promise<void> {
+  try { await api('POST', `/api/public/${encodeURIComponent(slug)}/rsvp`, { people, contact }); }
   catch (e) { throw new Error(messageFor(e)); }
 }
 
-/** Registra el aporte y sube el comprobante. Si falla a mitad de camino, reintentar con la misma `attempt` completa lo que falta sin duplicar el aporte. */
-export async function sendGift(slug: string, gifts: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }, extra: GiftSubmission): Promise<void> {
+/** Archivo → base64 (por partes, para no pasar el límite de argumentos con archivos de varios MB). */
+async function toBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+/** Registra el aporte CON su comprobante en un solo envío: sin comprobante el servidor no lo acepta (no existen regalos sin comprobante).
+ *  Reintentar con la misma `attempt` no duplica el aporte. */
+export async function sendGift(slug: string, gifts: Gift[], giver: Giver, extra: GiftSubmission): Promise<void> {
   try {
-    const r = await api<{ id: string }>('POST', `/api/public/${encodeURIComponent(slug)}/contributions`, {
-      idempotencyKey: extra.attempt.key, manageToken: extra.attempt.token, giftIds: gifts.map(g => g.id), giverName: giver.name, message: giver.message, how: giver.how,
+    if (!extra.proof) throw new ApiFailure(400, 'receipt_required');
+    if (extra.proof.size > 5 * 1024 * 1024) throw new ApiFailure(413, 'file_too_large');
+    const receipt = { data: await toBase64(extra.proof) };
+    await api('POST', `/api/public/${encodeURIComponent(slug)}/contributions`, {
+      idempotencyKey: extra.attempt.key, manageToken: extra.attempt.token, giftIds: gifts.map(g => g.id), giverName: giver.name, giverEmail: giver.email, marketingOptIn: giver.marketingOptIn, message: giver.message, how: giver.how, receipt,
     });
-    if (extra.proof) {
-      let res: Response;
-      try {
-        res = await fetch(`/api/public/contributions/${encodeURIComponent(r.id)}/receipt`, { method: 'PUT', headers: { 'x-manage-token': extra.attempt.token }, body: extra.proof });
-      } catch { throw new ApiFailure(0, 'network'); }
-      if (!res.ok) { let code = 'error'; try { code = (await res.json()).error ?? code; } catch { /* sin cuerpo */ } throw new ApiFailure(res.status, code); }
-    }
   } catch (e) { throw new Error(messageFor(e)); }
 }

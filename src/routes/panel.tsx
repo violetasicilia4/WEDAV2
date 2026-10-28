@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { CircleHelp, Eye, Gift, Globe, Heart, House, Lock, Users } from 'lucide-react';
+import { ChevronDown, CircleHelp, Eye, Gift, Globe, Heart, House, Lock, Mail, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { SideMenuIcon } from '@/components/panel/side-menu-icon';
 import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
-import { can, type Feature } from '@/lib/weda/plans';
+import { can, formatPrice, PLANS, PUBLICATION_TERM, type Feature } from '@/lib/weda/plans';
 import { ensureRemote, errorText, hasUnsaved, dismissNotice, reloadFromServer, retrySave, useRemote } from '@/lib/weda/remote';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import { isLive } from '@/lib/weda/payments';
@@ -97,21 +97,33 @@ function PublishLabel() {
   return <><Heart size={16} aria-hidden="true" /><span>{live ? 'Publicada' : down ? 'Despublicada' : 'Publicar'}</span></>;
 }
 
-/* Ayuda: explica lo que Weda hace hoy, sin prometer lo que todavía no está conectado. */
+/* Ayuda: preguntas frecuentes (cada respuesta se abre al tocar la pregunta) y el correo de consultas. Precios y duración salen de `plans.ts`.
+   Respuestas definidas por la dueña (2026-10-28). */
 function HelpDialog({ onClose }: { onClose: () => void }) {
-  const tips: [string, string][] = [
-    ['Tu página', 'Es la invitación que ven tus invitados. Completá los datos, mirá cómo queda y volvé a editar cuando quieras.'],
-    ['Regalos', 'Elegí packs o regalos sueltos, o creá los tuyos. Cargá cómo querés recibir los aportes desde «Datos de cobro».'],
-    ['Invitados', 'Cargalos de a uno o importá una planilla de Excel. Después organizalos en mesas y grupos.'],
-    ['Publicar', 'Armás todo gratis. El plan se elige al publicar y cambiar de plan no borra lo que cargaste.'],
+  const prices = PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ');
+  const faq: [string, string][] = [
+    ['¿Cuánto cuesta y cuándo pago?', `Armás todo gratis y pagás una sola vez, al publicar: ${prices}. Es un pago único y la página queda publicada ${PUBLICATION_TERM}.`],
+    ['¿Puedo cambiar de plan después de publicar?', 'Sí, a un plan más completo: pagás solo la diferencia. No se puede pasar a un plan más económico.'],
+    ['¿Cómo comparto la invitación?', 'Al publicar se genera el link de tu página. Lo podés mandar a todos tus contactos.'],
+    ['¿Cómo recibo los regalos?', 'Cargás el alias de tu cuenta en Regalos → Datos de cobro. Tus invitados eligen un regalo, te transfieren directo a esa cuenta y adjuntan el comprobante. No hay comisión: el dinero va directo a tu banco y podés validar cada regalo con su comprobante.'],
+    ['¿Dónde veo los regalos que recibí?', 'En Regalos → Aportes recibidos: quién te hizo el regalo, qué regalos eligió (puede ser más de uno), el monto, la fecha y el comprobante.'],
+    ['¿Puedo editar la invitación después de publicarla?', 'Sí. Mientras la página esté publicada, la podés editar cuando quieras.'],
+    ['¿Cuánto tiempo queda online la página?', `${PUBLICATION_TERM[0]!.toUpperCase()}${PUBLICATION_TERM.slice(1)} desde que la publicás.`],
   ];
   return (
     <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
       <DialogContent className="pn-dialog">
         <DialogTitle>Ayuda</DialogTitle>
-        <DialogDescription>Cómo se arma tu casamiento en Weda.</DialogDescription>
-        <dl className="pn-help">{tips.map(([t, d]) => <div key={t}><dt>{t}</dt><dd>{d}</dd></div>)}</dl>
-        <p className="pn-note">Hoy es una demo: tus datos se guardan solo en este navegador y no se publica ni se cobra nada.</p>
+        <DialogDescription>Preguntas frecuentes</DialogDescription>
+        <div className="pn-faq">
+          {faq.map(([q, a]) => (
+            <details key={q}>
+              <summary>{q}<ChevronDown size={18} aria-hidden="true" /></summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </div>
+        <p className="pn-contact"><Mail size={16} aria-hidden="true" /><span>¿Necesitás ayuda? Escribinos a <a className="pn-link" href="mailto:hola@weda.app">hola@weda.app</a></span></p>
         <div className="pn-actions is-end"><button type="button" className="pn-btn" onClick={onClose}>Entendido</button></div>
       </DialogContent>
     </Dialog>

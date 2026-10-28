@@ -3,6 +3,8 @@ import { Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useSessionState } from '@/lib/demo-session';
 import { useSite, useSiteActions } from '@/lib/weda/site-model';
+import { isEmail } from '@/lib/weda/logic';
+import { MARKETING_CONSENT_TEXT } from '@/lib/weda/consent';
 
 type Person = { name: string; first: string; last: string; attending: boolean; menu: string };
 type Errors = {
@@ -18,12 +20,8 @@ type RsvpApi = {
 const RsvpContext = createContext<RsvpApi>({ open: () => {}, sentCount: 0 });
 export const useRsvp = () => useContext(RsvpContext);
 
-/** Contacto válido: un email con forma de email, o un teléfono con al menos 8 dígitos. */
-function isValidContact(value: string): boolean {
-  const v = value.trim();
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return true;
-  return v.replace(/\D/g, '').length >= 8;
-}
+/** Contacto: un correo con forma de correo (decisión de la dueña, 2026-10-28: el contacto de los invitados es el mail). */
+const isValidContact = (value: string): boolean => isEmail(value.trim());
 
 /**
  * Formulario de confirmación en pop-up: una persona por vez, con su menú.
@@ -44,6 +42,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
   const [people, setPeople] = useSessionState<Person[]>('rsvp-people', []);
   const [sentList, setSentList] = useSessionState<Person[]>('rsvp-sent', []);
   const [contact, setContact] = useSessionState<string>('rsvp-contact', '');
+  const [optIn, setOptIn] = useState(false);
   // form: cargando a una persona · review: personas cargadas, listas para enviar · sent: confirmación enviada
   const [view, setView] = useState<'form' | 'review' | 'sent'>('form');
   const form = useRef<HTMLFormElement>(null);
@@ -66,7 +65,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
     sending.current = true;
     setSendError(null); setBusy(true);
     try {
-      await recordRsvp(people.map(p => ({ first: p.first || p.name.split(' ')[0] || p.name, last: p.last || p.name.split(' ').slice(1).join(' '), attending: p.attending, menu: p.menu })));
+      await recordRsvp(people.map(p => ({ first: p.first || p.name.split(' ')[0] || p.name, last: p.last || p.name.split(' ').slice(1).join(' '), attending: p.attending, menu: p.menu })), { email: contact.trim().toLowerCase(), marketingOptIn: optIn });
     } catch (e) {
       // No se simula el envío: las personas siguen cargadas para reintentar.
       sending.current = false; setBusy(false);
@@ -83,7 +82,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
     const e: Errors = {};
     if (name.trim().length < 2) e.name = 'Escribí tu nombre.';
     if (surname.trim().length < 2) e.surname = 'Escribí tu apellido.';
-    if (!isValidContact(contact)) e.contact = 'Escribí un email o un teléfono válido.';
+    if (!isValidContact(contact)) e.contact = 'Escribí un correo válido.';
     if (!attending) e.attending = 'Contanos si vas a venir.';
     if (attending === 'yes' && hasMenus && !menu) e.menu = 'Elegí una opción para esta persona.';
     return e;
@@ -117,7 +116,7 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
               <span className="dm-rsvp-mark" aria-hidden="true"><Check size={24} strokeWidth={1.6} /></span>
               <DialogTitle>{sentList.length === 1 ? `¡Gracias, ${sentList[0]!.name.split(/\s+/)[0]}!` : `¡Gracias! Cargaste ${sentList.length} confirmaciones.`}</DialogTitle>
               <DialogDescription>
-                Así se vería la confirmación. Es una demostración: no se envió ningún mensaje ni correo.
+                Gracias por avisarnos.
               </DialogDescription>
               <ul className="dm-rsvp-people" aria-label="Confirmaciones de esta sesión">
                 {sentList.map((p, n) => (
@@ -140,7 +139,8 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
                   <li key={`${p.name}-${n}`}><strong>{p.name}</strong><span>{p.attending ? (menuName(p.menu) || 'Asiste') : 'No asiste'}</span></li>
                 ))}
               </ul>
-              <p className="dm-demo-note">Es una demostración: al enviar no se manda nada a nadie.</p>
+              {/* Novedades de Weda: casilla aparte y destildada (consentimiento expreso; no es necesaria para confirmar). */}
+              <label className="dm-rsvp-optin"><input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} /><span>{MARKETING_CONSENT_TEXT} <a href="/privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad</a></span></label>
               <div className="dm-rsvp-actions">
                 <>
                   {sendError && <p className="dm-error" role="alert">{sendError}</p>}
@@ -174,8 +174,8 @@ export function RsvpProvider({ children }: { children: ReactNode }) {
               </div>
 
               <div className={`dm-rsvp-field${errors.contact ? ' has-error' : ''}`}>
-                <label htmlFor="rsvp-contact">Email o teléfono de contacto</label>
-                <input id="rsvp-contact" type="text" inputMode="email" autoComplete="email" value={contact}
+                <label htmlFor="rsvp-contact">Correo electrónico</label>
+                <input id="rsvp-contact" type="email" inputMode="email" autoComplete="email" value={contact}
                   onChange={e => { setContact(e.target.value); if (errors.contact) setErrors(x => ({ ...x, contact: undefined })); }}
                   aria-invalid={!!errors.contact} aria-describedby={errors.contact ? 'rsvp-contact-err' : undefined} />
                 {errors.contact && <p className="dm-error" id="rsvp-contact-err" role="alert">{errors.contact}</p>}

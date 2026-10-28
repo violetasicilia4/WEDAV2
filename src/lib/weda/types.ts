@@ -33,7 +33,8 @@ export type ListGift = {
 };
 
 /** Regalo recibido: `name` es quien regala. El resto se guarda al enviarlo para que el panel lo muestre aunque después se quite de la lista. */
-export type GivenGift = { id: string; name: string; message: string; giftName?: string | undefined; amount?: number | undefined; how?: 'alias' | 'tarjeta' | undefined; at?: number | undefined };
+/** `email`: correo de quien regala (obligatorio desde 2026-10-28). `ref`: identifica el envío, para agrupar los regalos que una persona hizo juntos. */
+export type GivenGift = { id: string; name: string; message: string; giftName?: string | undefined; amount?: number | undefined; how?: 'alias' | 'tarjeta' | undefined; at?: number | undefined; email?: string | undefined; ref?: string | undefined };
 
 export type GuestStatus = 'confirmed' | 'declined' | 'pending';
 export type GuestSource = 'rsvp' | 'manual';
@@ -73,9 +74,9 @@ export type SiteEvent = {
 
 export type SitePhoto = { id: string; src: string; alt: string };
 
-/** Secciones de la invitación que la pareja puede reordenar (la portada va siempre primero y el mensaje final siempre al cierre).
- *  `fecha` es «Save the date»: la fecha con su cuenta regresiva (solo se muestra si hay fecha). */
-export type BlockId = 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica';
+/** Secciones de la invitación que la pareja puede reordenar (la portada va siempre primero).
+ *  `fecha` es «Save the date»: la fecha con su cuenta regresiva (solo se muestra si hay fecha). `mensaje` es el mensaje final (por defecto, al cierre). */
+export type BlockId = 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'musica' | 'mensaje';
 
 /** Un círculo de color del dress code: el color y un nombre opcional. */
 export type Swatch = { name: string; color: string };
@@ -85,6 +86,8 @@ export type SiteConfig = {
   order: BlockId[];
   coverText: string;
   events: SiteEvent[];
+  /** «Save the date» en la invitación (opcional; viene prendido). */
+  saveDate: boolean;
   countdown: boolean;
   rsvp: { enabled: boolean; /** AAAA-MM-DD o vacío */ deadline: string; menus: boolean };
   /** `showColors`: si se muestran los círculos de colores sugeridos; `colors`: cuáles (cada color y su nombre los elige la pareja). */
@@ -94,14 +97,15 @@ export type SiteConfig = {
   /** Caja de texto libre: un título y un mensaje para lo que la pareja quiera contar. */
   note: { enabled: boolean; title: string; text: string };
   gallery: { enabled: boolean; photos: SitePhoto[]; hashtag: string; handle: string };
-  playlist: { enabled: boolean; name: string; tracks: { title: string; artist: string }[] };
+  /** `spotify`: link de la playlist de Spotify (se muestra con el reproductor de Spotify). `tracks`: lista cargada a mano (versión anterior). */
+  playlist: { enabled: boolean; name: string; spotify: string; tracks: { title: string; artist: string }[] };
   message: { enabled: boolean; title: string; text: string };
 };
 
 /** Un pago SIMULADO (no hay cobro real): publicar un plan, o pagar la diferencia al mejorar de plan. */
 export type Payment = { kind: 'publish' | 'upgrade'; planId: PlanId; amount: number; /** ISO 8601 */ at: string };
 /** Publicación simulada: el sitio se «publica» solo en este navegador. Se puede dar de baja (`live: false`) sin perder el pago. */
-export type Publication = { planId: PlanId; live: boolean; /** ISO 8601 */ publishedAt: string; /** ISO 8601: un año después de publicar. */ expiresAt: string; payments: Payment[] };
+export type Publication = { planId: PlanId; live: boolean; /** ISO 8601 */ publishedAt: string; /** ISO 8601: seis meses después de publicar (`PUBLICATION_MONTHS`). */ expiresAt: string; payments: Payment[] };
 
 export type AppState = {
   version: 2;

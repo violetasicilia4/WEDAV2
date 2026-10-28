@@ -114,3 +114,7 @@
 .dm-rsvp-done .dm-rsvp-actions { margin-top: 22px; }
 .dm-rsvp .dm-solid { background: var(--dm-blue); color: #fff; }
 @media (max-width: 480px) { .dm-rsvp-pair { grid-template-columns: 1fr; } }
+
+/* Confirmación de asistencia: casilla de novedades de Weda (aparte y destildada). */
+.dm-rsvp-optin { display: flex; align-items: flex-start; gap: 10px; margin: 14px 0 0; font-size: 13px; line-height: 1.45; color: #575757; text-align: left; cursor: pointer; }
+.dm-rsvp-optin input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: #3b3c3a; }

@@ -40,7 +40,8 @@ export class Client {
 
 export function makeEnv(over: Partial<ServerConfig> = {}): Env {
   const dir = mkdtempSync(path.join(tmpdir(), 'weda-test-'));
-  const cfg: ServerConfig = { dbPath: path.join(dir, 'test.db'), dataDir: dir, cookieSecure: false, requirePaidOrder: false, allowedOrigins: [], ...over };
+  const cfg: ServerConfig = { dbPath: path.join(dir, 'test.db'), dataDir: dir, cookieSecure: false, requirePaidOrder: false, allowedOrigins: [],
+    mail: { from: 'Weda <hola@weda.app>', replyTo: 'hola@weda.app' }, publicUrl: 'https://weda.test', secret: 'secreto-de-prueba', ...over };
   const svc = new Service(openDb(cfg.dbPath), cfg);
   const env: Env = { svc, cfg, dir, client: () => new Client(env), close: () => { svc.db.close(); rmSync(dir, { recursive: true, force: true }); } };
   return env;

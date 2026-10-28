@@ -30,8 +30,8 @@ test.describe('Perfil A · pareja apurada: de la landing al panel en el menor n�
     await page.waitForURL(/\/crear\/foto/);
     await page.getByRole('button', { name: 'Omitir por ahora' }).click();
     await page.waitForURL(/\/panel/);
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Camila & Juan')).toBeVisible();
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toBeVisible();
+    // Los nombres se ven en la tarjeta de la pareja de la barra lateral (el banner de Inicio ya no los repite).
+    await expect(page.locator('.pn-profile').first()).toContainText('Camila & Juan');
     const s = await stored(page);
     expect(s.couple).toMatchObject({ first: 'Camila', second: 'Juan' });
     expect(s.date).toBeNull();
@@ -41,7 +41,7 @@ test.describe('Perfil A · pareja apurada: de la landing al panel en el menor n�
   test('el siguiente paso del Inicio es único y lleva a elegir regalos; no hay nada obligatorio antes de Publicar', async ({ page }) => {
     await onboard(page, 'Camila', 'Juan');
     await expect(page.getByRole('heading', { name: 'Armá tu lista de regalos' })).toBeVisible();
-    await page.getByRole('link', { name: 'Elegir regalos' }).click();
+    await page.getByRole('link', { name: 'Armar mi lista' }).click();
     await expect(page).toHaveURL(/\/panel\/regalos/);
     // Publicar está siempre a mano y abre la elección de producto.
     await topPublish(page).click();
@@ -69,7 +69,6 @@ test.describe('Perfil C · pareja que empieza desde cero', () => {
     await expect(page).toHaveURL(/\/panel$/);          // el parámetro se limpia: recargar no vuelve a abrir el diálogo
     await expect(page.getByText('Datos guardados.')).toBeVisible();
     await expect.poll(async () => (await stored(page)).date).toBe('2030-05-18');
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Sábado 18 de mayo de 2030')).toBeVisible();
     await topPublish(page).click();
     await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     await expect(publishDialog(page).getByText('Definí la fecha del casamiento.')).toHaveCount(0);
@@ -104,8 +103,8 @@ test.describe('Perfiles B/D · quien explora el ejemplo puede empezar el suyo si
 test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa', () => {
   test('sin fecha ni lugar: portada del panel, editor, vista previa, sitio público y publicación lo dicen sin romperse; al definirlos todo se actualiza', async ({ page }) => {
     await onboard(page, 'Lucía', 'Violeta');
-    // Portada del panel.
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toBeVisible();
+    // Inicio: el banner muestra solo los pasos, sin nombres ni fecha.
+    await expect(page.getByRole('region', { name: /Primeros pasos/ })).not.toContainText('Fecha por definir');
     // El siguiente paso no depende de la fecha ni del lugar.
     await expect(page.getByRole('heading', { name: 'Armá tu lista de regalos' })).toBeVisible();
     // Editor: la portada marca la fecha como pendiente y los eventos no inventan un lugar.
@@ -133,8 +132,7 @@ test.describe('Fecha y lugar opcionales: qué pasa en cada pantalla que los usa'
     await dlg.getByLabel('Fecha del casamiento').fill('2031-03-15');
     await dlg.getByLabel('Lugar del casamiento').fill('Estancia La Dorotea');
     await dlg.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toHaveCount(0);
-    await expect(page.getByRole('region', { name: /Primeros pasos/ })).toContainText('2031');
+    await expect.poll(async () => (await stored(page)).date).toBe('2031-03-15');
     await expect.poll(async () => (await stored(page)).site.events[0].name).toBe('Estancia La Dorotea');
     await openPreview(page);
     await expect.poll(() => previewText(page)).toContain('Estancia La Dorotea');
@@ -395,13 +393,12 @@ test.describe('Perfil G · cambia de idea', () => {
     await dlg.getByLabel('Nombre de tu pareja').fill('Vera');
     await dlg.getByLabel('Fecha del casamiento').fill('2030-09-14');
     await dlg.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Lucila & Vera')).toBeVisible();
+    await expect(page.locator('.pn-profile').first()).toContainText('Lucila & Vera');
     await expect.poll(async () => (await stored(page)).couple.second).toBe('Vera');
     // Cambiar la fecha otra vez y vaciarla: queda «Fecha por definir».
     await page.goto('/panel?editar=datos', { waitUntil: 'networkidle' });
     await dlg.getByLabel('Fecha del casamiento').fill('');
     await dlg.getByRole('button', { name: 'Guardar' }).click();
-    await expect(page.getByRole('region', { name: /Primeros pasos/ }).getByText('Fecha por definir')).toBeVisible();
     await expect.poll(async () => (await stored(page)).date).toBeNull();
     await openPreview(page);
     await expect.poll(() => previewText(page)).toMatch(/Lucila/i);

@@ -20,7 +20,7 @@ test.describe('Constructor en el celular: barra fija, contexto y vista previa', 
   test.beforeEach(async ({ page }) => {
     await onboard(page);
     await nav(page, 'Tu página').click();
-    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
   });
 
   test('al editar una sección larga, volver y «Listo» siguen a la vista al final del formulario, y nada del formulario asoma sobre la ventana', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('Constructor en el celular: barra fija, contexto y vista previa', 
     expect(above).toBe('barra');
     // «Listo» vuelve a la estructura, arriba de todo y con la sección en su lugar.
     await done(page).click();
-    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Editar Eventos/ })).toBeVisible();
   });
 
@@ -59,7 +59,7 @@ test.describe('Constructor en el celular: barra fija, contexto y vista previa', 
     const r = (await remove.boundingBox())!, d = (await done(page).boundingBox())!;
     expect(r.y - (d.y + d.height)).toBeGreaterThan(100);
     await remove.click();
-    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
     await expect.poll(async () => (await stored(page)).site.note.enabled).toBe(false);
     await page.getByRole('button', { name: 'Agregar Texto libre a la invitación' }).click();
     await expect(page.getByLabel('Título')).toHaveValue('Un aviso');
@@ -85,7 +85,7 @@ test.describe('Constructor en el celular: barra fija, contexto y vista previa', 
   test('con un campo enfocado (como al pasar de campo con el teclado), el campo queda a la vista y no tapado por el bloque fijo', async ({ page }) => {
     await page.getByRole('button', { name: /^Editar Eventos/ }).click();
     if ((await page.locator('#sec-ceremonia').getAttribute('aria-expanded')) !== 'true') await page.locator('#sec-ceremonia').click();
-    for (const label of ['Nombre del lugar', 'Dirección', 'Enlace de Google Maps']) {
+    for (const label of ['Nombre del evento', 'Nombre del lugar', 'Dirección']) {
       const field = page.getByLabel(label);
       await field.focus();
       await page.waitForTimeout(250);
@@ -101,7 +101,7 @@ test.describe('Constructor en el celular: barra fija, contexto y vista previa', 
     await page.getByLabel('Título').fill('Elegante sport');
     await expect.poll(async () => (await stored(page)).site.dressCode.title).toBe('Elegante sport');
     await page.reload({ waitUntil: 'networkidle' });
-    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Editar Dress code/ })).toContainText('Completa');
   });
 

@@ -756,3 +756,16 @@ html:has(.dm-root.is-window)::-webkit-scrollbar { display: none; }
 .dm-root .iv-dress .iv-swatches { margin-top: clamp(28px, 4vw, 48px); gap: clamp(16px, 3.4vw, 48px); }
 .dm-root .iv-dress .iv-swatches i { width: clamp(52px, 7vw, 76px); height: clamp(52px, 7vw, 76px); }
 .dm-root .iv-dress .iv-swatches span { font-size: clamp(15px, .6vw + 12px, 20px); }
+
+/* ---------- centrado de los bloques (2026-10-28, pedido de la dueña) ----------
+   Cada bloque (save the date, eventos, confirmar asistencia, cierre) deja el mismo aire arriba y abajo, y el texto centrado de
+   izquierda a derecha, en web y en celular. En «eventos», la banda de confirmar se monta sobre la curva (--iv-curve): ese tramo
+   se suma abajo para que el aire visible sea igual al de arriba. Los eventos ya traen su propio relleno (igual arriba y abajo), por eso su bloque usa menos. */
+.dm-root { --iv-block: clamp(56px, 8vw, 104px); --iv-day-pad: clamp(16px, 3vw, 40px); }
+.dm-root .iv-welcome { padding: var(--iv-block) 0; }
+.dm-root .iv-section.iv-day { padding-top: var(--iv-day-pad); padding-bottom: calc(var(--iv-day-pad) + var(--iv-curve)); }
+.dm-root .iv-band.iv-rsvp { padding: var(--iv-block) 0; }
+.dm-root .iv-band.iv-rsvp .iv-rsvp-grid > div:first-child { display: grid; justify-items: center; }
+
+/* Playlist de Spotify: el reproductor oficial, a lo ancho del bloque. */
+.dm-root .iv-spotify { display: block; width: 100%; max-width: 640px; height: 352px; margin: clamp(20px, 3vw, 32px) auto 0; border: 0; border-radius: 12px; }

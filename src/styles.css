@@ -1417,3 +1417,24 @@ html.lenis, html.lenis body { height: auto; }
 .viacap-section { background-color: #4a4b47; contain: paint; }
 .viacap-section::before { background: linear-gradient(rgb(24 26 24 / .42), rgb(24 26 24 / .42)), url("/fondo-ramo.jpg") center / cover no-repeat; }
 .viacap-section::after { content: none; }
+
+/* Páginas simples de texto: política de privacidad y adjuntar comprobante (contexto landing, Geist). */
+.legal-page { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; color: #3b3c3a; font-size: 16px; line-height: 1.6; }
+.legal-page.is-narrow { max-width: 480px; }
+.legal-brand { margin: 0 0 28px; font-weight: 600; }
+.legal-brand a { color: inherit; text-decoration: none; }
+.legal-page h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 36px); line-height: 1.15; }
+.legal-page h2 { margin: 32px 0 8px; font-size: 19px; }
+.legal-page ul { padding-left: 20px; }
+.legal-page li + li { margin-top: 8px; }
+.legal-page a { color: inherit; }
+.legal-meta { color: #6b6b6b; font-size: 14px; }
+.legal-todo { padding: 0 4px; border-radius: 4px; background: #fff1c2; color: #6b4a10; }
+.legal-form { display: grid; gap: 14px; margin-top: 16px; }
+.legal-file { position: relative; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 16px; border: 1px dashed rgb(59 60 58 / .4); border-radius: 12px; cursor: pointer; }
+.legal-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.legal-file:focus-within { outline: 2px solid #3b3c3a; outline-offset: 2px; }
+.legal-btn { min-height: 48px; border: 0; border-radius: 999px; background: #3b3c3a; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.legal-btn:disabled { opacity: .6; cursor: default; }
+.legal-error { margin: 0; color: #a12f2f; font-size: 14px; }
+.legal-ok { display: flex; align-items: center; gap: 8px; }

@@ -64,7 +64,7 @@ function Account() {
       // Si el servidor no tiene base de datos (por ejemplo un hosting de prueba), se sigue en modo demostración, como antes de que existieran las cuentas.
       if (!r.ok && r.code === 'backend_unavailable') {
         update(s => ({ ...s, email: email.trim() }));
-        setNotice('Las cuentas todavía no están disponibles en este sitio: tu casamiento se guarda solo en este navegador.');
+        setNotice('No pudimos crear tu cuenta en este momento. Podés seguir armando tu casamiento y crearla más tarde.');
         next();
         return;
       }
@@ -98,7 +98,7 @@ function Account() {
             </div>
           )}
         </Field>
-        {signup && <p className="pn-terms">Al registrarte, aceptás los <strong>Términos de uso</strong> y la <strong>Política de privacidad</strong> de Weda.</p>}
+        {signup && <p className="pn-terms">Al registrarte, aceptás los <strong>Términos de uso</strong> y la <a href="/privacidad" target="_blank" rel="noopener noreferrer"><strong>Política de privacidad</strong></a> de Weda.</p>}
         {formError && <p className="pn-banner" role="alert">{formError}</p>}
         <button type="submit" className="pn-btn pn-block" disabled={busy} aria-busy={busy}>{busy ? 'Un momento…' : signup ? 'Registrarme' : 'Ingresar'}</button>
       </form>

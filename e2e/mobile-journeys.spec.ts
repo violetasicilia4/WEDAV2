@@ -5,7 +5,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
   test('Flujo 1: Inicio → Regalos → catálogo → pack → revisión, sin perder nada', async ({ page }) => {
     // Inicio: una sola acción principal que lleva a elegir los primeros regalos.
-    await page.getByRole('link', { name: 'Elegir regalos' }).click();
+    await page.getByRole('link', { name: 'Armar mi lista' }).click();
     await expect(page).toHaveURL(/\/panel\/regalos/);
 
     // Las cuatro solapas entran en el ancho de la pantalla (sin scroll lateral).
@@ -76,7 +76,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
   test('Flujo 3: Tu página → elegir Eventos → editar → verlo en la vista previa a pantalla completa → volver sin perder datos', async ({ page }) => {
     await nav(page, 'Tu página').click();
     // Primero la estructura de la invitación; los campos de una sección aparecen recién al elegirla.
-    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
     await expect(page.getByLabel('Nombre del lugar')).toHaveCount(0);
     await page.getByRole('button', { name: /^Editar Eventos/ }).click();
     // La primera fila de eventos ya viene abierta.
@@ -135,9 +135,10 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.getByLabel('Nombre del lugar').fill('Parroquia San Isidro');
     await page.getByLabel('Dirección').fill('Av. del Libertador 1234, C1425 CABA, Argentina');
     await page.getByLabel('Horario').selectOption('18:00');
-    await expect(page.getByText('En la tarjeta se ve «Av. del Libertador 1234»')).toBeVisible();
-    await expect(page.getByRole('link', { name: /Abrir Google Maps para copiar el enlace/ })).toHaveAttribute('href', /google\.com\/maps\/search/);
-    await expect(page.getByLabel('Enlace de Google Maps')).toBeVisible();
+    // Sin clave de Google: sin texto de ayuda sobre la tarjeta ni campo para pegar un enlace; «Cómo llegar» busca nombre + dirección.
+    await expect(page.getByText(/En la tarjeta se ve/)).toHaveCount(0);
+    await expect(page.getByLabel('Enlace de Google Maps')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /Probar el enlace de «Cómo llegar»/ })).toHaveAttribute('href', /google\.com\/maps\/search/);
     await page.getByRole('button', { name: 'Listo' }).click();
 
     // Dress code: círculos de colores que se pueden apagar y cuyo color elige la pareja.
@@ -282,8 +283,8 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
     await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
-    // Revisión: aclara que es un pago de prueba y no cambia nada hasta pagar.
-    await expect(page.getByText('No se cobra nada ni se guardan datos de pago.')).toBeVisible();
+    // Revisión: no cambia nada hasta pagar.
+    await expect(page.getByText('Al publicar, cualquiera que tenga el link')).toBeVisible();
     expect((await stored(page)).publication).toBeNull();
     await page.getByRole('button', { name: 'Volver', exact: true }).click();
     await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();

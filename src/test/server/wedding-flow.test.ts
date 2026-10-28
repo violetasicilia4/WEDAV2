@@ -1,12 +1,20 @@
 // @vitest-environment node
 /* eslint-disable @typescript-eslint/no-explicit-any -- respuestas JSON de la API, sin esquema compartido todavía */
-import { readdirSync } from 'node:fs';
+import { readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { draftFor, makeEnv, PASSWORD, PNG, saveDraft, signUp, type Env } from './helpers';
+import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
+import { unsubscribeToken } from '@/server/mail';
 
 let env: Env;
 beforeAll(() => { env = makeEnv(); });
+/** Simula un aporte anterior a la regla «sin comprobante no hay regalo»: borra su comprobante (registro y archivo). */
+const dropReceipt = (id: string) => {
+  const r = env.svc.db.prepare('SELECT storage_key FROM receipts WHERE contribution_id = ?').get(id) as { storage_key: string } | undefined;
+  if (r) rmSync(path.join(env.dir, 'receipts', r.storage_key), { force: true });
+  env.svc.db.prepare('DELETE FROM receipts WHERE contribution_id = ?').run(id);
+};
 afterAll(() => env.close());
 
 describe('persistencia del casamiento', () => {
@@ -88,9 +96,9 @@ describe('publicación y sitio público', () => {
     const owner = env.client(); await signUp(owner, 'orden@correo.com');
     const base = draftFor('Olga', 'Raúl');
     await saveDraft(owner, { ...base, site: { ...base.site, order: ['musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos'] } });
-    expect((await owner.get('/api/wedding')).body.draft.site.order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);   // el orden se normaliza al guardar: «Save the date» entra primero si no estaba
+    expect((await owner.get('/api/wedding')).body.draft.site.order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos', 'mensaje']);   // el orden se normaliza al guardar: «Save the date» entra primero si no estaba
     const slug = (await owner.post('/api/wedding/publish')).body.slug;
-    expect((await env.client().get(`/api/public/${slug}`)).body.site.order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos']);
+    expect((await env.client().get(`/api/public/${slug}`)).body.site.order).toEqual(['fecha', 'musica', 'fotos', 'texto', 'dress', 'rsvp', 'regalos', 'eventos', 'mensaje']);
   });
 
   it('slug inexistente → 404; despublicada → 410; republicar la vuelve a abrir', async () => {
@@ -156,6 +164,19 @@ describe('invitados y confirmaciones', () => {
     expect(hist.n).toBe(2);
   });
 
+  it('el correo de quien confirma es opcional; las novedades de Weda se guardan solo con correo y casilla tildada', async () => {
+    const g = env.client();
+    const rsvp = (first: string, contact?: unknown) => g.post(`/api/public/${slug}/rsvp`, { people: [{ first, last: 'Correo', attending: true, menu: '' }], contact });
+    expect((await rsvp('Sinmail')).status).toBe(200);
+    expect((await rsvp('Conmail', { email: 'lu@correo.com' })).status).toBe(200);
+    expect((await rsvp('Optin', { email: 'Sol@Correo.com', marketingOptIn: true })).status).toBe(200);
+    expect((await rsvp('Sinmailoptin', { email: '', marketingOptIn: true })).status).toBe(200);
+    const mail = (first: string) => (env.svc.db.prepare('SELECT email FROM guests WHERE first = ?').get(first) as { email: string }).email;
+    expect([mail('Sinmail'), mail('Conmail'), mail('Optin')]).toEqual(['', 'lu@correo.com', 'sol@correo.com']);
+    const c = env.svc.db.prepare("SELECT email, source FROM marketing_consents WHERE source = 'rsvp'").all();
+    expect(c).toEqual([{ email: 'sol@correo.com', source: 'rsvp' }]);
+  });
+
   it('el formulario público no devuelve datos de otros invitados', async () => {
     const r = await env.client().post(`/api/public/${slug}/rsvp`, { people: [{ first: 'Marta', last: 'Pérez', attending: true, menu: '' }] });
     expect(r.body).toEqual({ count: 1 });
@@ -188,11 +209,76 @@ describe('invitados y confirmaciones', () => {
 
 describe('aportes, comprobantes y órdenes', () => {
   let slug = '';
-  const body = (over: Record<string, unknown> = {}) => ({ idempotencyKey: 'key-0000-0001', manageToken: 'token-del-invitado-0001', giverName: 'Tía Nora', message: '¡Felicitaciones!', how: 'alias', giftIds: ['g1'], ...over });
+  const body = (over: Record<string, unknown> = {}) => ({ idempotencyKey: 'key-0000-0001', manageToken: 'token-del-invitado-0001', giverName: 'Tía Nora', giverEmail: 'nora@correo.com', message: '¡Felicitaciones!', how: 'alias', giftIds: ['g1'], receipt: { data: Buffer.from(PNG).toString('base64') }, ...over });
   beforeAll(async () => {
     const o = env.client(); await signUp(o, 'regalos@correo.com');
     await saveDraft(o, draftFor('Gala', 'Pablo'));
     slug = (await o.post('/api/wedding/publish')).body.slug;
+  });
+
+  it('el correo de quien regala es obligatorio, llega a la pareja y las novedades de Weda se guardan solo con la casilla tildada', async () => {
+    // Casamiento propio: no suma aportes al de las pruebas siguientes.
+    const o = env.client(); await signUp(o, 'correos@correo.com');
+    await saveDraft(o, draftFor('Ema', 'Leo'));
+    const own = (await o.post('/api/wedding/publish')).body.slug;
+    const g = env.client();
+    const send = (over: Record<string, unknown>) => g.post(`/api/public/${own}/contributions`, body(over));
+    expect((await send({ idempotencyKey: 'key-mail-0001', giverEmail: '' })).status).toBe(400);
+    expect((await send({ idempotencyKey: 'key-mail-0002', giverEmail: 'no-es-un-correo' })).status).toBe(400);
+    const consents = () => env.svc.db.prepare("SELECT email, source, text_version, revoked_at FROM marketing_consents WHERE email = 'ana@correo.com'").all();
+    const ok = await send({ idempotencyKey: 'key-mail-0003', manageToken: 'token-del-invitado-mail3', giverEmail: ' Ana@Correo.com ', giftIds: ['g1'] });
+    expect(ok.status).toBe(201);
+    expect(consents()).toEqual([]); // sin casilla tildada, no entra a la base de novedades
+    const mine = (await o.get('/api/contributions')).body.contributions.find((c: any) => c.id === ok.body.id);
+    expect(mine.giverEmail).toBe('ana@correo.com');
+    const opt = await send({ idempotencyKey: 'key-mail-0004', manageToken: 'token-del-invitado-mail4', giverEmail: 'ana@correo.com', giftIds: ['g2'], marketingOptIn: true });
+    expect(opt.status).toBe(201);
+    expect(consents()).toEqual([{ email: 'ana@correo.com', source: 'gift', text_version: MARKETING_CONSENT_VERSION, revoked_at: null }]);
+  });
+
+  it('constancia al regalar, recordatorio de comprobante (uno por día, con enlace nuevo) y baja de novedades', async () => {
+    const o = env.client(); await signUp(o, 'mails@correo.com');
+    await saveDraft(o, draftFor('Ivo', 'Mia'));
+    const own = (await o.post('/api/wedding/publish')).body.slug;
+    const g = env.client();
+    const r = await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-mails-0001', manageToken: 'token-del-invitado-mails1', giverEmail: 'juan@correo.com', marketingOptIn: true }));
+    expect(r.status).toBe(201);
+    const log = (kind: string) => env.svc.db.prepare('SELECT to_email, status FROM mail_log WHERE ref = ? AND kind = ?').all(r.body.id, kind);
+    expect(log('gift_receipt')).toEqual([{ to_email: 'juan@correo.com', status: 'skipped' }]); // sin proveedor configurado: queda registrado, no se envía
+    // Recordatorio: lo pide la pareja dueña; otra pareja recibe 404.
+    // Desde ahora no hay regalos sin comprobante: se simula uno viejo (anterior a esta regla) para probar el recordatorio.
+    expect((await o.post(`/api/contributions/${r.body.id}/remind`)).body.error).toBe('receipt_already_attached');
+    dropReceipt(r.body.id);
+    const other = env.client(); await signUp(other, 'ajena@correo.com');
+    expect((await other.post(`/api/contributions/${r.body.id}/remind`)).status).toBe(404);
+    expect((await o.post(`/api/contributions/${r.body.id}/remind`)).status).toBe(200);
+    expect(log('receipt_reminder')).toHaveLength(1);
+    expect((await o.post(`/api/contributions/${r.body.id}/remind`)).body.error).toBe('reminder_too_soon');
+    // El enlace viejo del invitado deja de servir (el recordatorio manda uno nuevo).
+    expect((await g.get(`/api/public/contributions/${r.body.id}`, { 'x-manage-token': 'token-del-invitado-mails1' })).status).toBe(404);
+    // Baja: el enlace firmado marca la baja; uno inventado no.
+    const live = () => env.svc.db.prepare("SELECT COUNT(*) AS n FROM marketing_consents WHERE email = 'juan@correo.com' AND revoked_at IS NULL").get() as { n: number };
+    expect(live().n).toBe(1);
+    expect((await g.get('/api/unsubscribe?t=bad.token')).status).toBe(400);
+    expect((await g.get(`/api/unsubscribe?t=${unsubscribeToken('secreto-de-prueba', 'juan@correo.com')}`)).status).toBe(200);
+    expect(live().n).toBe(0);
+  });
+
+  it('sin comprobante no se registra el regalo, y no se puede confirmar uno que no lo tenga', async () => {
+    const o = env.client(); await signUp(o, 'sincomp@correo.com');
+    await saveDraft(o, draftFor('Ale', 'Bruno'));
+    const own = (await o.post('/api/wedding/publish')).body.slug;
+    const g = env.client();
+    const r = await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-sinc-0001', manageToken: 'token-del-invitado-sinc1', receipt: undefined }));
+    expect([r.status, r.body.error]).toEqual([400, 'receipt_required']);
+    expect((await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-sinc-0002', manageToken: 'token-del-invitado-sinc2', receipt: { data: Buffer.from('<script>').toString('base64') } }))).status).toBe(415);
+    const n = env.svc.db.prepare('SELECT COUNT(*) AS n FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ?').get(own) as { n: number };
+    expect(n.n).toBe(0);
+    // Un aporte viejo sin comprobante (anterior a esta regla) no se puede confirmar.
+    const ok = await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-sinc-0003', manageToken: 'token-del-invitado-sinc3' }));
+    dropReceipt(ok.body.id);
+    const c = await o.patch(`/api/contributions/${ok.body.id}`, { status: 'confirmed' });
+    expect([c.status, c.body.error]).toEqual([409, 'receipt_required']);
   });
 
   it('un aporte queda «pendiente de revisión» (no es dinero recibido) con el monto tomado del servidor', async () => {
@@ -212,7 +298,7 @@ describe('aportes, comprobantes y órdenes', () => {
     const again = await g.post(`/api/public/${slug}/contributions`, body());
     expect([again.status, again.body.replay]).toEqual([200, true]);
     expect((await g.post(`/api/public/${slug}/contributions`, body({ manageToken: 'otro-token-distinto-0002' }))).status).toBe(409);
-    const n = env.svc.db.prepare('SELECT COUNT(*) AS n FROM contributions').get() as { n: number };
+    const n = env.svc.db.prepare('SELECT COUNT(*) AS n FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ?').get(slug) as { n: number };
     expect(n.n).toBe(1);
   });
 
@@ -245,7 +331,11 @@ describe('aportes, comprobantes y órdenes', () => {
     const ok = await g.put(`/api/public/contributions/${row.id}/receipt`, PNG, tok);
     expect([ok.status, ok.body.mime]).toEqual([200, 'image/png']);
     const files = readdirSync(path.join(env.dir, 'receipts'));
-    expect(files).toHaveLength(1);
+    // Reemplazar el comprobante no deja archivos sueltos: un archivo por cada comprobante registrado.
+    const rows = env.svc.db.prepare('SELECT storage_key FROM receipts').all() as { storage_key: string }[];
+    expect(files.sort()).toEqual(rows.map(r => r.storage_key).sort());
+    const mine = (env.svc.db.prepare('SELECT storage_key FROM receipts WHERE contribution_id = ?').get(row.id) as { storage_key: string }).storage_key;
+    files.splice(0, files.length, mine);
     // el comprobante no está en ninguna ruta pública ni estática
     expect(JSON.stringify((await g.get(`/api/public/${slug}`)).body)).not.toContain(files[0]!);
     expect((await g.get(`/api/contributions/${row.id}/receipt`)).status).toBe(401);

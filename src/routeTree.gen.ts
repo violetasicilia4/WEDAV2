@@ -10,10 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ComprobanteRouteImport } from './routes/comprobante'
 import { Route as CrearRouteImport } from './routes/crear'
 import { Route as EjemploRouteImport } from './routes/ejemplo'
 import { Route as EncontrarRouteImport } from './routes/encontrar'
 import { Route as PanelRouteImport } from './routes/panel'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as CrearIndexRouteImport } from './routes/crear.index'
 import { Route as CrearCuentaRouteImport } from './routes/crear.cuenta'
 import { Route as CrearFechaRouteImport } from './routes/crear.fecha'
@@ -37,6 +39,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComprobanteRoute = ComprobanteRouteImport.update({
+  id: '/comprobante',
+  path: '/comprobante',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrearRoute = CrearRouteImport.update({
   id: '/crear',
   path: '/crear',
@@ -55,6 +62,11 @@ const EncontrarRoute = EncontrarRouteImport.update({
 const PanelRoute = PanelRouteImport.update({
   id: '/panel',
   path: '/panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CrearIndexRoute = CrearIndexRouteImport.update({
@@ -145,10 +157,12 @@ const SitioSlugRegalosRoute = SitioSlugRegalosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/comprobante': typeof ComprobanteRoute
   '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
   '/panel': typeof PanelRouteWithChildren
+  '/privacidad': typeof PrivacidadRoute
   '/crear/cuenta': typeof CrearCuentaRoute
   '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
@@ -169,7 +183,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/comprobante': typeof ComprobanteRoute
   '/encontrar': typeof EncontrarRoute
+  '/privacidad': typeof PrivacidadRoute
   '/crear/cuenta': typeof CrearCuentaRoute
   '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
@@ -190,10 +206,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/comprobante': typeof ComprobanteRoute
   '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
   '/panel': typeof PanelRouteWithChildren
+  '/privacidad': typeof PrivacidadRoute
   '/crear/cuenta': typeof CrearCuentaRoute
   '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
@@ -216,10 +234,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/comprobante'
     | '/crear'
     | '/ejemplo'
     | '/encontrar'
     | '/panel'
+    | '/privacidad'
     | '/crear/cuenta'
     | '/crear/fecha'
     | '/crear/foto'
@@ -240,7 +260,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/comprobante'
     | '/encontrar'
+    | '/privacidad'
     | '/crear/cuenta'
     | '/crear/fecha'
     | '/crear/foto'
@@ -260,10 +282,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/comprobante'
     | '/crear'
     | '/ejemplo'
     | '/encontrar'
     | '/panel'
+    | '/privacidad'
     | '/crear/cuenta'
     | '/crear/fecha'
     | '/crear/foto'
@@ -285,10 +309,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ComprobanteRoute: typeof ComprobanteRoute
   CrearRoute: typeof CrearRouteWithChildren
   EjemploRoute: typeof EjemploRouteWithChildren
   EncontrarRoute: typeof EncontrarRoute
   PanelRoute: typeof PanelRouteWithChildren
+  PrivacidadRoute: typeof PrivacidadRoute
   SitioSlugRoute: typeof SitioSlugRouteWithChildren
 }
 
@@ -299,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comprobante': {
+      id: '/comprobante'
+      path: '/comprobante'
+      fullPath: '/comprobante'
+      preLoaderRoute: typeof ComprobanteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/crear': {
@@ -327,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/panel'
       fullPath: '/panel'
       preLoaderRoute: typeof PanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/crear/': {
@@ -520,10 +560,12 @@ const SitioSlugRouteWithChildren = SitioSlugRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ComprobanteRoute: ComprobanteRoute,
   CrearRoute: CrearRouteWithChildren,
   EjemploRoute: EjemploRouteWithChildren,
   EncontrarRoute: EncontrarRoute,
   PanelRoute: PanelRouteWithChildren,
+  PrivacidadRoute: PrivacidadRoute,
   SitioSlugRoute: SitioSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport

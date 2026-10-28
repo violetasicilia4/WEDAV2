@@ -64,7 +64,6 @@ function Find() {
             </>
           )}
         </div>
-        <p className="find-note">Parejas de demostración: todas abren la lista de regalos de ejemplo.</p>
       </main>
     </div>
   );

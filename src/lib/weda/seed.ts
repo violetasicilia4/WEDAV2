@@ -74,6 +74,7 @@ export function seedState(): AppState {
         { key: 'recepcion', icon: 'clink', enabled: true, title: 'Recepción', name: 'Jardín de los Olivos', address: 'Camino Real 450, Pilar, Buenos Aires', time: '18:30', note: 'Brindis y música en vivo mientras cae el sol.', mapsUrl: '' },
         { key: 'fiesta', icon: 'hall', enabled: true, title: 'Fiesta', name: 'Salón Los Álamos', address: 'Camino Real 450, Pilar, Buenos Aires', time: '20:30', note: 'Cena y baile hasta la madrugada.', mapsUrl: '' },
       ],
+      saveDate: true,
       countdown: true,
       rsvp: { enabled: true, deadline: '2027-03-17', menus: true },
       dressCode: { enabled: true, title: 'Elegante sport', text: 'Elegante sport. Les pedimos evitar el blanco y el marfil.', showColors: true, colors: defaultColors() },
@@ -81,7 +82,7 @@ export function seedState(): AppState {
       note: { enabled: false, title: '', text: '' },
       gallery: { enabled: true, photos: SEED_SITE_PHOTOS, hashtag: '#TomasYMartina2027', handle: '@tomasymartina' },
       playlist: {
-        enabled: true, name: 'Nuestra fiesta · Tomás & Martina',
+        enabled: true, name: 'Nuestra fiesta · Tomás & Martina', spotify: '',
         tracks: [{ title: 'La Bachata', artist: 'Manuel Turizo' }, { title: 'Mi Gente', artist: 'J Balvin, Willy William' }, { title: 'Zapatillas', artist: 'El Canto del Loco' }],
       },
       message: { enabled: true, title: 'Que vengas ya es un regalo.', text: '' },

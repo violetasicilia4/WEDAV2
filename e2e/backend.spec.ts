@@ -183,12 +183,13 @@ test.describe('sitio publicado, confirmaciones y regalos', () => {
     await dlg.getByRole('button', { name: 'Continuar' }).click();
     await dlg.locator('#rg-name').fill('Nora');
     await dlg.locator('#rg-surname').fill('Díaz');
+    await dlg.locator('#rg-email').fill('nora@example.com');
     await dlg.locator('#rg-proof').setInputFiles({ name: 'comprobante.png', mimeType: 'image/png', buffer: PNG });
-    // Falla la subida del comprobante (red caída): el aporte ya se registró una vez.
-    await page.route('**/api/public/contributions/*/receipt', r => r.abort('failed'));
+    // Falla el envío (red caída): el regalo y su comprobante viajan juntos, así que no queda un regalo sin comprobante. Reintentar no duplica.
+    await page.route('**/api/public/*/contributions', r => r.abort('failed'));
     await dlg.getByRole('button', { name: 'Enviar', exact: true }).click();
     await expect(dlg.getByRole('alert')).toContainText('No hay conexión');
-    await page.unroute('**/api/public/contributions/*/receipt');
+    await page.unroute('**/api/public/*/contributions');
     await dlg.getByRole('button', { name: 'Reintentar' }).click();
     await expect(dlg.getByRole('heading', { name: /¡Gracias, Nora!/ })).toBeVisible();
     await expect(dlg).toContainText('pendiente');

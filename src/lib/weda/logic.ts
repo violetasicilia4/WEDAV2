@@ -187,15 +187,17 @@ export const DEFAULT_EVENT_ICON: Record<string, EventIconId> = { ceremonia: 'rin
 export const EVENT_ICON_IDS: EventIconId[] = ['rings', 'church', 'heart', 'clink', 'wine', 'dinner', 'hall', 'music', 'sparkle', 'sun'];
 
 /** Orden de fábrica de la invitación. */
-export const DEFAULT_ORDER: BlockId[] = ['fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica'];
+export const DEFAULT_ORDER: BlockId[] = ['fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
 
 /** Orden válido a partir de cualquier valor: sin repetidos ni desconocidos. Las secciones que falten (por ejemplo, las que se agregaron después de guardar el orden)
- *  se ubican donde les corresponde según el orden de fábrica: justo después de la anterior que sí esté. */
+ *  se ubican donde les corresponde según el orden de fábrica: justo después de la anterior que sí esté (el mensaje final, al final). */
 export function normalizeOrder(v: unknown): BlockId[] {
   const out: BlockId[] = [];
   if (Array.isArray(v)) for (const x of v) if ((DEFAULT_ORDER as unknown[]).includes(x) && !out.includes(x as BlockId)) out.push(x as BlockId);
   DEFAULT_ORDER.forEach((id, i) => {
     if (out.includes(id)) return;
+    // El mensaje final siempre cerró la página: en un orden guardado antes de poder moverlo, va al final.
+    if (id === 'mensaje') { out.push(id); return; }
     const prev = [...DEFAULT_ORDER.slice(0, i)].reverse().find(p => out.includes(p));
     out.splice(prev ? out.indexOf(prev) + 1 : 0, 0, id);
   });
@@ -222,15 +224,23 @@ export const defaultSite = (): SiteConfig => ({
     { key: 'recepcion', icon: 'clink', enabled: false, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
     { key: 'fiesta', icon: 'hall', enabled: false, title: '', name: '', address: '', time: '', note: '', mapsUrl: '' },
   ],
+  saveDate: true,
   countdown: true,
   rsvp: { enabled: true, deadline: '', menus: true },
   dressCode: { enabled: false, title: '', text: '', showColors: true, colors: defaultColors() },
   giftsSection: { enabled: true, title: DEFAULT_GIFTS_TITLE, text: DEFAULT_GIFTS_TEXT, button: DEFAULT_GIFTS_BUTTON },
   note: { enabled: false, title: '', text: '' },
   gallery: { enabled: false, photos: [], hashtag: '', handle: '' },
-  playlist: { enabled: false, name: '', tracks: [] },
-  message: { enabled: true, title: 'Que vengas ya es un regalo.', text: '' },
+  playlist: { enabled: false, name: '', spotify: '', tracks: [] },
+  message: { enabled: false, title: 'Que vengas ya es un regalo.', text: '' },
 });
+
+/** Link de una playlist o un álbum de Spotify → dirección del reproductor embebido. Cualquier otra cosa → null. */
+export function spotifyEmbed(v: string): string | null {
+  const m = v.trim().match(/^(?:https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}(?:-[a-z]{2})?\/)?(playlist|album)\/|spotify:(playlist|album):)([A-Za-z0-9]{22})(?:[/?#].*)?$/);
+  if (!m) return null;
+  return `https://open.spotify.com/embed/${m[1] ?? m[2]}/${m[3]}`;
+}
 
 /** Validaciones de la cuenta (las usan el registro y el perfil). */
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -418,7 +428,7 @@ export function draftsFor(s: AppState, planId: PlanId): { feature: Feature; labe
     ['site', 'La página del casamiento', s.site.events.some(hasEventDetails)],
     ['guests', 'Los invitados', s.guests.length > 0],
     ['groups', 'Las mesas y grupos', tablesInUse(s)],
-    ['playlist', 'La música de la fiesta', s.site.playlist.tracks.length > 0],
+    ['playlist', 'La música de la fiesta', s.site.playlist.tracks.length > 0 || !!spotifyEmbed(s.site.playlist.spotify)],
     ['gallery', 'La galería de fotos', s.site.gallery.photos.length > 0],
     ['message', 'El mensaje final', s.site.message.text.trim() !== ''],
   ];
@@ -483,3 +493,42 @@ export function receivedGifts(s: AppState): ReceivedGift[] {
     .sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
 }
 export const receivedTotal = (r: ReceivedGift[]) => r.reduce((n, x) => n + x.amount, 0);
+
+/** Un envío de un invitado: quién, su correo, los regalos que eligió juntos (uno o varios), el total, la fecha, su mensaje y el comprobante.
+ *  `receipt`: dirección para verlo (sitio publicado, solo la pareja dueña), 'missing' si el invitado todavía no lo adjuntó, o null si no aplica
+ *  (regalos registrados en este navegador, sin servidor: el archivo no se guarda). */
+export type Contribution = {
+  id: string; giver: string; email: string; gifts: { name: string; amount: number }[]; total: number; at: number | null; message: string;
+  how: 'alias' | 'tarjeta' | null; receipt: string | 'missing' | null; status: 'pending_review' | 'confirmed' | 'rejected' | null;
+};
+
+/** Regalos registrados en este navegador, agrupados por envío (`ref`); los viejos sin `ref` quedan de a uno. Del más nuevo al más viejo. */
+export function contributionsFromState(s: AppState): Contribution[] {
+  const out = new Map<string, Contribution>();
+  for (const r of receivedGifts(s)) {
+    const x = s.gifts.given.find(g => g.id === r.id);
+    const key = x?.ref ?? r.id;
+    const c = out.get(key) ?? { id: key, giver: r.giver, email: x?.email ?? '', gifts: [], total: 0, at: r.at, message: r.message, how: r.how, receipt: null, status: null };
+    c.gifts.push({ name: r.giftName, amount: r.amount });
+    c.total += r.amount;
+    out.set(key, c);
+  }
+  return [...out.values()];
+}
+
+/** Aportes del servidor (GET /api/contributions) en el mismo formato. Los rechazados no cuentan como recibidos. */
+export function contributionsFromServer(list: unknown): Contribution[] {
+  if (!Array.isArray(list)) return [];
+  return list.filter((c): c is Record<string, unknown> => !!c && typeof c === 'object').filter(c => c['status'] !== 'rejected').map(c => {
+    const items = Array.isArray(c['items']) ? (c['items'] as Record<string, unknown>[]) : [];
+    const at = typeof c['createdAt'] === 'string' ? Date.parse(c['createdAt']) : NaN;
+    const id = String(c['id'] ?? '');
+    const status = c['status'] === 'confirmed' || c['status'] === 'pending_review' ? c['status'] : null;
+    return {
+      id, giver: String(c['giverName'] ?? '').trim() || 'Un invitado', email: String(c['giverEmail'] ?? ''), message: String(c['message'] ?? ''),
+      gifts: items.map(i => ({ name: String(i['giftName'] ?? 'Regalo'), amount: Number(i['amount']) || 0 })),
+      total: Number(c['total']) || 0, at: Number.isFinite(at) ? at : null, how: c['how'] === 'alias' ? 'alias' : null,
+      receipt: c['hasReceipt'] ? `/api/contributions/${encodeURIComponent(id)}/receipt` : 'missing', status,
+    };
+  });
+}

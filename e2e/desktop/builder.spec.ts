@@ -11,7 +11,7 @@ for (const width of [1024, 1280, 1440]) {
       await page.setViewportSize({ width, height: 860 });
       await onboard(page);
       await nav(page, 'Tu página').click();
-      await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
     });
 
     test('dos columnas: editor y vista previa a la vez, con anchos útiles y sin scroll lateral', async ({ page }) => {

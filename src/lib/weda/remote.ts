@@ -10,7 +10,7 @@
 //  - Los invitados viajan como operaciones (altas/cambios/bajas), no como lista completa: así no se pierden respuestas del sitio público.
 import { useSyncExternalStore } from 'react';
 import { hasEvent } from './account';
-import { addYear } from './payments';
+import { addTerm } from './payments';
 import { getState, replace, reset, subscribeState } from './store';
 import type { AppState, Guest, PlanId, Publication } from './types';
 
@@ -81,7 +81,7 @@ function reconcilePublication(local: Publication | null, server: { status: strin
   if (!server) return local;
   const live = server.status === 'live';
   if (local) return { ...local, live, planId: server.planId as PlanId };
-  return { planId: server.planId as PlanId, live, publishedAt: server.publishedAt, expiresAt: addYear(server.publishedAt), payments: [] };
+  return { planId: server.planId as PlanId, live, publishedAt: server.publishedAt, expiresAt: addTerm(server.publishedAt), payments: [] };
 }
 
 function mergeFromServer(local: AppState, w: any, email: string): AppState {

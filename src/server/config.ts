@@ -17,7 +17,15 @@ export type ServerConfig = {
   requirePaidOrder: boolean;
   /** Orígenes extra aceptados para escrituras (además del propio host). */
   allowedOrigins: string[];
+  /** Correo saliente. Sin `resendApiKey` no se envía nada: cada intento queda en `mail_log` como «skipped» (ver docs/datos-personales.md). */
+  mail: { resendApiKey?: string | undefined; from: string; replyTo: string };
+  /** Dirección pública del sitio, para armar los enlaces de los correos (comprobante, baja). */
+  publicUrl: string;
+  /** Secreto del servidor para firmar los enlaces de baja de novedades. En producción es obligatorio y largo. */
+  secret: string;
 };
+
+const fail = (k: string): never => { throw new Error(`Falta la variable de entorno ${k} (obligatoria en producción).`); };
 
 export function loadConfig(): ServerConfig {
   const dataDir = path.resolve(env('WEDA_DATA_DIR') ?? '.data');
@@ -27,5 +35,8 @@ export function loadConfig(): ServerConfig {
     cookieSecure: env('WEDA_COOKIE_SECURE') ? env('WEDA_COOKIE_SECURE') === 'true' : process.env['NODE_ENV'] === 'production',
     requirePaidOrder: env('WEDA_REQUIRE_PAID_ORDER') === 'true',
     allowedOrigins: (env('WEDA_ALLOWED_ORIGINS') ?? '').split(',').map(s => s.trim()).filter(Boolean),
+    mail: { resendApiKey: env('RESEND_API_KEY'), from: env('WEDA_MAIL_FROM') ?? 'Weda <hola@weda.app>', replyTo: env('WEDA_MAIL_REPLY_TO') ?? 'hola@weda.app' },
+    publicUrl: (env('WEDA_PUBLIC_URL') ?? env('VITE_SITE_URL') ?? 'http://localhost:8090').replace(/\/+$/, ''),
+    secret: env('WEDA_SECRET') ?? (process.env['NODE_ENV'] === 'production' ? fail('WEDA_SECRET') : 'secreto-solo-para-desarrollo'),
   };
 }

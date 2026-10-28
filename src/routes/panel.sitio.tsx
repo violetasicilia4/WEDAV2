@@ -3,12 +3,14 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowDown, ArrowLeft, Type, ArrowUp, CalendarClock, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, MapPin, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
 import { EVENT_ICONS } from '@/components/event-icons';
 import { PhotoPicker } from '@/components/panel/couple-form';
+import { PlaceSearch } from '@/components/panel/place-search';
 import { LiveCard, useKeyboardState } from '@/components/panel/live-card';
 import { SitePreview, type Device, type PreviewSection } from '@/components/panel/site-preview';
 import { Field, Locked, useToast, usePlans } from '@/components/panel/ui';
+import { placesEnabled } from '@/lib/weda/google-places';
 import { readImage } from '@/lib/weda/images';
-import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, defaultColors, hasEventDetails, isHexColor, isSafeMapsUrl, mapsLink, mapsSearch, moveBlock, shortAddress, sitePath, uid, validateOnboarding } from '@/lib/weda/logic';
-import { eventComplete } from '@/lib/weda/journey';
+import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, defaultColors, hasEventDetails, isHexColor, isSafeMapsUrl, mapsLink, moveBlock, sitePath, spotifyEmbed, uid, validateOnboarding } from '@/lib/weda/logic';
+import { eventBlank, eventComplete } from '@/lib/weda/journey';
 import { can, planFor, type Feature } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';
@@ -40,11 +42,11 @@ const ANCHOR: Record<SectionId, string> = { portada: '', fecha: 'save-the-date',
 const STATUS_ICON: Record<Tone, LucideIcon> = { ok: Check, todo: CircleAlert, off: EyeOff };
 /** Para qué sirve cada sección, en una línea (se muestra en «Para agregar»). */
 const PURPOSE: Record<SectionId, string> = {
-  portada: 'Foto, nombres y fecha', fecha: 'La fecha con su cuenta regresiva', eventos: 'Horarios y lugares, con mapa', regalos: 'Un acceso a tu lista de regalos', texto: 'Un título y un mensaje para lo que quieran contar', rsvp: 'Tus invitados responden desde la página', dress: 'Cómo vestirse ese día',
-  fotos: 'Una galería con su hashtag', mensaje: 'Unas palabras para cerrar', musica: 'La playlist de la fiesta',
+  portada: 'Foto, nombres y fecha', fecha: 'Fecha y cuenta regresiva', eventos: 'Horarios y lugares', regalos: 'Acceso a tu lista', texto: 'Un mensaje propio', rsvp: 'Respuestas de tus invitados', dress: 'Cómo vestirse',
+  fotos: 'Galería y hashtag', mensaje: 'Palabras de cierre', musica: 'Tu playlist en la invitación',
 };
 /** Las secciones que se pueden reordenar y su id en el orden guardado. */
-const BLOCK_SECTION: Record<BlockId, SectionId> = { fecha: 'fecha', eventos: 'eventos', regalos: 'regalos', rsvp: 'rsvp', dress: 'dress', texto: 'texto', fotos: 'fotos', musica: 'musica' };
+const BLOCK_SECTION: Record<BlockId, SectionId> = { fecha: 'fecha', eventos: 'eventos', regalos: 'regalos', rsvp: 'rsvp', dress: 'dress', texto: 'texto', fotos: 'fotos', musica: 'musica', mensaje: 'mensaje' };
 const photoWord = (n: number) => `${n} ${n === 1 ? 'foto' : 'fotos'}`;
 
 /** Estado de cada sección, derivado de los datos reales (misma regla que el Inicio: eventComplete/sectionGaps). */
@@ -52,12 +54,12 @@ function sectionsOf(s: AppState): Sec[] {
   const site = s.site;
   const on = site.events.filter(e => e.enabled);
   const done = site.events.filter(eventComplete);
-  const gaps = on.filter(e => !eventComplete(e));
+  const gaps = on.filter(e => !eventComplete(e) && !eventBlank(e));
   const dressOk = site.dressCode.title.trim() !== '' || site.dressCode.text.trim() !== '';
   const list: Sec[] = [
     { id: 'portada', label: 'Portada', title: 'Portada', status: s.date ? 'Completa' : 'Falta la fecha', tone: s.date ? 'ok' : 'todo' },
     { id: 'fecha', label: 'Save the date', title: 'Save the date y cuenta regresiva', status: s.date ? (site.countdown ? 'Con cuenta regresiva' : 'Sin cuenta regresiva') : 'Aparece al definir la fecha', tone: s.date ? 'ok' : 'off' },
-    { id: 'eventos', label: 'Eventos', title: 'Eventos', status: on.length === 0 ? 'Sin eventos' : gaps.length > 0 ? 'Falta completar' : `${done.length} ${done.length === 1 ? 'listo' : 'listos'}`, tone: on.length === 0 ? 'off' : gaps.length > 0 ? 'todo' : 'ok' },
+    { id: 'eventos', label: 'Eventos', title: 'Eventos', status: on.length === 0 ? 'Sin eventos' : gaps.length > 0 ? 'Falta completar' : done.length === 0 ? 'Sin cargar' : `${done.length} ${done.length === 1 ? 'listo' : 'listos'}`, tone: on.length === 0 ? 'off' : gaps.length > 0 || done.length === 0 ? 'todo' : 'ok' },
     { id: 'rsvp', label: 'Confirmación', title: 'Confirmación de asistencia', status: site.rsvp.enabled ? 'Visible' : 'Oculta', tone: site.rsvp.enabled ? 'ok' : 'off' },
     { id: 'dress', label: 'Dress code', title: 'Dress code', status: !site.dressCode.enabled ? 'Oculta' : dressOk ? 'Completa' : 'Falta completar', tone: !site.dressCode.enabled ? 'off' : dressOk ? 'ok' : 'todo' },
   ];
@@ -74,8 +76,11 @@ function sectionsOf(s: AppState): Sec[] {
     ? { id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: site.message.enabled ? 'Visible' : 'Oculta', tone: site.message.enabled ? 'ok' : 'off' }
     : { id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: `Plan ${planFor('message')?.name}`, tone: 'off', locked: 'message' });
   list.push(can(s.planId, 'playlist')
-    ? { id: 'musica', label: 'Música', title: 'Música de la fiesta', status: site.playlist.enabled ? `${site.playlist.tracks.length} temas` : 'Oculta', tone: site.playlist.enabled ? 'ok' : 'off' }
-    : { id: 'musica', label: 'Música', title: 'Música de la fiesta', status: `Plan ${planFor('playlist')?.name}`, tone: 'off', locked: 'playlist' });
+    ? (() => {
+        const linked = !!spotifyEmbed(site.playlist.spotify), n = site.playlist.tracks.length;
+        return { id: 'musica' as const, label: 'Playlist de Spotify', title: 'Playlist de Spotify', status: !site.playlist.enabled ? 'Oculta' : linked ? 'Conectada' : n ? `${n} temas` : 'Falta el link', tone: (!site.playlist.enabled ? 'off' : linked || n ? 'ok' : 'todo') as Tone };
+      })()
+    : { id: 'musica', label: 'Playlist de Spotify', title: 'Playlist de Spotify', status: `Plan ${planFor('playlist')?.name}`, tone: 'off', locked: 'playlist' });
   // Mismo orden de fábrica que la página: así «Para agregar» las muestra donde van.
   const rank: SectionId[] = ['portada', 'fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
   return list.sort((a, b) => rank.indexOf(a.id) - rank.indexOf(b.id));
@@ -126,7 +131,7 @@ function CoverFields() {
       </div>
       <Field label="Fecha del casamiento">{a => <input type="date" id={a.id} value={noDate ? '' : s.date ?? ''} disabled={noDate} onChange={e => update(x => ({ ...x, date: e.target.value || null }))} />}</Field>
       <label className="pn-check"><input type="checkbox" checked={noDate} onChange={e => { setNoDate(e.target.checked); if (e.target.checked) update(x => ({ ...x, date: null })); }} /><span>Todavía no tenemos fecha</span></label>
-      <Field label="Texto sobre los nombres" optional hint="Por ejemplo «Nos casamos». Podés dejarlo vacío.">{a => <input id={a.id} type="text" value={s.site.coverText} placeholder="Nos casamos" onChange={e => patchSite(x => ({ ...x, coverText: e.target.value }))} />}</Field>
+      <Field label="Texto sobre los nombres" optional>{a => <input id={a.id} type="text" value={s.site.coverText} placeholder="Nos casamos" onChange={e => patchSite(x => ({ ...x, coverText: e.target.value }))} />}</Field>
     </>
   );
 }
@@ -137,13 +142,11 @@ const SLOT: Record<string, number> = { ceremonia: 1, recepcion: 2, fiesta: 3, ci
 /** Un momento del día: fila compacta con estado y «Mostrar»; abierta, muestra solo sus campos. */
 function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: (k: SiteEvent['key'] | null) => void }) {
   const set = (patch: Partial<SiteEvent>) => patchSite(s => ({ ...s, events: s.events.map(e => (e.key === ev.key ? { ...e, ...patch } : e)) }));
-  const url = ev.mapsUrl.trim();
-  const urlError = url && !isSafeMapsUrl(url) ? 'Usá un enlace de Google Maps (https://maps.app.goo.gl/… o https://www.google.com/maps/…).' : undefined;
   const link = mapsLink(ev);
   const complete = eventComplete(ev);
-  const status = !ev.enabled ? 'Oculta' : complete ? 'Completa' : hasEventDetails(ev) ? 'Falta completar' : 'Sin cargar';
+  const status = !ev.enabled ? 'Oculta' : complete ? 'Completa' : hasEventDetails(ev) || ev.title.trim() ? 'Falta completar' : 'Sin cargar';
   const title = ev.title.trim() || `Evento ${SLOT[ev.key]}`;
-  const tone: Tone = !ev.enabled ? 'off' : complete ? 'ok' : 'todo';
+  const tone: Tone = !ev.enabled || eventBlank(ev) ? 'off' : complete ? 'ok' : 'todo';
   return (
     <li className={`pn-ev${open ? ' is-open' : ''}${ev.enabled ? '' : ' is-off'}`}>
       <div className="pn-ev-head">
@@ -152,11 +155,11 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
           <span className={`pn-sec-status is-${tone}`}>{status}</span>
           <ChevronDown size={18} aria-hidden="true" className="pn-sec-chev" />
         </button>
-        <label className="pn-sec-toggle"><input type="checkbox" checked={ev.enabled} onChange={e => { set({ enabled: e.target.checked }); if (e.target.checked) onOpen(ev.key); }} aria-label={`Mostrar ${title}`} /><span>Mostrar</span></label>
+        <label className="pn-sec-toggle"><input type="checkbox" checked={ev.enabled} onChange={e => set({ enabled: e.target.checked })} aria-label={`Mostrar ${title}`} /><span>Mostrar</span></label>
       </div>
       {open && (
         <div className="pn-ev-body" id={`ev-body-${ev.key}`}>
-          {!ev.enabled ? <p className="pn-note">Este evento está oculto y tus invitados no lo ven. Lo que cargaste se conserva: activá «Mostrar» para volver a usarlo.</p> : <>
+          {!ev.enabled ? <p className="pn-note">Activá «Mostrar» para editarlo.</p> : <>
       <Field label="Nombre del evento">{a => <input id={a.id} type="text" value={ev.title} placeholder="Ceremonia, brindis, after beach…" onChange={e => set({ title: e.target.value })} />}</Field>
       <fieldset className="ed-icons">
         <legend>Ícono</legend>
@@ -169,12 +172,14 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
           ))}
         </div>
       </fieldset>
+      {placesEnabled() && (
+        <PlaceSearch
+          confirmed={ev.mapsUrl.trim() && isSafeMapsUrl(ev.mapsUrl) ? { name: ev.name, address: ev.address, mapsUrl: ev.mapsUrl.trim() } : null}
+          onPick={p => set({ name: p.name, address: p.address, mapsUrl: p.mapsUrl })}
+        />
+      )}
       <Field label="Nombre del lugar">{a => <input id={a.id} type="text" value={ev.name} placeholder="Parroquia San Isidro Labrador" onChange={e => set({ name: e.target.value })} />}</Field>
-      <Field label="Dirección" hint={ev.address.trim() ? (shortAddress(ev.address) ? `En la tarjeta se ve «${shortAddress(ev.address)}». «Cómo llegar» abre Google Maps con la dirección completa.` : 'Una coordenada no se muestra en la tarjeta: «Cómo llegar» abre Google Maps en ese punto.') : 'Podés pegar la dirección tal como la copiás de Google Maps: en la tarjeta se ve solo la calle y la altura.'}>{a => <input id={a.id} type="text" value={ev.address} placeholder="Calle 123, Ciudad" onChange={e => set({ address: e.target.value })} aria-describedby={a.describedBy} />}</Field>
-      <Field label="Enlace de Google Maps" optional error={urlError} hint="Opcional. Si lo dejás vacío, armamos el enlace con el nombre y la dirección. Para fijar el punto exacto: buscá el lugar en Maps, tocá «Compartir» → «Copiar enlace» y pegalo acá.">
-        {a => <input id={a.id} type="url" value={ev.mapsUrl} placeholder="https://maps.app.goo.gl/…" onChange={e => set({ mapsUrl: e.target.value })} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
-      </Field>
-      {(ev.name.trim() || ev.address.trim()) && <a className="pn-link" href={mapsSearch([ev.name, ev.address].map(x => x.trim()).filter(Boolean).join(', '))} target="_blank" rel="noopener noreferrer">Abrir Google Maps para copiar el enlace <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a>}
+      {!placesEnabled() && <Field label="Dirección">{a => <input id={a.id} type="text" value={ev.address} placeholder="Calle 123, Ciudad" onChange={e => set({ address: e.target.value, mapsUrl: '' })} />}</Field>}
       <Field label="Horario" optional>{a => (
         <select id={a.id} value={ev.time} onChange={e => set({ time: e.target.value })}>
           <option value="">Sin horario</option>
@@ -187,7 +192,7 @@ function EventRow({ ev, open, onOpen }: { ev: SiteEvent; open: boolean; onOpen: 
           <Field label="Nota para los invitados" optional>{a => <textarea id={a.id} rows={2} value={ev.note} onChange={e => set({ note: e.target.value })} />}</Field>
         </div>
       </details>
-      {link ? <a className="pn-link" href={link} target="_blank" rel="noopener noreferrer">Probar el enlace de «Cómo llegar» <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a> : <p className="pn-hint">Cargá el nombre o la dirección para que aparezca «Cómo llegar».</p>}
+      {!placesEnabled() && (link ? <a className="pn-link" href={link} target="_blank" rel="noopener noreferrer">Probar el enlace de «Cómo llegar» <ExternalLink size={13} aria-hidden="true" /><span className="pn-sr"> (se abre en una pestaña nueva)</span></a> : <p className="pn-hint">Cargá el nombre o la dirección para que aparezca «Cómo llegar».</p>)}
           </>}
         </div>
       )}
@@ -201,7 +206,7 @@ function isOn(s: AppState, id: SectionId): boolean {
   const site = s.site;
   switch (id) {
     case 'portada': return true;
-    case 'fecha': return !!s.date;                 // sin fecha no hay «Save the date»
+    case 'fecha': return site.saveDate;            // sin fecha, el bloque espera: «Aparece al definir la fecha»
     case 'eventos': return site.events.some(e => e.enabled);
     case 'regalos': return site.giftsSection.enabled && can(s.planId, 'gifts');
     case 'texto': return site.note.enabled;
@@ -223,12 +228,14 @@ function setOn(id: SectionId, v: boolean) {
       case 'fotos': return { ...x, gallery: { ...x.gallery, enabled: v } };
       case 'mensaje': return { ...x, message: { ...x.message, enabled: v } };
       case 'musica': return { ...x, playlist: { ...x.playlist, enabled: v } };
-      case 'eventos': return v && !x.events.some(e => e.enabled) ? { ...x, events: x.events.map((e, i) => (i === 0 ? { ...e, enabled: true } : e)) } : x;
+      case 'fecha': return { ...x, saveDate: v };
+      case 'eventos': return !v ? { ...x, events: x.events.map(e => ({ ...e, enabled: false })) } : !x.events.some(e => e.enabled) ? { ...x, events: x.events.map((e, i) => (i === 0 ? { ...e, enabled: true } : e)) } : x;
       default: return x;
     }
   });
 }
-const REMOVABLE: SectionId[] = ['regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
+/** Solo la portada es obligatoria: todo lo demás se puede quitar (y volver a agregar con lo que se había cargado). */
+const REMOVABLE: SectionId[] = ['fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
 
 type Row = { id: SectionId; sec?: Sec; label: string; status: string; tone: Tone; movable: boolean; removable: boolean; fixed?: string };
 
@@ -242,7 +249,8 @@ function SiteEditor() {
   const [device, setDevice] = useState<Device>(() => (typeof window !== 'undefined' && window.matchMedia('(min-width: 1280px)').matches ? 'desktop' : 'mobile'));
   const [jump, setJump] = useState(0);
   const [announce, setAnnounce] = useState('');
-  const [openEv, setOpenEv] = useState<SiteEvent['key'] | null>(() => s.site.events.find(e => e.enabled)?.key ?? null);
+  // Los eventos arrancan cerrados: se abre el que la pareja toque.
+  const [openEv, setOpenEv] = useState<SiteEvent['key'] | null>(null);
   const [track, setTrack] = useState({ title: '', artist: '' });
   const [trackError, setTrackError] = useState('');
   const photoRef = useRef<HTMLInputElement>(null);
@@ -261,10 +269,8 @@ function SiteEditor() {
     const id = BLOCK_SECTION[b], sec = byId(id);
     if (isOn(s, id)) rows.push({ id, sec, label: sec.label, status: sec.status, tone: sec.tone, movable: true, removable: REMOVABLE.includes(id) });
   }
-  if (isOn(s, 'mensaje')) rows.push({ id: 'mensaje', sec: byId('mensaje'), label: 'Mensaje final', status: byId('mensaje').status, tone: byId('mensaje').tone, movable: false, removable: true, fixed: 'Siempre al final' });
   const movableIds = rows.filter(r => r.movable).map(r => r.id);
-  // «Save the date» no se agrega ni se quita: aparece cuando hay fecha y la pareja solo elige dónde va.
-  const addable = sections.filter(x => x.id !== 'portada' && x.id !== 'fecha' && !isOn(s, x.id));
+  const addable = sections.filter(x => x.id !== 'portada' && !isOn(s, x.id));
   const visibleCount = rows.length;
   const sec = sel ? byId(sel) : null;
   const hiddenNow = sel ? !isOn(s, sel) : false;
@@ -341,9 +347,8 @@ function SiteEditor() {
         <div className="ed-side" ref={topRef}>
           {!sec ? (
             <>
-              <section className="ed-block" aria-labelledby="ed-structure">
-                <h2 id="ed-structure" className="ed-h">Tu invitación</h2>
-                <p className="ed-help">Así está armada, de arriba hacia abajo. Tocá una sección para editarla.</p>
+              <section className="ed-block is-current" aria-labelledby="ed-structure">
+                <h2 id="ed-structure" className="ed-h">Tu invitación<span className="ed-count" aria-label={`${visibleCount} secciones`}>{visibleCount}</span></h2>
                 <ol className="ed-rows">
                   {rows.map((r, i) => {
                     const Icon = ICON[r.id];
@@ -373,12 +378,11 @@ function SiteEditor() {
                 </ol>
               </section>
 
-              <section className="ed-block" aria-labelledby="ed-add">
-                <h2 id="ed-add" className="ed-h">Para agregar</h2>
+              <section className="ed-block is-extra" aria-labelledby="ed-add">
+                <h2 id="ed-add" className="ed-h"><Plus size={16} strokeWidth={2.2} aria-hidden="true" />Para agregar</h2>
                 {addable.length === 0
                   ? <p className="ed-help">Ya tenés todas las secciones en tu invitación.</p>
                   : <>
-                      <p className="ed-help">Quitar una sección no borra lo que cargaste: si la agregás de nuevo, está todo como lo dejaste.</p>
                       <ul className="ed-rows is-add">
                         {addable.map(x => {
                           const Icon = ICON[x.id];
@@ -392,7 +396,7 @@ function SiteEditor() {
                               <div className="ed-acts">
                                 {x.locked
                                   ? <button type="button" className="pn-btn is-ghost is-small" onClick={plans.open} aria-label={`Ver el plan que incluye ${x.label}`}>Ver plan</button>
-                                  : <button type="button" className="pn-btn is-ghost is-small" onClick={() => add(x.id)} aria-label={`Agregar ${x.label} a la invitación`}><Plus size={15} aria-hidden="true" />Agregar</button>}
+                                  : <button type="button" className="pn-btn is-small ed-add-btn" onClick={() => add(x.id)} aria-label={`Agregar ${x.label} a la invitación`}><Plus size={15} aria-hidden="true" />Agregar</button>}
                               </div>
                             </li>
                           );
@@ -422,12 +426,11 @@ function SiteEditor() {
       {sel === 'portada' && (
         <Panel sec={sec}>
           <CoverFields />
-          {!s.date && <p className="pn-hint">Cuando definas la fecha aparece «Save the date» con su cuenta regresiva, y vas a poder elegir en qué lugar de la página va.</p>}
         </Panel>
       )}
       {sel === 'fecha' && (
         <Panel sec={sec}>
-          <p className="pn-hint">Muestra la fecha del casamiento y, si querés, cuánto falta. La fecha se cambia en Portada. Para moverla de lugar, usá «Subir» y «Bajar» en «Tu invitación».</p>
+          <p className="pn-hint">La fecha se cambia en Portada.</p>
           <label className="pn-check"><input type="checkbox" checked={site.countdown} onChange={e => patchSite(x => ({ ...x, countdown: e.target.checked }))} /><span>Mostrar la cuenta regresiva</span></label>
         </Panel>
       )}
@@ -438,7 +441,7 @@ function SiteEditor() {
       )}
       {sel === 'rsvp' && (
         <Panel sec={sec}>
-        <p className="pn-muted">Tus invitados confirman desde la página y las respuestas se suman solas a la solapa Invitados. No hace falta cargar nada.</p>
+        <p className="pn-muted">Las respuestas llegan a Invitados.</p>
         </Panel>
       )}
       {sel === 'dress' && (
@@ -448,7 +451,6 @@ function SiteEditor() {
         <label className="pn-check"><input type="checkbox" checked={site.dressCode.showColors} onChange={e => patchSite(x => ({ ...x, dressCode: { ...x.dressCode, showColors: e.target.checked } }))} /><span>Mostrar círculos de colores sugeridos</span></label>
         {site.dressCode.showColors && (
           <div className="ed-colors-box">
-            <p className="pn-hint">Elegí el color de cada círculo. El nombre es opcional.</p>
             <ul className="ed-colors">
               {site.dressCode.colors.map((c, i) => (
                 <li key={i}>
@@ -464,25 +466,22 @@ function SiteEditor() {
       )}
       {sel === 'regalos' && (
         <Panel sec={sec}>
-        <p className="pn-muted">Esta sección lleva a tus invitados a tu lista de regalos. Los regalos se arman en «Regalos».</p>
         <Field label="Título">{a => <input id={a.id} type="text" value={site.giftsSection.title} placeholder={DEFAULT_GIFTS_TITLE} onChange={e => patchSite(x => ({ ...x, giftsSection: { ...x.giftsSection, title: e.target.value } }))} />}</Field>
         <Field label="Texto" optional>{a => <textarea id={a.id} rows={2} value={site.giftsSection.text} placeholder={DEFAULT_GIFTS_TEXT} onChange={e => patchSite(x => ({ ...x, giftsSection: { ...x.giftsSection, text: e.target.value } }))} />}</Field>
-        <Field label="Texto del botón" hint="El botón abre la página de regalos.">{a => <input id={a.id} type="text" value={site.giftsSection.button} placeholder={DEFAULT_GIFTS_BUTTON} maxLength={40} onChange={e => patchSite(x => ({ ...x, giftsSection: { ...x.giftsSection, button: e.target.value } }))} />}</Field>
+        <Field label="Texto del botón">{a => <input id={a.id} type="text" value={site.giftsSection.button} placeholder={DEFAULT_GIFTS_BUTTON} maxLength={40} onChange={e => patchSite(x => ({ ...x, giftsSection: { ...x.giftsSection, button: e.target.value } }))} />}</Field>
         {s.gifts.items.length === 0
-          ? <p className="pn-note">Todavía no elegiste regalos: la sección se muestra cuando haya una lista. <Link to="/panel/regalos" className="pn-link">Elegir regalos</Link></p>
+          ? <p className="pn-note">Todavía sin regalos. <Link to="/panel/regalos" className="pn-link">Elegir regalos</Link></p>
           : <Link to="/panel/regalos" className="pn-link">Ir a mi lista de regalos</Link>}
         </Panel>
       )}
       {sel === 'texto' && (
         <Panel sec={sec}>
-        <p className="pn-muted">Una caja para lo que quieran contar: una anécdota, un aviso, unas indicaciones.</p>
         <Field label="Título" optional>{a => <input id={a.id} type="text" value={site.note.title} maxLength={80} placeholder="Un aviso importante" onChange={e => patchSite(x => ({ ...x, note: { ...x.note, title: e.target.value } }))} />}</Field>
         <Field label="Mensaje" optional>{a => <textarea id={a.id} rows={5} value={site.note.text} maxLength={1200} onChange={e => patchSite(x => ({ ...x, note: { ...x.note, text: e.target.value } }))} />}</Field>
         </Panel>
       )}
       {sel === 'fotos' && (
         <Panel sec={sec} planTag={tagFor('gallery')}>
-        {site.gallery.photos.length === 0 && <p className="pn-hint">Todavía no cargaste fotos. Con una alcanza para empezar.</p>}
         {site.gallery.photos.length > 0 && (
           <ul className="pn-photos">
             {site.gallery.photos.map((p, i) => (
@@ -498,7 +497,7 @@ function SiteEditor() {
           </ul>
         )}
         <input ref={photoRef} className="pn-sr" type="file" multiple accept="image/jpeg,image/png,image/webp" aria-label="Elegir fotos" onChange={e => void addPhotos(e.target.files)} />
-        <div className="pn-actions is-tight"><button type="button" className="pn-btn is-ghost is-small" disabled={site.gallery.photos.length >= MAX_PHOTOS} onClick={() => photoRef.current?.click()}><Plus size={15} aria-hidden="true" />Agregar fotos</button><span className="pn-hint">{site.gallery.photos.length >= MAX_PHOTOS ? `Llegaste al máximo de ${MAX_PHOTOS} fotos. Quitá alguna para sumar otra.` : `${site.gallery.photos.length} de ${MAX_PHOTOS}. Se guardan en este dispositivo.`}</span></div>
+        <div className="pn-actions is-tight"><button type="button" className="pn-btn is-ghost is-small" disabled={site.gallery.photos.length >= MAX_PHOTOS} onClick={() => photoRef.current?.click()}><Plus size={15} aria-hidden="true" />Agregar fotos</button><span className="pn-hint">{site.gallery.photos.length >= MAX_PHOTOS ? `Llegaste al máximo de ${MAX_PHOTOS} fotos. Quitá alguna para sumar otra.` : `${site.gallery.photos.length} de ${MAX_PHOTOS}.`}</span></div>
         <Field label="Hashtag" optional>{a => <input id={a.id} type="text" value={site.gallery.hashtag} placeholder="#TomasYMartina2027" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, hashtag: e.target.value } }))} />}</Field>
         <Field label="Usuario de Instagram" optional>{a => <input id={a.id} type="text" value={site.gallery.handle} placeholder="@tomasymartina" onChange={e => patchSite(x => ({ ...x, gallery: { ...x.gallery, handle: e.target.value } }))} />}</Field>
         </Panel>
@@ -506,30 +505,20 @@ function SiteEditor() {
       {sel === 'mensaje' && (
         <Panel sec={sec} planTag={tagFor('message')}>
         <Field label="Frase">{a => <input id={a.id} type="text" value={site.message.title} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, title: e.target.value } }))} />}</Field>
-        <Field label="Mensaje" optional hint="Si lo dejás vacío, usamos «Con todo cariño, …» con sus nombres.">{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
+        <Field label="Mensaje" optional>{a => <textarea id={a.id} rows={3} value={site.message.text} onChange={e => patchSite(x => ({ ...x, message: { ...x.message, text: e.target.value } }))} aria-describedby={a.describedBy} />}</Field>
         </Panel>
       )}
       {sel === 'musica' && (
         <Panel sec={sec} planTag={tagFor('playlist')}>
-          <p className="pn-note">Es una lista armada acá, solo para la vista previa: no está conectada a Spotify ni a otro servicio de música.</p>
-          <Field label="Nombre de la playlist" optional>{a => <input id={a.id} type="text" value={site.playlist.name} placeholder="Nuestra fiesta" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, name: e.target.value } }))} />}</Field>
-          <form onSubmit={addTrack} noValidate className="pn-inline-form is-tracks">
-            <Field label="Canción" error={trackError || undefined}>{a => <input id={a.id} type="text" value={track.title} onChange={e => { setTrack(t => ({ ...t, title: e.target.value })); setTrackError(''); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}</Field>
-            <Field label="Artista" optional>{a => <input id={a.id} type="text" value={track.artist} onChange={e => setTrack(t => ({ ...t, artist: e.target.value }))} />}</Field>
-            <button type="submit" className="pn-btn is-small">Agregar</button>
-          </form>
-          {site.playlist.tracks.length > 0 && (
-            <ol className="pn-tracks">
-              {site.playlist.tracks.map((t, i) => (
-                <li key={`${t.title}-${i}`}><span><strong>{t.title}</strong> · {t.artist}</span><button type="button" className="pn-icon" aria-label={`Quitar ${t.title}`} onClick={() => patchSite(x => ({ ...x, playlist: { ...x.playlist, tracks: x.playlist.tracks.filter((_, k) => k !== i) } }))}><X size={15} aria-hidden="true" /></button></li>
-              ))}
-            </ol>
-          )}
+          <Field label="Link de tu playlist de Spotify" error={site.playlist.spotify.trim() && !spotifyEmbed(site.playlist.spotify) ? 'Pegá el link de una playlist de Spotify (open.spotify.com/playlist/…).' : undefined}>
+            {a => <input id={a.id} type="url" inputMode="url" value={site.playlist.spotify} placeholder="https://open.spotify.com/playlist/…" onChange={e => patchSite(x => ({ ...x, playlist: { ...x.playlist, spotify: e.target.value } }))} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+          </Field>
+          <p className="pn-hint">En Spotify: Compartir → Copiar enlace de la playlist.</p>
         </Panel>
       )}
 
                 {REMOVABLE.includes(sel!) && !sec.locked && !hiddenNow && (
-                  <div className="pn-actions ed-remove-row"><button type="button" className="pn-btn is-ghost is-small" onClick={() => remove(sel!, sec.label)}>Quitar de la invitación</button><span className="pn-hint">Lo que cargaste se guarda.</span></div>
+                  <div className="pn-actions ed-remove-row"><button type="button" className="pn-btn is-ghost is-small" onClick={() => remove(sel!, sec.label)}>Quitar de la invitación</button></div>
                 )}
               </div>
             </>

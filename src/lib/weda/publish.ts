@@ -1,7 +1,7 @@
 // Resumen de publicación: qué se publicaría con cada plan y qué queda como borrador. Función pura sobre el AppState y la matriz de planes.
 // La publicación y el pago NO están conectados (no hay servidor): esto solo informa, no publica ni cobra nada.
 import { sectionGaps } from './journey';
-import { hasEventDetails, publicPages } from './logic';
+import { hasEventDetails, publicPages, spotifyEmbed } from './logic';
 import { can, planFor, type Feature } from './plans';
 import type { AppState, PlanId } from './types';
 
@@ -17,7 +17,7 @@ const PUBLIC: { feature: Feature; label: string; content: (s: AppState) => strin
   { feature: 'rsvp', label: 'Confirmación de asistencia', content: s => (s.site.rsvp.enabled ? 'formulario para tus invitados' : null) },
   { feature: 'gallery', label: 'Galería de fotos', content: s => (s.site.gallery.enabled && s.site.gallery.photos.length ? `${s.site.gallery.photos.length} fotos` : null) },
   { feature: 'message', label: 'Mensaje final', content: s => (s.site.message.enabled ? 'mensaje de cierre' : null) },
-  { feature: 'playlist', label: 'Música de la fiesta', content: s => (s.site.playlist.enabled && s.site.playlist.tracks.length ? `${s.site.playlist.tracks.length} temas` : null) },
+  { feature: 'playlist', label: 'Playlist de Spotify', content: s => (!s.site.playlist.enabled ? null : spotifyEmbed(s.site.playlist.spotify) ? 'playlist de Spotify' : s.site.playlist.tracks.length ? `${s.site.playlist.tracks.length} temas` : null) },
 ];
 
 export function publishSummary(s: AppState, planId: PlanId): PublishSummary {

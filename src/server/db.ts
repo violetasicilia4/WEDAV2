@@ -128,6 +128,36 @@ const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  // 2 (2026-10-28): el correo de quien regala (obligatorio desde ahora; los aportes viejos quedan vacíos), el correo opcional de quien
+  // confirma asistencia y la base de consentimientos de Weda para novedades (Ley 25.326: consentimiento expreso, con fecha y texto aceptado).
+  `
+  ALTER TABLE contributions ADD COLUMN giver_email TEXT NOT NULL DEFAULT '';
+  ALTER TABLE guests ADD COLUMN email TEXT NOT NULL DEFAULT '';
+  CREATE TABLE marketing_consents (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL COLLATE NOCASE,
+    source TEXT NOT NULL CHECK (source IN ('gift','rsvp')),
+    wedding_id TEXT REFERENCES weddings(id) ON DELETE SET NULL,  -- de dónde vino; la base es de Weda y no se borra con el casamiento
+    text_version TEXT NOT NULL,          -- versión del texto aceptado (src/lib/weda/consent.ts)
+    granted_at TEXT NOT NULL,
+    revoked_at TEXT                      -- baja: se marca, no se borra (prueba de cuándo se dio y cuándo se retiró)
+  );
+  CREATE INDEX marketing_consents_email ON marketing_consents(email);
+  `,
+  // 3 (2026-10-28): registro de correos salientes (tipo, destinatario y resultado; nunca el contenido). Sirve para auditar y para no
+  // mandar dos recordatorios seguidos.
+  `
+  CREATE TABLE mail_log (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,                  -- gift_receipt · receipt_reminder · marketing
+    to_email TEXT NOT NULL,
+    ref TEXT NOT NULL DEFAULT '',        -- por ejemplo, el id del aporte
+    status TEXT NOT NULL CHECK (status IN ('sent','skipped','failed')),
+    error TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX mail_log_ref ON mail_log(ref, kind);
+  `,
 ];
 
 export function openDb(file: string): Db {

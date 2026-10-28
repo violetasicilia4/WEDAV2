@@ -360,14 +360,6 @@ body:has(.pn-root) { background: #fff; }
 .pn-publish { display: grid; gap: 8px; margin-top: 12px; }
 .pn-plan-items.is-plain { border-top: 0; padding-top: 0; }
 
-/* Vista previa: qué está configurado, incluido o requiere otro plan. */
-.pn-sec-sum { display: grid; gap: 8px; max-width: 560px; margin: 0 auto; width: 100%; }
-.pn-sec-sum h2 { font-size: 18px; font-weight: var(--w-semibold); }
-.pn-sec-sum ul { list-style: none; margin: 0; padding: 0; }
-.pn-sec-sum li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--pn-line); font-size: 15px; }
-.pn-sum-tag { font-size: 13px; color: var(--pn-muted); text-align: right; }
-.pn-sum-tag.is-published { color: #34502c; }
-.pn-sum-tag.is-draft { color: #6b4a10; }
 
 /* Avisos: con un diálogo abierto suben a la parte superior para no tapar sus botones. */
 body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
@@ -1240,8 +1232,9 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 /* Inicio: las dos secciones usan las mismas tarjetas; la gestión queda abajo, separada por una línea. */
 .hm-grid .hm-tile { min-height: 96px; }
 /* «Publicar» es la acción principal de toda la pantalla: gris oscuro, aunque el resto de los botones del panel sean claros. */
-.pn-app .pn-top .pn-btn.pn-publish-btn { background: #dfdecc; color: var(--pn-ink); border-color: transparent; }
-.pn-app .pn-top .pn-btn.pn-publish-btn:hover:not(:disabled) { background: #d1d0b8; }
+/* Mismo verde que «Cómo llegar» en la invitación (un tono más que el fondo de eventos #dfdecc). */
+.pn-app .pn-top .pn-btn.pn-publish-btn { background: #b9b793; color: var(--pn-ink); border-color: transparent; }
+.pn-app .pn-top .pn-btn.pn-publish-btn:hover:not(:disabled) { background: #a9a780; }
 /* Con dos columnas y una cantidad impar de tarjetas, la última ocupa todo el ancho (sin hueco al costado). */
 @media (min-width: 720px) and (max-width: 1099px) { .hm-grid > li:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 
@@ -1608,45 +1601,6 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .ed-ico-opt.on { box-shadow: inset 0 0 0 2px var(--pn-ink); }
 .ed-ico-opt:has(input:focus-visible) { outline: 2px solid var(--pn-ink); outline-offset: 2px; }
 
-/* ===== Inicio: banner «Primeros pasos» (regalos → micrositio → publicación) ===== */
-.gs { --gs-bg: #ecebe2; --gs-tab: rgb(255 255 255 / .55); display: grid; gap: 0; border-radius: var(--pn-r-sheet); background: var(--gs-bg); overflow: hidden; }
-.pn-journey > .gs { grid-column: 1 / -1; }
-.gs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 20px 8px; }
-.gs-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; font-weight: var(--w-semibold); }
-.gs-count { font-size: 13px; font-weight: 400; color: var(--pn-muted); }
-.gs-head-actions { display: inline-flex; align-items: center; gap: 16px; }
-.gs-head-actions .pn-link { text-decoration: none; }
-/* 36 px solo con mouse: con el dedo vale el mínimo táctil de 44 px (antes esta regla, por venir después, se lo ganaba a `.pn-app .pn-link`). */
-@media (pointer: fine) { .gs-head-actions .pn-link { min-height: 36px; } }
-.gs-head-actions .pn-link:hover { color: var(--pn-ink); text-decoration: underline; }
-.gs-head-actions .is-up { transform: rotate(180deg); }
-.gs-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 12px; padding: 4px; border-radius: 14px; background: var(--gs-tab); }
-.gs-tab { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: var(--pn-h-ctl); padding: 6px 8px; border: 0; border-radius: 11px; background: none; color: var(--pn-muted); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
-.gs-tab:hover:not(.on) { color: var(--pn-ink); background: rgb(255 255 255 / .5); }
-.gs-tab.on { background: #fff; color: var(--pn-ink); font-weight: var(--w-semibold); }
-.gs-num { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: var(--pn-ink); font-size: 13px; font-weight: var(--w-semibold); }
-.gs-tab.on .gs-num { background: var(--pn-ink); color: #fff; }
-.gs-tab.is-done .gs-num { background: var(--pn-slate-d); color: #fff; }
-.gs-panel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: center; padding: 28px 24px 28px; }
-.gs-copy { display: grid; gap: 10px; justify-items: start; min-width: 0; }
-.gs-copy h3 { margin: 0; font-size: clamp(22px, 3vw, 28px); line-height: 1.15; letter-spacing: var(--ls-title); text-wrap: balance; }
-.gs-copy p { margin: 0; max-width: 52ch; color: var(--pn-ink); font-size: 16px; }
-.gs-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
-.gs-actions .pn-btn.is-ghost { background: rgb(255 255 255 / .6); }
-.gs-art { display: none; }
-@media (max-width: 559px) {
-  .gs-tabs { margin: 0 8px; gap: 4px; }
-  .gs-tab { flex-direction: column; gap: 4px; min-height: 64px; padding: 8px 4px; font-size: 13px; text-align: center; }
-}
-@media (min-width: 760px) {
-  .gs-panel { grid-template-columns: minmax(0, 1fr) minmax(180px, 280px); gap: 32px; padding: 36px 40px 40px; }
-  .gs-art { display: grid; place-items: center; min-height: 160px; border-radius: 18px; background: rgb(255 255 255 / .6); color: var(--pn-slate-d); }
-}
-.gs .gs-actions .pn-btn:not(.is-ghost) { background: var(--pn-ink); border-color: var(--pn-ink); color: #fff; }
-.gs .gs-actions .pn-btn:not(.is-ghost):hover:not(:disabled) { background: #000; border-color: #000; }
-.gs-id { display: grid; gap: 2px; min-width: 0; }
-.gs-couple { margin: 0 0 0 26px; font-size: 14px; color: var(--pn-muted); }
-
 /* ===== Tu página · iteración de usabilidad (2026-10-28) =====
    Mientras se edita una sección, una barra fija dice dónde estás (ícono + nombre), cómo volver (flecha) y «Listo».
    En el celular la ventana en vivo va pegada debajo, dentro del mismo bloque fijo y opaco: así no asoma el formulario por encima
@@ -1701,3 +1655,168 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 /* Compu angosta (1024–1279 px): el menú lateral ocupa 248 px y la vista previa quedaba en ~230 px (una miniatura). Las dos columnas se reparten
    el ancho por igual, con un mínimo útil para cada una (formulario ≥ 340 px, invitación ≥ 320 px, el ancho de un celular chico). */
 @media (min-width: 1024px) and (max-width: 1279px) { .ed-grid { grid-template-columns: minmax(340px, 1fr) minmax(320px, 1fr); gap: 24px; } }
+
+/* ===== Inicio (diseño de la dueña, 2026-10-28) =====
+   Encabezado con los nombres y la foto de la pareja; los tres pasos numerados unidos por una línea, con el paso elegido destacado y una
+   muestra de cómo se ve en la invitación; dos accesos con ícono de color suave; y, separadas, las herramientas que no se publican.
+   Tipografía del panel (Geist). Los colores de los íconos son tintes muy suaves (rosa, salvia, celeste), solo de fondo del ícono. */
+.pn-journey.hx-home { max-width: 1080px; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.hx-home > * { grid-column: 1 / -1; }
+.hx-hero { display: grid; grid-template-columns: minmax(0, 1fr); align-items: end; gap: 20px; }
+.hx-kicker { margin: 0 0 8px; font-size: 12px; font-weight: var(--w-medium); letter-spacing: .08em; text-transform: uppercase; color: var(--pn-muted); }
+.hx-hero h1 { margin: 0; font-size: clamp(30px, 4.2vw, 48px); line-height: 1.05; letter-spacing: var(--ls-title, -0.02em); font-weight: var(--w-semibold); text-wrap: balance; }
+.hx-hero-copy > p:last-child { margin: 12px 0 0; max-width: 58ch; font-size: clamp(15px, 1.2vw, 17px); line-height: 1.5; color: var(--pn-muted); }
+.hx-hero-photo { display: none; }
+@media (min-width: 760px) {
+  .hx-hero { grid-template-columns: minmax(0, 1fr) clamp(200px, 24vw, 280px); }
+  .hx-hero-photo { position: relative; display: block; align-self: end; height: clamp(170px, 18vw, 220px); margin-bottom: -40px; z-index: 0; }
+  .hx-hero-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 46% 54% 18px 18px / 58% 52% 18px 18px; }
+}
+
+/* Pasos */
+.hx-steps { position: relative; z-index: 1; display: grid; gap: 0; padding: 8px 0 0; border: 1px solid var(--pn-line); border-radius: var(--pn-r-sheet); background: var(--hx-bg); overflow: hidden; --hx-bg: #f0efe4; /* verde clarito, de la familia del verde de la invitación */ }
+.hx-stepper { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 14px 8px 4px; }
+/* La línea que une los números (de centro a centro del primero al último). */
+.hx-stepper::before { content: ''; position: absolute; left: calc(100% / 6 + 8px); right: calc(100% / 6 + 8px); top: 32px; height: 1px; background: rgb(59 60 58 / .18); }
+.hx-step { position: relative; display: grid; justify-items: center; gap: 8px; min-height: var(--pn-h-touch); padding: 0 4px 10px; border: 0; background: none; color: var(--pn-muted); font: inherit; font-size: 13px; line-height: 1.25; text-align: center; cursor: pointer; }
+.hx-dot { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .25); color: var(--pn-ink); font-size: 15px; font-weight: var(--w-semibold); }
+.hx-step.is-done .hx-dot { background: var(--pn-slate-d); box-shadow: none; color: #fff; }
+.hx-step.on { color: var(--pn-ink); font-weight: var(--w-semibold); }
+.hx-step.on .hx-dot { background: var(--pn-ink); box-shadow: 0 0 0 5px var(--hx-bg), 0 0 0 6px rgb(59 60 58 / .2); color: #fff; }
+.hx-step:hover:not(.on) { color: var(--pn-ink); }
+.hx-step:focus-visible { outline-offset: -2px; border-radius: 12px; }
+@media (min-width: 760px) { .hx-step { font-size: 14px; } }
+
+.hx-stack { display: grid; }
+.hx-stack > .hx-panel { grid-area: 1 / 1; }
+.hx-stack > .hx-panel:not(.on) { visibility: hidden; }
+.hx-panel { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: 14px 14px; padding: 14px 16px 18px; }
+.hx-ico { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; color: var(--pn-ink); }
+.hx-ico svg { width: 28px; height: 28px; }
+.hx-panel.is-regalos .hx-ico { background: #f6e8e6; }
+.hx-panel.is-sitio .hx-ico { background: #e5eee3; }
+.hx-panel.is-publicar .hx-ico { background: #e3ecf3; }
+.hx-copy { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.hx-eyebrow { margin: 0; font-size: 11px; font-weight: var(--w-medium); letter-spacing: .08em; text-transform: uppercase; color: var(--pn-muted); }
+.hx-copy h3 { margin: 0; font-size: clamp(19px, 2vw, 24px); line-height: 1.15; font-weight: var(--w-semibold); letter-spacing: var(--ls-section, -0.01em); text-wrap: balance; }
+.hx-copy > p:not(.hx-eyebrow) { margin: 0; max-width: 46ch; font-size: 15px; line-height: 1.45; color: var(--pn-muted); }
+.hx-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.hx-steps .hx-cta { background: var(--pn-ink); border-color: var(--pn-ink); color: #fff; border-radius: 999px; padding: 0 22px; }
+.hx-steps .hx-cta:hover:not(:disabled) { background: #000; border-color: #000; }
+.hx-steps .hx-actions .pn-btn.is-ghost { border-radius: 999px; background: #fff; }
+
+/* Muestra «así se verá» */
+.hx-sample { position: relative; grid-column: 1 / -1; margin: 4px 0 0; display: flex; align-items: flex-start; gap: 6px; }
+.hx-card { flex: 1; max-width: 300px; padding: 8px; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .05), 0 10px 26px rgb(0 0 0 / .06); }
+.hx-pics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.hx-pics img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; }
+.hx-card-cap { display: flex; align-items: center; gap: 6px; margin: 8px 2px 2px; font-size: 12px; color: var(--pn-muted); }
+.hx-cover { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 10px; }
+.hx-cover img { width: 100%; height: 100%; object-fit: cover; }
+.hx-cover::after { content: ''; position: absolute; inset: 0; background: rgb(0 0 0 / .28); }
+.hx-cover span { position: absolute; inset: 0; z-index: 1; display: grid; place-content: center; gap: 2px; padding: 8px; text-align: center; color: #fff; font-size: 11px; letter-spacing: .06em; }
+.hx-cover strong { font-family: 'Cormorant Garamond', Garamond, Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: 0; }
+.hx-link-label { margin: 6px 6px 2px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--pn-muted); }
+.hx-link { margin: 0 6px; padding: 10px 12px; border-radius: 10px; background: var(--pn-surface); font-size: 14px; overflow-wrap: anywhere; }
+
+@media (min-width: 760px) {
+  .hx-steps { padding-top: 10px; }
+  .hx-stepper { padding: 16px 24px 6px; }
+  .hx-stepper::before { left: calc((100% - 48px) / 6 + 24px); right: calc((100% - 48px) / 6 + 24px); top: 34px; }
+  .hx-panel { grid-template-columns: clamp(110px, 12vw, 150px) minmax(0, 1fr) minmax(220px, 300px); align-items: center; gap: 24px; padding: 18px 24px 24px; }
+  .hx-ico { width: 100%; height: auto; aspect-ratio: 1; border-radius: 18px; }
+  .hx-ico svg { width: 56px; height: 56px; }
+  .hx-sample { grid-column: auto; margin: 0; flex-direction: row-reverse; justify-content: flex-end; }
+  .hx-card { max-width: none; transform: rotate(-1.5deg); }
+}
+
+/* Accesos y herramientas: con ícono de color en compu; en el celular, filas simples con «›». */
+.hx-home .hm-path { margin-top: 4px; }
+.hx-home .hm-grid { grid-template-columns: 1fr; }
+@media (min-width: 720px) { .hx-home .hm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hx-home .hm-grid > li:last-child:nth-child(odd) { grid-column: auto; } }
+.hx-home .hm-tile { border-radius: var(--pn-r-card); background: #fff; }
+.hm-ico.is-sage { background: #e5eee3; color: var(--pn-ink); }
+.hm-ico.is-sky { background: #e3ecf3; color: var(--pn-ink); }
+.hx-home .hm-go.is-chev { display: none; }
+.hx-home .hm-manage { margin-top: 4px; }
+.hx-home .hm-manage .hm-head h2 { font-size: 17px; }
+@media (max-width: 559px) {
+  .hx-home .hm-tile { min-height: 64px; padding: 12px 14px; grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .hx-home .hm-text > span:not(.hm-tag) { display: none; }
+  .hx-home .hm-ico { width: 40px; height: 40px; }
+  .hx-home .hm-go.is-arrow { display: none; }
+  .hx-home .hm-go.is-chev { display: block; }
+  .hx-home .hx-cta { flex: 1; justify-content: center; }
+  .hx-home .hx-actions { width: 100%; }
+}
+@media (max-width: 759px) {
+  /* Celular: el botón del paso ocupa todo el ancho de la tarjeta, debajo del ícono y del texto (como en el diseño). */
+  .hx-panel .hx-actions { margin-left: -70px; width: calc(100% + 70px); }
+  .hx-panel .hx-actions > * { flex: 1; justify-content: center; }
+}
+
+/* Buscador de lugares (Google Places) en cada evento de «Tu página». */
+.ps { position: relative; display: grid; gap: 6px; }
+.ps-label { font-size: var(--pn-fs-label); font-weight: var(--w-semibold); }
+.ps-box { display: flex; align-items: center; gap: 8px; min-height: var(--pn-h-ctl); padding: 0 14px; border: 1px solid var(--pn-line-s); border-radius: var(--pn-r-ctl); background: #fff; color: var(--pn-muted); }
+.ps-box:focus-within { border-color: var(--pn-ink); box-shadow: 0 0 0 1px var(--pn-ink); }
+.pn-root .ps-box input, .ps-box input { flex: 1; border-radius: 0; box-shadow: none; min-width: 0; min-height: calc(var(--pn-h-ctl) - 2px); padding: 0; border: 0; outline: 0; background: none; color: var(--pn-ink); font: inherit; font-size: 16px; }
+.pn-root .ps-box input:focus, .pn-root .ps-box input:focus-visible { outline: 0; box-shadow: none; border: 0; }
+.ps-ok { display: inline-flex; align-items: center; gap: 6px; color: #34502c; }
+.ps-ok svg { flex: none; }
+/* Lista de sugerencias, al estilo del autocompletado de Google: un renglón por lugar, pin gris, nombre con lo escrito en negrita
+   y la zona en gris a continuación, líneas finas entre filas y la atribución «Google Maps» al pie. */
+.ps-pop { position: absolute; z-index: 20; top: calc(var(--pn-h-ctl) + 30px); left: 0; right: 0; border: 1px solid var(--pn-line); border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgb(0 0 0 / .14); overflow: hidden; scroll-margin-bottom: 96px; }
+.ps-list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow: auto; }
+.ps-list li { display: flex; align-items: center; gap: 10px; min-height: var(--pn-h-touch); padding: 10px 14px; border-bottom: 1px solid rgb(59 60 58 / .1); cursor: pointer; }
+.ps-list li:last-child { border-bottom: 0; }
+.ps-list li svg { flex: none; color: #a3a3a3; }
+.ps-list li.on { background: rgb(59 60 58 / .06); }
+.ps-opt { min-width: 0; font-size: 15px; line-height: 1.35; color: var(--pn-ink); }
+.ps-main { font-weight: 400; }
+.ps-main b { font-weight: var(--w-semibold); }
+.ps-sec { font-size: 13px; color: var(--pn-muted); }
+.ps-attr { margin: 0; padding: 6px 14px 8px; border-top: 1px solid rgb(59 60 58 / .1); font-size: 12px; text-align: right; color: var(--pn-muted); }
+
+
+/* Constructor: «Tu invitación» (lo que ya ven los invitados) y «Para agregar» (funciones que se pueden sumar) se distinguen a simple vista.
+   Lo que está: tarjetas blancas con borde lleno y número de orden. Lo que se puede sumar: un recuadro aparte, gris, con filas de borde punteado
+   e ícono apagado, y un botón «Agregar» lleno. (2026-10-28, pedido de la dueña.) */
+.ed-block.is-current .ed-row { background: #fff; box-shadow: inset 0 0 0 1px var(--pn-line-s), 0 1px 2px rgb(59 60 58 / .05); }
+.ed-block.is-current .ed-num { background: var(--pn-ink); box-shadow: none; color: #fff; }
+.ed-block.is-current .ed-ico { color: var(--pn-ink); }
+.ed-h { display: flex; align-items: center; gap: 8px; }
+.ed-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--pn-surface); font-size: 12px; font-weight: var(--w-semibold); color: var(--pn-muted); }
+.ed-block.is-extra { margin-top: 8px; padding: 14px; border-radius: 18px; background: var(--pn-surface); }
+.ed-block.is-extra .ed-h { color: var(--pn-muted); }
+.ed-block.is-extra .ed-row { background: transparent; box-shadow: none; border: 1px dashed rgb(59 60 58 / .28); }
+.ed-block.is-extra .ed-ico { color: var(--pn-muted); opacity: .8; }
+.ed-block.is-extra .ed-text strong { font-weight: var(--w-medium, 500); }
+.ed-block.is-extra .pn-btn.ed-add-btn { flex: none; background: var(--pn-ink); border-color: var(--pn-ink); color: #fff; }
+.ed-block.is-extra .pn-btn.ed-add-btn:hover { background: #2a2b29; }
+
+/* Ayuda: contacto por correo (hola@weda.app). */
+.pn-contact { display: flex; align-items: center; gap: 10px; margin: 4px 0 0; padding: 12px 14px; border-radius: var(--pn-r-ctl); background: var(--pn-surface); font-size: 14px; line-height: 1.45; }
+.pn-contact svg { flex: none; color: var(--pn-muted); }
+/* Preguntas frecuentes: cada respuesta oculta hasta tocar la pregunta. */
+.pn-faq { display: grid; border-top: 1px solid var(--pn-line); }
+.pn-faq details { border-bottom: 1px solid var(--pn-line); }
+.pn-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--pn-h-touch); padding: 10px 2px; font-size: 15px; font-weight: var(--w-semibold); cursor: pointer; list-style: none; }
+.pn-faq summary::-webkit-details-marker { display: none; }
+.pn-faq summary svg { flex: none; color: var(--pn-muted); transition: transform .2s; }
+.pn-faq details[open] summary svg { transform: rotate(180deg); }
+.pn-faq summary:focus-visible { outline: 2px solid var(--pn-ink); outline-offset: 2px; border-radius: 8px; }
+.pn-faq p { margin: 0 0 14px; padding-right: 30px; font-size: 14px; line-height: 1.5; color: var(--pn-muted); }
+@media (prefers-reduced-motion: reduce) { .pn-faq summary svg { transition: none; } }
+
+/* Aportes recibidos: correo de quien regaló, los regalos de ese envío con su monto, la fecha y el comprobante (o el aviso de que falta). */
+.rg-rec-main { flex: 1; }
+.rg-rec-mail { margin: 0; font-size: 14px; }
+.rg-rec-gifts { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; max-width: 420px; }
+.rg-rec-gifts li { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; color: var(--pn-ink); }
+.rg-rec-gifts li span:last-child { color: var(--pn-muted); font-variant-numeric: tabular-nums; }
+.rg-rec-date { margin: 2px 0 0; font-size: 13px; color: var(--pn-muted); }
+.rg-rec-proof { justify-self: start; margin-top: 8px; }
+.rg-rec-proof.is-missing { margin: 8px 0 0; font-size: 13px; font-weight: var(--w-semibold); color: #8f5b00; }
+.rg-rec-missing { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.rg-rec-missing .rg-rec-proof.is-missing { margin: 0; }

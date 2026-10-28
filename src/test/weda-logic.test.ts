@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addCatalogGift, addCustomGift, addGroup, addGuest, addSet, applyRsvp, assignGuest, emptyState, guestStats, isSafeMapsUrl, mapsLink,
   updateGroup, validateCapacity, cleanCbu, validateCbu, isSamplePhoto, isValidOptionalEmail, moveGift, moveGiftTo, resolvePhoto, parseAmount, receivedGifts, receivedTotal, removeSetGifts, readiness, tasks, removeGift, removeGroup, removeSet, setPlan, slugify, updateGuest, validateAlias, validateGift,
-  validateGroupName, validateOnboarding, draftsFor,
+  validateGroupName, validateOnboarding, draftsFor, spotifyEmbed, contributionsFromState, contributionsFromServer,
 } from '@/lib/weda/logic';
 import { SETS } from '@/lib/weda/catalog';
 import { can, formatPrice, PLANS, type Feature } from '@/lib/weda/plans';
@@ -338,6 +338,37 @@ describe('eventos con nombre propio', () => {
     const labels = siteFromState({ ...s, site }).events.map(e => e.label);
     expect(labels).toEqual(['Evento 1', 'After beach', 'Evento 3']);
   });
+  it('aparece apenas tiene nombre, con «Lugar a confirmar» hasta cargar la ubicación', () => {
+    const s = seedState();
+    const site = { ...s.site, events: s.site.events.map((e, i) => (i === 0 ? { ...e, enabled: true, title: 'Ceremonia', name: '', address: '', mapsUrl: '' } : { ...e, enabled: false })) };
+    const evs = siteFromState({ ...s, site }).events;
+    expect(evs.map(e => [e.label, e.name, e.maps])).toEqual([['Ceremonia', 'Lugar a confirmar', '']]);
+  });
+  it('con un solo evento completo alcanza: los eventos vacíos no quedan pendientes', () => {
+    const s = seedState();
+    const site = { ...s.site, events: s.site.events.map((e, i) => (i === 0 ? { ...e, enabled: true, title: 'Ceremonia', name: 'Parroquia', address: 'Calle 1' } : { ...e, enabled: true, title: '', name: '', address: '' })) };
+    expect(sectionGaps({ ...s, site }).filter(g => !['dress', 'texto', 'fotos', 'musica'].includes(g.id))).toEqual([]);
+    const half = { ...site, events: site.events.map((e, i) => (i === 1 ? { ...e, title: 'Fiesta' } : e)) };
+    expect(sectionGaps({ ...s, site: half }).map(g => g.label)).toContain('Fiesta');
+  });
+  it('un evento con «Mostrar» aparece aunque esté vacío', () => {
+    const s = seedState();
+    const site = { ...s.site, events: s.site.events.map((e, i) => (i === 2 ? { ...e, enabled: true, title: '', name: '', address: '', mapsUrl: '' } : e)) };
+    const last = siteFromState({ ...s, site }).events.at(-1)!;
+    expect([last.label, last.name, last.maps]).toEqual(['Evento 3', 'Lugar a confirmar', '']);
+  });
+  it('«Save the date» es opcional y viene prendido', () => {
+    const s = seedState();
+    expect(siteFromState(s).blocks.save).toBe(true);
+    expect(siteFromState({ ...s, site: { ...s.site, saveDate: false } }).blocks.save).toBe(false);
+  });
+  it('la playlist acepta solo links de Spotify y arma el reproductor', () => {
+    expect(spotifyEmbed('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=abc')).toBe('https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M');
+    expect(spotifyEmbed('https://open.spotify.com/intl-es/album/1A2GTWGtFfWp7KSQTwWOyo')).toBe('https://open.spotify.com/embed/album/1A2GTWGtFfWp7KSQTwWOyo');
+    expect(spotifyEmbed('spotify:playlist:37i9dQZF1DXcBWIGoYBM5M')).toBe('https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M');
+    expect(spotifyEmbed('https://evil.com/open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M')).toBeNull();
+    expect(spotifyEmbed('')).toBeNull();
+  });
   it('la portada puede quedar sin texto', () => {
     const s = seedState();
     expect(siteFromState({ ...s, site: { ...s.site, coverText: '' } }).coverText).toBe('');
@@ -499,5 +530,29 @@ describe('cuenta simulada: evento guardado y destino', () => {
     expect(accountDestination({ ...vacio(), onboarded: true })).toBe('/panel');
     expect(accountDestination({ ...vacio(), couple: { first: 'Lucía', second: 'Violeta' } })).toBe('/crear');
     expect(accountDestination(vacio())).toBe('/crear');
+  });
+});
+
+describe('aportes recibidos', () => {
+  it('agrupa los regalos de un mismo envío: una persona, varios regalos, un total y su correo', () => {
+    const s = emptyState();
+    s.gifts.given = [
+      { id: 'a', name: 'Ana Paz', message: '¡Felicidades!', giftName: 'Cena', amount: 100, at: 2, email: 'ana@correo.com', ref: 'env-1' },
+      { id: 'b', name: 'Ana Paz', message: '¡Felicidades!', giftName: 'Spa', amount: 50, at: 2, email: 'ana@correo.com', ref: 'env-1' },
+      { id: 'c', name: 'Leo', message: '', giftName: 'Vino', amount: 30, at: 1 },
+    ];
+    const list = contributionsFromState(s);
+    expect(list).toHaveLength(2);
+    expect(list[0]).toMatchObject({ giver: 'Ana Paz', email: 'ana@correo.com', total: 150, gifts: [{ name: 'Cena', amount: 100 }, { name: 'Spa', amount: 50 }], receipt: null });
+    expect(list[1]).toMatchObject({ giver: 'Leo', email: '', total: 30 });
+  });
+  it('del servidor: comprobante para ver o «falta», y los rechazados no cuentan', () => {
+    const list = contributionsFromServer([
+      { id: 'apo_1', giverName: 'Ana', giverEmail: 'ana@correo.com', message: 'Hola', how: 'alias', status: 'pending_review', total: 150, createdAt: '2026-10-28T12:00:00.000Z', hasReceipt: true, items: [{ giftName: 'Cena', amount: 100 }, { giftName: 'Spa', amount: 50 }] },
+      { id: 'apo_2', giverName: 'Leo', giverEmail: 'leo@correo.com', message: '', how: 'alias', status: 'confirmed', total: 30, createdAt: '2026-10-27T12:00:00.000Z', hasReceipt: false, items: [{ giftName: 'Vino', amount: 30 }] },
+      { id: 'apo_3', giverName: 'X', status: 'rejected', total: 10, items: [] },
+    ]);
+    expect(list.map(c => [c.giver, c.receipt, c.status])).toEqual([['Ana', '/api/contributions/apo_1/receipt', 'pending_review'], ['Leo', 'missing', 'confirmed']]);
+    expect(list[0]!.gifts).toHaveLength(2);
   });
 });

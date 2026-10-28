@@ -228,6 +228,15 @@ function PlaylistBlock() {
   };
   const all = [...added.map(t => ({ ...t, mine: true })), ...playlist.tracks.map(t => ({ ...t, mine: false }))];
   const shown = more ? all : all.slice(0, 5);
+  // Playlist conectada: el reproductor de Spotify (se escucha y se abre en Spotify desde ahí).
+  if (playlist.embed) {
+    return (
+      <div id="musica" className="iv-playlist">
+        <h2 className="iv-playlist-title">Tu música, nuestra playlist.</h2>
+        <iframe className="iv-spotify" src={playlist.embed} title={`Playlist de Spotify: ${playlist.name}`} width="100%" height="352" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" />
+      </div>
+    );
+  }
   return (
     <div id="musica" className="iv-playlist">
       <h2 className="iv-playlist-title">Tu música, nuestra playlist.</h2>
@@ -285,7 +294,7 @@ export function Invitation() {
   const { blocks, order = DEFAULT_ORDER } = useSite(); // los sitios publicados antes de poder reordenar no traen `order`
   // Cada sección reordenable sabe si se muestra y cómo; la portada va primero y el mensaje final cierra la página.
   const render: Record<BlockId, React.ReactNode> = {
-    fecha: <Welcome />,
+    fecha: blocks.save !== false ? <Welcome /> : null, // los sitios publicados antes de que fuera opcional no traen `save`
     eventos: blocks.day ? <TheDay /> : null,
     regalos: blocks.giftsSection ? <GiftsPreview /> : null,
     texto: blocks.note ? <NoteBlock /> : null,
@@ -293,12 +302,14 @@ export function Invitation() {
     dress: blocks.dress ? <Practical /> : null,
     fotos: blocks.photos ? <Photos /> : null,
     musica: blocks.playlist ? <Participate /> : null,
+    mensaje: blocks.message ? <Closing /> : null,
   };
   return <>
     <SiteCover variant="home" next="#nos-casamos" />
     {/* Marcador fijo justo debajo de la portada: lo usan la flecha de la portada y «Invitación» de la barra, y activa la tipografía de la invitación (:has(#nos-casamos)). No ocupa lugar. */}
     <span id="nos-casamos" aria-hidden="true" style={{ display: 'block', height: 0 }} />
+    {/* Los sitios publicados antes de poder mover el mensaje final no lo traen en `order`: va al cierre. */}
     {order.map(id => <Fragment key={id}>{render[id]}</Fragment>)}
-    {blocks.message && <Closing />}
+    {!order.includes('mensaje') && render.mensaje}
   </>;
 }

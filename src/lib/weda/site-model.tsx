@@ -9,7 +9,7 @@ import {
   type Category, type Gift, type WeddingEvent,
 } from '@/lib/demo-wedding';
 import { can } from './plans';
-import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, hasEventDetails, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath } from './logic';
+import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath, spotifyEmbed } from './logic';
 import type { AppState, BlockId, GivenGift } from './types';
 
 export type SiteData = {
@@ -41,7 +41,8 @@ export type SiteData = {
   rsvp: { deadline: string | null; menus: readonly { id: string; name: string }[] | null };
   dressCode: { title: string; text: string; palette: { name: string; color: string }[] };
   gallery: { photos: { src: string; alt: string; pos?: string | undefined }[]; hashtag: string; handle: string };
-  playlist: { name: string; tracks: { title: string; artist: string }[] };
+  /** `embed`: reproductor de Spotify (si la pareja conectó su playlist); si no, la lista de temas. */
+  playlist: { name: string; tracks: { title: string; artist: string }[]; embed?: string | null | undefined };
   message: { title: string; text: string };
   gifts: Gift[];
   giftCategories: Category[];
@@ -53,17 +54,21 @@ export type SiteData = {
 };
 
 export type RsvpEntry = { first: string; last: string; attending: boolean; menu: string };
+/** Contacto de quien responde y si aceptó recibir novedades de Weda (casilla aparte, destildada). */
+export type GuestContact = { email: string; marketingOptIn: boolean };
+/** Quien regala: nombre, mensaje, cómo paga, su correo (obligatorio) y si aceptó novedades de Weda. */
+export type Giver = { name: string; message: string; how: 'alias' | 'tarjeta' } & GuestContact;
 /** Lo necesario para enviar un aporte de verdad: el comprobante y una clave de reintento (la misma en cada reintento: evita duplicados). */
 export type GiftSubmission = { proof: File | null; attempt: { key: string; token: string } };
 export type SiteActions = {
   /** Regalos ya elegidos por invitados. */
   given: GivenGift[];
   /** Si el sitio es real, devuelve una promesa que falla (con un mensaje para la persona) cuando el servidor no confirma. */
-  recordGift: (gifts: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }, extra?: GiftSubmission) => void | Promise<void>;
+  recordGift: (gifts: Gift[], giver: Giver, extra?: GiftSubmission) => void | Promise<void>;
   /** true cuando el sitio es el publicado en el servidor: ahí los envíos son reales (estado «pendiente de revisión»), no una demostración. */
   remote?: boolean;
   /** Respuestas de asistencia enviadas desde el formulario público. */
-  recordRsvp: (people: RsvpEntry[]) => void | Promise<void>;
+  recordRsvp: (people: RsvpEntry[], contact?: GuestContact) => void | Promise<void>;
 };
 
 const SLOT: Record<string, number> = { ceremonia: 1, recepcion: 2, fiesta: 3, civil: 4, brunch: 5 };
@@ -108,10 +113,12 @@ export function siteFromState(s: AppState): SiteData {
   const base = sitePath(s);
   const names = coupleLabel(s.couple);
   const date = s.date && parseDate(s.date) ? s.date : null;
-  const premiumMusic = can(s.planId, 'playlist') && s.site.playlist.enabled && s.site.playlist.tracks.length > 0;
+  const spotify = spotifyEmbed(s.site.playlist.spotify);
+  const premiumMusic = can(s.planId, 'playlist') && s.site.playlist.enabled && (s.site.playlist.tracks.length > 0 || !!spotify);
   const events: WeddingEvent[] = can(s.planId, 'site')
-    ? s.site.events.filter(hasEventDetails).map(e => ({
-        key: e.key, icon: e.icon, label: e.title.trim() || `Evento ${SLOT[e.key]}`, time: e.time ? `${e.time} hs` : '', name: e.name || e.title.trim() || `Evento ${SLOT[e.key]}`, address: shortAddress(e.address),
+    // Un evento aparece apenas se prende «Mostrar», aunque esté vacío: mientras falta el lugar, la tarjeta dice «Lugar a confirmar».
+    ? s.site.events.filter(e => e.enabled).map(e => ({
+        key: e.key, icon: e.icon, label: e.title.trim() || `Evento ${SLOT[e.key]}`, time: e.time ? `${e.time} hs` : '', name: e.name.trim() || (e.address.trim() ? e.title.trim() || `Evento ${SLOT[e.key]}` : 'Lugar a confirmar'), address: shortAddress(e.address),
         note: e.note, maps: mapsLink(e),
       }))
     : [];
@@ -144,7 +151,7 @@ export function siteFromState(s: AppState): SiteData {
     order: normalizeOrder(s.site.order),
     blocks: {
       invitation: can(s.planId, 'site'),
-      save: true,
+      save: s.site.saveDate,
       countdown: s.site.countdown && !!date,
       day: events.length > 0,
       rsvp: can(s.planId, 'rsvp') && s.site.rsvp.enabled,
@@ -162,7 +169,7 @@ export function siteFromState(s: AppState): SiteData {
     rsvp: { deadline: s.site.rsvp.deadline && parseDate(s.site.rsvp.deadline) ? dayMonth(s.site.rsvp.deadline) : null, menus: s.site.rsvp.menus ? demoMenus : null },
     dressCode: { title: s.site.dressCode.title.trim(), text: s.site.dressCode.text.trim(), palette: s.site.dressCode.showColors ? s.site.dressCode.colors : [] },
     gallery: { photos: s.site.gallery.photos.map(p => ({ src: p.src, alt: p.alt || `${s.couple.first} y ${s.couple.second}` })), hashtag: s.site.gallery.hashtag.trim(), handle: s.site.gallery.handle.trim() },
-    playlist: { name: s.site.playlist.name.trim() || `Nuestra fiesta · ${names}`, tracks: s.site.playlist.tracks },
+    playlist: { name: s.site.playlist.name.trim() || `Nuestra fiesta · ${names}`, tracks: s.site.playlist.tracks, embed: spotify },
     message: { title: s.site.message.title.trim() || 'Que vengas ya es un regalo.', text: s.site.message.text.trim() },
     gifts,
     giftCategories: present,

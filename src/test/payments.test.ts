@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addYear, isExpired, isLive, publishPaid, republish, takeDown, totalPaid, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
+import { addTerm, isExpired, isLive, publishPaid, republish, takeDown, totalPaid, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
 import { emptyState } from '@/lib/weda/logic';
 import { PLANS } from '@/lib/weda/plans';
 import { parseStored } from '@/lib/weda/store';
@@ -17,12 +17,13 @@ describe('pago y publicación simulados', () => {
     expect(totalPaid(s.publication!)).toBe(price('invitacion'));
     expect(isLive(s, NOW)).toBe(true);
   });
-  it('la vigencia es de un año desde la publicación', () => {
-    expect(addYear('2026-10-22T15:00:00.000Z')).toBe('2027-10-22T15:00:00.000Z');
+  it('la vigencia es de seis meses desde la publicación', () => {
+    expect(addTerm('2026-10-22T15:00:00.000Z')).toBe('2027-04-22T15:00:00.000Z');
+    expect(addTerm('2026-08-31T12:00:00.000Z')).toBe('2027-02-28T12:00:00.000Z'); // el 31 de febrero no existe: vence el último día
     const s = publishPaid(base(), 'regalos', NOW);
-    expect(isExpired(s.publication!, new Date('2027-10-22T14:59:59.000Z'))).toBe(false);
-    expect(isExpired(s.publication!, new Date('2027-10-22T15:00:00.000Z'))).toBe(true);
-    expect(isLive(s, new Date('2027-10-23T00:00:00.000Z'))).toBe(false);
+    expect(isExpired(s.publication!, new Date('2027-04-22T14:59:59.000Z'))).toBe(false);
+    expect(isExpired(s.publication!, new Date('2027-04-22T15:00:00.000Z'))).toBe(true);
+    expect(isLive(s, new Date('2027-04-23T00:00:00.000Z'))).toBe(false);
   });
   it('no se paga dos veces la publicación: con una publicación existente no cambia nada', () => {
     const once = publishPaid(base(), 'regalos', NOW);

@@ -69,7 +69,7 @@ function site(v: unknown): SiteConfig {
   const gs = isObj(v['giftsSection']) ? v['giftsSection'] : {}, nt = isObj(v['note']) ? v['note'] : {};
   return {
     order: normalizeOrder(v['order']),
-    coverText: str(v['coverText'], d.coverText), events, countdown: bool(v['countdown'], d.countdown),
+    coverText: str(v['coverText'], d.coverText), events, saveDate: bool(v['saveDate'], d.saveDate), countdown: bool(v['countdown'], d.countdown),
     rsvp: { enabled: bool(r['enabled'], d.rsvp.enabled), deadline: str(r['deadline']), menus: bool(r['menus'], d.rsvp.menus) },
     dressCode: { enabled: bool(dc['enabled'], false), title: str(dc['title']), text: str(dc['text']), showColors: bool(dc['showColors'], true), colors: swatches(dc['colors']) },
     giftsSection: { enabled: bool(gs['enabled'], d.giftsSection.enabled), title: str(gs['title'], d.giftsSection.title), text: str(gs['text'], d.giftsSection.text), button: str(gs['button'], d.giftsSection.button) },
@@ -79,7 +79,7 @@ function site(v: unknown): SiteConfig {
       photos: arr(ga['photos']).filter(isObj).filter(p => typeof p['src'] === 'string').map(p => ({ id: str(p['id'], str(p['src']).slice(-12)), src: str(p['src']), alt: str(p['alt']) })),
     },
     playlist: {
-      enabled: bool(pl['enabled'], false), name: str(pl['name']),
+      enabled: bool(pl['enabled'], false), name: str(pl['name']), spotify: str(pl['spotify']),
       tracks: arr(pl['tracks']).filter(isObj).filter(t => typeof t['title'] === 'string').map(t => ({ title: str(t['title']), artist: str(t['artist']) })),
     },
     message: { enabled: bool(ms['enabled'], d.message.enabled), title: str(ms['title'], d.message.title), text: str(ms['text']) },
@@ -125,6 +125,8 @@ function build(raw: Record<string, unknown>, from: number): AppState {
         amount: typeof x['amount'] === 'number' && Number.isFinite(x['amount']) ? x['amount'] : undefined,
         how: x['how'] === 'alias' || x['how'] === 'tarjeta' ? x['how'] : undefined,
         at: typeof x['at'] === 'number' && Number.isFinite(x['at']) ? x['at'] : undefined,
+        email: typeof x['email'] === 'string' ? x['email'] : undefined,
+        ref: typeof x['ref'] === 'string' ? x['ref'] : undefined,
       })),
     },
     guests: arr(raw['guests']).map(guest).filter((x): x is Guest => !!x),

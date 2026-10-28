@@ -22,7 +22,7 @@ for (const width of [390, 1280]) {
       await seed(page, '2030-05-18');
       await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
       await expect(page.locator('li.ed-row[data-section="fecha"]')).toBeVisible();
-      expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp', 'mensaje']);
+      expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp']);
       // Es lo primero que se puede mover (no tiene dónde subir) y no se puede quitar: solo se elige su lugar.
       await expect(fecha(page, 'Subir')).toBeDisabled();
       await expect(page.getByRole('button', { name: 'Quitar Save the date de la invitación' })).toHaveCount(0);
@@ -34,14 +34,14 @@ for (const width of [390, 1280]) {
       expect((await readPublic()).slice(0, 4)).toEqual(['top', 'save-the-date', 'dia', 'regalos']);
 
       await fecha(page, 'Bajar').click();
-      expect(await rows(page)).toEqual(['portada', 'eventos', 'fecha', 'regalos', 'rsvp', 'mensaje']);
+      expect(await rows(page)).toEqual(['portada', 'eventos', 'fecha', 'regalos', 'rsvp']);
       await expect(fecha(page, 'Subir')).toBeEnabled();
       expect((await readPublic()).slice(0, 4)).toEqual(['top', 'dia', 'save-the-date', 'regalos']);
 
       // Bajar hasta el final de lo movible: queda antes del mensaje final, que siempre cierra, y la portada sigue primera y única.
       for (let i = 0; i < 6 && await fecha(page, 'Bajar').isEnabled(); i++) await fecha(page, 'Bajar').click();
       await expect(fecha(page, 'Bajar')).toBeDisabled();
-      expect(await rows(page)).toEqual(['portada', 'eventos', 'regalos', 'rsvp', 'fecha', 'mensaje']);
+      expect(await rows(page)).toEqual(['portada', 'eventos', 'regalos', 'rsvp', 'fecha']);
       const last = await readPublic();
       expect(last[0]).toBe('top');
       expect(last.filter(x => x === 'top')).toHaveLength(1);
@@ -51,7 +51,7 @@ for (const width of [390, 1280]) {
 
       // Y volver a subir lo deja donde estaba por defecto.
       for (let i = 0; i < 6 && await fecha(page, 'Subir').isEnabled(); i++) await fecha(page, 'Subir').click();
-      expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp', 'mensaje']);
+      expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp']);
       expect((await readPublic()).slice(0, 3)).toEqual(['top', 'save-the-date', 'dia']);
       await pub.close();
     });
@@ -63,7 +63,7 @@ for (const width of [390, 1280]) {
       await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('weda-app') ?? '{}').site?.order))).toEqual(expect.arrayContaining(['fecha']));
       await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('weda-app') ?? '{}').site.order.indexOf('fecha')))).toBe(1);
       await page.reload({ waitUntil: 'networkidle' });
-      expect(await rows(page)).toEqual(['portada', 'eventos', 'fecha', 'regalos', 'rsvp', 'mensaje']);
+      expect(await rows(page)).toEqual(['portada', 'eventos', 'fecha', 'regalos', 'rsvp']);
     });
 
     test('su panel cambia la cuenta regresiva y la página pública lo muestra', async ({ page }) => {
@@ -81,11 +81,24 @@ for (const width of [390, 1280]) {
       await pub.close();
     });
 
-    test('sin fecha no hay «Save the date»: no está en la lista, ni en «Para agregar», ni en la página pública', async ({ page }) => {
+    test('«Save the date» es opcional: se quita y se vuelve a agregar desde «Para agregar»', async ({ page }) => {
+      await seed(page, '2030-05-18');
+      await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: 'Quitar Save the date de la invitación' }).click();
+      expect(await rows(page)).not.toContain('fecha');
+      const pub = await page.context().newPage();
+      await pub.goto('/sitio/ana-y-beto', { waitUntil: 'networkidle' });
+      expect(await publicOrder(pub)).not.toContain('save-the-date');
+      await pub.close();
+      await page.getByRole('button', { name: 'Agregar Save the date a la invitación' }).click();
+      await expect.poll(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('weda-app') ?? '{}').site.saveDate))).toBe(true);
+    });
+
+    test('sin fecha, «Save the date» queda en la lista esperando la fecha y no aparece en la página pública', async ({ page }) => {
       await seed(page, null);
       await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
-      expect(await rows(page)).toEqual(['portada', 'eventos', 'regalos', 'rsvp', 'mensaje']);
-      await expect(page.getByRole('button', { name: /Agregar Save the date/ })).toHaveCount(0);
+      expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp']);
+      await expect(page.locator('li.ed-row[data-section="fecha"]')).toContainText('Aparece al definir la fecha');
       const pub = await page.context().newPage();
       await pub.goto('/sitio/ana-y-beto', { waitUntil: 'networkidle' });
       expect(await publicOrder(pub)).not.toContain('save-the-date');

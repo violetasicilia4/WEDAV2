@@ -3,8 +3,8 @@
 //   Regalos    → lista de regalos
 //   Celebración → + micrositio, confirmación de asistencia (RSVP), invitados y mesas
 //   Celebración Plus → + música de la fiesta, galería de fotos con hashtag y mensaje final
-// Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante UN AÑO (definiciones comerciales de la
-// autora, 2026-10-21). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
+// Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante SEIS MESES (definiciones comerciales de la
+// autora: pago único 2026-10-21; seis meses en lugar de un año, 2026-10-28). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
 // Mientras no se elige plan (planId null) la pareja prueba todo: el plan se elige al publicar. Cambiar de plan nunca borra datos:
 // lo que el plan no incluye se conserva como borrador y solo se oculta al mostrar (editor, navegación, página pública).
 // La música es SOLO configuración y vista previa: no hay conexión real con Spotify ni con ningún servicio.
@@ -36,8 +36,10 @@ export type Plan = {
 
 export const CURRENCY = 'ARS';
 export const PRICE_UNIT = 'pago único';
-/** Cuánto tiempo queda publicada la página con cualquiera de los planes (definición comercial de la autora, 2026-10-21). */
-export const PUBLICATION_TERM = '1 año';
+/** Cuánto tiempo queda publicada la página con cualquiera de los planes (definición comercial de la autora: 6 meses, 2026-10-28; antes 1 año). */
+export const PUBLICATION_TERM = '6 meses';
+/** La misma duración, en meses (para calcular el vencimiento). */
+export const PUBLICATION_MONTHS = 6;
 export const HIGHLIGHTS = 3;
 
 export const PLANS: Plan[] = [

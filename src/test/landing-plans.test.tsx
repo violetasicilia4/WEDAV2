@@ -49,9 +49,9 @@ describe('Planes en la landing', () => {
     expect(completo!.getByText('Todo lo de Celebración')).toBeTruthy();
   });
 
-  it('destaca el pago único y que la página queda publicada un año, sin hablar de suscripción', async () => {
+  it('destaca el pago único y que la página queda publicada seis meses, sin hablar de suscripción', async () => {
     await renderPlans();
-    expect(screen.getAllByText('Publicada 1 año')).toHaveLength(3);
-    expect(document.body.textContent).not.toMatch(/suscripci|meses/i);
+    expect(screen.getAllByText('Publicada 6 meses')).toHaveLength(3);
+    expect(document.body.textContent).not.toMatch(/suscripci|por mes|mensual/i);
   });
 });

@@ -149,11 +149,11 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               <div className="is-total"><dt>{upgrading ? 'Pagás la diferencia' : 'Total'}</dt><dd>{formatPrice(amount)} · {PRICE_UNIT}</dd></div>
             </dl>
             {error && <p className="pn-banner" role="alert">No se pudo publicar: {error}</p>}
-            <p className="pn-note" role="status"><strong>Pago de prueba.</strong> No se cobra nada ni se guardan datos de pago. {online ? 'La página sí se publica: cualquiera que tenga el link la va a poder abrir.' : 'Tu página se publica solo en este navegador.'}</p>
+            <p className="pn-note" role="status">Al publicar, cualquiera que tenga el link va a poder abrir tu página.</p>
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" disabled={step === 'paying'} onClick={() => setStep(pub ? 'manage' : 'choose')}>Volver</button>
               <button type="button" className="pn-btn" disabled={step === 'paying'} aria-busy={step === 'paying'} onClick={pay}>
-                {step === 'paying' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Procesando el pago…</> : `Pagar ${formatPrice(amount)} (prueba)`}
+                {step === 'paying' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Procesando el pago…</> : `Pagar ${formatPrice(amount)}`}
               </button>
             </div>
           </>
@@ -172,7 +172,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               <a className="pn-btn" href={path} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> Ver mi página<span className="pn-sr"> (se abre en otra pestaña)</span></a>
               <button type="button" className="pn-btn is-ghost" onClick={copyLink}>{copied ? 'Link copiado' : 'Copiar link'}</button>
             </div>
-            <p className="pn-note"><strong>Pago de prueba.</strong> No se cobró nada{online ? '. Tu página está publicada de verdad: cualquiera con el link la puede abrir' : ': tu página está publicada solo en este navegador'}. Desde «Publicada» podés mejorar tu plan o bajar la página cuando quieras.</p>
+            <p className="pn-note">Tu página está publicada: cualquiera con el link la puede abrir. Desde «Publicada» podés mejorar tu plan o bajar la página cuando quieras.</p>
             <div className="pn-actions is-end"><button type="button" className="pn-btn is-ghost" onClick={onClose}>Listo</button></div>
           </>
         )}
@@ -224,7 +224,6 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               </div>
             )}
             {error && <p className="pn-banner" role="alert">{error}</p>}
-            <p className="pn-hint">{online ? 'Pago de prueba: no hay cobro real. La publicación sí es real.' : 'Pago de prueba: no hay cobro real ni publicación en Internet.'}</p>
           </>
         )}
       </DialogContent>

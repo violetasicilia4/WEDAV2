@@ -569,3 +569,8 @@
 /* Auditoría 2026-10-21: en pantallas táctiles los enlaces de la barra del micrositio miden 34-36 px; el área de toque llega a 44 px sin cambiar cómo se ve. */
 @media (pointer: coarse) { .ej-bar-link { position: relative; } .ej-bar-link::after { content: ''; position: absolute; inset: -5px 0; } }
 @media (pointer: coarse) { .ej-bar-burger { min-width: 44px; justify-content: center; } }
+
+/* Correo de quien regala (ayuda) y casilla de novedades de Weda: aparte, destildada y con letra chica legible. */
+.rg-hint { margin: 6px 0 0; font-size: 13px; line-height: 1.4; color: var(--ej-muted); }
+.rg-optin { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--ej-muted); cursor: pointer; }
+.rg-optin input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: #3b3c3a; }

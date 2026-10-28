@@ -8,12 +8,13 @@ import { catalog, categories, setGifts, SETS, type GiftSet } from '@/lib/weda/ca
 import { formatARS, type Gift } from '@/lib/demo-wedding';
 import { readImage } from '@/lib/weda/images';
 import {
-  addCatalogGift, addCustomGift, addSet, hasCatalogGift, moveGiftTo, parseAmount, receivedGifts, receivedTotal, removeGift, removeSetGifts, sitePath, updateGift,
+  addCatalogGift, addCustomGift, addSet, contributionsFromServer, contributionsFromState, hasCatalogGift, moveGiftTo, parseAmount, removeGift, removeSetGifts, sitePath, updateGift, type Contribution,
   cleanCbu, validateAlias, validateCbu, validateGift,
 } from '@/lib/weda/logic';
 import { can } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';
+import { api, useRemote } from '@/lib/weda/remote';
 import type { Category } from '@/lib/demo-wedding';
 import type { ListGift } from '@/lib/weda/types';
 
@@ -102,6 +103,23 @@ function CatalogCard({ gift, inList, onAdd, onRemove }: { gift: Gift; inList: bo
 }
 
 const HOW_LABEL = { alias: 'Por alias', tarjeta: 'Con tarjeta' } as const;
+
+/** Aportes recibidos: con cuenta, los del servidor (con correo y comprobante); sin cuenta, los registrados en este navegador. */
+function useContributions(s: ReturnType<typeof useAppState>): { list: Contribution[]; loading: boolean; failed: boolean } {
+  const { user } = useRemote();
+  const [server, setServer] = useState<Contribution[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!user) { setServer(null); return; }
+    let alive = true;
+    api<{ contributions: unknown }>('GET', '/api/contributions')
+      .then(r => { if (alive) { setServer(contributionsFromServer(r.contributions)); setFailed(false); } })
+      .catch(() => { if (alive) setFailed(true); });
+    return () => { alive = false; };
+  }, [user]);
+  if (user) return { list: server ?? [], loading: server === null && !failed, failed };
+  return { list: contributionsFromState(s), loading: false, failed: false };
+}
 const fmtDate = (t: number) => new Date(t).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 /* Transferencia bancaria: banco, CBU y alias. Cada dato se guarda solo apenas es válido; el error aparece al salir del campo. Los tres son opcionales (el alias alcanza para cobrar); si se cargan, los invitados los ven al transferir. */
@@ -291,9 +309,21 @@ function GiftsModule() {
   const [editing, setEditing] = useState<ListGift | null>(null);
   // El botón de la barra superior (panel.tsx) pide abrir la vista previa de la lista.
 
+  const contrib = useContributions(s);
+  // Recordatorio por correo a quien regaló (con un enlace nuevo para adjuntarlo). El servidor permite uno por día por aporte.
+  const remind = async (r: Contribution) => {
+    try {
+      const res = await api<{ status: string }>('POST', `/api/contributions/${encodeURIComponent(r.id)}/remind`);
+      toast(res.status === 'sent' ? `Le pedimos el comprobante a ${r.giver}.` : res.status === 'skipped' ? 'El envío de correos todavía no está configurado: no se mandó.' : 'No pudimos enviar el correo. Probá de nuevo en un rato.', res.status === 'sent' ? 'ok' : 'error');
+    } catch (e) {
+      const code = e instanceof Error && 'code' in e ? String((e as { code: unknown }).code) : '';
+      toast(code === 'reminder_too_soon' ? 'Ya se lo pediste hoy. Podés volver a pedirlo mañana.' : code === 'receipt_already_attached' ? 'Ya adjuntó el comprobante: actualizá la página.' : 'No pudimos enviar el correo. Probá de nuevo en un rato.', 'error');
+    }
+  };
   if (!can(s.planId, 'gifts')) return <Locked feature="gifts" />;
   const items = s.gifts.items;
-  const received = receivedGifts(s);
+  const received = contrib.list;
+  const giftCount = received.reduce((n, c) => n + c.gifts.length, 0);
 
   // Cada cambio guarda la lista anterior para poder deshacer desde el aviso.
   const withUndo = (message: string, change: () => void) => {
@@ -390,7 +420,7 @@ function GiftsModule() {
             <ol>
               <li>Elegís o creás los regalos de tu lista (sets completos o de a uno).</li>
               <li>Cargás tu alias en «Datos de cobro»: ahí te llegan los aportes.</li>
-              <li>Compartís el enlace de la lista. Hoy es una demo: el enlace real se activa al publicar.</li>
+              <li>Compartís el enlace de la lista. El enlace se activa al publicar.</li>
               <li>Tus invitados eligen un regalo y lo ves en «Aportes recibidos», con su nombre y su mensaje, para agradecerles.</li>
             </ol>
           </details>
@@ -454,15 +484,16 @@ function GiftsModule() {
         {tab === 'recibidos' && (
           <>
             <div className="rg-section-head">
-              <div><h2>Aportes recibidos</h2><p className="pn-muted">Quién te regaló qué, con su mensaje.</p></div>
+              <div><h2>Aportes recibidos</h2><p className="pn-muted">Quién te regaló, qué regalos, el monto, la fecha, su mensaje y el comprobante.</p></div>
             </div>
             {/* Los tres totales están siempre, también antes del primer regalo (en cero). Los regalos se cargan en pesos y no hay cotización conectada: el total en dólares queda en «—». */}
             <ul className="gl-stats is-three" aria-label="Resumen de aportes recibidos">
-              <li><span>Regalos recibidos</span><strong>{received.length}</strong><small>{received.length === 1 ? 'Regalo' : 'Regalos'}</small></li>
-              <li><span>Total en pesos</span><strong>{formatARS(receivedTotal(received))}</strong><small>Pesos argentinos</small></li>
+              <li><span>Regalos recibidos</span><strong>{giftCount}</strong><small>{giftCount === 1 ? 'Regalo' : 'Regalos'}</small></li>
+              <li><span>Total en pesos</span><strong>{formatARS(received.reduce((n, c) => n + c.total, 0))}</strong><small>Pesos argentinos</small></li>
               <li><span>Total en dólares</span><strong aria-label="Sin dato">—</strong><small>Sin cotización conectada</small></li>
             </ul>
-            {received.length === 0 ? (
+            {contrib.failed && <p className="pn-banner" role="alert">No pudimos traer tus aportes. Revisá tu conexión y volvé a abrir esta pestaña.</p>}
+            {contrib.loading ? <p className="pn-muted" role="status">Cargando tus aportes…</p> : received.length === 0 ? (
               <div className="pn-empty is-centered">
                 <span className="pn-empty-ico" aria-hidden="true"><GiftIcon size={22} strokeWidth={1.6} /></span>
                 <h2>Todavía no recibiste regalos</h2>
@@ -475,15 +506,25 @@ function GiftsModule() {
                   {received.map(r => (
                     <li key={r.id} className="rg-rec">
                       <div className="rg-rec-main">
-                        <p className="rg-rec-name">{r.giver}{r.how && <span className="pn-chip">{HOW_LABEL[r.how]}</span>}</p>
-                        <p className="rg-rec-gift">Regaló: <b>{r.giftName}</b>{r.at ? ` · ${fmtDate(r.at)}` : ''}</p>
+                        <p className="rg-rec-name">{r.giver}{r.how && <span className="pn-chip">{HOW_LABEL[r.how]}</span>}{r.status === 'pending_review' && <span className="pn-chip is-todo">A revisar</span>}{r.status === 'confirmed' && <span className="pn-chip is-ok">Confirmado</span>}</p>
+                        {r.email && <p className="rg-rec-mail"><a className="pn-link" href={`mailto:${r.email}`}>{r.email}</a></p>}
+                        <ul className="rg-rec-gifts" aria-label={`Regalos de ${r.giver}`}>
+                          {r.gifts.map((g, i) => <li key={`${g.name}-${i}`}><span>{g.name}</span><span>{formatARS(g.amount)}</span></li>)}
+                        </ul>
+                        {r.at && <p className="rg-rec-date">{fmtDate(r.at)}</p>}
                         {r.message && <p className="rg-quote">«{r.message}»</p>}
+                        {r.receipt === 'missing' && (
+                          <div className="rg-rec-missing">
+                            <p className="rg-rec-proof is-missing">Falta el comprobante</p>
+                            {r.email && <button type="button" className="pn-btn is-ghost is-small" onClick={() => void remind(r)}>Pedir comprobante</button>}
+                          </div>
+                        )}
+                        {r.receipt && r.receipt !== 'missing' && <a className="pn-btn is-ghost is-small rg-rec-proof" href={r.receipt} target="_blank" rel="noopener noreferrer"><Eye size={15} aria-hidden="true" />Ver comprobante<span className="pn-sr"> (se abre en una pestaña nueva)</span></a>}
                       </div>
-                      <strong className="rg-rec-amount">{formatARS(r.amount)}</strong>
+                      <strong className="rg-rec-amount">{formatARS(r.total)}</strong>
                     </li>
                   ))}
                 </ul>
-                <p className="pn-hint">En esta demo los regalos se registran en este navegador cuando se hacen desde la vista de invitado. No hay verificación de pagos.</p>
               </>
             )}
           </>

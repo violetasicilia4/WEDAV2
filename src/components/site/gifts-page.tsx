@@ -1,5 +1,5 @@
 // Lista de regalos pública. Es la MISMA página para /ejemplo/regalos y para la lista de cada pareja: todo viene de useSite().
-import { isValidOptionalEmail } from '@/lib/weda/logic';
+import { isEmail } from '@/lib/weda/logic';
 import { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
@@ -11,7 +11,8 @@ import { useRsvp } from '@/components/rsvp-dialog';
 import { SiteCover } from './site-cover';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { formatARS, type Category, type Gift, type IconKey } from '@/lib/demo-wedding';
-import { useSite, useSiteActions, type GiftSubmission } from '@/lib/weda/site-model';
+import { useSite, useSiteActions, type GiftSubmission, type Giver } from '@/lib/weda/site-model';
+import { MARKETING_CONSENT_TEXT } from '@/lib/weda/consent';
 
 const icons: Record<IconKey, LucideIcon> = {
   utensils: Utensils, bed: BedDouble, chef: ChefHat, plane: Plane, sofa: Sofa, lamp: Lamp, wine: Wine,
@@ -47,12 +48,13 @@ function Thumb({ gift }: { gift: Gift }) {
 /* Pop-up de varios regalos: tu regalo (lista, quitar, total) → cómo pagar → alias → nombre, apellido y comprobante → Enviar → agradecimiento.
    «Agregar otro regalo» vuelve a la lista sin perder lo elegido. */
 type DialogView = 'cart' | 'pay';
-function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onSent: (gs: Gift[], giver: { name: string; message: string; how: 'alias' | 'tarjeta' }, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
+function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onSent: (gs: Gift[], giver: Giver, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
   const [view, setView] = useState<DialogView>('cart');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [optIn, setOptIn] = useState(false);
   const { remote } = useSiteActions();
   const [proof, setProof] = useState<File | null>(null);
   const [how, setHow] = useState<'alias' | 'tarjeta'>('alias');
@@ -62,15 +64,15 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
   // Lo enviado se guarda aparte: al enviar, el carrito se vacía pero el agradecimiento sigue mostrando esos regalos.
   const [sent, setSent] = useState<{ first: string; gifts: Gift[] } | null>(null);
   const total = items.reduce((n, g) => n + g.amount, 0);
-  const reset = () => { attempt.current = null; setSendError(null); setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
-  // Para poder enviar: nombre, apellido y, si transfiere por alias, el comprobante cargado. El correo es opcional (si se completa, se valida).
+  const reset = () => { attempt.current = null; setSendError(null); setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setOptIn(false); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
+  // Para poder enviar: nombre, apellido, correo (obligatorio: constancia del regalo y contacto de la pareja) y, si transfiere por alias, el comprobante.
   const cardSelected = site.acceptCard && how === 'tarjeta';
   const noAlias = !cardSelected && !alias;
   const blocked = cardSelected || noAlias;
   const missing = blocked ? [] : [
     name.trim().length < 2 && 'nombre',
     surname.trim().length < 2 && 'apellido',
-    !isValidOptionalEmail(email) && 'un correo válido (o dejalo vacío)',
+    !isEmail(email) && 'tu correo',
     how === 'alias' && !proof && 'comprobante',
   ].filter(Boolean) as string[];
   const close = () => { onClose(); window.setTimeout(reset, 200); };
@@ -89,7 +91,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
     attempt.current ??= { key: crypto.randomUUID(), token: `${crypto.randomUUID()}${crypto.randomUUID()}` };
     setSending(true); setSendError(null);
     try {
-      await onSent(items, { name: `${name.trim()} ${surname.trim()}`, message: message.trim(), how }, { proof, attempt: attempt.current });
+      await onSent(items, { name: `${name.trim()} ${surname.trim()}`, message: message.trim(), how, email: email.trim().toLowerCase(), marketingOptIn: optIn }, { proof, attempt: attempt.current });
     } catch (err) {
       setSending(false);
       setSendError(err instanceof Error && err.message ? err.message : 'No pudimos enviar tu regalo. Revisá tu conexión y probá de nuevo.');
@@ -107,7 +109,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
           <div className="rg-thanks">
             <span className="rg-check" aria-hidden="true"><Check size={22} strokeWidth={1.8} /></span>
             <DialogTitle>¡Gracias, {sent.first}!</DialogTitle>
-            <DialogDescription>{remote ? <>Registramos {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Los novios van a revisar tu comprobante: figura como pendiente hasta que ellos lo confirmen.</> : <>Así se vería la confirmación de {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Es una demostración: no se realizó ningún cobro ni se envió nada.</>}</DialogDescription>
+            <DialogDescription>{remote ? <>Registramos {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Los novios van a revisar tu comprobante: figura como pendiente hasta que ellos lo confirmen.</> : <>Gracias por {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}.</>}</DialogDescription>
             <ul className="rg-sent">{sent.gifts.map(g => <li key={g.id}>{g.name}<span>{formatARS(g.amount)}</span></li>)}</ul>
             <button type="button" className="dm-solid" onClick={close}>Volver a la lista</button>
           </div>
@@ -200,8 +202,9 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
             </div>
 
             <div className="rg-field">
-              <label htmlFor="rg-email">Correo electrónico (opcional)</label>
-              <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
+              <label htmlFor="rg-email">Correo electrónico</label>
+              <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} aria-describedby="rg-email-help" />
+              <p className="rg-hint" id="rg-email-help">Para enviarte la constancia de tu regalo. Los novios también lo ven.</p>
             </div>
 
             <div className="rg-field">
@@ -209,7 +212,10 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
               <textarea id="rg-message" rows={2} value={message} onChange={e => setMessage(e.target.value)} />
             </div>
 
-            {!blocked && <p className="rg-help">{remote ? 'Tu regalo queda informado a los novios; ellos revisan tu comprobante para confirmarlo. Weda no cobra ni mueve dinero.' : 'Es una demostración: no se cobra ni se envía nada.'}</p>}
+            {/* Novedades de Weda: casilla aparte y destildada (consentimiento expreso; no es necesaria para regalar). */}
+            <label className="rg-optin"><input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} /><span>{MARKETING_CONSENT_TEXT} <a href="/privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad</a></span></label>
+
+            {!blocked && remote && <p className="rg-help">Tu regalo queda informado a los novios; ellos revisan tu comprobante para confirmarlo. Weda no cobra ni mueve dinero.</p>}
             {sendError && <p className="dm-error" role="alert">{sendError}</p>}
             <button type="submit" className="dm-solid rg-send" disabled={blocked || missing.length > 0 || sending} aria-busy={sending}>{sending ? 'Enviando…' : sendError ? 'Reintentar' : 'Enviar'}</button>
             <button type="button" className="dm-ghost" onClick={() => setView('cart')}>Volver a mis regalos</button>

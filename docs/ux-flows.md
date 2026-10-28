@@ -244,7 +244,8 @@ Hay servidor y base de datos (detalle en [backend-readiness.md](backend-readines
 - **Pedido de la dueña:** en el lugar de la foto de portada, un banner con pasos, al estilo «Get started» (pestañas de pasos que se van completando), con color de fondo.
 - **Qué hay hoy** (`src/components/panel/get-started.tsx`): reemplaza la foto «Tu casamiento» y la tarjeta «Siguiente paso». Tres pasos: **Lista de regalos**, **Sitio de casamiento** y **Publicación**. Muestra el panel del primer paso pendiente (se puede tocar cualquier pestaña para verlo). Cada paso se marca solo, con los mismos datos de `giftsStage` / `siteStage` (`journey.ts`): regalos está completo con al menos un regalo y alias de cobro; micrositio, cuando todos los momentos y secciones prendidas están completos. Los textos y accesos son los que ya usaba «Siguiente paso» («Elegir regalos», «Configurar aportes», «Terminá tu invitación»).
 - **Publicación nunca se marca completa:** no existe publicación real. Su panel abre «Publicar» (planes) y «Vista previa», y dice que es una demostración.
-- La cabecera conserva los nombres y la fecha («Fecha por definir» si falta); ya no tiene «Editar datos» (los datos se editan desde el perfil, el avatar o la tarjeta de la pareja, y el pendiente «Definí la fecha» abre el diálogo con `?editar=datos`). «Ocultar / Mostrar» pliega el banner (se recuerda en el navegador, `weda-home-steps`). Fondo arena `#ecebe2` (solo en este banner); botón principal en gris oscuro, sin azul.
+- **Versión compacta (2026-10-28, pedido de la dueña):** el banner muestra solo las tres solapas (Lista de regalos, Sitio de casamiento, Publicación) y el paso elegido. Ya no tiene título visible («Primeros pasos» queda solo para lectores de pantalla), ni nombres y fecha (están en la barra), ni «Ocultar / Mostrar»: siempre está a la vista. Es más bajo: ≈ 280 px a 390 px (antes ≈ 440) y ≈ 245 px en compu (antes ≈ 360). Se pasa de un paso a otro tocando las solapas. Fondo arena `#ecebe2` y botón principal en gris oscuro, como antes.
+- **Mismo alto en los tres pasos y solapas integradas (2026-10-28):** los tres paneles se dibujan en la misma celda y solo se ve el elegido (los otros quedan `inert` y ocultos para lectores de pantalla), así el banner mide siempre lo que el paso más largo y no salta al cambiar de paso. Altos medidos: 321 px a 320 px, 267 px a 390 px y 231 px a 1280 px, iguales en los tres pasos, con datos completos y vacíos. Las solapas ya no son una caja blanca aparte: son la parte de arriba del mismo banner, separadas por una línea fina, con el paso activo subrayado.
 - Supuesto: la foto elegida de la pareja ya no se ve en Inicio (sigue en la barra lateral, la vista previa y la página pública).
 
 ## 15. «Save the date» movible y fotos en celular (2026-10-27)
@@ -266,3 +267,126 @@ Detalle, mediciones y alternativas en [ui-iteration-audit.md](ui-iteration-audit
 - **Filas en ≤ 420 px:** sin el número de orden, para que los nombres no se corten (el ícono y la posición dan el orden).
 - **Compu:** dos columnas desde 1024 px (antes 1100). Entre 1024 y 1279 px se reparten por igual (formulario ≥ 340 px, invitación ≥ 320 px). La vista previa arranca en «Compu» desde 1280 px.
 - **Sin cambios de modelo:** las mismas secciones, el mismo orden, el mismo guardado y el mismo «Mostrar» por evento. Esto último queda como decisión abierta (H12 en la auditoría).
+
+## Inicio: rediseño de la dueña (2026-10-28)
+
+Reemplaza el banner «Primeros pasos» y las secciones «Lo que vas a publicar» / «Gestión de invitados». Se llevó el diseño de la dueña (compu y celular) a la tipografía del panel (Geist), sin la serif del boceto.
+
+- **Encabezado:** «Tu casamiento · {nombres}», «Tu invitación empieza acá.» y «Armá tu lista de regalos, diseñá tu sitio y elegí qué publicar cuando esté listo. Podés hacerlo a tu ritmo.». En compu va a la derecha la foto de la pareja (la de portada, o la de muestra si no hay propia), con un corazón dibujado a mano. En celular no hay foto.
+- **Pasos** (`get-started.tsx`):
+  - Tres pasos numerados unidos por una línea: Lista de regalos, Diseño del sitio y Publicación. El elegido va en círculo oscuro con aro y los completos llevan una tilde. Se cambia de paso tocándolos.
+  - Cada paso muestra un ícono sobre un tinte suave (rosa, salvia, celeste), «Paso N de 3», un título, un texto y su botón. «Armar mi lista» aparece si la lista está vacía; si no, el siguiente paso real de `journey.ts`.
+  - Al costado va una muestra de «Así se verá en tu invitación»: tres fotos de la lista (o de muestra del catálogo), la portada con los nombres o el link del sitio.
+  - Los tres paneles miden lo mismo: no cambia el alto al pasar de paso.
+- **Accesos:**
+  - «Diseñá tu invitación» lleva al editor.
+  - «Elegí qué publicar» abre los planes.
+  - En celular son filas con «›», sin descripción.
+- **Herramientas adicionales:** Invitados, y Mesas y grupos (con lo que no se publica).
+- **No se tocó la navegación.** El boceto muestra «Mesas y grupos» en la barra lateral y un menú tipo hamburguesa en celular, pero eso cambia la navegación de todo el panel, no solo Inicio: queda para decidir aparte.
+- **Supuesto:** «Vista previa» deja de ser una tarjeta del Inicio. Sigue en la barra de arriba y dentro del paso «Publicación».
+
+## Eventos: buscar el lugar con Google (2026-10-28, pedido de la dueña)
+
+- **Qué cambia:**
+  - En cada evento hay un solo campo **«Ubicación»**: se empieza a escribir y aparece la lista de lugares reales de Google.
+  - Al elegir uno, el campo queda mostrando **la dirección corta** (calle y altura, `shortAddress`), nunca el enlace.
+  - Debajo dice «Ubicación confirmada: «Cómo llegar» abre este lugar en Google Maps.».
+  - Se guardan el nombre (de la sugerencia), la dirección completa y un enlace oficial de Maps con el id del lugar (`query_place_id`). Ese enlace es el que usa «Cómo llegar».
+  - El nombre del lugar se puede retocar, porque es lo que ve el invitado en la tarjeta.
+  - Para cambiar el lugar se vuelve a escribir en el mismo campo; Escape deja el que estaba.
+- **Qué se sacó:** la ayuda «En la tarjeta se ve «…». «Cómo llegar» abre Google Maps con la dirección completa.», el campo «Enlace de Google Maps» y el acceso «Abrir Google Maps para copiar el enlace».
+- **Teclado y accesibilidad:** patrón combobox (flechas, Enter, Escape). Busca después de 3 letras, con una pausa corta, no en cada letra. Avisa «Buscando…», «No encontramos ese lugar…» o «No pudimos conectar con Google Maps…».
+- **Costo:** usa la Places API (New) de Google con **sesiones de autocompletado**: todas las letras más la elección cuentan como una sola sesión. Al elegir se pide solo `formattedAddress` (categoría «Place Details Essentials»). El nombre sale de la sugerencia y el enlace se arma con `query_place_id` (URL oficial de Maps), para no pedir campos «Pro» como `displayName` o `googleMapsURI`. Resultados limitados a Argentina y Uruguay.
+- **Configuración:** clave de navegador de Google Cloud en `VITE_GOOGLE_MAPS_KEY` (`.env.local`; ver `.env.example`), con la Maps JavaScript API y la Places API (New) activadas y restringida por dominio.
+- **Sin clave:** el buscador no aparece; quedan «Nombre del lugar» y «Dirección», y «Cómo llegar» busca nombre + dirección en Google Maps, como antes.
+- **Pruebas:** `e2e/place-search.spec.ts` simula la librería de Google (no llama a la API real).
+- **Facturación:** Google rechaza Places con un 403 genérico («The caller does not have permission») si la cuenta de facturación del proyecto está vencida o sin forma de pago válida, aunque la Maps JavaScript API cargue bien. Revisarlo antes que la clave.
+
+## Eventos: aparecen apenas tienen nombre (2026-10-28, pedido de la dueña)
+
+- Un evento con «Mostrar» activado aparece en la invitación (y en la vista previa del editor) apenas se escribe su **nombre** («Ceremonia», «Brindis»…). Antes esperaba a tener lugar o dirección.
+- Mientras falta la ubicación, la tarjeta dice **«Lugar a confirmar»** (mismo criterio que «a confirmar» en el horario) y no muestra «Cómo llegar».
+- Los estados del editor y del Inicio no cambian: el evento sigue figurando como «Falta completar» hasta tener lugar. Lo que se publica sigue exigiendo lugar o dirección para contar como contenido (`hasEventDetails`).
+- Lógica en `siteFromState` (`src/lib/weda/site-model.tsx`); prueba en `src/test/weda-logic.test.ts`.
+
+## Sin textos de «demo» (2026-10-28, pedido de la dueña)
+
+- **Por qué:** empieza la construcción del backend; la interfaz no debe presentarse como demostración.
+- **Qué se sacó:**
+  - Avisos «Hoy es una demo…» (ayuda del panel), «Hoy es una demostración: no se publica ni se cobra nada» (paso Publicación del Inicio) y «En esta demo los regalos se registran…» (Regalos).
+  - El pie del Inicio «Tus datos se guardan solo en este navegador» con el botón «Reiniciar la demo» y su diálogo.
+  - «Pago de prueba» y «(prueba)» en el diálogo de publicar.
+  - «Es una demostración…» en la confirmación de asistencia y en el regalo del invitado: ahora dicen «Gracias por avisarnos.» y «Gracias por tu regalo.».
+  - «Parejas de demostración…» en Encontrar, «modo demostración» y «Se guarda solo en este navegador» en Perfil, «Se guardan en este dispositivo» en Fotos.
+- **Qué se reescribió:** el aviso de sitio no disponible («Puede que el link esté mal escrito o que la página todavía no esté publicada.»), el error de cuenta («No pudimos crear tu cuenta en este momento…») y el de cambio de clave («No pudimos cambiar la clave…»).
+- **Qué queda:** los avisos de error reales (sin lugar en el navegador, cambios sin guardar en la cuenta) y la invitación de ejemplo `/ejemplo`, que es un ejemplo, no el producto.
+- **Pendiente para el backend:** el pago del diálogo de publicar sigue sin cobrar de verdad, y la confirmación de asistencia y el regalo del invitado sin cuenta no se envían. Hay que conectarlos antes de abrir la app al público.
+
+## Inicio: «Bienvenidos» (2026-10-28)
+
+- El título del encabezado pasa de «Tu invitación empieza acá.» a **«Bienvenidos»**; el texto queda «Armá tu lista de regalos, diseñá tu sitio y elegí qué publicar cuando esté listo.» (se sacó «Podés hacerlo a tu ritmo.»).
+
+## Invitación: bloques centrados (2026-10-28)
+
+- Cada bloque de la invitación (save the date, eventos, confirmar asistencia, cierre y los opcionales) deja **el mismo aire arriba y abajo** y el contenido centrado de izquierda a derecha, en web y en celular.
+- Variables en `src/invitacion.css` (bloque final «centrado de los bloques»): `--iv-block` para save the date y confirmar; `--iv-day-pad` para eventos, que ya traen su propio relleno; abajo de eventos se suma `--iv-curve` porque la banda de confirmar se monta sobre la curva.
+- Medido en 375, 871 y 1440 px de ancho, sobre un sitio propio y sobre `/ejemplo`: diferencia arriba/abajo de 0 a 1 px.
+
+## Vista previa: sin resumen ni cambio de pantalla (2026-10-28, pedido de la dueña)
+
+- Se sacaron de `/panel/vista-previa` la línea «Los invitados la abren sobre todo desde el celular» con el botón «Probar en pantalla de compu», y el bloque «Qué estás viendo» (estado de cada función según el plan y «Pendiente de completar»).
+- La vista previa queda en formato celular, con «Abrir vista limpia» para verla a pantalla completa en otra pestaña.
+
+## Eventos: con uno alcanza (2026-10-28, pedido de la dueña)
+
+- La pareja no tiene que cargar tres eventos: con **uno completo** (nombre + lugar o dirección) la sección queda lista.
+- Un evento con «Mostrar» tildado pero **vacío** (sin nombre, lugar ni dirección) ya no cuenta como pendiente (`eventBlank` en `journey.ts`): no aparece en «Falta completar», ni en el Inicio, ni en el diálogo de publicar, ni en la invitación. En el editor su fila dice «Sin cargar» en tono neutro.
+- Un evento empezado (por ejemplo, solo con nombre) sí sigue pendiente hasta tener lugar.
+
+## Constructor: invitación prearmada y «Para agregar» (2026-10-28, pedido de la dueña)
+
+- **Obligatoria solo la portada.** Todo lo demás se puede quitar y volver a agregar con lo que se había cargado.
+- **Prearmado de fábrica** (cuenta nueva): Portada, Save the date, Eventos, Regalos y Confirmación. Dress code, Texto libre, Fotos, Playlist de Spotify y Mensaje final empiezan en «Para agregar» (el mensaje final ya no viene prendido).
+- **Save the date opcional** (`site.saveDate`, viene prendido): se quita y se agrega como cualquier sección; la cuenta regresiva sigue siendo opcional dentro. Sin fecha, queda en la lista con «Aparece al definir la fecha» y no se ve en la página.
+- **Mensaje final movible:** es una sección más del orden (`BlockId` `mensaje`), por defecto al final. Los órdenes guardados antes lo reciben al final (`normalizeOrder`), no pegado a la música.
+- **Eventos:** las filas arrancan cerradas; tildar «Mostrar» no abre la fila, pero el evento aparece enseguida en la invitación aunque esté vacío («Evento N · Lugar a confirmar»). Un evento vacío sigue sin contar como pendiente.
+- **Playlist de Spotify:** la sección «Música» pasa a llamarse «Playlist de Spotify». Se pega el link de la playlist (o álbum) y la invitación muestra el reproductor oficial de Spotify (`spotifyEmbed` en `logic.ts`). Si no es un link de Spotify, el campo lo marca. La lista de temas cargada a mano (versión anterior) se sigue mostrando si no hay link.
+- **Distinción visual** (`panel.css`, bloque «Constructor»): «Tu invitación» = tarjetas blancas con borde lleno, número de orden oscuro y un contador; «Para agregar» = recuadro gris aparte, filas con borde punteado, ícono apagado y botón «Agregar» lleno.
+- **Textos que sobraban, fuera:** «Así está armada…», «Quitar una sección no borra…», «Se completa al elegir el lugar…», «Lo que cargaste se guarda.», las ayudas largas de Save the date, Regalos, Texto libre, Confirmación, Dress code, Fotos y Mensaje final, y en «Ubicación» la ayuda inicial (queda «Ubicación confirmada»). Descripciones de «Para agregar» resumidas a dos o tres palabras.
+
+## Ayuda: contacto (2026-10-28)
+
+- El diálogo de Ayuda del panel termina con un recuadro «¿Necesitás ayuda? Escribinos a hola@weda.app» (enlace `mailto:`). Es el correo de consultas de Weda. No hay formulario: el correo se abre en la aplicación de mail de la persona.
+
+## Publicación: 6 meses (definición comercial, 2026-10-28)
+
+- **La página queda publicada 6 meses** (antes 1 año) con cualquiera de los tres planes. `PUBLICATION_TERM = '6 meses'` y `PUBLICATION_MONTHS = 6` en `plans.ts`; el vencimiento se calcula con `addTerm` en `payments.ts` (si el día no existe en el mes de destino, vence el último día de ese mes). Se ve en la landing, en el diálogo de publicar y en Ayuda. Esto reemplaza lo dicho más arriba sobre «1 año».
+- **Cambio de plan:** solo a uno más completo, pagando la diferencia; no se puede pasar a uno más económico (como ya hacía `upgradeOptions`).
+
+## Ayuda: preguntas frecuentes (2026-10-28, respuestas de la dueña)
+
+- El diálogo de Ayuda muestra 7 preguntas desplegables (`<details>`, respuesta oculta hasta tocar la pregunta) y abajo el contacto «¿Necesitás ayuda? Escribinos a hola@weda.app».
+- Preguntas: cuánto cuesta y cuándo pago (precios de `PLANS`), cambiar de plan, cómo compartir (el link que se genera al publicar), cómo recibir regalos (alias en Datos de cobro, transferencia directa sin comisión, comprobante del invitado), dónde ver los regalos (Regalos → Aportes recibidos), editar después de publicar (sí, mientras esté publicada) y cuánto queda online (6 meses).
+- **Pendiente para el backend:** la respuesta dice que en «Aportes recibidos» se ve el comprobante; hoy esa lista muestra quién, qué regalo, monto, fecha y mensaje, pero todavía no el comprobante adjunto.
+
+## Regalos y confirmación: correo del invitado y novedades de Weda (2026-10-28, decisión de la dueña)
+
+- **Regalo:** el correo es **obligatorio** («Para enviarte la constancia de tu regalo. Los novios también lo ven.»). Se suma una casilla **aparte y destildada**: «Quiero recibir novedades y promociones de Weda por correo. Puedo darme de baja cuando quiera.» (`MARKETING_CONSENT_TEXT`, `src/lib/weda/consent.ts`). No es necesaria para regalar.
+- **Confirmación de asistencia:** el contacto pasa de «email o teléfono» a **correo** (obligatorio en el formulario, como lo era el contacto). Antes se pedía pero no se enviaba: ahora llega al servidor y queda en cada persona de ese envío. Misma casilla de novedades, antes de «Enviar».
+- **Servidor (migración 2):** `contributions.giver_email` (obligatorio en nuevos aportes; `invalid_giver_email` si falta), `guests.email` (opcional) y la tabla **`marketing_consents`**: correo, origen (`gift`/`rsvp`), casamiento de origen, **versión del texto aceptado** y fecha; la baja se marca (`revoked_at`), no se borra. Es la base de Weda, separada de los datos de cada casamiento (no se borra con el casamiento). Solo entra quien tildó la casilla.
+- **Panel → Regalos → Aportes recibidos:** un aporte por envío: quién regaló, su correo, los regalos que eligió (uno o varios, cada uno con su monto), total, fecha, mensaje, estado («A revisar» / «Confirmado») y **«Ver comprobante»** (o «Falta el comprobante»). Con cuenta se lee del servidor (`GET /api/contributions`); sin cuenta, de lo registrado en este navegador (sin archivo de comprobante).
+- **Pendiente (backend y legal):** proveedor de correo para enviar la constancia y los recordatorios («todavía no subiste el comprobante»), página de **política de privacidad** (hoy no existe y el registro ya la menciona), enlace de **baja** en cada correo de novedades que marque `revoked_at`, y la **inscripción de la base** ante la AAIP. Los recordatorios de comprobante son comunicaciones del servicio (finalidad del regalo); las promociones de Weda, solo a quien tenga consentimiento vigente.
+
+## Correos, comprobante y baja (2026-10-28)
+
+- Constancia del regalo por correo, botón «Pedir comprobante» en Aportes recibidos (uno por día), página `/comprobante` para adjuntarlo desde el correo, baja de novedades por enlace firmado y borrador de `/privacidad` (enlazada desde las casillas de novedades y el registro).
+- Sin `RESEND_API_KEY` no se envía nada: el panel avisa «El envío de correos todavía no está configurado».
+- Detalle, configuración y checklist previo al lanzamiento (incluida la inscripción en la AAIP): [datos-personales.md](datos-personales.md).
+
+## Sin comprobante no hay regalo (2026-10-28, decisión de la dueña)
+
+- **Invitado:** «Enviar» queda deshabilitado hasta adjuntar el comprobante (y nombre, apellido y correo); abajo dice «Para enviar falta: comprobante.».
+- **Servidor:** el comprobante viaja **en el mismo envío** que el regalo (`receipt: { data: base64 }` en `POST /api/public/:slug/contributions`). Sin comprobante responde `receipt_required` y no registra nada; un archivo que no es imagen ni PDF, `unsupported_file_type`. Antes eran dos pasos y, si fallaba la subida, el regalo quedaba sin comprobante.
+- **Pareja:** no se puede marcar como «confirmado» un aporte sin comprobante (`receipt_required`).
+- `PUT /api/public/contributions/:id/receipt` queda para **reemplazar** el comprobante (página `/comprobante`). «Pedir comprobante» queda solo para aportes viejos, anteriores a esta regla.

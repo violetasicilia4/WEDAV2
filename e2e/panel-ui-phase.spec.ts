@@ -118,7 +118,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
 
   test('Editor: la estructura primero, una sección a la vez con su estado, campos sin tapar por la barra inferior y vista previa que se abre y se cierra', async ({ page }) => {
     await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('heading', { name: 'Tu invitación' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tu invitación', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /Editar Portada/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /Editar Eventos/ })).toBeVisible();
     // Las secciones que no están se ofrecen para agregar, con su propósito.
@@ -189,7 +189,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     const dlg = page.getByRole('dialog');
     await expect(dlg.getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
     await expect(dlg.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
-    await expect(dlg.getByText('Publicada 1 año')).toHaveCount(3);
+    await expect(dlg.getByText('Publicada 6 meses')).toHaveCount(3);
     const box = (await dlg.boundingBox())!;
     expect(box.x).toBe(0);
     expect(Math.round(box.y + box.height)).toBe(844);

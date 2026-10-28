@@ -57,10 +57,10 @@ function Profile() {
         </dl>
         {remote.user
           ? <p className="pn-note">Tu casamiento se guarda en tu cuenta: podés abrirlo desde otro dispositivo. Cambiar el correo o la clave todavía no está disponible.</p>
-          : <p className="pn-note">Estás en modo demostración: sin cuenta, tu casamiento se guarda solo en este navegador. Creá una cuenta o ingresá para guardarlo en Weda y abrirlo desde otro dispositivo.</p>}
+          : <p className="pn-note">Todavía no tenés una cuenta. Creá una o ingresá para guardar tu casamiento en Weda y abrirlo desde cualquier dispositivo.</p>}
         <div className="pf-out">
           <button type="button" className="pn-btn is-ghost" onClick={() => { void (remote.user ? logout() : Promise.resolve()).then(() => navigate({ to: '/crear/cuenta', search: { modo: 'ingresar' } })); }}><LogOut size={16} aria-hidden="true" />{remote.user ? 'Cerrar sesión' : 'Ingresar con una cuenta'}</button>
-          <p className="pn-hint">{remote.user ? 'Al cerrar sesión se borra de este navegador la copia de tu casamiento; en tu cuenta sigue guardado.' : 'Tus datos quedan guardados en este navegador.'}</p>
+          {remote.user && <p className="pn-hint">Al cerrar sesión se borra de este dispositivo la copia de tu casamiento; en tu cuenta sigue guardado.</p>}
         </div>
       </section>
 
@@ -85,7 +85,7 @@ function EmailDialog({ current, onClose }: { current: string; onClose: () => voi
     <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
       <DialogContent className="pn-dialog">
         <DialogTitle>{current ? 'Cambiar el correo' : 'Agregar un correo'}</DialogTitle>
-        <DialogDescription>Es el correo con el que ingresás a Weda. Se guarda solo en este navegador.</DialogDescription>
+        <DialogDescription>Es el correo con el que ingresás a Weda.</DialogDescription>
         <form onSubmit={submit} noValidate className="pn-form">
           <Field label="Correo electrónico" error={error}>
             {a => <input id={a.id} type="email" inputMode="email" autoComplete="email" autoFocus value={value} onChange={e => { setValue(e.target.value); setError(undefined); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
@@ -120,7 +120,7 @@ function PasswordDialog({ onClose }: { onClose: () => void }) {
     setErrors(found);
     const first = found.current ? 'pf-current' : found.next ? 'pf-new' : found.again ? 'pf-again' : '';
     if (first) { document.getElementById(first)?.focus(); return; }
-    toast('La clave no se cambió: esta demo todavía no guarda claves.', 'error');
+    toast('No pudimos cambiar la clave. Probá de nuevo más tarde.', 'error');
     onClose();
   };
   const clear = (k: keyof Errors) => setErrors(x => ({ ...x, [k]: undefined }));

@@ -54,13 +54,13 @@ export type IcsInput = {
 
 export function buildIcs({ events, date, offset, title, now = new Date() }: IcsInput): string {
   const stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Weda//Demo//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Weda//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
   for (const ev of events) {
     const t = parseTime(ev.time);
     if (!t) continue;
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${ev.key}-${date}@weda.demo`,
+      `UID:${ev.key}-${date}@weda.app`,
       `DTSTAMP:${stamp}`,
       `DTSTART:${toUtcStamp(date, t, offset)}`,
       `SUMMARY:${escapeText(`${ev.label} · ${title}`)}`,

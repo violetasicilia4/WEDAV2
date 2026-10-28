@@ -112,7 +112,7 @@ test.describe('Landing · celular 390 px', () => {
     await expect(cards.nth(1).locator('.plan-inherit')).toContainText('Todo lo de Regalos');
     // Funcionalidades de los tres planes presentes (no se elimina ninguna).
     const all = await cards.allInnerTexts();
-    for (const t of ['Lista de regalos', 'Confirmación de asistencia', 'Música de la fiesta', 'Galería de fotos', 'Mensaje final', 'Pago único', 'Publicada 1 año']) expect(all.join('\n')).toContain(t);
+    for (const t of ['Lista de regalos', 'Confirmación de asistencia', 'Música de la fiesta', 'Galería de fotos', 'Mensaje final', 'Pago único', 'Publicada 6 meses']) expect(all.join('\n')).toContain(t);
   });
 
   test('testimonios: una cita grande a la vez, con pareja, contador y flechas que la cambian', async ({ page }) => {

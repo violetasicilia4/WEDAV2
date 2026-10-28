@@ -1,15 +1,20 @@
 // Pago y publicación SIMULADOS (frontend-only): no hay cobro ni publicación en Internet. Los montos salen de la matriz de planes (`plans.ts`);
-// la vigencia es la del plan (`PUBLICATION_TERM`, un año). Dar de baja la página NO devuelve el pago ni cambia el plan.
+// la vigencia es la del plan (`PUBLICATION_TERM`, seis meses). Dar de baja la página NO devuelve el pago ni cambia el plan.
 import { setPlan } from './logic';
-import { PLANS, planById, type Plan } from './plans';
+import { PLANS, PUBLICATION_MONTHS, planById, type Plan } from './plans';
 import type { AppState, PlanId, Publication } from './types';
 
 const priceOf = (id: PlanId): number => planById(id)?.price ?? 0;
 
-/** Fecha de vencimiento: un año después de publicar (misma regla que `PUBLICATION_TERM`). */
-export function addYear(iso: string): string {
+/** Fecha de vencimiento: seis meses después de publicar (`PUBLICATION_MONTHS`, misma regla que `PUBLICATION_TERM`).
+ *  Si el día no existe en el mes de destino (31 de agosto + 6 meses), vence el último día de ese mes. */
+export function addTerm(iso: string): string {
   const d = new Date(iso);
-  d.setUTCFullYear(d.getUTCFullYear() + 1);
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + PUBLICATION_MONTHS);
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, last));
   return d.toISOString();
 }
 
@@ -29,7 +34,7 @@ export const upgradeAmount = (from: PlanId, to: PlanId): number => Math.max(0, p
 export function publishPaid(s: AppState, planId: PlanId, now: Date = new Date()): AppState {
   if (s.publication) return s;
   const at = now.toISOString();
-  return { ...setPlan(s, planId), publication: { planId, live: true, publishedAt: at, expiresAt: addYear(at), payments: [{ kind: 'publish', planId, amount: priceOf(planId), at }] } };
+  return { ...setPlan(s, planId), publication: { planId, live: true, publishedAt: at, expiresAt: addTerm(at), payments: [{ kind: 'publish', planId, amount: priceOf(planId), at }] } };
 }
 
 /** Mejora de plan: se paga solo la diferencia, el sitio pasa a mostrarse con el plan nuevo y la vigencia no cambia. */

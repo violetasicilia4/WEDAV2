@@ -1,7 +1,7 @@
 // Recorrido guiado del panel: las cuatro etapas del casamiento, su estado y el siguiente paso recomendado.
 // Todo se deriva del AppState real (nadie marca nada a mano) y no bloquea nada: sirve para orientar, no para exigir.
 // `tasks`/`readiness` de logic.ts siguen existiendo para el resto del panel; esta es la vista de «recorrido» del Inicio.
-import { hasEventDetails } from './logic';
+import { hasEventDetails, spotifyEmbed } from './logic';
 import { can } from './plans';
 import type { AppState, SiteEvent } from './types';
 
@@ -31,17 +31,20 @@ export type NextAction = { label: string; to: string; stage: StageId; /** Copy p
 /** Un momento está completo con nombre propio y al menos el lugar o la dirección (misma regla que muestra el editor). */
 export const eventComplete = (e: SiteEvent) => e.enabled && e.title.trim() !== '' && (e.name.trim() !== '' || e.address.trim() !== '');
 
+/** Un evento sin nombre, lugar ni dirección no está empezado: no se muestra ni cuenta como pendiente (alcanza con un solo evento). */
+export const eventBlank = (e: SiteEvent) => e.title.trim() === '' && e.name.trim() === '' && e.address.trim() === '';
+
 export type SectionGap = { id: string; label: string };
 
 /** Secciones prendidas a las que todavía les faltan datos mínimos (prender «Mostrar» no alcanza para estar lista).
  *  El mensaje final no entra: vacío usa un cierre por defecto con los nombres. El editor y el Inicio leen esta misma regla. */
 export function sectionGaps(s: AppState): SectionGap[] {
   const out: SectionGap[] = [];
-  for (const e of s.site.events) if (e.enabled && !eventComplete(e)) out.push({ id: e.key, label: e.title.trim() || e.name.trim() || `Evento ${s.site.events.indexOf(e) + 1}` });
+  for (const e of s.site.events) if (e.enabled && !eventComplete(e) && !eventBlank(e)) out.push({ id: e.key, label: e.title.trim() || e.name.trim() || `Evento ${s.site.events.indexOf(e) + 1}` });
   if (s.site.dressCode.enabled && s.site.dressCode.title.trim() === '' && s.site.dressCode.text.trim() === '') out.push({ id: 'dress', label: 'Dress code' });
   if (s.site.note.enabled && s.site.note.title.trim() === '' && s.site.note.text.trim() === '') out.push({ id: 'texto', label: 'Texto libre' });
   if (s.site.gallery.enabled && s.site.gallery.photos.length === 0) out.push({ id: 'fotos', label: 'Fotos' });
-  if (s.site.playlist.enabled && s.site.playlist.tracks.length === 0) out.push({ id: 'musica', label: 'Música de la fiesta' });
+  if (s.site.playlist.enabled && s.site.playlist.tracks.length === 0 && !spotifyEmbed(s.site.playlist.spotify)) out.push({ id: 'musica', label: 'Playlist de Spotify' });
   return out;
 }
 

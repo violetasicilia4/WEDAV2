@@ -12,6 +12,12 @@ import { emptyState, isEmail, slugify, strongPassword } from '@/lib/weda/logic';
 import { planById, isPlanId } from '@/lib/weda/plans';
 import type { Guest, PlanId } from '@/lib/weda/types';
 import type { SiteData } from '@/lib/weda/site-model';
+import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
+import { formatARS } from '@/lib/demo-wedding';
+import { layout, sendMail, unsubscribeUrl, verifyUnsubscribe } from './mail';
+
+/** Entre un recordatorio de comprobante y el siguiente, para el mismo aporte. */
+const REMINDER_GAP_MS = 24 * 60 * 60 * 1000;
 
 const SESSION_DAYS = 30;
 const MAX_DRAFT_BYTES = 6 * 1024 * 1024;
@@ -206,10 +212,14 @@ export class Service {
   }
 
   /** Confirmación de asistencia. No devuelve datos de invitados: ni existentes ni propios. */
-  submitRsvp(slug: string, peopleRaw: unknown) {
+  submitRsvp(slug: string, peopleRaw: unknown, contactRaw?: unknown) {
     const p = this.livePublication(slug);
     if (!p.snapshot.blocks.rsvp) throw conflict('rsvp_disabled');
     const people = parseRsvp(peopleRaw, p.snapshot.rsvp.menus !== null);
+    // Correo opcional de quien responde (queda en cada persona de este envío). Novedades de Weda: solo con correo y casilla tildada.
+    const contact = (contactRaw ?? {}) as Row;
+    const email = optEmail(contact['email']);
+    const optIn = contact['marketingOptIn'] === true && !!email;
     return tx(this.db, () => {
       const t = now();
       for (const x of people) {
@@ -218,12 +228,20 @@ export class Service {
         const status = x.attending ? 'confirmed' : 'declined';
         const menu = x.attending ? x.menu : '';
         let gid: string;
-        if (found) { gid = found['id'] as string; this.db.prepare("UPDATE guests SET status=?, menu=?, source='rsvp', updated_at=? WHERE id=?").run(status, menu, t, gid); }
-        else { gid = newId('inv'); this.db.prepare("INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,created_at,updated_at) VALUES (?,?,?,?,?,?,?,NULL,'rsvp',?,?)").run(gid, p.wid, x.first, x.last, key, status, menu, t, t); }
+        if (found) { gid = found['id'] as string; this.db.prepare("UPDATE guests SET status=?, menu=?, source='rsvp', email=CASE WHEN ? != '' THEN ? ELSE email END, updated_at=? WHERE id=?").run(status, menu, email, email, t, gid); }
+        else { gid = newId('inv'); this.db.prepare("INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,email,created_at,updated_at) VALUES (?,?,?,?,?,?,?,NULL,'rsvp',?,?,?)").run(gid, p.wid, x.first, x.last, key, status, menu, email, t, t); }
         this.db.prepare('INSERT INTO rsvp_events (wedding_id,guest_id,status,menu,at) VALUES (?,?,?,?,?)').run(p.wid, gid, status, menu, t);
       }
+      if (optIn) this.grantConsent(email, 'rsvp', p.wid);
       return { count: people.length };
     });
+  }
+
+  /** Alta en la base de novedades de Weda (consentimiento expreso). Si la persona ya tiene un consentimiento vigente, no se duplica. */
+  private grantConsent(email: string, source: 'gift' | 'rsvp', weddingId: string) {
+    const live = this.db.prepare('SELECT 1 FROM marketing_consents WHERE email = ? AND revoked_at IS NULL').get(email);
+    if (live) return;
+    this.db.prepare('INSERT INTO marketing_consents (id,email,source,wedding_id,text_version,granted_at,revoked_at) VALUES (?,?,?,?,?,?,NULL)').run(newId('cns'), email, source, weddingId, MARKETING_CONSENT_VERSION, now());
   }
 
   /* ------------------------------------------------------------------ aportes */
@@ -237,29 +255,117 @@ export class Service {
     const key = reqStr(b['idempotencyKey'], 8, 100, 'invalid_idempotency_key');
     const manage = reqStr(b['manageToken'], 20, 200, 'invalid_manage_token');
     const giver = reqStr(b['giverName'], 1, 120, 'invalid_giver_name');
+    const giverEmail = optEmail(b['giverEmail']);
+    if (!giverEmail) throw invalid('invalid_giver_email'); // obligatorio: es para la constancia del regalo y para que la pareja pueda escribirle
+    // El comprobante viaja en el mismo envío (decisión de la dueña, 2026-10-28): no existe un regalo sin comprobante.
+    const receipt = decodeReceipt(b['receipt']);
     const message = typeof b['message'] === 'string' ? b['message'].trim().slice(0, 500) : '';
     const ids = Array.isArray(b['giftIds']) ? [...new Set((b['giftIds'] as unknown[]).filter((x): x is string => typeof x === 'string'))] : [];
     if (ids.length < 1 || ids.length > 30) throw invalid('invalid_gifts');
     if (!p.snapshot.blocks.gifts) throw conflict('gifts_disabled');
     const gifts = ids.map(id => p.snapshot.gifts.find(g => g.id === id));
     if (gifts.some(g => !g)) throw invalid('unknown_gift');
-    return tx(this.db, () => {
+    let written = '';
+    let res: { id: string; status: string; replay: boolean };
+    try { res = tx(this.db, () => {
       const hash = sha256(manage);
       const prev = this.db.prepare('SELECT id, status, manage_token_hash FROM contributions WHERE wedding_id = ? AND idempotency_key = ?').get(p.wid, key) as Row | undefined;
       if (prev) {
         if (prev['manage_token_hash'] !== hash) throw conflict('idempotency_key_reused');
         return { id: prev['id'] as string, status: prev['status'] as string, replay: true };
       }
+      if (!receipt) throw invalid('receipt_required');
       const taken = this.db.prepare(`SELECT DISTINCT i.gift_id AS id FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id WHERE c.wedding_id = ? AND c.status != 'rejected' AND i.gift_id IN (${ids.map(() => '?').join(',')})`).all(p.wid, ...ids) as Row[];
       if (taken.length) throw new ApiError(409, 'gift_taken', taken.map(r => r['id']).join(','));
       const id = newId('apo');
       const t = now();
       const total = gifts.reduce((n, g) => n + Math.round(g!.amount), 0);
-      this.db.prepare("INSERT INTO contributions (id,wedding_id,giver_name,message,how,status,total,idempotency_key,manage_token_hash,created_at,updated_at) VALUES (?,?,?,?,?,'pending_review',?,?,?,?,?)").run(id, p.wid, giver, message, 'alias', total, key, hash, t, t);
+      this.db.prepare("INSERT INTO contributions (id,wedding_id,giver_name,giver_email,message,how,status,total,idempotency_key,manage_token_hash,created_at,updated_at) VALUES (?,?,?,?,?,?,'pending_review',?,?,?,?,?)").run(id, p.wid, giver, giverEmail, message, 'alias', total, key, hash, t, t);
+      if (b['marketingOptIn'] === true) this.grantConsent(giverEmail, 'gift', p.wid);
       for (const g of gifts) this.db.prepare('INSERT INTO contribution_items (contribution_id,gift_id,gift_name,amount) VALUES (?,?,?,?)').run(id, g!.id, g!.name, Math.round(g!.amount));
       this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'created','guest',NULL,'pending_review','',?)").run(id, t);
+      const fileKey = this.storeReceiptFile(receipt.bytes);
+      written = fileKey;
+      this.db.prepare('INSERT INTO receipts (id,wedding_id,contribution_id,mime,size,storage_key,created_at) VALUES (?,?,?,?,?,?,?)').run(newId('rec'), p.wid, id, receipt.mime, receipt.bytes.length, fileKey, t);
       return { id, status: 'pending_review', replay: false };
     });
+    } catch (e) {
+      if (written) rmSync(path.join(this.cfg.dataDir, 'receipts', written), { force: true }); // sin registro no queda archivo huérfano
+      throw e;
+    }
+    // Constancia para quien regaló (no bloquea: si el correo falla, el regalo ya quedó registrado).
+    if (!res.replay) void this.mailGiftReceipt({ id: res.id, to: giverEmail, giver, couple: p.snapshot.names, gifts: gifts.map(g => ({ name: g!.name, amount: Math.round(g!.amount) })), manage, optedIn: b['marketingOptIn'] === true });
+    return res;
+  }
+
+  /** Guarda el archivo del comprobante con un nombre al azar (privado) y devuelve ese nombre. */
+  private storeReceiptFile(bytes: Buffer): string {
+    const dir = path.join(this.cfg.dataDir, 'receipts');
+    mkdirSync(dir, { recursive: true });
+    const key = newId('rcp');
+    writeFileSync(path.join(dir, key), bytes, { mode: 0o600 });
+    return key;
+  }
+
+  private comprobanteUrl(id: string, token: string) {
+    return `${this.cfg.publicUrl}/comprobante?aporte=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`;
+  }
+
+  /** Constancia del regalo: qué regaló, el total, que la pareja revisa el comprobante y el enlace para adjuntarlo o cambiarlo. */
+  private mailGiftReceipt(o: { id: string; to: string; giver: string; couple: string; gifts: { name: string; amount: number }[]; manage: string; optedIn: boolean }) {
+    const total = o.gifts.reduce((n, g) => n + g.amount, 0);
+    const first = o.giver.split(/\s+/)[0] ?? o.giver;
+    const body = layout({
+      title: `¡Gracias por tu regalo, ${first}!`,
+      paragraphs: [
+        `Le avisamos a ${o.couple} que les hiciste un regalo:`,
+        ...o.gifts.map(g => `· ${g.name}: ${formatARS(g.amount)}`),
+        `Total: ${formatARS(total)}.`,
+        'La transferencia va directo a la cuenta de los novios. Ellos revisan tu comprobante para confirmarlo.',
+      ],
+      button: { label: 'Adjuntar o cambiar el comprobante', url: this.comprobanteUrl(o.id, o.manage) },
+      footer: [
+        'Weda no cobra comisión ni pasa por el dinero.',
+        ...(o.optedIn ? [`Recibís novedades de Weda porque lo pediste. Para darte de baja: ${unsubscribeUrl(this.cfg, o.to)}`] : []),
+      ],
+    });
+    return sendMail(this.db, this.cfg, 'gift_receipt', { to: o.to, subject: `Tu regalo para ${o.couple}`, ...body }, o.id);
+  }
+
+  /** La pareja pide el comprobante a quien regaló. Genera un enlace nuevo para adjuntarlo (el anterior deja de servir) y respeta un día entre pedidos. */
+  async remindReceipt(userId: string, id: string): Promise<{ status: 'sent' | 'skipped' | 'failed' }> {
+    const { to, link, giver, couple } = tx(this.db, () => {
+      const c = this.ownedContribution(userId, id);
+      if (c['status'] === 'rejected') throw conflict('contribution_rejected');
+      if (this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_already_attached');
+      const to = (c['giver_email'] as string | undefined) ?? '';
+      if (!to) throw conflict('no_giver_email');
+      const last = this.db.prepare("SELECT at FROM contribution_events WHERE contribution_id = ? AND kind = 'receipt_reminder' ORDER BY id DESC LIMIT 1").get(id) as Row | undefined;
+      if (last && Date.now() - Date.parse(last['at'] as string) < REMINDER_GAP_MS) throw conflict('reminder_too_soon');
+      const token = newToken();
+      this.db.prepare('UPDATE contributions SET manage_token_hash = ?, updated_at = ? WHERE id = ?').run(sha256(token), now(), id);
+      this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'receipt_reminder','owner',?,?,'',?)").run(id, c['status'] as string, c['status'] as string, now());
+      const site = this.db.prepare("SELECT snapshot FROM publications WHERE wedding_id = ? ORDER BY version DESC LIMIT 1").get(c['wedding_id'] as string) as Row | undefined;
+      let couple = 'los novios';
+      try { couple = (JSON.parse((site?.['snapshot'] as string | undefined) ?? '{}') as { names?: string }).names || couple; } catch { /* sin snapshot legible */ }
+      return { to, link: this.comprobanteUrl(id, token), giver: c['giver_name'] as string, couple };
+    });
+    const first = giver.split(/\s+/)[0] ?? giver;
+    const body = layout({
+      title: `${first}, falta tu comprobante`,
+      paragraphs: [`${couple} todavía no recibieron el comprobante de tu regalo. Cuando puedas, adjuntalo desde acá: es una captura o el PDF de la transferencia.`],
+      button: { label: 'Adjuntar el comprobante', url: link },
+      footer: ['Si ya lo mandaste por otro medio, podés ignorar este correo.'],
+    });
+    return { status: await sendMail(this.db, this.cfg, 'receipt_reminder', { to, subject: `Falta el comprobante de tu regalo para ${couple}`, ...body }, id) };
+  }
+
+  /** Baja de novedades desde el enlace firmado del correo. Marca la baja (no borra: queda la prueba de cuándo se dio y se retiró). */
+  unsubscribe(token: string): boolean {
+    const email = verifyUnsubscribe(this.cfg.secret, token);
+    if (!email) return false;
+    this.db.prepare('UPDATE marketing_consents SET revoked_at = ? WHERE email = ? AND revoked_at IS NULL').run(now(), email);
+    return true;
   }
 
   private contributionWithToken(id: string, token: string | undefined): Row {
@@ -311,7 +417,7 @@ export class Service {
     if (!w) return [];
     const rows = this.db.prepare('SELECT * FROM contributions WHERE wedding_id = ? ORDER BY created_at DESC, id').all(w['id'] as string) as Row[];
     return rows.map(c => ({
-      id: c['id'] as string, giverName: c['giver_name'] as string, message: c['message'] as string, how: c['how'] as string, status: c['status'] as string, total: c['total'] as number, createdAt: c['created_at'] as string,
+      id: c['id'] as string, giverName: c['giver_name'] as string, giverEmail: (c['giver_email'] as string | undefined) ?? '', message: c['message'] as string, how: c['how'] as string, status: c['status'] as string, total: c['total'] as number, createdAt: c['created_at'] as string,
       items: (this.db.prepare('SELECT gift_id, gift_name, amount FROM contribution_items WHERE contribution_id = ?').all(c['id'] as string) as Row[]).map(i => ({ giftId: i['gift_id'] as string, giftName: i['gift_name'] as string, amount: i['amount'] as number })),
       hasReceipt: !!this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(c['id'] as string),
       history: (this.db.prepare('SELECT kind, actor, from_status, to_status, note, at FROM contribution_events WHERE contribution_id = ? ORDER BY id').all(c['id'] as string) as Row[]).map(e => ({ kind: e['kind'] as string, actor: e['actor'] as string, from: (e['from_status'] as string | null) ?? null, to: (e['to_status'] as string | null) ?? null, note: e['note'] as string, at: e['at'] as string })),
@@ -330,6 +436,7 @@ export class Service {
       const c = this.ownedContribution(userId, id);
       const from = c['status'] as string;
       if (!CONTRIBUTION_TRANSITIONS[from]?.includes(to)) throw conflict('invalid_transition');
+      if (to === 'confirmed' && !this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_required');
       const t = now();
       this.db.prepare('UPDATE contributions SET status=?, updated_at=? WHERE id=?').run(to, t, id);
       this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'status_changed','owner',?,?,?,?)").run(id, from, to, typeof note === 'string' ? note.slice(0, 300) : '', t);
@@ -404,6 +511,24 @@ function parseGuestInputs(v: unknown): GuestInput[] {
     if (status !== 'confirmed' && status !== 'declined' && status !== 'pending') throw invalid('invalid_guest_status');
     return { id: o['id'], first: reqStr(o['first'], 1, 80, 'invalid_guest_name'), last: typeof o['last'] === 'string' ? o['last'].trim().slice(0, 80) : '', status, menu: typeof o['menu'] === 'string' ? o['menu'].slice(0, 60) : '', groupId: typeof o['groupId'] === 'string' ? o['groupId'].slice(0, 80) : null, source: o['source'] === 'rsvp' ? 'rsvp' : 'manual' } as GuestInput;
   });
+}
+
+/** Comprobante que viaja dentro del envío del regalo: `{ data: base64 }`. Valida tamaño y tipo real (por contenido). Sin comprobante → null. */
+function decodeReceipt(v: unknown): { bytes: Buffer; mime: string } | null {
+  const data = v && typeof v === 'object' ? (v as Row)['data'] : undefined;
+  if (typeof data !== 'string' || data === '') return null;
+  const bytes = Buffer.from(data, 'base64');
+  if (bytes.length === 0) throw invalid('empty_file');
+  if (bytes.length > MAX_RECEIPT_BYTES) throw new ApiError(413, 'file_too_large');
+  const mime = sniffMime(bytes);
+  if (!mime) throw new ApiError(415, 'unsupported_file_type');
+  return { bytes, mime };
+}
+
+/** Correo opcional: vacío o inválido → ''. Se guarda en minúsculas. */
+function optEmail(v: unknown): string {
+  const e = typeof v === 'string' ? v.trim().toLowerCase() : '';
+  return e && e.length <= 200 && isEmail(e) ? e : '';
 }
 
 function parseRsvp(v: unknown, withMenus: boolean) {
