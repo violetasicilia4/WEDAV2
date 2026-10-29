@@ -73,14 +73,24 @@ function withRobotsHeader(request: Request, response: Response): Response {
 }
 
 let config: ReturnType<typeof loadConfig> | undefined;
-const apiConfig = () => (config ??= loadConfig());
+let configFailed = false;
+// Si falta una variable obligatoria (por ejemplo WEDA_SECRET en producción), solo la API deja de andar: las páginas siguen sirviéndose.
+const apiConfig = () => {
+  if (configFailed) return null;
+  try { return (config ??= loadConfig()); } catch (error) { configFailed = true; console.error(error); return null; }
+};
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       // API propia (cuentas, casamiento, publicación, RSVP, aportes): src/server/api.ts. Las respuestas nunca se indexan.
-      const api = await handleApi(request, apiConfig());
-      if (api) return api;
+      const cfg = apiConfig();
+      if (cfg) {
+        const api = await handleApi(request, cfg);
+        if (api) return api;
+      } else if (new URL(request.url).pathname.startsWith("/api/")) {
+        return new Response(JSON.stringify({ error: "backend_unavailable" }), { status: 503, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
+      }
       const seo = staticSeoResponse(new URL(request.url).pathname);
       if (seo) return seo;
       const handler = await getServerEntry();

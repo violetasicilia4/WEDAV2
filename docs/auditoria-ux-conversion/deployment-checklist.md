@@ -17,7 +17,7 @@ Estado al 2026-10-29. **No se hizo ningún despliegue.** Lista para el primer de
 | Variable | Obligatoria | Qué es |
 |---|---|---|
 | `NODE_ENV=production` | Sí | Activa cookies Secure y exige `WEDA_SECRET` |
-| `WEDA_SECRET` | **Sí** (sin ella, el servidor no arranca en producción) | 32+ caracteres al azar (`openssl rand -base64 48`). Firma los enlaces de baja de novedades y, por defecto, los webhooks |
+| `WEDA_SECRET` | **Sí** (sin ella la API responde 503 `backend_unavailable` y el panel queda en modo demostración; las páginas siguen sirviéndose) | 32+ caracteres al azar (`openssl rand -base64 48`). Firma los enlaces de baja de novedades y, por defecto, los webhooks |
 | `WEDA_DATA_DIR` | Sí | Carpeta en el disco persistente |
 | `WEDA_DB_PATH` | No | Por defecto `WEDA_DATA_DIR/weda.db` |
 | `WEDA_PUBLIC_URL` | Sí | `https://weda.app`: arma los enlaces de los correos |
