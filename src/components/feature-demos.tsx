@@ -1,10 +1,27 @@
+import { useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { formatARS, gifts, type Gift } from '@/lib/demo-wedding';
 
 /* Escenas animadas en loop para las tarjetas de funcionalidades de la landing.
    Son puro HTML/CSS (sin video): en reduced-motion quedan en su estado final. */
 
+/* Las escenas animan sin parar: fuera de la pantalla se pausan (`data-live` ausente), porque cada una repinta en bucle y, entre las tres,
+   trababan el scroll en equipos modestos. */
+function useLive<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') { el.setAttribute('data-live', ''); return; }
+    const io = new IntersectionObserver(([e]) => { if (e?.isIntersecting) el.setAttribute('data-live', ''); else el.removeAttribute('data-live'); }, { rootMargin: '60px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
+
 export function GiftDemo() {
+  const ref = useLive<HTMLDivElement>();
   // Muchos regalos que pasan sin parar: dos columnas que suben y bajan en sentido contrario, en bucle.
   // Mezcla de hogar, experiencias y luna de miel, con montos de todo tipo (de $ 55.000 a $ 1.500.000).
   const ids = ['ollas', 'cafetera', 'globo', 'vuelo-interno', 'sabanas', 'lampara', 'boutique', 'vinos', 'horno', 'vajilla', 'cena-mar', 'patagonia'];
@@ -22,7 +39,7 @@ export function GiftDemo() {
     </div>
   );
   return (
-    <div className="fd fd-gm" aria-hidden="true">
+    <div ref={ref} className="fd fd-gm" aria-hidden="true">
       <div className="fd-gm-view">
         <div className="fd-gm-col">{[...colA, ...colA].map((g, i) => card(g, `a${i}`))}</div>
         <div className="fd-gm-col is-down">{[...colB, ...colB].map((g, i) => card(g, `b${i}`))}</div>
@@ -32,8 +49,9 @@ export function GiftDemo() {
 }
 
 export function SiteDemo() {
+  const ref = useLive<HTMLDivElement>();
   return (
-    <div className="fd fd-site" aria-hidden="true">
+    <div ref={ref} className="fd fd-site" aria-hidden="true">
       <div className="fd-frame">
         <div className="fd-chrome"><i /><i /><i /></div>
         <div className="fd-viewport">
@@ -56,8 +74,9 @@ export function SiteDemo() {
 }
 
 export function RsvpDemo() {
+  const ref = useLive<HTMLDivElement>();
   return (
-    <div className="fd fd-rsvp" aria-hidden="true">
+    <div ref={ref} className="fd fd-rsvp" aria-hidden="true">
       <div className="fd-form">
         <span className="fd-label">Nombre y apellido</span>
         <span className="fd-input"><span className="fd-typed">Lucía Fernández</span></span>
