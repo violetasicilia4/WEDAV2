@@ -1168,7 +1168,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 
   /* Planes: tarjetas verticales más compactas, lo que suma cada plan se destaca y el botón queda siempre al pie, a lo ancho. */
   .plans-section { padding-top: 44px; padding-bottom: 44px; }
-  .plans-head h2 { font-size: clamp(26px, 7.2vw, 30px); line-height: 1.12; text-wrap: balance; }
+  /* Dos renglones en celular: una frase por línea, con el tamaño escalado al ancho para que la más larga entre entera. */
+  .plans-head h2 { font-size: clamp(17px, 5.7vw, 27px); line-height: 1.18; letter-spacing: -.02em; }
+  .plans-head h2 .plans-l1, .plans-head h2 .plans-l2 { display: block; white-space: nowrap; }
   .plans-head p { font-size: 15px; line-height: 1.5; max-width: 34ch; }
   .plan-card { padding: 22px 20px; }
   .plan-card .plan-price { margin-top: 14px; }

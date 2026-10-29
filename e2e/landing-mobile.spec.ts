@@ -115,27 +115,25 @@ test.describe('Landing · celular 390 px', () => {
     for (const t of ['Lista de regalos', 'Confirmación de asistencia', 'Música de la fiesta', 'Galería de fotos', 'Mensaje final', 'Pago único', 'Publicada 6 meses']) expect(all.join('\n')).toContain(t);
   });
 
-  test('«Por qué Weda» (en lugar de testimonios inventados): una frase a la vez, sin parejas, con contador y flechas que la cambian', async ({ page }) => {
+  test('Testimonios: una cita a la vez, con foto, contador y flechas que la cambian', async ({ page }) => {
     await goLanding(page);
     const tq = page.locator('.tq');
     await tq.scrollIntoViewIfNeeded();
-    await expect(tq.getByText('/Por qué Weda')).toBeVisible();
-    await expect(page.getByText('/Testimonios')).toHaveCount(0);
-    await expect(tq.locator('img')).toHaveCount(0);                                         // sin fotos de parejas
-    await expect(page.locator('.tq-quotes .tq-text.on')).toHaveCount(1);
-    const first = await page.locator('.tq-quotes .tq-text.on').innerText();
-    await expect(tq.locator('.tq-who strong')).toHaveText('Un solo link');
-    await expect(tq.locator('.tq-cap span')).toHaveText('01 / 04');
-    const m = await tq.evaluate(el => { const q = el.querySelector('.tq-text.on')!.getBoundingClientRect(), f = el.querySelector('.tq-foot')!.getBoundingClientRect(); return { left: q.left, right: innerWidth - q.right, quoteAbove: q.bottom <= f.top }; });
+    await expect(tq.getByText('/Testimonios')).toBeVisible();
+    await expect(page.getByText('/Por qué Weda')).toHaveCount(0);
+    await expect(page.locator('.tq-quotes blockquote.on')).toHaveCount(1);
+    const first = await page.locator('.tq-quotes blockquote.on').innerText();
+    await expect(tq.locator('.tq-who strong')).toHaveText('Camila & Lucas');
+    await expect(tq.locator('.tq-who span')).toHaveText('01 / 04');
+    const m = await tq.evaluate(el => { const q = el.querySelector('blockquote.on')!.getBoundingClientRect(); return { left: q.left, right: innerWidth - q.right }; });
     expect(m.left).toBeGreaterThanOrEqual(12); expect(m.right).toBeGreaterThanOrEqual(12);
-    expect(m.quoteAbove).toBe(true);
-    await tq.getByRole('button', { name: 'Siguiente' }).click();
-    await expect(tq.locator('.tq-who strong')).toHaveText('Regalos con comprobante');
-    expect(await page.locator('.tq-quotes .tq-text.on').innerText()).not.toBe(first);
-    await tq.getByRole('button', { name: 'Anterior' }).click();
-    await tq.getByRole('button', { name: 'Anterior' }).click();                              // da la vuelta al principio
-    await expect(tq.locator('.tq-cap span')).toHaveText('04 / 04');
-    const btn = await tq.getByRole('button', { name: 'Siguiente' }).boundingBox();
+    await tq.getByRole('button', { name: 'Testimonio siguiente' }).click();
+    await expect(tq.locator('.tq-who strong')).toHaveText('Valentina & Mariano');
+    expect(await page.locator('.tq-quotes blockquote.on').innerText()).not.toBe(first);
+    await tq.getByRole('button', { name: 'Testimonio anterior' }).click();
+    await tq.getByRole('button', { name: 'Testimonio anterior' }).click();                  // da la vuelta al final
+    await expect(tq.locator('.tq-who span')).toHaveText('04 / 04');
+    const btn = await tq.getByRole('button', { name: 'Testimonio siguiente' }).boundingBox();
     expect(btn!.width).toBeGreaterThanOrEqual(44); expect(btn!.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });
