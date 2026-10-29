@@ -8,6 +8,7 @@ const TEXT: Record<string, string> = {
   network: 'No hay conexión con Weda. Revisá tu internet y probá de nuevo: no se envió nada.',
   too_many_requests: 'Hiciste demasiados envíos seguidos. Esperá unos minutos y probá de nuevo.',
   site_unpublished: 'Esta página dejó de estar publicada.',
+  site_expired: 'Esta invitación ya no está disponible: terminó el tiempo de publicación.',
   site_not_found: 'No encontramos esta página.',
   rsvp_disabled: 'Los novios no habilitaron la confirmación de asistencia.',
   gift_taken: 'Alguien ya eligió uno de estos regalos. Actualizá la página para ver los que quedan.',

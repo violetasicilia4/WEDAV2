@@ -1,3 +1,5 @@
+import { trackOnce } from '@/lib/analytics';
+import { giftsStage, siteStage } from '@/lib/weda/journey';
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { ChevronDown, CircleHelp, Eye, Gift, Globe, Heart, House, Lock, Mail, Users } from 'lucide-react';
@@ -30,12 +32,14 @@ const NAV: NavItem[] = [
   { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
   { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
 ];
-/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado (Borrador o Publicada, según el pago simulado).
+/* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado. «Publicada» solo con cuenta: la publicación
+   real la hace el servidor (sin cuenta no hay página en Internet, aunque quede una publicación vieja guardada en este navegador).
    Es un enlace a /panel/perfil (datos del casamiento y cuenta). En escritorio va en el menú; en celular, como avatar arriba (`compact`). */
 function Profile({ compact = false }: { compact?: boolean }) {
   const photo = useAppSelector(s => s.photo);
   const couple = useAppSelector(s => s.couple);
-  const status = useAppSelector(s => isLive(s)) ? 'Publicada' : 'Borrador';
+  const online = !!useRemote().user;
+  const status = useAppSelector(s => isLive(s)) && online ? 'Publicada' : 'Borrador';
   const img = <img className="pn-profile-img" src={resolvePhoto(photo)} alt="" />;
   if (compact) return (
     <Link to="/panel/perfil" className="pn-top-avatar" activeProps={{ 'aria-current': 'page' }} aria-label={`Perfil de ${coupleLabel(couple)}`}>
@@ -92,8 +96,9 @@ function PublishButton({ className, children }: { className: string; children: R
 
 function PublishLabel() {
   const state = useAppState();
-  const live = isLive(state);
-  const down = !!state.publication && !live;
+  const online = !!useRemote().user;
+  const live = isLive(state) && online;
+  const down = online && !!state.publication && !live;
   return <><Heart size={16} aria-hidden="true" /><span>{live ? 'Publicada' : down ? 'Despublicada' : 'Publicar'}</span></>;
 }
 
@@ -144,6 +149,18 @@ function SyncBanner() {
   return null;
 }
 
+/** Embudo: avances que se ven en el panel (una vez por navegador). Sin efecto si la analítica está apagada (analytics.ts). */
+function FunnelProgress() {
+  const s = useAppState();
+  const gifts = giftsStage(s).status, site = siteStage(s).status;
+  useEffect(() => {
+    if (s.gifts.items.length > 0) trackOnce('gift_list_started');
+    if (gifts === 'done') trackOnce('gift_list_completed');
+    if (site === 'done') trackOnce('microsite_completed');
+  }, [s.gifts.items.length, gifts, site]);
+  return null;
+}
+
 function PanelLayout() {
   const navigate = useNavigate();
   // Solo lo que usa el contenedor: así escribir en el editor o los invitados no lo vuelve a dibujar.
@@ -183,6 +200,7 @@ function PanelLayout() {
 
   return (
     <ToastProvider>
+      <FunnelProgress />
       <PlansProvider>
       <div className="pn-root pn-app" data-side={collapsed ? 'collapsed' : 'open'}>
         <a className="skip-link" href="#main">Ir al contenido</a>

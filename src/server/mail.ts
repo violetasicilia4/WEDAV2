@@ -5,7 +5,7 @@ import type { ServerConfig } from './config';
 import { tx, type Db } from './db';
 import { newId } from './security';
 
-export type MailKind = 'gift_receipt' | 'receipt_reminder' | 'marketing';
+export type MailKind = 'gift_receipt' | 'receipt_reminder' | 'password_reset' | 'marketing';
 export type Mail = { to: string; subject: string; text: string; html: string };
 
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -27,7 +27,10 @@ ${o.button ? `<p style="margin:20px 0 4px"><a href="${esc(o.button.url)}" style=
 export async function sendMail(db: Db, cfg: ServerConfig, kind: MailKind, mail: Mail, ref = ''): Promise<'sent' | 'skipped' | 'failed'> {
   let status: 'sent' | 'skipped' | 'failed' = 'skipped';
   let error = '';
-  if (cfg.mail.resendApiKey) {
+  if (cfg.mail.testOutbox) {
+    // Adaptador de prueba (solo lo configuran las pruebas automáticas): guarda el correo en memoria. Nunca sale nada.
+    cfg.mail.testOutbox.push({ kind, to: mail.to, subject: mail.subject, text: mail.text });
+  } else if (cfg.mail.resendApiKey) {
     try {
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',

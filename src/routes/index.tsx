@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, ArrowRight, BellRing, Gift, UserPlus, Wallet } from 'lucide-react';
+import { track } from '@/lib/analytics';
+import { ArrowLeft, ArrowRight, BellRing, Gift, Receipt, UserCheck, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
@@ -44,36 +45,37 @@ function SeedLink({ children, pill = false, href, to, disabled }: SeedLinkProps)
   if (to) return <Button variant={variant} asChild><Link to={to}>{content}</Link></Button>;
   return <Button variant={variant} asChild><a href={href}>{content}</a></Button>;
 }
-// Parejas ficticias de la demo (nombres y fotos inventados); los textos son los testimonios aportados.
-const testimonials = [
-  { quote: 'Weda nos ayudó a tener todo mucho más ordenado. Pudimos ver quiénes nos habían hecho un regalo y llevar un registro para no olvidarnos de agradecerle a nadie.', who: 'Camila & Lucas', photo: '/parejas/camila-lucas.jpg' },
-  { quote: 'Nos re sirvió tener todo en la página. Más de uno nos preguntó cómo llegar o a qué hora era cada cosa, y les pasábamos el link directamente. Tenían el mapa, los horarios y toda la info ahí, así que no tuvimos que estar respondiendo mil mensajes el día del casamiento.', who: 'Valentina & Mariano', photo: '/parejas/valentina-mariano.jpg' },
-  { quote: 'Nos divertimos un montón armando la lista porque pudimos elegir regalos que tenían que ver con nosotros y con esta nueva etapa. Más allá del regalo en sí, nos gustaba pensar que cada persona estaba aportando a algo que queríamos hacer juntos.', who: 'Julieta & Franco', photo: '/parejas/julieta-franco.jpg' },
-  { quote: 'Nos sirvió para organizarnos con los invitados. Cada uno podía confirmar desde la página y nosotros ir viendo las respuestas sin tener que revisar todos los chats.', who: 'Juan & Claudia', photo: '/parejas/juan-claudia.jpg' },
+/* Antes: cuatro «testimonios» de parejas inventadas (nombres y fotos ficticios). Publicar experiencias de clientes que no existen puede ser publicidad
+   engañosa (Ley 24.240): hasta tener testimonios reales y con consentimiento, la sección muestra lo que Weda hace, sin fingir clientes
+   (auditoría 2026-10-28, docs/auditoria-ux-conversion/findings.md F-10). Cada frase describe una función que existe hoy. */
+const benefits: { text: string; title: string; Icon: typeof Gift }[] = [
+  { text: 'Tu lista de regalos y tu invitación, en un solo link para compartir con todos tus invitados.', title: 'Un solo link', Icon: Gift },
+  { text: 'Ves quién te regaló, qué regalos eligió, el monto, la fecha, su mensaje y el comprobante de la transferencia.', title: 'Regalos con comprobante', Icon: Receipt },
+  { text: 'Tus invitados confirman desde la página y las respuestas se suman solas a tu lista de invitados.', title: 'Confirmaciones en un lugar', Icon: UserCheck },
+  { text: 'Los regalos van directo a tu cuenta: Weda no cobra comisión ni pasa por el dinero.', title: 'Sin comisión', Icon: Wallet },
 ];
-function Testimonials() {
-  // Una cita a la vez, en grande, con flechas para pasar de una a otra. Todas las citas ocupan la misma celda: la sección no cambia de alto al pasar.
+function Benefits() {
+  // Una frase a la vez, en grande, con flechas para pasar de una a otra. Todas ocupan la misma celda: la sección no cambia de alto al pasar.
   const [i, setI] = useState(0);
-  const n = testimonials.length;
+  const n = benefits.length;
   const go = (d: number) => setI(v => (v + d + n) % n);
-  const t = testimonials[i]!;
+  const b = benefits[i]!;
   const num = (v: number) => String(v).padStart(2, '0');
   return (
-    <div className="tq" role="group" aria-roledescription="carrusel" aria-label="Testimonios">
-      <p className="tq-label">/Testimonios</p>
-      <span className="tq-mark" aria-hidden="true">“</span>
+    <div className="tq" role="group" aria-roledescription="carrusel" aria-label="Por qué Weda">
+      <p className="tq-label">/Por qué Weda</p>
       <div className="tq-quotes">
-        {testimonials.map((q, k) => <blockquote key={q.who} className={k === i ? 'on' : undefined} aria-hidden={k === i ? undefined : true}>{q.quote}</blockquote>)}
+        {benefits.map((q, k) => <p key={q.title} className={`tq-text${k === i ? ' on' : ''}`} aria-hidden={k === i ? undefined : true}>{q.text}</p>)}
       </div>
       <div className="tq-rule" aria-hidden="true"><i style={{ width: `${100 / n}%`, transform: `translateX(${i * 100}%)` }} /></div>
       <div className="tq-foot">
-        <figure className="tq-who" aria-live="polite">
-          <img key={t.who} src={t.photo} alt="" width={48} height={48} loading="lazy" draggable={false} />
-          <figcaption><strong>{t.who}</strong><span>{num(i + 1)} / {num(n)}</span></figcaption>
-        </figure>
+        <div className="tq-who" aria-live="polite">
+          <span className="tq-ico" aria-hidden="true"><b.Icon size={22} strokeWidth={1.6} /></span>
+          <p className="tq-cap"><strong>{b.title}</strong><span>{num(i + 1)} / {num(n)}</span></p>
+        </div>
         <div className="tq-nav">
-          <button type="button" onClick={() => go(-1)} aria-label="Testimonio anterior"><ArrowLeft size={18} aria-hidden="true" /></button>
-          <button type="button" onClick={() => go(1)} aria-label="Testimonio siguiente"><ArrowRight size={18} aria-hidden="true" /></button>
+          <button type="button" onClick={() => go(-1)} aria-label="Anterior"><ArrowLeft size={18} aria-hidden="true" /></button>
+          <button type="button" onClick={() => go(1)} aria-label="Siguiente"><ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </div>
     </div>
@@ -82,6 +84,7 @@ function Testimonials() {
 function Index() {
   useSmoothScroll();
   useReveal();
+  useEffect(() => { track('landing_viewed'); }, []);
   const heroVideo = useRef<HTMLVideoElement>(null);
   // El video (3,6 MB) se pide recién cuando la página terminó de cargar y el navegador está libre: la portada (póster) es lo primero que se ve
   // y no compite con el resto. Con movimiento reducido, ahorro de datos o conexión lenta no se descarga: queda el póster.
@@ -120,7 +123,7 @@ function Index() {
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
     <section className="duo-section" id="regalos"><div className="duo-split"><div className="duo-photo"><img src="/landing-regalos.jpg" alt="La novia camina del brazo del novio, detalle del vestido y de las manos con la alianza" loading="lazy" decoding="async"/></div><div className="duo-panel"><p className="eyebrow">Regalos</p><h2>Una lista de regalos hecha para ustedes.</h2><ol className="duo-steps">{giftSteps.map(({ title, Icon }, i) => <li key={title}><span className="duo-step-n" aria-hidden="true">{i + 1}</span><Icon className="duo-step-ico" size={22} strokeWidth={1.4} aria-hidden="true" /><b>{title}</b></li>)}</ol><div className="duo-cta"><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div></div></div></section>
-    <section className="viacap-section" id="testimonios"><div className="section-inner"><Testimonials/></div></section>
+    <section className="viacap-section" id="por-que-weda"><div className="section-inner"><Benefits/></div></section>
     <LandingPlans />
     </main>
     <footer className="seed-footer"><div className="section-inner">
@@ -133,7 +136,7 @@ function Index() {
           <Link to="/ejemplo">Ver ejemplo</Link>
         </nav>
       </div>
-      <div className="footer-bottom"><span>© 2026 Weda</span></div>
+      <div className="footer-bottom"><span>© 2026 Weda</span><span className="footer-legal"><Link to="/terminos">Términos de uso</Link> · <Link to="/privacidad">Privacidad</Link></span></div>
     </div></footer>
   </>;
 }

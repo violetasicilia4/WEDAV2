@@ -390,3 +390,22 @@ Reemplaza el banner «Primeros pasos» y las secciones «Lo que vas a publicar»
 - **Servidor:** el comprobante viaja **en el mismo envío** que el regalo (`receipt: { data: base64 }` en `POST /api/public/:slug/contributions`). Sin comprobante responde `receipt_required` y no registra nada; un archivo que no es imagen ni PDF, `unsupported_file_type`. Antes eran dos pasos y, si fallaba la subida, el regalo quedaba sin comprobante.
 - **Pareja:** no se puede marcar como «confirmado» un aporte sin comprobante (`receipt_required`).
 - `PUT /api/public/contributions/:id/receipt` queda para **reemplazar** el comprobante (página `/comprobante`). «Pedir comprobante» queda solo para aportes viejos, anteriores a esta regla.
+
+## Auditoría UX y conversión (2026-10-28)
+
+Detalle completo en [auditoria-ux-conversion/](auditoria-ux-conversion/README.md). Cambios de flujo:
+- **Publicar exige cuenta.** Sin cuenta, la revisión dice «Para publicar necesitás una cuenta…» y el botón es «Crear cuenta para publicar». Una publicación guardada solo en el navegador no se muestra como «Publicada».
+- **Sin pago simulado.** No hay proveedor de pagos: la revisión muestra «Precio» y el botón «Publicar». Nunca «Pagar», «Pagaste» ni «Total pagado» hasta que exista un pago confirmado por el proveedor.
+- **«Publicar los cambios»** en «Tu publicación»: la página pública es una copia del momento de publicar; este botón la actualiza con el mismo link.
+- **Registro sin Google ni Apple** (no hay OAuth).
+- **`/encontrar`:** pegar el link de la invitación; ya no hay parejas inventadas.
+- **Perfil sin cuenta:** solo la invitación a crearla (no hay clave que cambiar).
+
+## Remediación post-auditoría (2026-10-29)
+
+Detalle: [auditoria-ux-conversion/post-audit-remediation.md](auditoria-ux-conversion/post-audit-remediation.md).
+- **Recuperar la clave:** «¿Olvidaste tu clave?» en Ingresar → `/clave` (el enlace llega por correo, vale una hora, un solo uso) → `/clave/nueva` → al cambiarla se cierran las sesiones.
+- **Pagos:** con proveedor configurado, «Ir a pagar ARS …» → checkout → `/panel/pago` consulta al servidor → «Pago confirmado» → «Publicar mi página». Sin proveedor, publicar no cobra. `/pago-de-prueba` solo con el proveedor de prueba.
+- **Vencimiento:** a los 6 meses de la primera publicación la página pública dice «Esta invitación ya no está disponible». Publicar cambios no lo extiende; vencida no se reabre sola.
+- **Landing:** «Por qué Weda» (funciones reales) en lugar de testimonios inventados; pie con «Términos de uso» y «Privacidad».
+- **Alta:** «Continuar» y «Registrarme» quedan deshabilitados hasta que la página está activa (antes, tocar muy rápido recargaba la página).

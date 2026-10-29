@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- estado guardado y estados aleatorios sin esquema (prueba exploratoria) */
 import { mkdirSync, appendFileSync, writeFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { COUNT, rng, randomState, SEED, type Rng } from './rng';

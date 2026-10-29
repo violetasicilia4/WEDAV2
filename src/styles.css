@@ -1359,8 +1359,8 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .tq-label::before { content: ''; position: absolute; left: 0; top: -2px; width: clamp(96px, 13vw, 156px); height: 3px; background: rgb(255 255 255 / .85); }
 .tq-mark { grid-column: 1; grid-row: 2; align-self: start; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(88px, 11vw, 150px); line-height: .8; color: rgb(255 255 255 / .4); }
 .tq-quotes { grid-column: 2; grid-row: 2; display: grid; }
-.tq-quotes blockquote { grid-area: 1 / 1; margin: 0; font-size: clamp(21px, 2.5vw, 34px); line-height: 1.28; letter-spacing: -.012em; font-weight: var(--w-regular, 400); text-wrap: pretty; visibility: hidden; opacity: 0; transition: opacity .35s ease; }
-.tq-quotes blockquote.on { visibility: visible; opacity: 1; }
+.tq-quotes blockquote, .tq-quotes .tq-text { grid-area: 1 / 1; margin: 0; font-size: clamp(21px, 2.5vw, 34px); line-height: 1.28; letter-spacing: -.012em; font-weight: var(--w-regular, 400); text-wrap: pretty; visibility: hidden; opacity: 0; transition: opacity .35s ease; }
+.tq-quotes blockquote.on, .tq-quotes .tq-text.on { visibility: visible; opacity: 1; }
 .tq-rule { grid-column: 2; position: relative; height: 1px; margin-top: clamp(28px, 4vw, 48px); background: rgb(255 255 255 / .35); }
 .tq-rule i { position: absolute; left: 0; top: -1px; height: 3px; background: #fff; transition: transform .35s ease; }
 .tq-foot { grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
@@ -1378,9 +1378,9 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .tq-mark, .tq-quotes, .tq-rule, .tq-foot { grid-column: 1; }
   .tq-mark { grid-row: 2; font-size: 72px; margin-bottom: 4px; }
   .tq-quotes { grid-row: 3; }
-  .tq-quotes blockquote { font-size: 19px; }
+  .tq-quotes blockquote, .tq-quotes .tq-text { font-size: 19px; }
 }
-@media (prefers-reduced-motion: reduce) { .tq-quotes blockquote, .tq-rule i, .tq-nav button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tq-quotes blockquote, .tq-quotes .tq-text, .tq-rule i, .tq-nav button { transition: none; } }
 @media (min-width: 641px) { .viacap-section .tq { padding-inline: clamp(24px, 7vw, 110px); box-sizing: border-box; } }
 /* Tarjetas de plan compactas: «Ver lo que incluye» queda pegado a la lista y el botón justo debajo, todo a la misma altura en las tres. */
 .plans-grid .plan-card ul { margin-bottom: 0; }
@@ -1438,3 +1438,29 @@ html.lenis, html.lenis body { height: auto; }
 .legal-btn:disabled { opacity: .6; cursor: default; }
 .legal-error { margin: 0; color: #a12f2f; font-size: 14px; }
 .legal-ok { display: flex; align-items: center; gap: 8px; }
+
+/* Encontrar: abrir la invitación con el link de los novios (sin búsqueda de casamientos reales todavía). */
+.find-form { display: grid; gap: 12px; }
+.find-error { margin: 0; font-size: 14px; color: #a12f2f; }
+.find-go { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border: 0; border-radius: 999px; background: var(--foreground); color: var(--background); font: inherit; font-weight: 600; cursor: pointer; }
+.find-go:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.find-main .find-empty { margin-top: 28px; }
+
+/* Objetivo táctil: el enlace «Ver ejemplo» del hero quedaba en 43,99 px en el build de producción (redondeo de la fuente). Mínimo 44 px. */
+.seed-hero .hero-actions a:not(.seed-button) { min-height: 44px; }
+
+/* «Por qué Weda» (reemplaza los testimonios inventados): ícono de la función en lugar de la foto de una pareja. */
+.tq-ico { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--muted, #f1f1ef); color: var(--foreground); }
+.tq-cap { display: grid; gap: 2px; min-width: 0; margin: 0; }
+.tq-cap strong { font-size: clamp(17px, 1.6vw, 21px); font-weight: var(--w-medium); line-height: 1.15; }
+.tq-cap span { font-size: 13px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+
+/* Pie: enlaces legales (términos y privacidad), legibles y con área táctil. */
+.footer-bottom { align-items: center; gap: 16px; }
+.footer-legal { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.footer-legal a { color: inherit; display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Proveedor de pagos de PRUEBA: el aviso no se puede pasar por alto. */
+.test-pay-banner { margin: 0 0 20px; padding: 14px 16px; border: 2px dashed #a12f2f; border-radius: 12px; background: #fff3f1; color: #7a1d1d; font-size: 15px; line-height: 1.4; }
+.test-pay-actions { display: grid; gap: 10px; margin-top: 20px; }
+.legal-btn.is-ghost { background: transparent; color: #3b3c3a; box-shadow: inset 0 0 0 1px rgb(59 60 58 / .35); }

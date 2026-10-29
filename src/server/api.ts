@@ -5,6 +5,7 @@ import { openDb } from './db';
 import { ApiError } from './errors';
 import { RateLimiter } from './security';
 import { MAX_RECEIPT_BYTES, Service, type Session } from './service';
+import { readMedia } from './media';
 
 const COOKIE = 'weda_session';
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' };
@@ -45,6 +46,8 @@ function originOk(req: Request, cfg: ServerConfig): boolean {
 }
 
 const publicWriteLimiter = new RateLimiter(30, 10 * 60_000);
+/** Eventos del embudo: límite propio, así la analítica nunca agota el de las confirmaciones y los regalos. */
+const eventLimiter = new RateLimiter(120, 10 * 60_000);
 /** IP para los límites de uso. Detrás de un proxy de confianza usa X-Forwarded-For; si el servidor está expuesto directo, ese encabezado lo puede falsear quien llama (ver docs/backend-readiness.md). */
 const clientIp = (req: Request) => (req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim() || 'local';
 
@@ -76,6 +79,12 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
   try {
     if (method !== 'GET' && method !== 'HEAD' && !originOk(req, cfg)) throw new ApiError(403, 'bad_origin');
     if (a0(parts) === 'health') return json(200, { ok: true });
+    // Fotos guardadas (media.ts). Públicas: las usan las invitaciones publicadas. El nombre es el hash del contenido: no cambia nunca.
+    if (a0(parts) === 'media' && parts[1] && method === 'GET') {
+      const m = readMedia(cfg.dataDir, parts[1]);
+      if (!m) throw new ApiError(404, 'not_found');
+      return new Response(new Uint8Array(m.bytes), { status: 200, headers: { 'content-type': m.mime, 'cache-control': 'public, max-age=31536000, immutable', 'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'" } });
+    }
     // Baja de novedades desde el enlace del correo (sin sesión). Responde una página simple, no JSON.
     if (a0(parts) === 'unsubscribe' && method === 'GET') {
       const ok = (injected ?? openService(cfg)).unsubscribe(url.searchParams.get('t') ?? '');
@@ -98,6 +107,14 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
         const body = await readJson(req);
         const r = await svc.login(body['email'], body['password'], clientIp(req));
         return json(200, { user: { email: r.user.email } }, { 'set-cookie': setCookie(cfg, r.token) });
+      }
+      if (b === 'forgot' && method === 'POST') {
+        const body = await readJson(req);
+        return json(200, await svc.requestPasswordReset(body['email'], clientIp(req)));
+      }
+      if (b === 'reset' && method === 'POST') {
+        const body = await readJson(req);
+        return json(200, await svc.resetPassword(body['token'], body['password']));
       }
       if (b === 'logout' && method === 'POST') {
         svc.logout(cookieOf(req, COOKIE));
@@ -139,8 +156,25 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
     if (a === 'orders') {
       if (!b && method === 'GET') return json(200, { orders: svc.listOrders(session().userId) });
       if (!b && method === 'POST') { const body = await readJson(req); return json(201, svc.createOrder(session().userId, body['planId'])); }
+      if (b && !c && method === 'GET') return json(200, svc.orderStatus(session().userId, b));
     }
-    if (a === 'webhooks' && b === 'payments') return json(501, { error: 'payments_not_configured' });
+    if (a === 'payments' && !b && method === 'GET') return json(200, svc.paymentInfo(session().userId));
+    // Eventos del embudo que manda el navegador (solo los de CLIENT_EVENTS; límite por IP).
+    if (a === 'events' && method === 'POST') {
+      if (!eventLimiter.take(clientIp(req))) throw new ApiError(429, 'too_many_requests');
+      const body = await readJson(req);
+      return json(200, svc.recordClientEvent(body['name'], body['props']));
+    }
+    if (a === 'checkout' && method === 'POST') { const body = await readJson(req); return json(201, svc.startCheckout(session().userId, body['planId'])); }
+    // Solo con WEDA_PAYMENTS_PROVIDER=test (si no, 404): lo que hace el «proveedor» de prueba al aprobar, rechazar o cancelar.
+    if (a === 'test-payments' && b && method === 'POST') { const body = await readJson(req); return json(200, svc.completeTestPayment(session().userId, b, body['outcome'])); }
+    if (a === 'webhooks' && b === 'payments') {
+      if (!c) return json(501, { error: 'payments_not_configured' });
+      if (method !== 'POST') throw new ApiError(405, 'method_not_allowed');
+      const raw = await req.text();
+      if (raw.length > 100_000) throw new ApiError(413, 'payload_too_large');
+      return json(200, svc.handlePaymentNotification(c, raw, req.headers));
+    }
 
     /* ---- público (sin sesión) */
     if (a === 'public') {

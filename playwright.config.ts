@@ -30,5 +30,7 @@ export default defineConfig({
         { name: 'mobile', testIgnore: [/desktop\//, /explore\//], use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
         { name: 'desktop', testMatch: /desktop\/.*\.spec\.ts/, use: { viewport: { width: 1280, height: 800 } } },
       ],
-  webServer: process.env['WEDA_URL'] ? undefined : { command: 'npx vite dev --port 8080 --host 127.0.0.1', url: 'http://127.0.0.1:8080/', reuseExistingServer: true, timeout: 120_000 },
+  // Sin clave de Google Maps: las pruebas no llaman a servicios externos (el buscador de lugares se prueba con un Google simulado en place-search.spec.ts).
+  // Para correr contra otro servidor (WEDA_URL), levantalo también sin clave: VITE_GOOGLE_MAPS_KEY= npx vite dev --port 8091
+  webServer: process.env['WEDA_URL'] ? undefined : { command: 'npx vite dev --port 8080 --host 127.0.0.1', url: 'http://127.0.0.1:8080/', reuseExistingServer: true, timeout: 120_000, env: { VITE_GOOGLE_MAPS_KEY: '' } },
 });

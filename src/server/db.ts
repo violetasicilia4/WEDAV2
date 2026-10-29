@@ -158,6 +158,40 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX mail_log_ref ON mail_log(ref, kind);
   `,
+  // 4 (2026-10-29): recuperar la clave. Solo el hash del token; un solo uso (used_at) y con vencimiento.
+  `
+  CREATE TABLE password_resets (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,     -- sha256 del token del enlace (el token nunca se guarda)
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    used_at TEXT
+  );
+  CREATE INDEX password_resets_user ON password_resets(user_id);
+  `,
+  // 5 (2026-10-29): notificaciones de pago ya procesadas (idempotencia: el proveedor puede mandar la misma varias veces) y vencimiento real.
+  `
+  CREATE TABLE payment_events (
+    provider TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    order_id TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    received_at TEXT NOT NULL,
+    PRIMARY KEY (provider, event_id)
+  );
+  `,
+  // 6 (2026-10-29): embudo mínimo. Sin datos personales: nombre del evento, origen, fecha y propiedades de una lista cerrada (analytics-events.ts).
+  `
+  CREATE TABLE funnel_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('server','client')),
+    props TEXT NOT NULL DEFAULT '{}',
+    at TEXT NOT NULL
+  );
+  CREATE INDEX funnel_events_name_at ON funnel_events(name, at);
+  `,
 ];
 
 export function openDb(file: string): Db {

@@ -1,3 +1,4 @@
+import { track } from '@/lib/analytics';
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Field } from '@/components/panel/ui';
@@ -37,6 +38,7 @@ function Names() {
     if (found.first || found.second) { document.getElementById(found.first ? 'on-first' : 'on-second')?.focus(); return; }
     const couple = { first: first.trim(), second: second.trim(), ...(firstLast.trim() ? { firstLast: firstLast.trim() } : {}), ...(secondLast.trim() ? { secondLast: secondLast.trim() } : {}) };
     update(s => ({ ...s, onboarded: true, couple }));
+    track('event_created');
     void navigate({ to: '/crear/fecha' });
   };
   const text = (set: (v: string) => void, key?: 'first' | 'second') => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.value); if (key) setErrors(x => ({ ...x, [key]: undefined })); };

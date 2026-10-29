@@ -52,3 +52,5 @@ explore-results
 
 # Datos locales del servidor (base SQLite y comprobantes)
 .data/
+.data-e2e/
+.data-e2e-pay/

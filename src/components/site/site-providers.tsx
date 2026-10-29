@@ -77,6 +77,7 @@ export function AppSite({ slug, remote, children }: { slug: string; remote?: Pub
   if (preview && typeof window !== 'undefined') stickyPreview = true;
   if (remote?.status === 'live' && !preview) return <PublishedSite slug={slug} lookup={remote}>{children}</PublishedSite>;
   if (remote?.status === 'unpublished' && !preview) return <Notice title="Esta página no está publicada" text="Sus dueños la bajaron por ahora. Volvé a probar más tarde." to="/" cta="Ir a Weda" />;
+  if (remote?.status === 'expired' && !preview) return <Notice title="Esta invitación ya no está disponible" text="Terminó el tiempo de publicación de esta página." to="/" cta="Ir a Weda" />;
   return <LocalSite slug={slug}>{children}</LocalSite>;
 }
 

@@ -15,11 +15,17 @@ import type { SiteData } from '@/lib/weda/site-model';
 import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
 import { formatARS } from '@/lib/demo-wedding';
 import { layout, sendMail, unsubscribeUrl, verifyUnsubscribe } from './mail';
+import { providerFor, signedTestNotification, type Outcome } from './payments';
+import { addTerm } from '@/lib/weda/payments';
+import { externalizeImages } from './media';
+import { ALLOWED_PROPS, CLIENT_EVENTS, type EventProps, type ServerEvent } from '@/lib/analytics-events';
 
 /** Entre un recordatorio de comprobante y el siguiente, para el mismo aporte. */
 const REMINDER_GAP_MS = 24 * 60 * 60 * 1000;
 
 const SESSION_DAYS = 30;
+/** Cuánto vale el enlace para cambiar la clave. */
+const RESET_TTL_MS = 60 * 60 * 1000;
 const MAX_DRAFT_BYTES = 6 * 1024 * 1024;
 export const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
 const now = () => new Date().toISOString();
@@ -37,6 +43,9 @@ export type GuestInput = { id: string; first: string; last: string; status: Gues
 
 export class Service {
   private loginLimiter = new RateLimiter(8, 15 * 60_000);
+  /** Pedidos de recuperación: por correo y por IP, para no usar el formulario para mandar correos en masa. */
+  private resetLimiter = new RateLimiter(5, 60 * 60_000);
+  private resetIpLimiter = new RateLimiter(20, 60 * 60_000);
   constructor(public db: Db, public cfg: ServerConfig) {}
 
   /* ------------------------------------------------------------------ cuentas y sesiones */
@@ -53,6 +62,7 @@ export class Service {
       if (String((e as Error).message).includes('UNIQUE')) throw conflict('email_taken');
       throw e;
     }
+    this.track('signup_completed');
     return { user: { userId: id, email }, token: this.newSession(id) };
   }
 
@@ -81,6 +91,70 @@ export class Service {
     if (!row) return null;
     if ((row['exp'] as string) <= now()) { this.db.prepare('DELETE FROM sessions WHERE id = ?').run(sha256(token)); return null; }
     return { userId: row['id'] as string, email: row['email'] as string };
+  }
+
+  /* ------------------------------------------------------------------ embudo */
+
+  /** Registra un evento del embudo. Nunca falla hacia afuera: medir no puede romper un registro, un pago ni una publicación. */
+  private track(name: ServerEvent | string, props: EventProps = {}, source: 'server' | 'client' = 'server') {
+    try {
+      const clean = Object.fromEntries(Object.entries(props).filter(([k, v]) => (ALLOWED_PROPS as readonly string[]).includes(k) && ['string', 'number', 'boolean'].includes(typeof v) && String(v).length <= 40));
+      this.db.prepare('INSERT INTO funnel_events (name,source,props,at) VALUES (?,?,?,?)').run(name, source, JSON.stringify(clean), now());
+    } catch (e) { console.error('No se pudo registrar el evento:', e); }
+  }
+
+  /** Eventos que manda el navegador: solo los de la lista del cliente (nunca «pago confirmado» ni otro que pruebe algo). */
+  recordClientEvent(nameRaw: unknown, propsRaw: unknown) {
+    if (typeof nameRaw !== 'string' || !(CLIENT_EVENTS as readonly string[]).includes(nameRaw)) throw invalid('unknown_event');
+    this.track(nameRaw, (propsRaw && typeof propsRaw === 'object' ? propsRaw : {}) as EventProps, 'client');
+    return { ok: true };
+  }
+
+  /* ------------------------------------------------------------------ recuperar la clave */
+
+  /** Pide el enlace para cambiar la clave. Responde lo mismo exista o no la cuenta (no revela qué correos están registrados). */
+  async requestPasswordReset(emailRaw: unknown, ipKey = ''): Promise<{ ok: true }> {
+    const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
+    if (!isEmail(email) || email.length > 200) throw invalid('invalid_email');
+    if (!this.resetLimiter.take(email) || !this.resetIpLimiter.take(ipKey)) throw new ApiError(429, 'too_many_requests');
+    const user = this.db.prepare('SELECT id FROM users WHERE email = ?').get(email) as Row | undefined;
+    if (!user) return { ok: true };
+    const token = newToken();
+    const created = new Date();
+    const expires = new Date(created.getTime() + RESET_TTL_MS);
+    tx(this.db, () => {
+      // Un enlace nuevo anula los anteriores sin usar.
+      this.db.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(created.toISOString(), user['id'] as string);
+      this.db.prepare('INSERT INTO password_resets (id,user_id,token_hash,created_at,expires_at,used_at) VALUES (?,?,?,?,?,NULL)').run(newId('rst'), user['id'] as string, sha256(token), created.toISOString(), expires.toISOString());
+    });
+    const url = `${this.cfg.publicUrl}/clave/nueva?token=${encodeURIComponent(token)}`;
+    const body = layout({
+      title: 'Cambiá tu clave de Weda',
+      paragraphs: ['Pediste cambiar la clave de tu cuenta. El enlace vale por una hora y sirve una sola vez.', 'Si no lo pediste, ignorá este correo: tu clave sigue igual.'],
+      button: { label: 'Elegir una clave nueva', url },
+    });
+    // Sin esperar el envío: así la respuesta tarda lo mismo exista o no la cuenta.
+    void sendMail(this.db, this.cfg, 'password_reset', { to: email, subject: 'Cambiá tu clave de Weda', ...body }, user['id'] as string);
+    return { ok: true };
+  }
+
+  /** Cambia la clave con el token del enlace. Token de un solo uso y con vencimiento; al usarlo se cierran todas las sesiones de la cuenta. */
+  async resetPassword(tokenRaw: unknown, password: unknown): Promise<{ ok: true }> {
+    if (typeof tokenRaw !== 'string' || tokenRaw.length < 20 || tokenRaw.length > 200) throw invalid('invalid_or_expired_token');
+    if (typeof password !== 'string' || !strongPassword(password) || password.length > 200) throw invalid('weak_password');
+    const row = this.db.prepare('SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token_hash = ?').get(sha256(tokenRaw)) as Row | undefined;
+    if (!row || row['used_at'] || Date.parse(row['expires_at'] as string) <= Date.now()) throw invalid('invalid_or_expired_token');
+    const hash = await hashPassword(password);
+    tx(this.db, () => {
+      // Se vuelve a verificar dentro de la transacción: dos envíos simultáneos con el mismo token no pasan los dos.
+      const still = this.db.prepare('SELECT used_at FROM password_resets WHERE id = ?').get(row['id'] as string) as Row | undefined;
+      if (!still || still['used_at']) throw invalid('invalid_or_expired_token');
+      const t = now();
+      this.db.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(t, row['user_id'] as string);
+      this.db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, row['user_id'] as string);
+      this.db.prepare('DELETE FROM sessions WHERE user_id = ?').run(row['user_id'] as string);
+    });
+    return { ok: true };
   }
 
   logout(token: string | undefined) {
@@ -130,7 +204,8 @@ export class Service {
     if (typeof input.baseRevision !== 'number' || !Number.isInteger(input.baseRevision)) throw invalid('invalid_revision');
     const serialized = JSON.stringify(input.draft ?? null);
     if (serialized.length > MAX_DRAFT_BYTES) throw new ApiError(413, 'draft_too_large');
-    const draft = sanitizeDraft(input.draft);
+    // Fotos embebidas → archivos (media.ts). Va antes de la transacción: escribir archivos no debe retener el candado de la base.
+    const draft = externalizeImages(sanitizeDraft(input.draft), this.cfg.dataDir);
     const upserts = parseGuestInputs(input.guests?.upsert);
     const removes = Array.isArray(input.guests?.remove) ? (input.guests!.remove as unknown[]).filter((x): x is string => typeof x === 'string' && x.length <= 80).slice(0, 5000) : [];
     return tx(this.db, () => {
@@ -181,9 +256,13 @@ export class Service {
       }
       const snapshot = publicSite(draft, planId, slug);
       const t = now();
-      const prev = this.db.prepare('SELECT version FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
-      if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, wid);
-      else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at) VALUES (?,?,?,?,?,?,?)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t);
+      const prev = this.db.prepare('SELECT version, published_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+      // Vencimiento (PUBLICATION_MONTHS desde la PRIMERA publicación, en UTC): publicar cambios, bajar y volver a publicar o mejorar el plan no lo extienden.
+      // Una publicación vencida no se reabre sola: renovar es una decisión comercial pendiente (production-readiness.md). El contenido no se borra.
+      if (prev && Date.parse(expiresOf(prev)) <= Date.now()) throw conflict('publication_expired');
+      if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=?, expires_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, expiresOf(prev), wid);
+      else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,?)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t, addTerm(t));
+      this.track('publication_completed', { plan_id: planId, is_republish: !!prev });
       return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1 };
     });
   }
@@ -198,9 +277,11 @@ export class Service {
   /* ------------------------------------------------------------------ sitio público (sin sesión) */
 
   private livePublication(slug: string): { wid: string; snapshot: SiteData; status: string } {
-    const row = this.db.prepare('SELECT w.id AS wid, p.snapshot AS snapshot, p.status AS status FROM weddings w JOIN publications p ON p.wedding_id = w.id WHERE w.slug = ?').get(slug) as Row | undefined;
+    const row = this.db.prepare('SELECT w.id AS wid, p.snapshot AS snapshot, p.status AS status, p.published_at AS published_at, p.expires_at AS expires_at FROM weddings w JOIN publications p ON p.wedding_id = w.id WHERE w.slug = ?').get(slug) as Row | undefined;
     if (!row) throw notFound('site_not_found');
     if (row['status'] !== 'live') throw new ApiError(410, 'site_unpublished');
+    // Vencida: el servidor decide (no un temporizador del navegador). Vale para la página, las confirmaciones y los regalos.
+    if (Date.parse(expiresOf(row)) <= Date.now()) throw new ApiError(410, 'site_expired');
     return { wid: row['wid'] as string, snapshot: JSON.parse(row['snapshot'] as string) as SiteData, status: 'live' };
   }
 
@@ -208,6 +289,7 @@ export class Service {
   getPublicSite(slug: string) {
     const p = this.livePublication(slug);
     const taken = this.db.prepare("SELECT DISTINCT i.gift_id AS id FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id WHERE c.wedding_id = ? AND c.status != 'rejected'").all(p.wid) as Row[];
+    this.track('public_invitation_opened');
     return { site: p.snapshot, takenGiftIds: taken.map(r => r['id'] as string) };
   }
 
@@ -233,6 +315,7 @@ export class Service {
         this.db.prepare('INSERT INTO rsvp_events (wedding_id,guest_id,status,menu,at) VALUES (?,?,?,?,?)').run(p.wid, gid, status, menu, t);
       }
       if (optIn) this.grantConsent(email, 'rsvp', p.wid);
+      this.track('rsvp_submitted', { attending: people.some(x => x.attending) });
       return { count: people.length };
     });
   }
@@ -293,6 +376,7 @@ export class Service {
       if (written) rmSync(path.join(this.cfg.dataDir, 'receipts', written), { force: true }); // sin registro no queda archivo huérfano
       throw e;
     }
+    if (!res.replay) this.track('gift_submitted');
     // Constancia para quien regaló (no bloquea: si el correo falla, el regalo ya quedó registrado).
     if (!res.replay) void this.mailGiftReceipt({ id: res.id, to: giverEmail, giver, couple: p.snapshot.names, gifts: gifts.map(g => ({ name: g!.name, amount: Math.round(g!.amount) })), manage, optedIn: b['marketingOptIn'] === true });
     return res;
@@ -471,6 +555,84 @@ export class Service {
     return (this.db.prepare('SELECT id, plan_id, amount, status, created_at, paid_at FROM orders WHERE wedding_id = ? ORDER BY created_at DESC, id').all(w['id'] as string) as Row[]).map(o => ({ id: o['id'] as string, planId: o['plan_id'] as string, amount: o['amount'] as number, status: o['status'] as string, createdAt: o['created_at'] as string, paidAt: (o['paid_at'] as string | null) ?? null }));
   }
 
+  /** Plan más alto que esta pareja ya pagó (con confirmación del proveedor), o null. */
+  private paidPlan(wid: string): PlanId | null {
+    const paid = this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[];
+    return paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => b!.price - a!.price)[0]?.id ?? null;
+  }
+
+  /** Para el panel: hay cobro configurado y qué plan está pagado. Sin proveedor, `payments: false` (publicar no cobra). */
+  paymentInfo(userId: string) {
+    const w = this.weddingOf(userId);
+    return { payments: this.cfg.payments.provider !== 'none', paidPlan: w ? this.paidPlan(w['id'] as string) : null };
+  }
+
+  /**
+   * Empieza un pago. El monto lo calcula el servidor: el precio del plan, o la diferencia si ya hay uno pagado (mejora). Si ya hay una orden
+   * pendiente para el mismo plan y monto (doble clic, recarga, volver atrás), se reusa: no se crean dos cobros para lo mismo.
+   */
+  startCheckout(userId: string, planIdRaw: unknown) {
+    const provider = providerFor(this.cfg);
+    if (!provider) throw new ApiError(501, 'payments_not_configured');
+    if (!isPlanId(planIdRaw)) throw invalid('invalid_plan');
+    return tx(this.db, () => {
+      const w = this.ensureWedding(userId);
+      const wid = w['id'] as string;
+      const plan = planById(planIdRaw)!;
+      const current = this.paidPlan(wid);
+      const currentPrice = current ? planById(current)!.price : 0;
+      if (currentPrice >= plan.price) throw conflict('already_paid');
+      const amount = plan.price - currentPrice;
+      const open = this.db.prepare("SELECT id FROM orders WHERE wedding_id = ? AND plan_id = ? AND amount = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1").get(wid, plan.id, amount) as Row | undefined;
+      const id = (open?.['id'] as string | undefined) ?? newId('ord');
+      if (!open) {
+        const t = now();
+        this.db.prepare("INSERT INTO orders (id,wedding_id,plan_id,amount,status,provider,created_at,updated_at) VALUES (?,?,?,?,'pending',?,?,?)").run(id, wid, plan.id, amount, provider.name, t, t);
+      }
+      return { id, planId: plan.id, amount, status: 'pending', checkoutUrl: provider.checkoutUrl({ id, amount }, this.cfg) };
+    });
+  }
+
+  /** Estado de una orden propia (para retomar un pago interrumpido o al volver del proveedor). */
+  orderStatus(userId: string, id: string) {
+    const o = this.db.prepare('SELECT o.id, o.plan_id, o.amount, o.status, o.paid_at FROM orders o JOIN weddings w ON w.id = o.wedding_id WHERE o.id = ? AND w.owner_id = ?').get(id, userId) as Row | undefined;
+    if (!o) throw notFound();
+    return { id: o['id'] as string, planId: o['plan_id'] as string, amount: o['amount'] as number, status: o['status'] as string, paidAt: (o['paid_at'] as string | null) ?? null };
+  }
+
+  /**
+   * Notificación del proveedor (webhook). Única vía para marcar una orden como pagada. Se verifica la firma; cada evento se procesa una sola vez
+   * (el proveedor puede repetirlo) y una orden ya cerrada no cambia por un evento posterior contradictorio.
+   */
+  handlePaymentNotification(providerName: string, rawBody: string, headers: Headers) {
+    const provider = providerFor(this.cfg);
+    if (!provider || provider.name !== providerName) throw notFound();
+    let n;
+    try { n = provider.verify(rawBody, headers, this.cfg); } catch { throw new ApiError(401, 'invalid_signature'); }
+    return tx(this.db, () => {
+      const seen = this.db.prepare('SELECT 1 FROM payment_events WHERE provider = ? AND event_id = ?').get(provider.name, n.eventId);
+      if (seen) return { duplicate: true };
+      this.db.prepare('INSERT INTO payment_events (provider,event_id,order_id,outcome,received_at) VALUES (?,?,?,?,?)').run(provider.name, n.eventId, n.orderId, n.outcome, now());
+      const o = this.db.prepare('SELECT status FROM orders WHERE id = ?').get(n.orderId) as Row | undefined;
+      if (!o) throw notFound();
+      if (o['status'] !== 'pending') return { duplicate: false, ignored: true, status: o['status'] as string };
+      const t = now();
+      this.db.prepare('UPDATE orders SET status=?, provider=?, provider_ref=?, updated_at=?, paid_at=? WHERE id=?').run(n.outcome, provider.name, n.providerRef, t, n.outcome === 'paid' ? t : null, n.orderId);
+      // Única fuente de «pago confirmado»: la notificación verificada del proveedor.
+      if (n.outcome === 'paid') { const po = this.db.prepare('SELECT plan_id FROM orders WHERE id = ?').get(n.orderId) as Row; this.track('payment_confirmed', { plan_id: po['plan_id'] as string }); }
+      return { duplicate: false, status: n.outcome };
+    });
+  }
+
+  /** SOLO adaptador de prueba: lo que hace el «proveedor» cuando la persona toca Aprobar/Rechazar/Cancelar en /pago-de-prueba. Pasa por la misma verificación. */
+  completeTestPayment(userId: string, orderId: string, outcome: unknown) {
+    if (this.cfg.payments.provider !== 'test') throw notFound();
+    if (outcome !== 'paid' && outcome !== 'failed' && outcome !== 'cancelled') throw invalid('invalid_outcome');
+    this.orderStatus(userId, orderId); // solo la pareja dueña
+    const { body, signature } = signedTestNotification(this.cfg, { eventId: newId('evt'), orderId, outcome: outcome as Outcome });
+    return this.handlePaymentNotification('test', body, new Headers({ 'x-weda-signature': signature }));
+  }
+
   /**
    * SOLO para el proveedor de pagos (webhook verificado) o para pruebas: no está expuesta por HTTP. Idempotente por (provider, providerRef).
    */
@@ -511,6 +673,11 @@ function parseGuestInputs(v: unknown): GuestInput[] {
     if (status !== 'confirmed' && status !== 'declined' && status !== 'pending') throw invalid('invalid_guest_status');
     return { id: o['id'], first: reqStr(o['first'], 1, 80, 'invalid_guest_name'), last: typeof o['last'] === 'string' ? o['last'].trim().slice(0, 80) : '', status, menu: typeof o['menu'] === 'string' ? o['menu'].slice(0, 60) : '', groupId: typeof o['groupId'] === 'string' ? o['groupId'].slice(0, 80) : null, source: o['source'] === 'rsvp' ? 'rsvp' : 'manual' } as GuestInput;
   });
+}
+
+/** Vencimiento de una publicación. Las anteriores a la migración 5 no lo tienen guardado: se calcula desde su primera publicación. */
+function expiresOf(p: Row): string {
+  return (p['expires_at'] as string | null) ?? addTerm(p['published_at'] as string);
 }
 
 /** Comprobante que viaja dentro del envío del regalo: `{ data: base64 }`. Valida tamaño y tipo real (por contenido). Sin comprobante → null. */

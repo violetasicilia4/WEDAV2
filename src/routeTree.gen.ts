@@ -14,8 +14,12 @@ import { Route as ComprobanteRouteImport } from './routes/comprobante'
 import { Route as CrearRouteImport } from './routes/crear'
 import { Route as EjemploRouteImport } from './routes/ejemplo'
 import { Route as EncontrarRouteImport } from './routes/encontrar'
+import { Route as PagoDePruebaRouteImport } from './routes/pago-de-prueba'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as TerminosRouteImport } from './routes/terminos'
+import { Route as ClaveIndexRouteImport } from './routes/clave.index'
+import { Route as ClaveNuevaRouteImport } from './routes/clave.nueva'
 import { Route as CrearIndexRouteImport } from './routes/crear.index'
 import { Route as CrearCuentaRouteImport } from './routes/crear.cuenta'
 import { Route as CrearFechaRouteImport } from './routes/crear.fecha'
@@ -26,6 +30,7 @@ import { Route as EjemploRegalosRouteImport } from './routes/ejemplo.regalos'
 import { Route as PanelIndexRouteImport } from './routes/panel.index'
 import { Route as PanelInvitadosRouteImport } from './routes/panel.invitados'
 import { Route as PanelMesasRouteImport } from './routes/panel.mesas'
+import { Route as PanelPagoRouteImport } from './routes/panel.pago'
 import { Route as PanelPerfilRouteImport } from './routes/panel.perfil'
 import { Route as PanelRegalosRouteImport } from './routes/panel.regalos'
 import { Route as PanelSitioRouteImport } from './routes/panel.sitio'
@@ -59,6 +64,11 @@ const EncontrarRoute = EncontrarRouteImport.update({
   path: '/encontrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagoDePruebaRoute = PagoDePruebaRouteImport.update({
+  id: '/pago-de-prueba',
+  path: '/pago-de-prueba',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PanelRoute = PanelRouteImport.update({
   id: '/panel',
   path: '/panel',
@@ -67,6 +77,21 @@ const PanelRoute = PanelRouteImport.update({
 const PrivacidadRoute = PrivacidadRouteImport.update({
   id: '/privacidad',
   path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminosRoute = TerminosRouteImport.update({
+  id: '/terminos',
+  path: '/terminos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClaveIndexRoute = ClaveIndexRouteImport.update({
+  id: '/clave/',
+  path: '/clave/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClaveNuevaRoute = ClaveNuevaRouteImport.update({
+  id: '/clave/nueva',
+  path: '/clave/nueva',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CrearIndexRoute = CrearIndexRouteImport.update({
@@ -119,6 +144,11 @@ const PanelMesasRoute = PanelMesasRouteImport.update({
   path: '/mesas',
   getParentRoute: () => PanelRoute,
 } as any)
+const PanelPagoRoute = PanelPagoRouteImport.update({
+  id: '/pago',
+  path: '/pago',
+  getParentRoute: () => PanelRoute,
+} as any)
 const PanelPerfilRoute = PanelPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -161,8 +191,11 @@ export interface FileRoutesByFullPath {
   '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
+  '/pago-de-prueba': typeof PagoDePruebaRoute
   '/panel': typeof PanelRouteWithChildren
   '/privacidad': typeof PrivacidadRoute
+  '/terminos': typeof TerminosRoute
+  '/clave/nueva': typeof ClaveNuevaRoute
   '/crear/cuenta': typeof CrearCuentaRoute
   '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
@@ -170,11 +203,13 @@ export interface FileRoutesByFullPath {
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/panel/invitados': typeof PanelInvitadosRoute
   '/panel/mesas': typeof PanelMesasRoute
+  '/panel/pago': typeof PanelPagoRoute
   '/panel/perfil': typeof PanelPerfilRoute
   '/panel/regalos': typeof PanelRegalosRoute
   '/panel/sitio': typeof PanelSitioRoute
   '/panel/vista-previa': typeof PanelVistaPreviaRoute
   '/sitio/$slug': typeof SitioSlugRouteWithChildren
+  '/clave/': typeof ClaveIndexRoute
   '/crear/': typeof CrearIndexRoute
   '/ejemplo/': typeof EjemploIndexRoute
   '/panel/': typeof PanelIndexRoute
@@ -185,7 +220,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/comprobante': typeof ComprobanteRoute
   '/encontrar': typeof EncontrarRoute
+  '/pago-de-prueba': typeof PagoDePruebaRoute
   '/privacidad': typeof PrivacidadRoute
+  '/terminos': typeof TerminosRoute
+  '/clave/nueva': typeof ClaveNuevaRoute
   '/crear/cuenta': typeof CrearCuentaRoute
   '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
@@ -193,10 +231,12 @@ export interface FileRoutesByTo {
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/panel/invitados': typeof PanelInvitadosRoute
   '/panel/mesas': typeof PanelMesasRoute
+  '/panel/pago': typeof PanelPagoRoute
   '/panel/perfil': typeof PanelPerfilRoute
   '/panel/regalos': typeof PanelRegalosRoute
   '/panel/sitio': typeof PanelSitioRoute
   '/panel/vista-previa': typeof PanelVistaPreviaRoute
+  '/clave': typeof ClaveIndexRoute
   '/crear': typeof CrearIndexRoute
   '/ejemplo': typeof EjemploIndexRoute
   '/panel': typeof PanelIndexRoute
@@ -210,8 +250,11 @@ export interface FileRoutesById {
   '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
+  '/pago-de-prueba': typeof PagoDePruebaRoute
   '/panel': typeof PanelRouteWithChildren
   '/privacidad': typeof PrivacidadRoute
+  '/terminos': typeof TerminosRoute
+  '/clave/nueva': typeof ClaveNuevaRoute
   '/crear/cuenta': typeof CrearCuentaRoute
   '/crear/fecha': typeof CrearFechaRoute
   '/crear/foto': typeof CrearFotoRoute
@@ -219,11 +262,13 @@ export interface FileRoutesById {
   '/ejemplo/regalos': typeof EjemploRegalosRoute
   '/panel/invitados': typeof PanelInvitadosRoute
   '/panel/mesas': typeof PanelMesasRoute
+  '/panel/pago': typeof PanelPagoRoute
   '/panel/perfil': typeof PanelPerfilRoute
   '/panel/regalos': typeof PanelRegalosRoute
   '/panel/sitio': typeof PanelSitioRoute
   '/panel/vista-previa': typeof PanelVistaPreviaRoute
   '/sitio/$slug': typeof SitioSlugRouteWithChildren
+  '/clave/': typeof ClaveIndexRoute
   '/crear/': typeof CrearIndexRoute
   '/ejemplo/': typeof EjemploIndexRoute
   '/panel/': typeof PanelIndexRoute
@@ -238,8 +283,11 @@ export interface FileRouteTypes {
     | '/crear'
     | '/ejemplo'
     | '/encontrar'
+    | '/pago-de-prueba'
     | '/panel'
     | '/privacidad'
+    | '/terminos'
+    | '/clave/nueva'
     | '/crear/cuenta'
     | '/crear/fecha'
     | '/crear/foto'
@@ -247,11 +295,13 @@ export interface FileRouteTypes {
     | '/ejemplo/regalos'
     | '/panel/invitados'
     | '/panel/mesas'
+    | '/panel/pago'
     | '/panel/perfil'
     | '/panel/regalos'
     | '/panel/sitio'
     | '/panel/vista-previa'
     | '/sitio/$slug'
+    | '/clave/'
     | '/crear/'
     | '/ejemplo/'
     | '/panel/'
@@ -262,7 +312,10 @@ export interface FileRouteTypes {
     | '/'
     | '/comprobante'
     | '/encontrar'
+    | '/pago-de-prueba'
     | '/privacidad'
+    | '/terminos'
+    | '/clave/nueva'
     | '/crear/cuenta'
     | '/crear/fecha'
     | '/crear/foto'
@@ -270,10 +323,12 @@ export interface FileRouteTypes {
     | '/ejemplo/regalos'
     | '/panel/invitados'
     | '/panel/mesas'
+    | '/panel/pago'
     | '/panel/perfil'
     | '/panel/regalos'
     | '/panel/sitio'
     | '/panel/vista-previa'
+    | '/clave'
     | '/crear'
     | '/ejemplo'
     | '/panel'
@@ -286,8 +341,11 @@ export interface FileRouteTypes {
     | '/crear'
     | '/ejemplo'
     | '/encontrar'
+    | '/pago-de-prueba'
     | '/panel'
     | '/privacidad'
+    | '/terminos'
+    | '/clave/nueva'
     | '/crear/cuenta'
     | '/crear/fecha'
     | '/crear/foto'
@@ -295,11 +353,13 @@ export interface FileRouteTypes {
     | '/ejemplo/regalos'
     | '/panel/invitados'
     | '/panel/mesas'
+    | '/panel/pago'
     | '/panel/perfil'
     | '/panel/regalos'
     | '/panel/sitio'
     | '/panel/vista-previa'
     | '/sitio/$slug'
+    | '/clave/'
     | '/crear/'
     | '/ejemplo/'
     | '/panel/'
@@ -313,9 +373,13 @@ export interface RootRouteChildren {
   CrearRoute: typeof CrearRouteWithChildren
   EjemploRoute: typeof EjemploRouteWithChildren
   EncontrarRoute: typeof EncontrarRoute
+  PagoDePruebaRoute: typeof PagoDePruebaRoute
   PanelRoute: typeof PanelRouteWithChildren
   PrivacidadRoute: typeof PrivacidadRoute
+  TerminosRoute: typeof TerminosRoute
+  ClaveNuevaRoute: typeof ClaveNuevaRoute
   SitioSlugRoute: typeof SitioSlugRouteWithChildren
+  ClaveIndexRoute: typeof ClaveIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -355,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EncontrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pago-de-prueba': {
+      id: '/pago-de-prueba'
+      path: '/pago-de-prueba'
+      fullPath: '/pago-de-prueba'
+      preLoaderRoute: typeof PagoDePruebaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/panel': {
       id: '/panel'
       path: '/panel'
@@ -367,6 +438,27 @@ declare module '@tanstack/react-router' {
       path: '/privacidad'
       fullPath: '/privacidad'
       preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminos': {
+      id: '/terminos'
+      path: '/terminos'
+      fullPath: '/terminos'
+      preLoaderRoute: typeof TerminosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clave/': {
+      id: '/clave/'
+      path: '/clave'
+      fullPath: '/clave/'
+      preLoaderRoute: typeof ClaveIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clave/nueva': {
+      id: '/clave/nueva'
+      path: '/clave/nueva'
+      fullPath: '/clave/nueva'
+      preLoaderRoute: typeof ClaveNuevaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/crear/': {
@@ -437,6 +529,13 @@ declare module '@tanstack/react-router' {
       path: '/mesas'
       fullPath: '/panel/mesas'
       preLoaderRoute: typeof PanelMesasRouteImport
+      parentRoute: typeof PanelRoute
+    }
+    '/panel/pago': {
+      id: '/panel/pago'
+      path: '/pago'
+      fullPath: '/panel/pago'
+      preLoaderRoute: typeof PanelPagoRouteImport
       parentRoute: typeof PanelRoute
     }
     '/panel/perfil': {
@@ -525,6 +624,7 @@ const EjemploRouteWithChildren =
 interface PanelRouteChildren {
   PanelInvitadosRoute: typeof PanelInvitadosRoute
   PanelMesasRoute: typeof PanelMesasRoute
+  PanelPagoRoute: typeof PanelPagoRoute
   PanelPerfilRoute: typeof PanelPerfilRoute
   PanelRegalosRoute: typeof PanelRegalosRoute
   PanelSitioRoute: typeof PanelSitioRoute
@@ -535,6 +635,7 @@ interface PanelRouteChildren {
 const PanelRouteChildren: PanelRouteChildren = {
   PanelInvitadosRoute: PanelInvitadosRoute,
   PanelMesasRoute: PanelMesasRoute,
+  PanelPagoRoute: PanelPagoRoute,
   PanelPerfilRoute: PanelPerfilRoute,
   PanelRegalosRoute: PanelRegalosRoute,
   PanelSitioRoute: PanelSitioRoute,
@@ -564,9 +665,13 @@ const rootRouteChildren: RootRouteChildren = {
   CrearRoute: CrearRouteWithChildren,
   EjemploRoute: EjemploRouteWithChildren,
   EncontrarRoute: EncontrarRoute,
+  PagoDePruebaRoute: PagoDePruebaRoute,
   PanelRoute: PanelRouteWithChildren,
   PrivacidadRoute: PrivacidadRoute,
+  TerminosRoute: TerminosRoute,
+  ClaveNuevaRoute: ClaveNuevaRoute,
   SitioSlugRoute: SitioSlugRouteWithChildren,
+  ClaveIndexRoute: ClaveIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

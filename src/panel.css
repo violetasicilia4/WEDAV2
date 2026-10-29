@@ -1820,3 +1820,12 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .rg-rec-proof.is-missing { margin: 8px 0 0; font-size: 13px; font-weight: var(--w-semibold); color: #8f5b00; }
 .rg-rec-missing { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
 .rg-rec-missing .rg-rec-proof.is-missing { margin: 0; }
+
+/* Tu publicación: actualizar la página publicada con lo editado después (la pública es una copia del momento de publicar). */
+.pn-refresh { display: grid; gap: 8px; justify-items: start; margin-top: 4px; }
+.pn-refresh .pn-note { display: flex; align-items: center; gap: 6px; margin: 0; }
+
+/* Vuelta del checkout: estado del pago según el servidor. */
+.pn-pay-status { display: grid; gap: 12px; justify-items: start; max-width: 560px; }
+.pn-pay-status h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 20px; }
+.pn-pay-status .pn-muted { display: flex; align-items: center; gap: 8px; margin: 0; }

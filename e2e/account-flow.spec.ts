@@ -12,7 +12,7 @@ const signupByEmail = async (page: Page, mail = 'nueva@example.com') => {
 };
 const couple = async (page: Page) => (await stored(page)).couple;
 
-test.describe('Cuenta simulada · el evento guardado se conserva', () => {
+test.describe('Cuenta · el evento guardado se conserva', () => {
   test('1. evento completo → registrarse con correo: se conserva y se sigue al panel (también al recargar)', async ({ page }) => {
     await onboard(page);
     await signupByEmail(page);
@@ -23,17 +23,12 @@ test.describe('Cuenta simulada · el evento guardado se conserva', () => {
     await expect(page).toHaveURL(/\/panel/);
   });
 
-  for (const provider of ['Google', 'Apple']) {
-    test(`${provider === 'Google' ? '2' : '3'}. evento completo → registrarse con ${provider}: se conserva (también al recargar)`, async ({ page }) => {
-      await onboard(page);
-      await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
-      await page.getByRole('button', { name: `Registrarme con ${provider}` }).click();
-      await page.waitForURL(/\/panel/);
-      expect(await couple(page)).toEqual({ first: 'Lucía', second: 'Violeta' });
-      await page.reload({ waitUntil: 'networkidle' });
-      expect(await couple(page)).toEqual({ first: 'Lucía', second: 'Violeta' });
-    });
-  }
+  test('2. no hay botones de Google ni Apple: no existe OAuth y un botón así prometería un registro que no hace (auditoría 2026-10-28)', async ({ page }) => {
+    await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
+    await expect(page.getByRole('button', { name: /Google|Apple/ })).toHaveCount(0);
+    await page.goto('/crear/cuenta?modo=ingresar', { waitUntil: 'networkidle' });
+    await expect(page.getByRole('button', { name: /Google|Apple/ })).toHaveCount(0);
+  });
 
   test('4. onboarding empezado (nombres cargados, falta fecha y foto) → registro simulado: se conserva el progreso', async ({ page }) => {
     await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });

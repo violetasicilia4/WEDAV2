@@ -25,6 +25,8 @@ export type RemoteState = {
   /** Aviso para la persona (por ejemplo, que se conservó el borrador local). */
   notice: string | null;
   publication: { status: string; planId: string; version: number; publishedAt: string } | null;
+  /** Cobro: si el servidor tiene un proveedor de pagos y qué plan está pagado (confirmado por el proveedor). null = todavía no se sabe. */
+  payments: { enabled: boolean; paidPlan: string | null } | null;
 };
 
 export class ApiFailure extends Error {
@@ -46,7 +48,7 @@ export async function api<T = any>(method: string, url: string, body?: unknown):
 
 /* ------------------------------------------------------------------ estado observable */
 
-let remote: RemoteState = { settled: false, user: null, save: 'idle', error: null, notice: null, publication: null };
+let remote: RemoteState = { settled: false, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null };
 const listeners = new Set<() => void>();
 const set = (p: Partial<RemoteState>) => { remote = { ...remote, ...p }; listeners.forEach(l => l()); };
 const SERVER_REMOTE: RemoteState = remote;
@@ -115,6 +117,7 @@ async function load(): Promise<void> {
 
 /** Con sesión confirmada: trae el casamiento del servidor y lo combina con el borrador de este navegador sin perder ninguno de los dos. */
 async function attach(email: string): Promise<void> {
+  void refreshPayments();
   let w: any;
   try { w = await api('GET', '/api/wedding'); } catch (e) {
     set({ settled: true, user: { email }, error: e instanceof ApiFailure ? e.code : 'network', save: 'error' });
@@ -269,7 +272,7 @@ export async function logout(): Promise<void> {
   try { window.localStorage.removeItem(META_KEY); } catch { /* nada que borrar */ }
   reset();
   started = Promise.resolve();
-  set({ settled: true, user: null, save: 'idle', error: null, notice: null, publication: null });
+  set({ settled: true, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null });
 }
 
 /** Publica de verdad en el servidor lo último guardado. Primero se asegura de que el servidor tenga el borrador actual. */
@@ -308,7 +311,36 @@ export const ERROR_TEXT: Record<string, string> = {
   session_expired: 'Tu sesión venció. Ingresá de nuevo para seguir guardando.',
   revision_conflict: 'Este casamiento se modificó desde otro dispositivo.',
   payment_required: 'Falta el pago del plan para publicar.',
+  payments_not_configured: 'El cobro todavía no está disponible.',
+  already_paid: 'Ese plan ya está pagado.',
+  publication_expired: 'Tu publicación venció. Escribinos a hola@weda.app para volver a publicarla.',
   incomplete: 'Completá los nombres de la pareja para publicar.',
   no_plan: 'Elegí un plan para publicar.',
+  invalid_or_expired_token: 'El enlace venció o ya se usó. Pedí uno nuevo.',
+  too_many_requests: 'Hiciste demasiados pedidos seguidos. Esperá un rato y probá de nuevo.',
 };
 export const errorText = (code: string | null) => (code && ERROR_TEXT[code]) || 'Algo salió mal de nuestro lado. Probá de nuevo en un rato.';
+
+/* ------------------------------------------------------------------ pagos (el servidor decide: la interfaz solo pregunta y redirige) */
+
+/** Vuelve a preguntar al servidor si hay cobro configurado y qué plan está pagado. */
+export async function refreshPayments(): Promise<void> {
+  try { const r = await api<{ payments: boolean; paidPlan: string | null }>('GET', '/api/payments'); set({ payments: { enabled: r.payments, paidPlan: r.paidPlan } }); }
+  catch { set({ payments: null }); }
+}
+
+/** Empieza el pago de un plan. El monto lo calcula el servidor. Devuelve adónde ir a pagar (o el error). No marca nada como pagado. */
+export async function startCheckout(planId: string): Promise<{ ok: true; orderId: string; url: string } | { ok: false; code: string }> {
+  try {
+    await flush();
+    const r = await api<{ id: string; checkoutUrl: string }>('POST', '/api/checkout', { planId });
+    return { ok: true, orderId: r.id, url: r.checkoutUrl };
+  } catch (e) { return { ok: false, code: e instanceof ApiFailure ? e.code : 'network' }; }
+}
+
+export type OrderStatus = { id: string; planId: string; amount: number; status: 'pending' | 'paid' | 'failed' | 'cancelled'; paidAt: string | null };
+/** Estado real de una orden según el servidor (al volver del proveedor o para retomar un pago interrumpido). */
+export async function getOrder(id: string): Promise<{ ok: true; order: OrderStatus } | { ok: false; code: string }> {
+  try { return { ok: true, order: await api<OrderStatus>('GET', `/api/orders/${encodeURIComponent(id)}`) }; }
+  catch (e) { return { ok: false, code: e instanceof ApiFailure ? e.code : 'network' }; }
+}

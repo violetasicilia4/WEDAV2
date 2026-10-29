@@ -532,3 +532,14 @@ export function contributionsFromServer(list: unknown): Contribution[] {
     };
   });
 }
+
+/** Acepta el link completo (weda.app/sitio/…, con o sin https) o solo la ruta (/sitio/…). Devuelve la ruta de la invitación o null. */
+export function invitationPath(raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return null;
+  let p = v;
+  try { p = new URL(/^https?:\/\//i.test(v) ? v : `https://${v.replace(/^\/+/, 'x/')}`).pathname; } catch { return null; }
+  if (!/^https?:\/\//i.test(v) && v.startsWith('/')) p = v.split(/[?#]/)[0]!;
+  const m = p.match(/^\/sitio\/([a-z0-9-]+)(\/regalos)?\/?$/i);
+  return m ? `/sitio/${m[1]!.toLowerCase()}${m[2] ?? ''}` : null;
+}

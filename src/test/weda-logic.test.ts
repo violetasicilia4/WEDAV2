@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addCatalogGift, addCustomGift, addGroup, addGuest, addSet, applyRsvp, assignGuest, emptyState, guestStats, isSafeMapsUrl, mapsLink,
   updateGroup, validateCapacity, cleanCbu, validateCbu, isSamplePhoto, isValidOptionalEmail, moveGift, moveGiftTo, resolvePhoto, parseAmount, receivedGifts, receivedTotal, removeSetGifts, readiness, tasks, removeGift, removeGroup, removeSet, setPlan, slugify, updateGuest, validateAlias, validateGift,
-  validateGroupName, validateOnboarding, draftsFor, spotifyEmbed, contributionsFromState, contributionsFromServer,
+  validateGroupName, validateOnboarding, draftsFor, spotifyEmbed, contributionsFromState, contributionsFromServer, invitationPath,
 } from '@/lib/weda/logic';
 import { SETS } from '@/lib/weda/catalog';
 import { can, formatPrice, PLANS, type Feature } from '@/lib/weda/plans';
@@ -554,5 +554,16 @@ describe('aportes recibidos', () => {
     ]);
     expect(list.map(c => [c.giver, c.receipt, c.status])).toEqual([['Ana', '/api/contributions/apo_1/receipt', 'pending_review'], ['Leo', 'missing', 'confirmed']]);
     expect(list[0]!.gifts).toHaveLength(2);
+  });
+});
+
+describe('encontrar: el link de la invitación', () => {
+  it('acepta el link completo, sin https o solo la ruta; rechaza cualquier otra cosa', () => {
+    expect(invitationPath('https://weda.app/sitio/ana-y-leo')).toBe('/sitio/ana-y-leo');
+    expect(invitationPath('weda.app/sitio/Ana-y-Leo/regalos?x=1')).toBe('/sitio/ana-y-leo/regalos');
+    expect(invitationPath('/sitio/ana-y-leo')).toBe('/sitio/ana-y-leo');
+    expect(invitationPath('Ana y Leo')).toBeNull();
+    expect(invitationPath('https://weda.app/panel')).toBeNull();
+    expect(invitationPath('')).toBeNull();
   });
 });

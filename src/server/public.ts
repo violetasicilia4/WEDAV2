@@ -7,6 +7,7 @@ import { ApiError } from './errors';
 export type PublicLookup =
   | { status: 'live'; site: SiteData; takenGiftIds: string[] }
   | { status: 'unpublished' }
+  | { status: 'expired' }
   | { status: 'missing' };
 
 export function lookupPublicSite(slug: string): PublicLookup {
@@ -14,7 +15,7 @@ export function lookupPublicSite(slug: string): PublicLookup {
     const r = getService(loadConfig()).getPublicSite(slug);
     return { status: 'live', site: r.site, takenGiftIds: r.takenGiftIds };
   } catch (e) {
-    if (e instanceof ApiError && e.status === 410) return { status: 'unpublished' };
+    if (e instanceof ApiError && e.status === 410) return { status: e.code === 'site_expired' ? 'expired' : 'unpublished' };
     if (e instanceof ApiError && e.status === 404) return { status: 'missing' };
     // Sin base de datos (hosting sin disco persistente) no hay sitios publicados: la página sigue con su comportamiento local.
     console.error('No se pudo leer el sitio publicado:', e);

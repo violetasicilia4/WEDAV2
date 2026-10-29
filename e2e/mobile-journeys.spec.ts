@@ -131,6 +131,8 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
 
     // Eventos: la tarjeta muestra solo calle y altura; «Cómo llegar» usa la dirección completa y hay un acceso a Google Maps para fijar el lugar.
     await page.getByRole('button', { name: /^Editar Eventos/ }).click();
+    // Los eventos arrancan cerrados (2026-10-28): se abre el que se quiere editar.
+    await page.locator('#sec-ceremonia').click();
     await page.getByLabel('Nombre del evento').fill('Ceremonia');
     await page.getByLabel('Nombre del lugar').fill('Parroquia San Isidro');
     await page.getByLabel('Dirección').fill('Av. del Libertador 1234, C1425 CABA, Argentina');
@@ -277,51 +279,27 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByText('Pasaje luna de miel')).toBeVisible();
   });
 
-  test('Flujo 7: elegir plan → pagar (simulado) → publicada → mejorar pagando la diferencia → bajar y volver a publicar', async ({ page }) => {
+  test('Flujo 7: sin cuenta, publicar pide crear la cuenta: no hay «Pagar», nada queda publicado ni «Publicada» (auditoría 2026-10-28)', async ({ page }) => {
+    // El beforeEach crea una cuenta: se borra la sesión para quedar con el casamiento solo en este navegador (sin cuenta).
+    await page.context().clearCookies();
     await page.goto('/panel/vista-previa');
     await expect(page.getByText('Todavía no está publicada')).toBeVisible();
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
     await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
-    // Revisión: no cambia nada hasta pagar.
-    await expect(page.getByText('Al publicar, cualquiera que tenga el link')).toBeVisible();
+    const dlg = page.getByRole('dialog');
+    await expect(dlg.getByText('Para publicar necesitás una cuenta')).toBeVisible();
+    await expect(dlg.getByRole('button', { name: /Pagar/ })).toHaveCount(0);
+    await expect(dlg.getByText(/Pagaste|Total pagado/)).toHaveCount(0);
+    await expect(dlg.getByText('Precio')).toBeVisible();
+    const cta = dlg.getByRole('link', { name: 'Crear cuenta para publicar' });
+    await expect(cta).toHaveAttribute('href', '/crear/cuenta');
     expect((await stored(page)).publication).toBeNull();
-    await page.getByRole('button', { name: 'Volver', exact: true }).click();
-    await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
-    await page.getByRole('button', { name: /^Pagar / }).click();
-    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Celebración!' })).toBeVisible({ timeout: 10000 });
-    await expect.poll(async () => ((await stored(page)) as { planId: string }).planId).toBe('invitacion');
-    const first = (await stored(page)) as { planId: string; publication: { live: boolean; planId: string; payments: { kind: string; amount: number }[] } };
-    expect(first.planId).toBe('invitacion');
-    expect(first.publication.live).toBe(true);
-    expect(first.publication.payments).toHaveLength(1);
-    await page.getByRole('button', { name: 'Listo' }).click();
-    // El botón de la cabecera pasa a «Publicada» y abre la gestión.
-    const head = page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true });
-    await head.click();
-    await expect(page.getByRole('heading', { name: 'Tu publicación' })).toBeVisible();
-    // Mejorar a Celebración Plus: solo la diferencia.
-    await page.getByRole('button', { name: 'Mejorar a Celebración Plus' }).click();
-    await expect(page.getByText('Pagás la diferencia')).toBeVisible();
-    await page.getByRole('button', { name: /^Pagar / }).click();
-    await expect(page.getByRole('heading', { name: '¡Pagaste tu plan Celebración Plus!' })).toBeVisible({ timeout: 10000 });
-    await expect.poll(async () => ((await stored(page)) as { planId: string }).planId).toBe('completo');
-    const up = (await stored(page)) as { planId: string; publication: { payments: { kind: string; amount: number }[] } };
-    expect(up.planId).toBe('completo');
-    expect(up.publication.payments.map(x => x.kind)).toEqual(['publish', 'upgrade']);
-    await page.getByRole('button', { name: 'Listo' }).click();
-    // Bajar la página (con confirmación) y volver a publicar sin pagar de nuevo.
-    await page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true }).click();
-    await page.getByRole('button', { name: 'Bajar la página' }).click();
-    await page.getByRole('button', { name: 'Sí, bajar la página' }).click();
-    // El guardado local es diferido: se espera a que se escriba.
-    await expect.poll(async () => ((await stored(page)) as { publication: { live: boolean } }).publication.live).toBe(false);
-    await page.getByRole('button', { name: 'Volver a publicar' }).click();
-    await expect.poll(async () => ((await stored(page)) as { publication: { live: boolean } }).publication.live).toBe(true);
-    expect(((await stored(page)) as { publication: { payments: unknown[] } }).publication.payments).toHaveLength(2);
-    // La publicación sobrevive a recargar.
-    await page.reload();
-    await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();
+    await cta.click();
+    await expect(page).toHaveURL(/\/crear\/cuenta$/);
+    expect((await stored(page)).publication).toBeNull();
+    await page.goto('/panel');
+    await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true })).toBeVisible();
   });
 });
 

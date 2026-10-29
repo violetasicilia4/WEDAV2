@@ -102,6 +102,9 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="es">
       <head>
         <HeadContent />
+        {/* Antes de que React tome la página, un formulario enviado hace un envío nativo (GET a la misma URL): la página se recarga y se pierde lo escrito.
+            Pasaba al tocar «Continuar» muy rápido en celulares lentos (y explicaba la intermitencia del alta en las pruebas). Se frena hasta hidratar. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('submit',function(e){if(!document.documentElement.hasAttribute('data-hydrated'))e.preventDefault()},true)" }} />
       </head>
       <body>
         {children}
@@ -112,6 +115,8 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 function RootComponent() {
+  // Marca que React ya tomó la página: desde acá los formularios se envían por JavaScript (ver el script del <head>).
+  useEffect(() => { document.documentElement.setAttribute('data-hydrated', ''); }, []);
   // Required: nested routes render here. Removing <Outlet /> breaks all child routes.
   return <Outlet />;
 }

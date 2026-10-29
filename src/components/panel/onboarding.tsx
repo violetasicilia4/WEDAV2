@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
+import { useHydrated } from '@/lib/weda/store';
 
 export type OnboardingStep = 1 | 2 | 3;
 
@@ -11,6 +12,8 @@ export function OnboardingShell({ step, title, sub, big = false, back, formId, o
   /** Si hay formulario, el botón principal lo envía; si no, usa onNext. */
   formId?: string; onNext?: () => void; nextLabel?: string; side: ReactNode; children: ReactNode;
 }) {
+  // Hasta hidratar, el botón no hace nada (ver __root.tsx): se muestra deshabilitado para que no parezca roto.
+  const hydrated = useHydrated();
   return (
     <div className="ob">
       <header className="ob-top">
@@ -28,8 +31,8 @@ export function OnboardingShell({ step, title, sub, big = false, back, formId, o
       <footer className="ob-foot">
         <Link to={back} className="pn-btn is-ghost">Volver</Link>
         {formId
-          ? <button type="submit" form={formId} className="pn-btn ob-next">{nextLabel}</button>
-          : <button type="button" className="pn-btn ob-next" onClick={onNext}>{nextLabel}</button>}
+          ? <button type="submit" form={formId} className="pn-btn ob-next" disabled={!hydrated}>{nextLabel}</button>
+          : <button type="button" className="pn-btn ob-next" onClick={onNext} disabled={!hydrated}>{nextLabel}</button>}
       </footer>
     </div>
   );

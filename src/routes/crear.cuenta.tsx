@@ -1,5 +1,6 @@
+import { track } from '@/lib/analytics';
 import { useState } from 'react';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field, FlowClose } from '@/components/panel/ui';
 import { accountDestination, hasEvent } from '@/lib/weda/account';
@@ -15,23 +16,10 @@ export const Route = createFileRoute('/crear/cuenta')({
 
 type Mode = 'signup' | 'login';
 
-const GoogleMark = () => (
-  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
-    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z" />
-    <path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.6l7.9-6.1z" />
-    <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
-  </svg>
-);
-const AppleMark = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
-  </svg>
-);
 
 /* Paso 1: cuenta. Con correo y clave se crea la cuenta o se ingresa de verdad (sesión en el servidor, src/lib/weda/remote.ts). El borrador de este navegador nunca se
-   borra: si la cuenta no tenía casamiento se sube; si ya tenía uno, se abre ese y el borrador local queda guardado aparte. «Google» y «Apple» siguen siendo una simulación
-   (no hay OAuth): continúan sin cuenta, en modo demostración.
+   borra: si la cuenta no tenía casamiento se sube; si ya tenía uno, se abre ese y el borrador local queda guardado aparte. «Google» y «Apple» no están:
+   no hay OAuth todavía y un botón que no registra con Google promete algo que no hace (auditoría 2026-10-28, docs/auditoria-ux-conversion).
    Sin avisos: la pantalla no menciona el evento guardado. */
 function Account() {
   const navigate = useNavigate();
@@ -86,7 +74,7 @@ function Account() {
 
       <form onSubmit={submit} noValidate className="pn-form">
         <Field id="ac-email" label="Correo electrónico" error={errors.email}>
-          {a => <input id="ac-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(x => ({ ...x, email: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+          {a => <input id="ac-email" onFocus={() => { if (signup) track('signup_started'); }} type="email" inputMode="email" autoComplete="email" value={email} onChange={e => { setEmail(e.target.value); setErrors(x => ({ ...x, email: undefined })); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
         </Field>
         <Field id="ac-pass" label="Clave" error={errors.password} hint={signup ? 'Mínimo 8 caracteres, con mayúscula, minúscula y número.' : undefined}>
           {a => (
@@ -98,17 +86,11 @@ function Account() {
             </div>
           )}
         </Field>
-        {signup && <p className="pn-terms">Al registrarte, aceptás los <strong>Términos de uso</strong> y la <a href="/privacidad" target="_blank" rel="noopener noreferrer"><strong>Política de privacidad</strong></a> de Weda.</p>}
+        {signup && <p className="pn-terms">Al registrarte, aceptás los <a href="/terminos" target="_blank" rel="noopener noreferrer"><strong>Términos de uso</strong></a> y la <a href="/privacidad" target="_blank" rel="noopener noreferrer"><strong>Política de privacidad</strong></a> de Weda.</p>}
+        {!signup && <p className="pn-alt"><Link to="/clave" className="pn-link">¿Olvidaste tu clave?</Link></p>}
         {formError && <p className="pn-banner" role="alert">{formError}</p>}
-        <button type="submit" className="pn-btn pn-block" disabled={busy} aria-busy={busy}>{busy ? 'Un momento…' : signup ? 'Registrarme' : 'Ingresar'}</button>
+        <button type="submit" className="pn-btn pn-block" disabled={busy || !hydrated} aria-busy={busy}>{busy ? 'Un momento…' : signup ? 'Registrarme' : 'Ingresar'}</button>
       </form>
-
-      <p className="pn-or" aria-hidden="true"><span>o</span></p>
-
-      <div className="pn-social">
-        <button type="button" className="pn-btn is-ghost pn-block" onClick={next}><GoogleMark />{signup ? 'Registrarme con Google' : 'Ingresar con Google'}</button>
-        <button type="button" className="pn-btn is-ghost pn-block" onClick={next}><AppleMark />{signup ? 'Registrarme con Apple' : 'Ingresar con Apple'}</button>
-      </div>
 
       <p className="pn-alt pn-account-switch">
         {signup ? '¿Ya sos miembro? ' : '¿Todavía no tenés cuenta? '}

@@ -23,9 +23,9 @@ for (const width of [390, 1280]) {
       await page.goto('/panel/sitio', { waitUntil: 'networkidle' });
       await expect(page.locator('li.ed-row[data-section="fecha"]')).toBeVisible();
       expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp']);
-      // Es lo primero que se puede mover (no tiene dónde subir) y no se puede quitar: solo se elige su lugar.
+      // Es lo primero que se puede mover (no tiene dónde subir). Desde el 2026-10-28 es opcional: se puede quitar (ver la prueba de «opcional»).
       await expect(fecha(page, 'Subir')).toBeDisabled();
-      await expect(page.getByRole('button', { name: 'Quitar Save the date de la invitación' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Quitar Save the date de la invitación' })).toHaveCount(1);
       // La portada ni sube ni baja: dice que es siempre primera.
       await expect(page.locator('li.ed-row[data-section="portada"]').getByText('Siempre primera')).toBeVisible();
 
@@ -36,23 +36,26 @@ for (const width of [390, 1280]) {
       await fecha(page, 'Bajar').click();
       expect(await rows(page)).toEqual(['portada', 'eventos', 'fecha', 'regalos', 'rsvp']);
       await expect(fecha(page, 'Subir')).toBeEnabled();
-      expect((await readPublic()).slice(0, 4)).toEqual(['top', 'dia', 'save-the-date', 'regalos']);
+      // El guardado del panel es diferido: se vuelve a leer la página pública hasta que refleje el orden nuevo.
+      await expect.poll(async () => (await readPublic()).slice(0, 4)).toEqual(['top', 'dia', 'save-the-date', 'regalos']);
 
       // Bajar hasta el final de lo movible: queda antes del mensaje final, que siempre cierra, y la portada sigue primera y única.
       for (let i = 0; i < 6 && await fecha(page, 'Bajar').isEnabled(); i++) await fecha(page, 'Bajar').click();
       await expect(fecha(page, 'Bajar')).toBeDisabled();
       expect(await rows(page)).toEqual(['portada', 'eventos', 'regalos', 'rsvp', 'fecha']);
+      await expect.poll(async () => (await readPublic()).at(-1)).toBe('save-the-date');
       const last = await readPublic();
       expect(last[0]).toBe('top');
       expect(last.filter(x => x === 'top')).toHaveLength(1);
       expect(last.filter(x => x === 'save-the-date')).toHaveLength(1);
       expect(last.indexOf('save-the-date')).toBeGreaterThan(last.indexOf('confirmar'));
-      expect(last[last.length - 1]).toBe('iv-closing');
+      // El mensaje final ya no viene prendido de fábrica (2026-10-28): bajado al fondo, «Save the date» es el último bloque.
+      expect(last[last.length - 1]).toBe('save-the-date');
 
       // Y volver a subir lo deja donde estaba por defecto.
       for (let i = 0; i < 6 && await fecha(page, 'Subir').isEnabled(); i++) await fecha(page, 'Subir').click();
       expect(await rows(page)).toEqual(['portada', 'fecha', 'eventos', 'regalos', 'rsvp']);
-      expect((await readPublic()).slice(0, 3)).toEqual(['top', 'save-the-date', 'dia']);
+      await expect.poll(async () => (await readPublic()).slice(0, 3)).toEqual(['top', 'save-the-date', 'dia']);
       await pub.close();
     });
 

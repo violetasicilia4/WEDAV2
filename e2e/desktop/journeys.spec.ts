@@ -405,14 +405,15 @@ test.describe('Perfil G · cambia de idea', () => {
     await closePreview(page);
   });
 
-  test('elegir un plan, volver atrás y elegir otro no cobra ni publica nada hasta pagar', async ({ page }) => {
+  test('elegir un plan, volver atrás y elegir otro no publica nada hasta confirmar, y nunca dice «Pagar» sin proveedor de pagos', async ({ page }) => {
     await onboard(page);
     await topPublish(page).click();
     await publishDialog(page).getByRole('button', { name: 'Publicar Regalos' }).click();
-    await expect(publishDialog(page).getByText('No se cobra nada ni se guardan datos de pago.')).toBeVisible();
+    await expect(publishDialog(page).getByText('ARS 95.000 · pago único', { exact: false }).first()).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Volver', exact: true }).click();
     await publishDialog(page).getByRole('button', { name: 'Publicar Celebración Plus' }).click();
-    await expect(publishDialog(page).getByRole('button', { name: /^Pagar ARS 150\.000/ })).toBeVisible();
+    await expect(publishDialog(page).getByRole('button', { name: 'Publicar', exact: true })).toBeVisible();
+    await expect(publishDialog(page).getByRole('button', { name: /Pagar/ })).toHaveCount(0);
     await publishDialog(page).getByRole('button', { name: 'Cerrar' }).click();
     expect((await stored(page)).publication).toBeNull();
     // Reabrir el diálogo vuelve a la elección de producto, no al paso de pago.
@@ -422,12 +423,13 @@ test.describe('Perfil G · cambia de idea', () => {
 });
 
 test.describe('Perfil J · publicar cuanto antes', () => {
-  test('publicar con el plan Celebración: pago de prueba, link, estado «Publicada» y persistencia tras recargar', async ({ page }) => {
+  test('publicar con el plan Celebración: link, estado «Publicada» y persistencia tras recargar; nunca dice que se pagó', async ({ page }) => {
     await onboard(page);
     await topPublish(page).click();
     await publishDialog(page).getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
-    await publishDialog(page).getByRole('button', { name: /^Pagar / }).click();
-    await expect(publishDialog(page).getByRole('heading', { name: '¡Pagaste tu plan Celebración!' })).toBeVisible({ timeout: 10000 });
+    await publishDialog(page).getByRole('button', { name: 'Publicar', exact: true }).click();
+    await expect(publishDialog(page).getByRole('heading', { name: '¡Tu página está publicada!' })).toBeVisible({ timeout: 10000 });
+    await expect(publishDialog(page).getByText(/Pagaste|Total pagado/)).toHaveCount(0);
     await expect(publishDialog(page).getByText(/\/sitio\/lucia-y-violeta/)).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Listo' }).click();
     await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();

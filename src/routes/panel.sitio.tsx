@@ -348,7 +348,7 @@ function SiteEditor() {
           {!sec ? (
             <>
               <section className="ed-block is-current" aria-labelledby="ed-structure">
-                <h2 id="ed-structure" className="ed-h">Tu invitación<span className="ed-count" aria-label={`${visibleCount} secciones`}>{visibleCount}</span></h2>
+                <h2 id="ed-structure" className="ed-h">Tu invitación<span className="ed-count" aria-hidden="true">{visibleCount}</span></h2>
                 <ol className="ed-rows">
                   {rows.map((r, i) => {
                     const Icon = ICON[r.id];
