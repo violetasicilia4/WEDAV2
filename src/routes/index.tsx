@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { track } from '@/lib/analytics';
+import { testimonials } from '@/lib/testimonials';
 import { ArrowLeft, ArrowRight, BellRing, Gift, Receipt, UserCheck, UserPlus, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
@@ -81,6 +82,34 @@ function Benefits() {
     </div>
   );
 }
+function Testimonials() {
+  // Una cita a la vez, en grande, con flechas para pasar de una a otra. Todas las citas ocupan la misma celda: la sección no cambia de alto al pasar.
+  const [i, setI] = useState(0);
+  const n = testimonials.length;
+  const go = (d: number) => setI(v => (v + d + n) % n);
+  const t = testimonials[i]!;
+  const num = (v: number) => String(v).padStart(2, '0');
+  return (
+    <div className="tq" role="group" aria-roledescription="carrusel" aria-label="Testimonios">
+      <p className="tq-label">/Testimonios</p>
+      <span className="tq-mark" aria-hidden="true">“</span>
+      <div className="tq-quotes">
+        {testimonials.map((q, k) => <blockquote key={q.who} className={k === i ? 'on' : undefined} aria-hidden={k === i ? undefined : true}>{q.quote}</blockquote>)}
+      </div>
+      <div className="tq-rule" aria-hidden="true"><i style={{ width: `${100 / n}%`, transform: `translateX(${i * 100}%)` }} /></div>
+      <div className="tq-foot">
+        <figure className="tq-who" aria-live="polite">
+          {t.photo && <img key={t.who} src={t.photo} alt="" width={48} height={48} loading="lazy" draggable={false} />}
+          <figcaption><strong>{t.who}</strong><span>{num(i + 1)} / {num(n)}</span></figcaption>
+        </figure>
+        <div className="tq-nav">
+          <button type="button" onClick={() => go(-1)} aria-label="Testimonio anterior"><ArrowLeft size={18} aria-hidden="true" /></button>
+          <button type="button" onClick={() => go(1)} aria-label="Testimonio siguiente"><ArrowRight size={18} aria-hidden="true" /></button>
+        </div>
+      </div>
+    </div>
+  );
+}
 function Index() {
   useSmoothScroll();
   useReveal();
@@ -123,7 +152,7 @@ function Index() {
       <div className="feat-grid">{features.map((f)=><div className="feat-card" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></div>)}</div>
     </div></section>
     <section className="duo-section" id="regalos"><div className="duo-split"><div className="duo-photo"><img src="/landing-regalos.jpg" alt="La novia camina del brazo del novio, detalle del vestido y de las manos con la alianza" loading="lazy" decoding="async"/></div><div className="duo-panel"><p className="eyebrow">Regalos</p><h2>Una lista de regalos hecha para ustedes.</h2><ol className="duo-steps">{giftSteps.map(({ title, Icon }, i) => <li key={title}><span className="duo-step-n" aria-hidden="true">{i + 1}</span><Icon className="duo-step-ico" size={22} strokeWidth={1.4} aria-hidden="true" /><b>{title}</b></li>)}</ol><div className="duo-cta"><SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink></div></div></div></section>
-    <section className="viacap-section" id="por-que-weda"><div className="section-inner"><Benefits/></div></section>
+    <section className="viacap-section" id="por-que-weda"><div className="section-inner">{testimonials.length > 0 ? <Testimonials/> : <Benefits/>}</div></section>
     <LandingPlans />
     </main>
     <footer className="seed-footer"><div className="section-inner">

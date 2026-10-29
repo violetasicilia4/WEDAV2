@@ -409,3 +409,6 @@ Detalle: [auditoria-ux-conversion/post-audit-remediation.md](auditoria-ux-conver
 - **Vencimiento:** a los 6 meses de la primera publicación la página pública dice «Esta invitación ya no está disponible». Publicar cambios no lo extiende; vencida no se reabre sola.
 - **Landing:** «Por qué Weda» (funciones reales) en lugar de testimonios inventados; pie con «Términos de uso» y «Privacidad».
 - **Alta:** «Continuar» y «Registrarme» quedan deshabilitados hasta que la página está activa (antes, tocar muy rápido recargaba la página).
+
+## Landing: testimonios (2026-10-29)
+- La sección entre «Funciones» y «Armá tu casamiento» muestra el carrusel de **testimonios** cuando `src/lib/testimonials.ts` tiene al menos uno; con la lista vacía muestra «Por qué Weda» (funciones reales). Los cuatro testimonios actuales (Camila & Lucas, Valentina & Mariano, Julieta & Franco, Juan & Claudia) los cargó la dueña el 2026-10-29, que responde por su autenticidad y permiso; la auditoría 2026-10-28 (F-10, Ley 24.240) advirtió que publicar testimonios que no son de clientes reales puede ser publicidad engañosa. Cada uno lleva frase, nombre como quieren figurar y foto opcional en `public/parejas/`.
