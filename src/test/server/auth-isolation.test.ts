@@ -1,7 +1,7 @@
 // @vitest-environment node
 /* eslint-disable @typescript-eslint/no-explicit-any -- respuestas JSON de la API, sin esquema compartido todavía */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, PASSWORD, saveDraft, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, PASSWORD, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeAll(() => { env = makeEnv(); });
@@ -101,5 +101,16 @@ describe('aislamiento entre parejas', () => {
     const a = env.client(); await a.post('/api/auth/login', { email: 'a1@correo.com', password: PASSWORD });
     const wb = env.svc.db.prepare("SELECT id FROM weddings WHERE draft LIKE '%Bea%'").get() as { id: string };
     expect((await a.get(`/api/wedding/${wb.id}`)).status).toBe(404);
+  });
+  it('el destino de cobro es solo del dueño: con su clave cambia el suyo, nunca el de otra pareja', async () => {
+    const a = env.client(), b = env.client();
+    await signUp(a, 'alias-a@correo.com'); await signUp(b, 'alias-b@correo.com');
+    expect((await setPayout(a, { alias: 'pareja.a.mp' })).status).toBe(200);
+    expect((await setPayout(b, { alias: 'pareja.b.mp' })).status).toBe(200);
+    // La clave de A no sirve en la sesión de B (y no hay ruta por id para apuntar al casamiento de A).
+    expect((await setPayout(b, { alias: 'robado.mp.x' }, 'Otra-clave-A1')).body.error).toBe('wrong_password');
+    expect((await b.post('/api/wedding/payout/otro', { currentPassword: PASSWORD, baseVersion: 1, alias: 'robado.mp.x' })).status).toBe(404);
+    expect((await a.get('/api/wedding')).body.payout.alias).toBe('pareja.a.mp');
+    expect((await b.get('/api/wedding')).body.payout.alias).toBe('pareja.b.mp');
   });
 });

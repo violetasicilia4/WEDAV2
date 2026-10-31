@@ -445,3 +445,10 @@ Esta decisión **reemplaza** el modelo anterior (plan de 6 meses, permanencia p�
 - Los rechazados siguen en la lista con la etiqueta «Rechazado», sin «Pedir comprobante», y no suman en los totales ni en el contador de la pestaña.
 - «Volver a revisar» falla con un aviso si otro invitado eligió alguno de sus regalos mientras tanto: un regalo nunca queda tomado dos veces.
 - Supuesto: los textos de la sección («Aportes recibidos», «Regalos recibidos») no se tocaron; su redacción definitiva sigue pendiente (IC-07).
+
+## Datos de cobro protegidos (2026-10-31, GIFT-14 / BR-30 nivel base; decisiones D1–D8 aprobadas por la dueña en el plan)
+- **Con cuenta**, en Regalos → Datos de cobro: «Cambiar» (o «Configurar» la primera vez) abre dos pasos. Primero el alias (obligatorio en el formulario), el banco y el CBU (opcionales), validados antes de seguir. Después, la confirmación: «Antes» enmascarado (`an•••mp`) y «Ahora» completo, para revisar que no haya errores de tipeo; la clave actual y «Confirmar cambio». La primera carga también pide la clave.
+- **Errores:** si la clave es incorrecta, se avisa en el campo y se vacía. En un aviso aparte: los mismos datos que ya estaban, que cambiaron desde otro dispositivo (hay que recargar) o más de 3 cambios en el día.
+- **Al guardar:** el aviso dice «Tus invitados los ven cuando publiques los cambios» (la página pública es una copia, PUB-04) y llega un correo al dueño con los datos enmascarados y «Cambiar mi clave».
+- **Sin cuenta:** se cargan en el navegador como antes. Al crear la cuenta o ingresar **no se suben solos**: el panel muestra «Cargaste un alias antes de crear tu cuenta… Confirmalo con tu clave», con el formulario completo. Supuesto: si se recarga la página antes de confirmar, ese dato local se pierde y hay que volver a escribirlo.
+- **Cambio respecto del plan aprobado:** en la confirmación, el destino **nuevo** se muestra completo (no enmascarado), porque la persona lo acaba de escribir en la pantalla anterior y así puede detectar errores de tipeo. El anterior y el correo sí van enmascarados.

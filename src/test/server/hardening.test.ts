@@ -47,7 +47,7 @@ describe('endurecimiento de la API', () => {
     const again = openDb(env.cfg.dbPath);
     const n = again.prepare("SELECT COUNT(*) AS n FROM users WHERE email = 'migra@correo.com'").get() as { n: number };
     expect(n.n).toBe(1);
-    expect((again.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(6);
+    expect((again.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(7);
     again.close();
   });
 
