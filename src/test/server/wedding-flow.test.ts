@@ -373,6 +373,20 @@ describe('aportes, comprobantes y órdenes', () => {
     expect((await env.client().get(`/api/public/${slug}`)).body.takenGiftIds).not.toContain('g1');
   });
 
+  it('volver a revisar un rechazado solo si sus regalos siguen libres (un regalo nunca queda tomado dos veces)', async () => {
+    const owner = env.client(); await owner.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
+    const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
+    // Mientras estaba rechazado, otro invitado eligió el mismo regalo.
+    const other = await env.client().post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0007', manageToken: 'token-del-invitado-0007' }));
+    expect(other.status).toBe(201);
+    const back = await owner.patch(`/api/contributions/${row.id}`, { status: 'pending_review' });
+    expect([back.status, back.body.error, back.body.detail]).toEqual([409, 'gift_taken', 'g1']);
+    // Si la pareja rechaza el otro, el primero puede volver a revisión.
+    expect((await owner.patch(`/api/contributions/${other.body.id}`, { status: 'rejected' })).status).toBe(200);
+    expect((await owner.patch(`/api/contributions/${row.id}`, { status: 'pending_review' })).status).toBe(200);
+    expect((await env.client().get(`/api/public/${slug}`)).body.takenGiftIds).toContain('g1');
+  });
+
   it('el pago no se puede marcar desde el cliente; el webhook de pagos no está configurado', async () => {
     const c = env.client(); await c.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
     const o = (await c.post('/api/orders', { planId: 'completo' })).body;
