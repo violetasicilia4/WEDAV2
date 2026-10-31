@@ -43,8 +43,10 @@ playwright-report/
 .env.*
 !.env.example
 
-# Herramientas de IA y capturas locales (no se suben; ver CLAUDE.md)
-.claude/
+# Herramientas de IA y capturas locales (no se suben; ver CLAUDE.md).
+# .claude/ se versiona (permisos, reglas, agentes y skills compartidos); solo quedan afuera las preferencias personales y los worktrees.
+.claude/settings.local.json
+.claude/worktrees/
 .impeccable/*.local.json
 .impeccable/hook.*
 capturas/
