@@ -102,4 +102,12 @@ describe('aislamiento entre parejas', () => {
     const wb = env.svc.db.prepare("SELECT id FROM weddings WHERE draft LIKE '%Bea%'").get() as { id: string };
     expect((await a.get(`/api/wedding/${wb.id}`)).status).toBe(404);
   });
+
+  it('cambiar la clave solo afecta a la propia cuenta: B sigue con su clave y su sesión', async () => {
+    const b = env.client(); await b.post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD });
+    const a = env.client(); await a.post('/api/auth/login', { email: 'a1@correo.com', password: PASSWORD });
+    expect((await a.post('/api/auth/password', { currentPassword: PASSWORD, newPassword: 'Nueva-clave-A1' })).status).toBe(200);
+    expect((await b.get('/api/me')).body.user).toEqual({ email: 'b1@correo.com' });
+    expect((await env.client().post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD })).status).toBe(200);
+  });
 });

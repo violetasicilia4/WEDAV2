@@ -116,6 +116,10 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
         const body = await readJson(req);
         return json(200, await svc.resetPassword(body['token'], body['password']));
       }
+      if (b === 'password' && method === 'POST') {
+        const body = await readJson(req);
+        return json(200, await svc.changePassword(cookieOf(req, COOKIE), body['currentPassword'], body['newPassword']));
+      }
       if (b === 'logout' && method === 'POST') {
         svc.logout(cookieOf(req, COOKIE));
         return json(200, { ok: true }, { 'set-cookie': setCookie(cfg, null) });
