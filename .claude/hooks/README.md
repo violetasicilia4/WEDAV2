@@ -60,7 +60,7 @@ Cómo encuentra los comandos:
 | No llega `permission_mode` | Las operaciones según modo se bloquean. |
 | El script se pasa del timeout, devuelve un error distinto de 2 o no se puede ejecutar | **La llamada sigue** (los hooks de Claude Code fallan abiertos). `onFailure: "block"` existe recién desde la 2.1.295; mientras la CLI de terminal sea 2.1.84 no se usa. |
 | Alguien edita `guard.sh`, `settings*.json` o agrega `disableAllHooks` | deny fuera del modo `default`; en `default`, pregunta. |
-| CLI de terminal 2.1.84 | **No verificado.** Todas las pruebas se hicieron con la app 2.1.309. Si esa versión no entiende `hookSpecificOutput.permissionDecision`, el hook no tiene efecto; si no envía `permission_mode`, las operaciones según modo quedan bloqueadas. |
+| CLI de terminal 2.1.84 | **Revisada por código, no validada en ejecución.** El paquete instalado acepta `hookSpecificOutput.permissionDecision` (`allow`, `deny`, `ask`) con `permissionDecisionReason`, trata `deny` como bloqueo y le pasa `permission_mode` al hook. La prueba real se intentó el 2026-10-31 en un repo descartable con una copia exacta del hook y de los permisos, pero la CLI respondió `401 OAuth access token is invalid` antes de usar herramientas, en modo no interactivo e interactivo, dentro de la app. El hook nunca llegó a ejecutarse. **Pendiente:** repetir las pruebas desde Terminal.app con la CLI autenticada. **Riesgo mientras tanto:** si esa versión no aplicara la decisión, el hook no protegería nada desde la terminal. Todas las pruebas reales se hicieron con la app 2.1.309. |
 
 ## Límites conocidos (no cubiertos)
 
