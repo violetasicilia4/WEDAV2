@@ -41,8 +41,8 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | AUTH-02 | Recuperar la clave por correo (token de un uso, 1 hora, cierra sesiones) | DOCUMENTADO | **Implementada y probada** | U (`password-reset`: 5) | El correo real (Resend) **nunca se probó**: sin él, quien olvida la clave no entra |
 | AUTH-03 | Ingreso con Google | DECIDIDO agregar (Apple descartado) | **No implementada**: el botón muestra «todavía no está habilitado» | E2E (`account-flow`) | No hay OAuth |
 | AUTH-04 | Verificación del correo al registrarse | DOCUMENTADO como pendiente | **No implementada** | — | `users` no tiene marca de verificación |
-| AUTH-05 | Cambiar el correo; cambiar la clave desde el perfil | DOCUMENTADO como pendiente | **Parcial**: la clave se cambia pidiendo un enlace por correo; el correo no se puede cambiar | U (reset) | `/panel/perfil` solo muestra el correo |
-| AUTH-06 | Cierre de sesión; lista o cierre remoto de sesiones | — | **Parcial**: cierra la sesión actual; no hay lista ni cierre remoto | U (`auth-isolation`) | |
+| AUTH-05 | Cambiar el correo; cambiar la clave desde el perfil | DOCUMENTADO como pendiente | **Parcial**: la clave se cambia con el enlace por correo o desde «Tu cuenta» en `/panel/perfil`, con la clave actual (`POST /api/auth/password`; 2026-10-31); el correo no se puede cambiar | U (reset, `password-change`: 4, `password-form`: 7) | |
+| AUTH-06 | Cierre de sesión; lista o cierre remoto de sesiones | — | **Parcial**: cierra la sesión actual; «Sesiones» en `/panel/perfil` muestra cuántas hay abiertas en otros lugares y las cierra (`GET /api/auth/sessions`, `POST /api/auth/sessions/close-others`; 2026-10-31); cambiar la clave también las cierra. No hay lista por dispositivo: `sessions` no guarda navegador ni lugar | U (`auth-isolation`, `password-change`, `sessions`: 4, `sessions-row`: 3) | Ver detalle por dispositivo requiere columnas nuevas (cambio de esquema) |
 | AUTH-07 | Segundo factor (MFA) | DECIDIDO obligatorio para personal y ofrecido al propietario (P5 abierta) | **No implementada** | — | Depende de P5 |
 
 ## 3. Onboarding (ONB)
