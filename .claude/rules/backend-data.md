@@ -33,7 +33,7 @@ Weda tiene un servidor real: API `/api/*` (`src/server/api.ts` → `service.ts`)
 
 ## Secretos y configuración
 - Solo las variables `VITE_*` llegan al navegador. Las demás (`WEDA_*`, `RESEND_API_KEY`) son de servidor; documentá las nuevas en `.env.example` sin valores reales.
-- Nunca leas `.env*` ni `.data*/` (bloqueado en `.claude/settings.json`).
+- Nunca leas `.env*` ni `.data*/` (bloqueado en `.claude/settings.json` y en `.claude/hooks/guard.sh`).
 
 ## Decisiones abiertas
 No implementes nada que dependa de una decisión pendiente (DP-01 a DP-22, en `docs/product-blueprint/03-open-decisions-and-risks.md`) sin la aprobación de la dueña: hosting, proveedor de pagos, reembolsos, requisitos para publicar, condiciones, precios, controles del alias, retención y borrado.

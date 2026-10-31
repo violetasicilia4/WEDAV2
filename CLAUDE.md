@@ -16,7 +16,12 @@ Este archivo es un índice. Las reglas por área se cargan solas al trabajar en 
 
 ## Git y entorno
 - Cada tarea va en su rama y llega a `main` por PR. **No hagas commit, push, merge ni deploy** salvo que se pida explícitamente. Nunca force-push.
-- Los permisos reales están en `.claude/settings.json` (versionado). No subas `.claude/settings.local.json`, `analisis-confites-top50.md`, `luna-de-miel-confites.md`, `capturas/` ni las fotos sin usar de `public/` (`pareja-portada-3…7.webp`, `pareja-portada-10.png`).
+- Los permisos reales están en `.claude/settings.json` (versionado). Como los permisos de Bash miran solo el comienzo del comando, `.claude/hooks/guard.sh` revisa la llamada entera. Bloquea:
+  - secretos, `.data*/`, flags destructivos de git en cualquier posición, `rm -rf`, `sqlite3` y deploys;
+  - crear, borrar o publicar tags;
+  - merge de PR y escrituras por `gh api`.
+
+  Commit, push, `gh pr create` y la edición de `src/server/db.ts` piden aprobación en modo default y se **bloquean en cualquier otro modo**: en modo auto, una regla `ask` no frena la llamada. Para cerrar una tarea en modo auto, la dueña hace esos pasos o pasa la sesión a default (ver `.claude/hooks/README.md`). Los casos del hook se prueban con `bash .claude/hooks/guard.test.sh`. No subas `.claude/settings.local.json`, `analisis-confites-top50.md`, `luna-de-miel-confites.md`, `capturas/` ni las fotos sin usar de `public/` (`pareja-portada-3…7.webp`, `pareja-portada-10.png`).
 - Node 22.5 o más (el servidor usa `node:sqlite`). Servidor de desarrollo en el puerto 8080 (preview «weda»); crea y migra `.data/weda.db`.
 
 ## Verificación
