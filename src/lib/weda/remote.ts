@@ -24,7 +24,8 @@ export type RemoteState = {
   error: string | null;
   /** Aviso para la persona (por ejemplo, que se conservó el borrador local). */
   notice: string | null;
-  publication: { status: string; planId: string; version: number; publishedAt: string } | null;
+  /** `pendingChanges`: lo guardado difiere de la página pública (lo calcula el servidor). Sin dato todavía: undefined. */
+  publication: { status: string; planId: string; version: number; publishedAt: string; pendingChanges?: boolean | null } | null;
   /** Cobro: si el servidor tiene un proveedor de pagos y qué plan está pagado (confirmado por el proveedor). null = todavía no se sabe. */
   payments: { enabled: boolean; paidPlan: string | null } | null;
 };
@@ -209,7 +210,8 @@ async function flush(): Promise<void> {
     baselineRef = getState();
     writeMeta();
     retry = 0;
-    set({ save: 'saved', error: null });
+    const pub = remote.publication;
+    set({ save: 'saved', error: null, ...(pub && typeof r.pendingChanges === 'boolean' ? { publication: { ...pub, pendingChanges: r.pendingChanges } } : {}) });
   } catch (e) {
     if (e instanceof ApiFailure && e.status === 409 && e.code === 'revision_conflict') {
       frozen = true;
@@ -286,7 +288,7 @@ export async function publishRemote(): Promise<{ ok: true; slug: string } | { ok
     const r = await api<{ slug: string; planId: string; version: number }>('POST', '/api/wedding/publish');
     replace({ ...getState(), slug: r.slug });
     baselineRef = getState();
-    set({ publication: { status: 'live', planId: r.planId, version: r.version, publishedAt: new Date().toISOString() } });
+    set({ publication: { status: 'live', planId: r.planId, version: r.version, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString(), pendingChanges: false } });
     return { ok: true, slug: r.slug };
   } catch (e) {
     return { ok: false, code: e instanceof ApiFailure ? e.code : 'network' };
