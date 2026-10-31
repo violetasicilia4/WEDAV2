@@ -446,6 +446,21 @@ Esta decisión **reemplaza** el modelo anterior (plan de 6 meses, permanencia p�
 - «Volver a revisar» falla con un aviso si otro invitado eligió alguno de sus regalos mientras tanto: un regalo nunca queda tomado dos veces.
 - Supuesto: los textos de la sección («Aportes recibidos», «Regalos recibidos») no se tocaron; su redacción definitiva sigue pendiente (IC-07).
 
+## Cambiar la clave desde el perfil (2026-10-31, pedido de la dueña)
+
+Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la clave no se guardaba y el cambio avisaba que no se aplicó).
+- En «Tu cuenta», debajo del correo, la fila **Clave** (`••••••••`) con «Cambiar». Al tocarlo se abre ahí mismo el formulario (sin diálogo ni pantalla nueva), con el foco en «Clave actual».
+- Campos: clave actual, clave nueva (mismas reglas que al registrarse y distinta de la actual) y su repetición; un solo «ojo» muestra u oculta las tres. Validación en el navegador antes de enviar; el servidor vuelve a validar y exige la clave actual.
+- Mientras espera: «Un momento…» y los dos botones desactivados. Clave actual equivocada: el error va en su campo, que se vacía. Demasiados intentos, sesión vencida o sin conexión: aviso arriba de los botones.
+- Al terminar: «Listo: cambiaste tu clave. Cerramos las sesiones abiertas en otros dispositivos; en este seguís adentro.» El servidor cierra las demás sesiones y anula los enlaces de recuperación pendientes.
+- «Si no recordás tu clave, pedí un enlace por correo» sigue disponible (`/clave`). Sin cuenta, el perfil no muestra la fila Clave.
+
+## Cerrar las demás sesiones (2026-10-31, siguiente incremento del backend)
+
+- En «Tu cuenta», debajo de «Clave», la fila **Sesiones**: «Solo en este dispositivo» o «Abierta también en N lugares más» con «Cerrar las demás». Al tocarlo: «Listo: cerramos las demás. Acá seguís adentro.»
+- Es solo un número: el servidor no guarda navegador ni lugar de cada sesión, así que no hay lista por dispositivo (requeriría cambiar el esquema).
+- Después de cambiar la clave, la fila se vuelve a consultar (el cambio de clave ya cerró las demás).
+
 ## Datos de cobro protegidos (2026-10-31, GIFT-14 / BR-30 nivel base; decisiones D1–D8 aprobadas por la dueña en el plan)
 - **Con cuenta**, en Regalos → Datos de cobro: «Cambiar» (o «Configurar» la primera vez) abre dos pasos. Primero el alias (obligatorio en el formulario), el banco y el CBU (opcionales), validados antes de seguir. Después, la confirmación: «Antes» enmascarado (`an•••mp`) y «Ahora» completo, para revisar que no haya errores de tipeo; la clave actual y «Confirmar cambio». La primera carga también pide la clave.
 - **Errores:** si la clave es incorrecta, se avisa en el campo y se vacía. En un aviso aparte: los mismos datos que ya estaban, que cambiaron desde otro dispositivo (hay que recargar) o más de 3 cambios en el día.

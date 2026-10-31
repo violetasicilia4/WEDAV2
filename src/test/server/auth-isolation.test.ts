@@ -102,6 +102,23 @@ describe('aislamiento entre parejas', () => {
     const wb = env.svc.db.prepare("SELECT id FROM weddings WHERE draft LIKE '%Bea%'").get() as { id: string };
     expect((await a.get(`/api/wedding/${wb.id}`)).status).toBe(404);
   });
+
+  it('cambiar la clave solo afecta a la propia cuenta: B sigue con su clave y su sesión', async () => {
+    const b = env.client(); await b.post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD });
+    const a = env.client(); await a.post('/api/auth/login', { email: 'a1@correo.com', password: PASSWORD });
+    expect((await a.post('/api/auth/password', { currentPassword: PASSWORD, newPassword: 'Nueva-clave-A1' })).status).toBe(200);
+    expect((await b.get('/api/me')).body.user).toEqual({ email: 'b1@correo.com' });
+    expect((await env.client().post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD })).status).toBe(200);
+  });
+
+  it('cerrar las demás sesiones solo afecta a la propia cuenta: la sesión de B sigue abierta', async () => {
+    const b = env.client(); await b.post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD });
+    const a = env.client(); await a.post('/api/auth/login', { email: 'a1@correo.com', password: 'Nueva-clave-A1' });
+    expect((await a.post('/api/auth/sessions/close-others')).status).toBe(200);
+    expect((await b.get('/api/me')).body.user).toEqual({ email: 'b1@correo.com' });
+    expect((await b.get('/api/auth/sessions')).body.others).toBeGreaterThan(0);
+  });
+
   it('el destino de cobro es solo del dueño: con su clave cambia el suyo, nunca el de otra pareja', async () => {
     const a = env.client(), b = env.client();
     await signUp(a, 'alias-a@correo.com'); await signUp(b, 'alias-b@correo.com');
