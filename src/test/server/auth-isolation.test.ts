@@ -110,4 +110,12 @@ describe('aislamiento entre parejas', () => {
     expect((await b.get('/api/me')).body.user).toEqual({ email: 'b1@correo.com' });
     expect((await env.client().post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD })).status).toBe(200);
   });
+
+  it('cerrar las demás sesiones solo afecta a la propia cuenta: la sesión de B sigue abierta', async () => {
+    const b = env.client(); await b.post('/api/auth/login', { email: 'b1@correo.com', password: PASSWORD });
+    const a = env.client(); await a.post('/api/auth/login', { email: 'a1@correo.com', password: 'Nueva-clave-A1' });
+    expect((await a.post('/api/auth/sessions/close-others')).status).toBe(200);
+    expect((await b.get('/api/me')).body.user).toEqual({ email: 'b1@correo.com' });
+    expect((await b.get('/api/auth/sessions')).body.others).toBeGreaterThan(0);
+  });
 });

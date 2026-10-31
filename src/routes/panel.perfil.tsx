@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { LogOut } from 'lucide-react';
 import { CoupleForm } from '@/components/panel/couple-form';
 import { PasswordForm } from '@/components/panel/password-form';
+import { SessionsRow } from '@/components/panel/sessions-row';
 import { logout, useRemote } from '@/lib/weda/remote';
 
 export const Route = createFileRoute('/panel/perfil')({ component: Profile });
@@ -50,6 +51,8 @@ function Profile() {
                 <dd aria-label="Oculta">••••••••</dd>
                 {pass !== 'open' && <button type="button" className="pn-btn is-ghost is-small" onClick={() => setPass('open')}>Cambiar</button>}
               </div>
+              {/* Cambiar la clave cierra las demás sesiones: se vuelve a consultar el número. */}
+              <SessionsRow key={pass === 'done' ? 'after-pass' : 'start'} />
             </dl>
             {pass === 'open' && <PasswordForm onDone={() => setPass('done')} onCancel={() => setPass('closed')} />}
             {pass === 'done' && <p className="pn-note" role="status">Listo: cambiaste tu clave. Cerramos las sesiones abiertas en otros dispositivos; en este seguís adentro.</p>}
