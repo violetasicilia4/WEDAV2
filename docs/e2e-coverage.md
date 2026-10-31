@@ -1,5 +1,7 @@
 # Weda · Cobertura de pruebas E2E y resultados (2026-10-23)
 
+> **Documento histórico.** Describe el estado de su fecha y no se actualiza. Parte de lo que dice ya no es cierto (p. ej. cantidad de pruebas y «publicación simulada»). Estado vigente: [docs/product-blueprint/](product-blueprint/00-product-blueprint.md) (2026-10-31).
+
 Documento **histórico y con fecha**. Dice qué demuestra cada prueba, qué **no** demuestra, qué se ejecutó sobre el estado final del código y qué quedó pendiente. Complementa [product-journey-audit.md](product-journey-audit.md) (hallazgos) y [conversion-opportunities.md](conversion-opportunities.md) (hipótesis).
 
 **Regla de lectura:** una funcionalidad figura como cubierta solo si hay una prueba que ejerce ese comportamiento y comprueba su resultado. La matriz de estados sintéticos (§4) **no** prueba interacciones: carga estados y mira pantallas.

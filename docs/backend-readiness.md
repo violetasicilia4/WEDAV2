@@ -1,5 +1,7 @@
 # Weda · Del frontend a un producto multiusuario (backend-readiness)
 
+> **Documento histórico.** Describe el estado de su fecha y no se actualiza. Parte de lo que dice ya no es cierto (p. ej. aportes del panel, recuperación de clave y vencimiento). Estado vigente: [docs/product-blueprint/](product-blueprint/00-product-blueprint.md) (2026-10-31).
+
 Fecha: 2026-10-26. Este documento describe **qué existe de verdad**, qué sigue simulado, el modelo de datos, la autorización, los riesgos y los próximos bloques. Todo lo que figura como «funciona» fue ejecutado contra el servidor y una base SQLite real (ver §10); lo que no se pudo probar está marcado.
 
 ## 1. Arquitectura actual

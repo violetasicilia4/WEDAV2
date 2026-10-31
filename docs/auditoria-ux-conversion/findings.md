@@ -1,5 +1,7 @@
 # Registro de hallazgos
 
+> **Documento histórico.** Describe el estado de su fecha y no se actualiza. Parte de lo que dice ya no es cierto (algunos hallazgos ya se resolvieron total o parcialmente). Estado vigente: [docs/product-blueprint/](../product-blueprint/00-product-blueprint.md) (2026-10-31).
+
 Auditoría del 2026-10-28. Ordenados por severidad. «Arreglado» solo cuando hay cambio en el código **y** prueba que lo cubre (ver `test-results.md` para el resultado de la corrida final).
 
 Severidad: **P0** crítico (seguridad, privacidad, pérdida de datos, confirmación de pago falsa) · **P1** alto (impide o engaña en un recorrido esencial) · **P2** medio (confusión o fricción importante) · **P3** bajo.
