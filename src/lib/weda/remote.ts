@@ -265,6 +265,15 @@ async function auth(path: 'register' | 'login', email: string, password: string)
 export const register = (email: string, password: string) => auth('register', email, password);
 export const login = (email: string, password: string) => auth('login', email, password);
 
+/** Cambia la clave con la sesión abierta. El servidor exige la clave actual y cierra las demás sesiones; esta sigue abierta. */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<AuthResult> {
+  try { await api('POST', '/api/auth/password', { currentPassword, newPassword }); return { ok: true }; }
+  catch (e) {
+    const code = e instanceof ApiFailure ? e.code : 'network';
+    return { ok: false, code: code === 'unauthenticated' ? 'session_expired' : code };
+  }
+}
+
 export async function logout(): Promise<void> {
   try { await api('POST', '/api/auth/logout'); } catch { /* si no hay red, la cookie igual vence */ }
   unsub?.(); unsub = undefined; baselineRef = null; frozen = false;
@@ -304,6 +313,7 @@ export const ERROR_TEXT: Record<string, string> = {
   backend_unavailable: 'Las cuentas no están disponibles en este momento.',
   network: 'No hay conexión con Weda. Revisá tu internet y probá de nuevo.',
   invalid_credentials: 'El correo o la clave no coinciden.',
+  wrong_password: 'La clave actual no es correcta.',
   email_taken: 'Ya existe una cuenta con ese correo. Probá ingresar.',
   invalid_email: 'Ingresá un correo válido.',
   weak_password: 'Usá 8 o más caracteres, con mayúsculas, minúsculas y un número.',
