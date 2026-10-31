@@ -1,28 +1,24 @@
 # Weda · instrucciones permanentes para Claude Code
 
-Weda crea y gestiona la experiencia digital de un casamiento (página web, lista de regalos simbólicos, invitados, mesas, vista previa). Este archivo es un **índice de reglas**: el detalle vive en `docs/`.
+Weda crea y gestiona la experiencia digital de un casamiento: página de invitación, lista de regalos simbólicos con aportes por alias, invitados y mesas, confirmación de asistencia y vista previa. Tiene frontend (TanStack Start + React) y un servidor propio (API `/api/*` con SQLite). Todavía **no** tiene hosting de producción ni proveedor de pagos real.
 
-## Antes de cualquier tarea de UX/UI, navegación, formularios, onboarding, interacción, responsive o conversión
-1. Leé [docs/product-principles.md](docs/product-principles.md): criterio de producto, proceso de decisión, prioridades, checklist y límites. Es obligatorio.
-2. Consultá [docs/design-system.md](docs/design-system.md) (tokens, componentes, patrones de interacción y vacíos) y [docs/ux-flows.md](docs/ux-flows.md) (recorridos, planes, supuestos).
-3. Detalle técnico (rutas, estado local, arquitectura): [docs/panel-frontend.md](docs/panel-frontend.md). Auditorías previas (históricas, con fecha): `docs/auditorias/`.
-4. Inspeccioná el código existente y reutilizá componentes antes de crear otros.
-
-## Autonomía
-- Resolvé por tu cuenta las decisiones habituales de UX/UI (patrón de interacción, jerarquía, textos, estados vacíos, feedback, responsive). No preguntes por cada detalle.
-- Consultá solo si falta una **definición comercial importante**, la decisión es **difícil de revertir** o la ambigüedad **afecta materialmente al producto**. Si falta una definición comercial, mantené un comportamiento conservador y documentá el supuesto en `docs/ux-flows.md`.
+Este archivo es un índice. Las reglas por área se cargan solas al trabajar en esos archivos (`.claude/rules/`): interfaz (`frontend-ux.md`), servidor y datos (`backend-data.md`) y documentación (`docs.md`).
 
 ## Fuente de verdad
-- Mandan, en este orden: el código y las funcionalidades implementadas, las decisiones comerciales documentadas y luego los documentos de criterio. Si un documento contradice el código, corregí el documento o avisá; no inventes.
-- **No inventes** features, precios, planes, beneficios, reglas de publicación, integraciones, estados de pago, testimonios ni métricas. La matriz de planes está en `src/lib/weda/plans.ts`.
-- Una sola fuente de datos: el panel, la vista previa y la página pública leen el mismo estado (`src/lib/weda/`). No dupliques contenido ni crees una segunda versión de una página existente.
+- Mandan, en este orden: el código, las decisiones comerciales documentadas y luego los documentos de criterio. Si un documento contradice el código, corregí el documento o avisá.
+- Estado vigente del producto, reglas de negocio y decisiones abiertas: [docs/product-blueprint/](docs/product-blueprint/00-product-blueprint.md). Modelo de datos decidido: [docs/data-architecture/](docs/data-architecture/06-consolidation-report.md).
+- **No inventes** features, precios, planes, beneficios, reglas de publicación, integraciones, estados de pago, testimonios ni métricas. Los planes están en `src/lib/weda/plans.ts`.
+- Una sola fuente de datos: panel, vista previa y página pública leen el mismo estado (`src/lib/weda/`). No dupliques contenido ni crees una segunda versión de una página.
 
-## Identidad visual (restricción permanente)
-Tres contextos que no se mezclan: **landing** (`styles.css`), **administración** (`panel.css`, fondo blanco, paleta neutra de grises `#6b6b6b`/`#4a4a4a`/`#9a9a9a`, sin azul en botones ni acentos) y **página pública** (`/ejemplo*`, `/sitio/*`). Tipografía: **Geist** (variable, local en `public/fonts/geist`; tokens en `src/typography.css`) en landing, onboarding y panel; el micrositio (`/ejemplo*`, `/sitio/*` y su maqueta en la landing) conserva su tipografía original (Cormorant Garamond en portada y secciones; Arial en barra, pie, pop-ups y regalos). Detalle en `docs/design-system.md`. No agregues gradientes, sombras, colores, fuentes ni animaciones sin razón funcional. No rompas la landing ni `/ejemplo`.
+## Autonomía y decisiones
+- Resolvé por tu cuenta lo habitual de implementación y de UX/UI.
+- Pedí aprobación antes de: tocar una decisión pendiente (DP-xx), cambiar el esquema de la base, agregar dependencias, o cualquier cosa difícil de revertir o que afecte dinero, datos personales o seguridad.
 
-## Reglas de trabajo del proyecto
-- Interfaz en español rioplatense (voseo). Sin `alert` del navegador y sin botones decorativos: cada botón hace algo real.
-- No simules cuentas, pagos, publicación, correos ni sincronización. La interfaz **no** habla de «demo», «demostración» ni «pago de prueba» (decisión de la dueña, 2026-10-28: el backend está en construcción); lo que todavía no existe se deja fuera o se conecta, no se explica como demo.
-- **No hagas commit, push, merge ni deploy** salvo que se pida explícitamente («push»). Nunca force-push sin autorización. Los permisos reales están en `.claude/settings.json` (versionado); no subas `.claude/settings.local.json`, `analisis-confites-top50.md`, `luna-de-miel-confites.md`, `capturas/` ni las fotos sin usar de `public/` (`pareja-portada-3…7.webp`, `pareja-portada-10.png`).
-- Verificá lo que construyas: `npx tsc --noEmit`, `npx vitest run`, `npm run build` y, para cambios visibles, el flujo real en el navegador (móvil y desktop). Informá qué se verificó y qué no; no afirmes pruebas que no ejecutaste. El servidor de desarrollo corre en el puerto 8080 (`preview_start` «weda»).
-- Si cambiás un patrón o un flujo, actualizá `docs/design-system.md` o `docs/ux-flows.md` en la misma tarea.
+## Git y entorno
+- Cada tarea va en su rama y llega a `main` por PR. **No hagas commit, push, merge ni deploy** salvo que se pida explícitamente. Nunca force-push.
+- Los permisos reales están en `.claude/settings.json` (versionado). No subas `.claude/settings.local.json`, `analisis-confites-top50.md`, `luna-de-miel-confites.md`, `capturas/` ni las fotos sin usar de `public/` (`pareja-portada-3…7.webp`, `pareja-portada-10.png`).
+- Node 22.5 o más (el servidor usa `node:sqlite`). Servidor de desarrollo en el puerto 8080 (preview «weda»); crea y migra `.data/weda.db`.
+
+## Verificación
+- Antes de dar algo por terminado: `npm run typecheck`, `npm run lint`, `npm test` y `npm run build`. Para cambios visibles, además el recorrido real en el navegador (celular y compu).
+- Informá qué se verificó y qué no. No afirmes pruebas que no ejecutaste.

@@ -1,5 +1,7 @@
 # Weda · Estado del frontend para producción (auditoría anti-vibecoding)
 
+> **Documento histórico.** Describe el estado de su fecha y no se actualiza. Parte de lo que dice ya no es cierto (es anterior al servidor). Estado vigente: [docs/product-blueprint/](product-blueprint/00-product-blueprint.md) (2026-10-31).
+
 Fecha: 2026-10-24. Alcance: frontend actual (TanStack Start + Vite + Nitro, sin backend). Todo lo que se afirma como verificado se ejecutó sobre un **build de producción local** (`node .output/server/index.mjs`, puerto 3000) y, para la parte de dominio, con un dominio de prueba (`https://weda.example.test`) usado solo en esa verificación. **No se probó** contra un dominio real, Vercel, WhatsApp, Google Search Console ni ningún servicio externo.
 
 ## 1. Estado general

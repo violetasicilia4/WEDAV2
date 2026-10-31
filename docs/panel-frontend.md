@@ -1,7 +1,7 @@
-# Weda · Frontend de creación y gestión de casamientos (MVP sin backend)
+# Weda · Frontend de creación y gestión de casamientos
 
 **Alcance:** recorrido `Landing → Crear mi evento → Datos del casamiento → Plan → Panel → Configuración → Vista previa`.
-Todo funciona **sin backend**: el estado vive en `localStorage` de este navegador. No hay cuentas, pagos, correos ni publicación reales.
+El estado del panel (`AppState`) vive en `localStorage` de este navegador y, cuando hay sesión, se sincroniza con el servidor (`src/lib/weda/remote.ts`). Este documento se escribió antes del servidor (2026-10-26): donde dice que no hay cuentas, correos o publicación reales, describe ese momento. Servidor y API: [backend-readiness.md](backend-readiness.md); estado vigente: [product-blueprint/](product-blueprint/00-product-blueprint.md).
 
 ## 1. Arquitectura que ya existía (auditoría)
 

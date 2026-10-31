@@ -1,6 +1,8 @@
 # Weda · Flujos de usuario (lo que hoy existe en el código)
 
-Describe los recorridos **implementados** en el frontend sin backend. No describe objetivos futuros. Criterios de decisión: [product-principles.md](product-principles.md). Detalle técnico y rutas: [panel-frontend.md](panel-frontend.md). Estilos y componentes: [design-system.md](design-system.md).
+Describe los recorridos **implementados**. No describe objetivos futuros.
+
+> **Cómo leerlo (2026-10-31).** Las secciones 1 a 11 se escribieron cuando Weda no tenía servidor: donde dicen «sin backend», «no hay cuentas» o «simulación» describen ese momento. Desde el 2026-10-26 hay servidor (cuentas, sincronización, publicación, aportes con comprobante): mandan las secciones fechadas posteriores, y la más reciente gana. Estado vigente y decisiones abiertas: [product-blueprint/](product-blueprint/00-product-blueprint.md). Criterios de decisión: [product-principles.md](product-principles.md). Detalle técnico y rutas: [panel-frontend.md](panel-frontend.md). Estilos y componentes: [design-system.md](design-system.md).
 
 ## 1. Mapa de rutas
 
