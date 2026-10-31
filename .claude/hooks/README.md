@@ -305,7 +305,7 @@ El hook lee el campo `permission_mode` que le pasa Claude Code. Este cambio reem
 - En un comando encadenado, un tramo bloqueado gana sobre uno que pregunta. Por ejemplo, `git commit -m x && git push --force` se bloquea.
 - Si el modo no llega (por ejemplo, una versión vieja de la CLI que no lo envíe), se bloquea.
 - **Comprobado:** este control bloquea en modo `auto`.
-- **No comprobado:** que en modo `default` la pregunta aparezca y frene. Esta sesión corre en `auto` y la prueba necesita a la dueña en una sesión en `default`.
+- **Comprobado en modo `default` (2026-10-31):** la sesión se pasó a `default` para cerrar E3. Primero quedó en `acceptEdits`, y el hook bloqueó el commit con «git commit en modo acceptEdits». De nuevo en `default`, el commit, el push y `gh pr create` del PR #3 mostraron cada uno la pregunta de aprobación. La dueña confirmó haberla visto en los tres casos y los aprobó. En `default` la pregunta aparece y frena hasta la aprobación.
 
 ### Pruebas (2026-10-31)
 
