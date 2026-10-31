@@ -454,3 +454,9 @@ Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la c
 - Mientras espera: «Un momento…» y los dos botones desactivados. Clave actual equivocada: el error va en su campo, que se vacía. Demasiados intentos, sesión vencida o sin conexión: aviso arriba de los botones.
 - Al terminar: «Listo: cambiaste tu clave. Cerramos las sesiones abiertas en otros dispositivos; en este seguís adentro.» El servidor cierra las demás sesiones y anula los enlaces de recuperación pendientes.
 - «Si no recordás tu clave, pedí un enlace por correo» sigue disponible (`/clave`). Sin cuenta, el perfil no muestra la fila Clave.
+
+## Cerrar las demás sesiones (2026-10-31, siguiente incremento del backend)
+
+- En «Tu cuenta», debajo de «Clave», la fila **Sesiones**: «Solo en este dispositivo» o «Abierta también en N lugares más» con «Cerrar las demás». Al tocarlo: «Listo: cerramos las demás. Acá seguís adentro.»
+- Es solo un número: el servidor no guarda navegador ni lugar de cada sesión, así que no hay lista por dispositivo (requeriría cambiar el esquema).
+- Después de cambiar la clave, la fila se vuelve a consultar (el cambio de clave ya cerró las demás).

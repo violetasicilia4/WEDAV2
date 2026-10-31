@@ -274,6 +274,20 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
 }
 
+const authCode = (e: unknown) => { const code = e instanceof ApiFailure ? e.code : 'network'; return code === 'unauthenticated' ? 'session_expired' : code; };
+
+/** Cuántas sesiones abiertas tiene la cuenta además de esta (otros dispositivos o navegadores). */
+export async function otherSessions(): Promise<{ ok: true; others: number } | { ok: false; code: string }> {
+  try { const r = await api<{ others: number }>('GET', '/api/auth/sessions'); return { ok: true, others: r.others }; }
+  catch (e) { return { ok: false, code: authCode(e) }; }
+}
+
+/** Cierra las demás sesiones de la cuenta; esta sigue abierta. */
+export async function closeOtherSessions(): Promise<{ ok: true; closed: number } | { ok: false; code: string }> {
+  try { const r = await api<{ closed: number }>('POST', '/api/auth/sessions/close-others'); return { ok: true, closed: r.closed }; }
+  catch (e) { return { ok: false, code: authCode(e) }; }
+}
+
 export async function logout(): Promise<void> {
   try { await api('POST', '/api/auth/logout'); } catch { /* si no hay red, la cookie igual vence */ }
   unsub?.(); unsub = undefined; baselineRef = null; frozen = false;
