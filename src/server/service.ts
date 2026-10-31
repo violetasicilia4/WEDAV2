@@ -181,6 +181,20 @@ export class Service {
     return { ok: true };
   }
 
+  /** Cuántas sesiones vigentes tiene la cuenta además de esta. Sin ids ni tokens: solo el número. */
+  otherSessions(token: string | undefined): { others: number } {
+    const s = this.requireSession(this.sessionFromToken(token));
+    const row = this.db.prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND id != ? AND expires_at > ?').get(s.userId, sha256(token!), now()) as Row;
+    return { others: Number(row['n']) };
+  }
+
+  /** Cierra las demás sesiones de la cuenta (otros dispositivos o navegadores); esta sigue abierta. */
+  closeOtherSessions(token: string | undefined): { closed: number } {
+    const s = this.requireSession(this.sessionFromToken(token));
+    const r = this.db.prepare('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(s.userId, sha256(token!));
+    return { closed: Number(r.changes) };
+  }
+
   logout(token: string | undefined) {
     if (token) this.db.prepare('DELETE FROM sessions WHERE id = ?').run(sha256(token));
   }
