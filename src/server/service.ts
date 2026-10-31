@@ -230,8 +230,23 @@ export class Service {
       slug: (w['slug'] as string | null) ?? null,
       draft: JSON.parse(w['draft'] as string) as DraftState,
       guests: this.guestsOf(wid),
-      publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, expiresAt: (pub['expires_at'] as string | null) ?? null } : null,
+      publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, expiresAt: (pub['expires_at'] as string | null) ?? null, pendingChanges: this.pendingChanges(w) } : null,
     };
+  }
+
+  /**
+   * ¿Publicar ahora cambiaría la página pública? Arma el snapshot como lo haría `publish` y lo compara con el publicado.
+   * Solo cuenta lo que ve un invitado: invitados, datos de cobro sin mostrar o secciones que el plan no incluye no generan aviso. null sin publicación.
+   */
+  private pendingChanges(w: Row): boolean | null {
+    const wid = w['id'] as string;
+    const slug = w['slug'] as string | null;
+    const pub = this.db.prepare('SELECT plan_id, snapshot FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+    if (!pub || !slug) return null;
+    const draft = JSON.parse(w['draft'] as string) as DraftState;
+    let planId = pub['plan_id'] as PlanId;
+    try { planId = this.entitledPlan(wid, draft.planId); } catch { /* sin plan o sin pago: publicar fallaría; se compara con el plan publicado */ }
+    return JSON.stringify(publicSite(draft, planId, slug)) !== (pub['snapshot'] as string);
   }
 
   /**
@@ -260,7 +275,7 @@ export class Service {
         else this.db.prepare('INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(g.id, wid, g.first, g.last, normalizeName(g.first, g.last), g.status, g.menu, g.groupId, g.source, t, t);
       }
       for (const id of removes) this.db.prepare('DELETE FROM guests WHERE id = ? AND wedding_id = ?').run(id, wid);
-      return { revision: next, guests: this.guestsOf(wid) };
+      return { revision: next, guests: this.guestsOf(wid), pendingChanges: this.pendingChanges({ ...w, draft: JSON.stringify(draft) }) };
     });
   }
 

@@ -460,3 +460,9 @@ Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la c
 - En «Tu cuenta», debajo de «Clave», la fila **Sesiones**: «Solo en este dispositivo» o «Abierta también en N lugares más» con «Cerrar las demás». Al tocarlo: «Listo: cerramos las demás. Acá seguís adentro.»
 - Es solo un número: el servidor no guarda navegador ni lugar de cada sesión, así que no hay lista por dispositivo (requeriría cambiar el esquema).
 - Después de cambiar la clave, la fila se vuelve a consultar (el cambio de clave ya cerró las demás).
+
+## Aviso de «cambios sin publicar» (2026-10-31, implementación de DASH-04 / NE-03)
+- **Quién lo decide:** el servidor. Al guardar el borrador y al abrir el panel compara la página que publicaría ahora con la que está publicada (`pendingChanges`). Solo cuenta lo que ve un invitado: cambiar la lista de invitados no genera aviso; cambiar textos, fotos, regalos o el plan, sí.
+- **Arriba a la derecha:** con la página publicada y cambios pendientes, el botón «Publicada» pasa a decir «Publicar cambios» y abre «Tu publicación». Al publicar vuelve a «Publicada».
+- **En «Tu publicación»:** el estado dice «Publicada, con cambios sin publicar» y un texto explica que la página todavía muestra la versión anterior, con el botón «Publicar los cambios». Si está al día dice «Tu página ya muestra todo lo que guardaste» y no ofrece volver a publicar lo mismo. Mientras no llegó el dato del servidor, se mantiene el texto y el botón anteriores, sin afirmar nada.
+- **Supuesto:** con la página dada de baja no hay aviso; «Volver a publicar» ya publica lo último guardado.
