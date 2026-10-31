@@ -445,3 +445,9 @@ Esta decisión **reemplaza** el modelo anterior (plan de 6 meses, permanencia p�
 - Los rechazados siguen en la lista con la etiqueta «Rechazado», sin «Pedir comprobante», y no suman en los totales ni en el contador de la pestaña.
 - «Volver a revisar» falla con un aviso si otro invitado eligió alguno de sus regalos mientras tanto: un regalo nunca queda tomado dos veces.
 - Supuesto: los textos de la sección («Aportes recibidos», «Regalos recibidos») no se tocaron; su redacción definitiva sigue pendiente (IC-07).
+
+## Regalos repetibles (2026-10-31, GIFT-08 / BR-19; decisión Q1 de la dueña, plan aprobado)
+- **Reemplaza** lo anterior sobre «Ya elegido» y la nota de la revisión de aportes («Volver a revisar falla si otro invitado eligió alguno de sus regalos»): **ningún regalo se agota**. El mismo regalo se puede regalar las veces que quieran los invitados, y una persona puede hacer los aportes que quiera.
+- **Página publicada:** todas las tarjetas dicen «Regalar», aunque el regalo ya tenga aportes. Después de enviar, el agradecimiento confirma el envío y la tarjeta no cambia. La página no muestra cuántos regalaron ni quiénes (BR-27).
+- **Panel:** cada aporte se ve por separado, aunque varios tengan el mismo regalo. Al rechazar se pregunta «¿Rechazar el aporte? Deja de sumar en tus totales; si te equivocás, podés volver a revisarlo.» y se avisa «Rechazaste el aporte de … Ya no suma en tus totales.». «Volver a revisar» ya no depende de otros aportes.
+- **Aclaración de la dueña (2026-10-31):** los regalos son conceptos simbólicos de contribución, sin inventario ni unidades. Un mismo regalo admite aportes ilimitados e independientes, de distintos invitados o de la misma persona, y los aportes anteriores nunca cambian su disponibilidad. No se muestra «Ya elegido», «Agotado», «Reservado» ni porcentajes de stock. Por eso `/ejemplo` tampoco marca «Elegido por vos»: lo que ya regaló ese navegador se puede regalar otra vez.

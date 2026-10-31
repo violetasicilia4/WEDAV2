@@ -11,7 +11,6 @@ const TEXT: Record<string, string> = {
   site_expired: 'Esta invitación ya no está disponible: terminó el tiempo de publicación.',
   site_not_found: 'No encontramos esta página.',
   rsvp_disabled: 'Los novios no habilitaron la confirmación de asistencia.',
-  gift_taken: 'Alguien ya eligió uno de estos regalos. Actualizá la página para ver los que quedan.',
   file_too_large: 'El comprobante pesa más de 5 MB. Probá con una captura más liviana.',
   unsupported_file_type: 'El comprobante tiene que ser una imagen (JPG, PNG o WebP) o un PDF.',
   card_not_available: 'El pago con tarjeta todavía no está disponible. Elegí «Alias».',

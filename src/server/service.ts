@@ -285,12 +285,11 @@ export class Service {
     return { wid: row['wid'] as string, snapshot: JSON.parse(row['snapshot'] as string) as SiteData, status: 'live' };
   }
 
-  /** Solo el snapshot publicado y los ids de regalos ya tomados (sin nombres ni mensajes de nadie). */
+  /** Solo el snapshot publicado. Ningún dato de aportes: los regalos son repetibles (BR-19) y lo público no muestra cuántos se regalaron (BR-27). */
   getPublicSite(slug: string) {
     const p = this.livePublication(slug);
-    const taken = this.db.prepare("SELECT DISTINCT i.gift_id AS id FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id WHERE c.wedding_id = ? AND c.status != 'rejected'").all(p.wid) as Row[];
     this.track('public_invitation_opened');
-    return { site: p.snapshot, takenGiftIds: taken.map(r => r['id'] as string) };
+    return { site: p.snapshot };
   }
 
   /** Confirmación de asistencia. No devuelve datos de invitados: ni existentes ni propios. */
@@ -358,8 +357,7 @@ export class Service {
         return { id: prev['id'] as string, status: prev['status'] as string, replay: true };
       }
       if (!receipt) throw invalid('receipt_required');
-      const taken = this.db.prepare(`SELECT DISTINCT i.gift_id AS id FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id WHERE c.wedding_id = ? AND c.status != 'rejected' AND i.gift_id IN (${ids.map(() => '?').join(',')})`).all(p.wid, ...ids) as Row[];
-      if (taken.length) throw new ApiError(409, 'gift_taken', taken.map(r => r['id']).join(','));
+      // Regalos repetibles (BR-19): el mismo regalo puede estar en cualquier cantidad de aportes. Lo único que evita duplicados es la clave de idempotencia.
       const id = newId('apo');
       const t = now();
       const total = gifts.reduce((n, g) => n + Math.round(g!.amount), 0);
@@ -521,11 +519,6 @@ export class Service {
       const from = c['status'] as string;
       if (!CONTRIBUTION_TRANSITIONS[from]?.includes(to)) throw conflict('invalid_transition');
       if (to === 'confirmed' && !this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_required');
-      // Un rechazado libera sus regalos: si vuelve a revisión, tienen que seguir libres (otro invitado pudo haberlos elegido mientras tanto).
-      if (from === 'rejected') {
-        const taken = this.db.prepare("SELECT DISTINCT i.gift_id AS id FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id WHERE c.wedding_id = ? AND c.id != ? AND c.status != 'rejected' AND i.gift_id IN (SELECT gift_id FROM contribution_items WHERE contribution_id = ?)").all(c['wedding_id'] as string, id, id) as Row[];
-        if (taken.length) throw new ApiError(409, 'gift_taken', taken.map(r => r['id']).join(','));
-      }
       const t = now();
       this.db.prepare('UPDATE contributions SET status=?, updated_at=? WHERE id=?').run(to, t, id);
       this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'status_changed','owner',?,?,?,?)").run(id, from, to, typeof note === 'string' ? note.slice(0, 300) : '', t);

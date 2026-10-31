@@ -1,5 +1,5 @@
 // Revisión manual de un aporte (Weda no verifica transferencias): la pareja lo confirma o lo rechaza; un rechazado puede volver a
-// revisión si sus regalos siguen libres. Las reglas las aplica el servidor (PATCH /api/contributions/:id); acá solo se ofrecen las posibles.
+// revisión. Las reglas las aplica el servidor (PATCH /api/contributions/:id); acá solo se ofrecen las posibles.
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { useToast } from './ui';
@@ -10,7 +10,6 @@ type Target = 'confirmed' | 'rejected' | 'pending_review';
 
 const ERROR: Record<string, string> = {
   receipt_required: 'Para confirmarlo, primero tiene que estar el comprobante.',
-  gift_taken: 'No se puede volver a revisar: otro invitado ya eligió uno de esos regalos.',
   invalid_transition: 'Ese cambio ya no se puede hacer. Actualizá la página.',
 };
 
@@ -26,7 +25,7 @@ export function ContributionReview({ r, onChange }: { r: Contribution; onChange:
       await api('PATCH', `/api/contributions/${encodeURIComponent(r.id)}`, { status: to });
       setRejecting(false);
       onChange(to);
-      toast(to === 'confirmed' ? `Confirmaste el aporte de ${r.giver}.` : to === 'rejected' ? `Rechazaste el aporte de ${r.giver}. Sus regalos vuelven a estar libres en tu lista.` : `El aporte de ${r.giver} volvió a revisión.`, 'ok');
+      toast(to === 'confirmed' ? `Confirmaste el aporte de ${r.giver}.` : to === 'rejected' ? `Rechazaste el aporte de ${r.giver}. Ya no suma en tus totales.` : `El aporte de ${r.giver} volvió a revisión.`, 'ok');
     } catch (e) {
       toast(ERROR[e instanceof ApiFailure ? e.code : ''] ?? 'No pudimos guardar el cambio. Probá de nuevo en un rato.', 'error');
     } finally { setBusy(false); }
@@ -38,7 +37,7 @@ export function ContributionReview({ r, onChange }: { r: Contribution; onChange:
     <div className="pn-actions is-tight" role="group" aria-label={`Revisar el aporte de ${r.giver}`}>
       {rejecting ? (
         <>
-          <p className="pn-note">¿Rechazar el aporte? Sus regalos vuelven a quedar libres para otros invitados.</p>
+          <p className="pn-note">¿Rechazar el aporte? Deja de sumar en tus totales; si te equivocás, podés volver a revisarlo.</p>
           <button type="button" className="pn-btn is-small" disabled={busy} aria-busy={busy} onClick={() => void review('rejected')}>{wait ?? 'Sí, rechazar'}</button>
           <button type="button" className="pn-btn is-ghost is-small" disabled={busy} onClick={() => setRejecting(false)}>Cancelar</button>
         </>

@@ -56,7 +56,6 @@
 }
 .rg-btn:hover:not(:disabled) { background: #4b545b; }
 .rg-btn:disabled { background: rgb(59 60 58 / .1); color: var(--ej-muted); cursor: default; }
-.rg-card.is-done .rg-photo img, .rg-card.is-done .rg-icon { opacity: .55; filter: grayscale(.6); }
 .rg-live { margin: 28px 0 0; text-align: center; font-size: 13px; color: var(--ej-muted); }
 .rg-next { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 24px; margin-top: clamp(40px, 5vw, 72px); padding-top: 32px; border-top: 1px solid var(--ej-line); }
 .rg-next p { margin: 0; font-size: 18px; }
