@@ -516,14 +516,15 @@ export function contributionsFromState(s: AppState): Contribution[] {
   return [...out.values()];
 }
 
-/** Aportes del servidor (GET /api/contributions) en el mismo formato. Los rechazados no cuentan como recibidos. */
+/** Aportes del servidor (GET /api/contributions) en el mismo formato. Incluye los rechazados (la pareja puede volver a revisarlos);
+ *  los totales del panel los dejan afuera con `countsAsGift`. */
 export function contributionsFromServer(list: unknown): Contribution[] {
   if (!Array.isArray(list)) return [];
-  return list.filter((c): c is Record<string, unknown> => !!c && typeof c === 'object').filter(c => c['status'] !== 'rejected').map(c => {
+  return list.filter((c): c is Record<string, unknown> => !!c && typeof c === 'object').map(c => {
     const items = Array.isArray(c['items']) ? (c['items'] as Record<string, unknown>[]) : [];
     const at = typeof c['createdAt'] === 'string' ? Date.parse(c['createdAt']) : NaN;
     const id = String(c['id'] ?? '');
-    const status = c['status'] === 'confirmed' || c['status'] === 'pending_review' ? c['status'] : null;
+    const status = c['status'] === 'confirmed' || c['status'] === 'pending_review' || c['status'] === 'rejected' ? c['status'] : null;
     return {
       id, giver: String(c['giverName'] ?? '').trim() || 'Un invitado', email: String(c['giverEmail'] ?? ''), message: String(c['message'] ?? ''),
       gifts: items.map(i => ({ name: String(i['giftName'] ?? 'Regalo'), amount: Number(i['amount']) || 0 })),
@@ -532,6 +533,9 @@ export function contributionsFromServer(list: unknown): Contribution[] {
     };
   });
 }
+
+/** Un aporte rechazado por la pareja no suma en los totales ni en la cuenta de regalos. */
+export const countsAsGift = (c: Contribution) => c.status !== 'rejected';
 
 /** Acepta el link completo (weda.app/sitio/…, con o sin https) o solo la ruta (/sitio/…). Devuelve la ruta de la invitación o null. */
 export function invitationPath(raw: string): string | null {
