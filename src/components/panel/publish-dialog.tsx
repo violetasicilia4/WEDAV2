@@ -53,6 +53,9 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
   };
   const summary = picked ? publishSummary(state, picked) : null;
   const live = !!pub && isLive(state);
+  // Lo calcula el servidor al guardar: true = la página pública muestra una versión anterior; false = está al día; undefined = todavía no se sabe.
+  const pending = remoteState.publication?.pendingChanges;
+  const upToDate = pending === false && remoteState.save !== 'saving';
   const amount = upgrading && pub && picked ? upgradeAmount(pub.planId, picked) : plan?.price ?? 0;
   const path = sitePath(state);
   const close = () => { if (step !== 'paying') onClose(); };
@@ -203,7 +206,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             <DialogTitle>Tu publicación</DialogTitle>
             <DialogDescription>{live ? `Tu página está publicada con el plan ${planById(pub.planId)?.name}.` : `Diste de baja tu página. Tu plan ${planById(pub.planId)?.name} sigue vigente hasta el ${until}.`}</DialogDescription>
             <dl className="pn-pay">
-              <div><dt>Estado</dt><dd>{live ? 'Publicada' : 'Dada de baja'}</dd></div>
+              <div><dt>Estado</dt><dd>{live ? (pending ? 'Publicada, con cambios sin publicar' : 'Publicada') : 'Dada de baja'}</dd></div>
               <div><dt>Plan</dt><dd>{planById(pub.planId)?.name}</dd></div>
               <div><dt>Publicada desde</dt><dd>{since}</dd></div>
               <div><dt>Vigente hasta</dt><dd>{until}</dd></div>
@@ -216,12 +219,19 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
                   <button type="button" className="pn-btn is-ghost" onClick={copyLink}>{copied ? 'Link copiado' : 'Copiar link'}</button>
                 </div>
                 <div className="pn-refresh">
-                  <p className="pn-hint">Lo que cambies en el panel se ve en tu página cuando tocás «Publicar los cambios». El link no cambia.</p>
-                  <button type="button" className="pn-btn is-ghost" disabled={refresh === 'busy'} aria-busy={refresh === 'busy'}
-                    onClick={() => { setRefresh('busy'); setError(null); void publishRemote().then(r => { if (r.ok) setRefresh('done'); else { setRefresh('idle'); setError(errorText(r.code)); } }); }}>
-                    {refresh === 'busy' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Publicando…</> : 'Publicar los cambios'}
-                  </button>
-                  {refresh === 'done' && <p className="pn-note" role="status"><Check size={16} aria-hidden="true" /> Listo: tu página ya muestra los cambios.</p>}
+                  {refresh === 'done' && upToDate
+                    ? <p className="pn-note" role="status"><Check size={16} aria-hidden="true" /> Listo: tu página ya muestra los cambios.</p>
+                    : upToDate
+                      ? <p className="pn-hint">Tu página ya muestra todo lo que guardaste. Si cambiás algo en el panel, te avisamos acá para que lo publiques.</p>
+                      : <>
+                          {pending
+                            ? <p className="pn-note" role="status">Tenés cambios guardados que todavía no se ven en tu página. Publicalos para que tus invitados vean la versión nueva. El link no cambia.</p>
+                            : <p className="pn-hint">Lo que cambies en el panel se ve en tu página cuando tocás «Publicar los cambios». El link no cambia.</p>}
+                          <button type="button" className={`pn-btn${pending ? '' : ' is-ghost'}`} disabled={refresh === 'busy'} aria-busy={refresh === 'busy'}
+                            onClick={() => { setRefresh('busy'); setError(null); void publishRemote().then(r => { if (r.ok) setRefresh('done'); else { setRefresh('idle'); setError(errorText(r.code)); } }); }}>
+                            {refresh === 'busy' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Publicando…</> : 'Publicar los cambios'}
+                          </button>
+                        </>}
                 </div>
               </>
             )}

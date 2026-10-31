@@ -77,7 +77,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | DASH-01 | Inicio con etapas, siguiente paso y estado de publicación | DOCUMENTADO | **Implementada** | U (journey) · E2E | |
 | DASH-02 | Ayuda con preguntas frecuentes y contacto | DOCUMENTADO (respuestas de la dueña) | **Implementada** (`panel.tsx`) | — | El FAQ habla de «6 meses» y de ver el comprobante |
 | DASH-03 | Vista previa privada de la invitación (celular/compu) | DOCUMENTADO | **Implementada** | E2E | |
-| DASH-04 | Aviso «hay cambios sin publicar» | DOCUMENTADO como pendiente | **No implementada** | — | |
+| DASH-04 | Aviso «hay cambios sin publicar» | DOCUMENTADO como pendiente (NE-03) | **Implementada y probada** (2026-10-31): el servidor compara lo que publicaría con la página pública (`pendingChanges` en `GET`/`PUT /api/wedding`); el botón de arriba pasa a «Publicar cambios» y «Tu publicación» lo explica | U (`pending-changes`: 4, `publish-pending`: 3) · E2E (`audit` T-02, actualizada, no ejecutada) | Solo cuenta lo que ve un invitado (invitados no). Sin cambios de esquema |
 | DASH-05 | Fecha exacta de vencimiento y avisos 30/7/1 días | **DECIDIDO** (P23) | **No implementada** | — | Hoy el panel muestra una vigencia calculada en el cliente (6 meses) |
 | DASH-06 | Perfil: datos del casamiento y de la cuenta | DOCUMENTADO | **Parcial** (ver AUTH-05) | E2E | |
 | DASH-07 | Eliminar la cuenta o el casamiento | DECIDIDO (procedimiento P32/P30) | **No implementada** | — | No hay ruta ni pantalla |

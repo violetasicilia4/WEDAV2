@@ -461,9 +461,15 @@ Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la c
 - Es solo un número: el servidor no guarda navegador ni lugar de cada sesión, así que no hay lista por dispositivo (requeriría cambiar el esquema).
 - Después de cambiar la clave, la fila se vuelve a consultar (el cambio de clave ya cerró las demás).
 
+## Aviso de «cambios sin publicar» (2026-10-31, implementación de DASH-04 / NE-03)
+- **Quién lo decide:** el servidor. Al guardar el borrador y al abrir el panel compara la página que publicaría ahora con la que está publicada (`pendingChanges`). Solo cuenta lo que ve un invitado: cambiar la lista de invitados no genera aviso; cambiar textos, fotos, regalos o el plan, sí.
+- **Arriba a la derecha:** con la página publicada y cambios pendientes, el botón «Publicada» pasa a decir «Publicar cambios» y abre «Tu publicación». Al publicar vuelve a «Publicada».
+- **En «Tu publicación»:** el estado dice «Publicada, con cambios sin publicar» y un texto explica que la página todavía muestra la versión anterior, con el botón «Publicar los cambios». Si está al día dice «Tu página ya muestra todo lo que guardaste» y no ofrece volver a publicar lo mismo. Mientras no llegó el dato del servidor, se mantiene el texto y el botón anteriores, sin afirmar nada.
+- **Supuesto:** con la página dada de baja no hay aviso; «Volver a publicar» ya publica lo último guardado.
+
 ## Datos de cobro protegidos (2026-10-31, GIFT-14 / BR-30 nivel base; decisiones D1–D8 aprobadas por la dueña en el plan)
 - **Con cuenta**, en Regalos → Datos de cobro: «Cambiar» (o «Configurar» la primera vez) abre dos pasos. Primero el alias (obligatorio en el formulario), el banco y el CBU (opcionales), validados antes de seguir. Después, la confirmación: «Antes» enmascarado (`an•••mp`) y «Ahora» completo, para revisar que no haya errores de tipeo; la clave actual y «Confirmar cambio». La primera carga también pide la clave.
 - **Errores:** si la clave es incorrecta, se avisa en el campo y se vacía. En un aviso aparte: los mismos datos que ya estaban, que cambiaron desde otro dispositivo (hay que recargar) o más de 3 cambios en el día.
-- **Al guardar:** el aviso dice «Tus invitados los ven cuando publiques los cambios» (la página pública es una copia, PUB-04) y llega un correo al dueño con los datos enmascarados y «Cambiar mi clave».
+- **Al guardar:** el aviso dice «Tus invitados los ven cuando publiques los cambios» (la página pública es una copia, PUB-04) y llega un correo al dueño con los datos enmascarados y «Cambiar mi clave». Si la página ya está publicada, se enciende «Publicar cambios» (DASH-04). Un alias que llegue dentro del borrador no lo enciende, porque se descarta.
 - **Sin cuenta:** se cargan en el navegador como antes. Al crear la cuenta o ingresar **no se suben solos**: el panel muestra «Cargaste un alias antes de crear tu cuenta… Confirmalo con tu clave», con el formulario completo. Supuesto: si se recarga la página antes de confirmar, ese dato local se pierde y hay que volver a escribirlo.
 - **Cambio respecto del plan aprobado:** en la confirmación, el destino **nuevo** se muestra completo (no enmascarado), porque la persona lo acaba de escribir en la pantalla anterior y así puede detectar errores de tipeo. El anterior y el correo sí van enmascarados.
