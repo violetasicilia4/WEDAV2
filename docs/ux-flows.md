@@ -445,3 +445,12 @@ Esta decisión **reemplaza** el modelo anterior (plan de 6 meses, permanencia p�
 - Los rechazados siguen en la lista con la etiqueta «Rechazado», sin «Pedir comprobante», y no suman en los totales ni en el contador de la pestaña.
 - «Volver a revisar» falla con un aviso si otro invitado eligió alguno de sus regalos mientras tanto: un regalo nunca queda tomado dos veces.
 - Supuesto: los textos de la sección («Aportes recibidos», «Regalos recibidos») no se tocaron; su redacción definitiva sigue pendiente (IC-07).
+
+## Cambiar la clave desde el perfil (2026-10-31, pedido de la dueña)
+
+Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la clave no se guardaba y el cambio avisaba que no se aplicó).
+- En «Tu cuenta», debajo del correo, la fila **Clave** (`••••••••`) con «Cambiar». Al tocarlo se abre ahí mismo el formulario (sin diálogo ni pantalla nueva), con el foco en «Clave actual».
+- Campos: clave actual, clave nueva (mismas reglas que al registrarse y distinta de la actual) y su repetición; un solo «ojo» muestra u oculta las tres. Validación en el navegador antes de enviar; el servidor vuelve a validar y exige la clave actual.
+- Mientras espera: «Un momento…» y los dos botones desactivados. Clave actual equivocada: el error va en su campo, que se vacía. Demasiados intentos, sesión vencida o sin conexión: aviso arriba de los botones.
+- Al terminar: «Listo: cambiaste tu clave. Cerramos las sesiones abiertas en otros dispositivos; en este seguís adentro.» El servidor cierra las demás sesiones y anula los enlaces de recuperación pendientes.
+- «Si no recordás tu clave, pedí un enlace por correo» sigue disponible (`/clave`). Sin cuenta, el perfil no muestra la fila Clave.
