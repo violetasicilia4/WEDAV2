@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 # Casos de la guardia (.claude/hooks/guard.sh). Uso: bash .claude/hooks/guard.test.sh
 # Cada fila: decisión esperada (deny | ask | allow), herramienta y comando o ruta.
-# Necesita jq para armar el JSON de entrada.
+# Le pasa al hook el JSON de cada llamada; no ejecuta ningún comando. Necesita jq.
+# GUARD_HOOK y GUARD_ROOT permiten probar una copia del hook contra este repo.
 
 dir=$(cd "$(dirname "$0")" && pwd)
-root=$(cd "$dir/../.." && pwd)
+root=${GUARD_ROOT:-$(cd "$dir/../.." && pwd)}
+hook=${GUARD_HOOK:-$dir/guard.sh}
 fail=0
 
 # Modo de permisos que recibe el hook: default salvo que la sección fije otro. Con mode='' no se envía.
 mode=default
 
-run() { # $1 = esperado, $2 = herramienta, $3 = comando o ruta, $4 = cwd (opcional)
+run() { # $1 = esperado, $2 = herramienta, $3 = comando o ruta, $4 = cwd (Bash) o contenido (Write)
   local json out got
   if [[ $2 == Bash ]]; then
     json=$(jq -n --arg c "$3" --arg d "${4:-$root}" '{tool_name:"Bash",tool_input:{command:$c},cwd:$d}')
   else
-    json=$(jq -n --arg t "$2" --arg p "$3" --arg d "$root" '{tool_name:$t,tool_input:{file_path:$p,path:$p},cwd:$d}')
+    json=$(jq -n --arg t "$2" --arg p "$3" --arg d "$root" --arg x "${4:-}" '{tool_name:$t,tool_input:{file_path:$p,path:$p,content:$x},cwd:$d}')
   fi
   json=$(printf '%s' "$json" | jq --arg m "$mode" 'if $m == "" then . else . + {permission_mode: $m} end')
-  out=$(printf '%s' "$json" | "$dir/guard.sh")
+  out=$(printf '%s' "$json" | CLAUDE_PROJECT_DIR=$root "$hook")
   got=$(printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecision // "allow"' 2>/dev/null)
   [[ -z $got ]] && got=allow
   if [[ $got == "$1" ]]; then
@@ -108,7 +110,8 @@ run deny  Bash  'fly deploy'
 run deny  Bash  'flyctl deploy'
 run deny  Bash  'railway up'
 run deny  Bash  'FOO=1 npx -y vercel'
-run ask   Bash  'git commit -m "documenta rm -rf y sqlite3"'
+# Falso positivo aceptado: el hook no distingue un mensaje de un comando. Usar git commit -F archivo.
+run deny  Bash  'git commit -m "documenta rm -rf y sqlite3"'
 run allow Bash  'npm run typecheck'
 run allow Bash  'git log --oneline -5'
 
@@ -246,6 +249,255 @@ for mode in auto acceptEdits bypassPermissions dontAsk plan ''; do
   run allow Bash  'git tag -n'
   run allow Edit  "$root/src/server/service.ts"
 done
+mode=default
+
+# ---------------------------------------------------------------------------------------------------
+# Auditoría independiente (2026-10-31): cada fila es una evasión o un falso positivo encontrado.
+# ---------------------------------------------------------------------------------------------------
+mode=auto
+
+# A1. Estructuras de control
+run deny  Bash  'if true; then git push origin main --force; fi'
+run deny  Bash  'for i in 1; do git push origin main --force; done'
+run deny  Bash  '! git push origin main --force'
+run deny  Bash  'if true; then git commit -m x; fi'
+run deny  Bash  'then git reset --hard'
+run deny  Bash  'if true; then gh pr merge 3; fi'
+
+# A2. Envoltorios con argumento o fuera de la lista
+run deny  Bash  'timeout 60 git push origin main --force'
+run deny  Bash  'nice -n 5 git push origin main --force'
+run deny  Bash  'env -u FOO git push origin main --force'
+run deny  Bash  'sudo -u otra git push origin main --force'
+run deny  Bash  'xargs -n 1 git push origin main --force'
+run deny  Bash  'bash -o pipefail -c "git push origin main --force"'
+run deny  Bash  'caffeinate -i git push origin main --force'
+run deny  Bash  'arch -arm64 git push origin main --force'
+run deny  Bash  'find . -maxdepth 0 -exec git push origin main --force ;'
+run deny  Bash  'timeout 60 gh pr merge 3'
+run deny  Bash  'python3 -c "import subprocess; subprocess.run([\"git\",\"push\",\"--force\"])"'
+
+# A3. Autoprotección: la guardia, los permisos y las instrucciones
+run deny  Bash  'chmod -x .claude/hooks/guard.sh'
+run deny  Bash  "sed -i '' 's/deny/allow/' .claude/hooks/guard.sh"
+run deny  Bash  'echo "{\"disableAllHooks\":true}" > .claude/settings.local.json'
+run deny  Bash  'echo x | tee -a ~/.claude/settings.json'
+run deny  Bash  'git checkout main -- .claude/settings.json'
+run deny  Bash  'mv .claude /tmp/x'
+run deny  Bash  "sed -i '' 's/a/b/' CLAUDE.md"
+run deny  Bash  'cat nuevo.md > CLAUDE.md'
+run deny  Edit  "$root/.claude/settings.json"
+run deny  Write "$root/.claude/settings.local.json"
+run deny  Write "$root/.claude/hooks/guard.sh"
+run deny  Edit  "$root/CLAUDE.md"
+run deny  Write "$HOME/.claude/settings.json"
+run deny  Write "$root/notas.json"                      '{"disableAllHooks": true}'
+run allow Read  "$root/.claude/settings.json"
+run allow Bash  'bash .claude/hooks/guard.test.sh'
+run allow Bash  'bash .claude/hooks/guard.test.sh > /tmp/resultado.txt 2>&1'
+run allow Bash  'cat CLAUDE.md > /tmp/copia.md'
+run allow Bash  'git log --oneline -2 && git tag --list && grep -c x .claude/hooks/README.md'
+run deny  Bash  'cd .claude/hooks && sed -i "" s/a/b/ guard.sh'
+run deny  Bash  'echo x >> .claude/settings.local.json'
+run deny  Bash  'printf x >CLAUDE.md'
+run deny  Bash  'echo "export const x = 1" >> src/server/db.ts'
+run allow Bash  'jq . .claude/settings.json'
+run allow Bash  'git diff .claude/ CLAUDE.md'
+run allow Bash  'cat CLAUDE.md'
+run allow Bash  'grep -n hook CLAUDE.md'
+run allow Write "$HOME/.claude/projects/x/memory/nota.md"
+mode=default
+run ask   Edit  "$root/.claude/settings.json"
+run ask   Bash  'chmod -x .claude/hooks/guard.sh'
+run ask   Edit  "$root/CLAUDE.md"
+run deny  Bash  'echo "{\"disableAllHooks\":true}" > .claude/settings.local.json'
+run deny  Write "$root/.claude/settings.local.json"       '{"disableAllHooks": true}'
+mode=auto
+
+# A4. Otras formas de escribir git
+run deny  Bash  'git reset --har HEAD~1'
+run deny  Bash  'git reset --ha HEAD~1'
+run deny  Bash  'git push origin main --forc'
+run deny  Bash  'git push --mirr origin'
+run deny  Bash  'git push --delet origin rama'
+run deny  Bash  'git push origin --tag'
+run deny  Bash  'git push --prun origin'
+run deny  Bash  'git -c alias.p="push --force" p origin main'
+run deny  Bash  'git -c alias.c=commit c -m x'
+run deny  Bash  'git config alias.fp "push --force"'
+run deny  Bash  'git config --global core.sshCommand "sh -c x"'
+run deny  Bash  'git -c remote.origin.mirror=true push origin'
+run deny  Bash  'git -c core.hooksPath=/tmp/h commit -m x'
+run deny  Bash  '$(which git) push origin main --force'
+run deny  Bash  'G=git; $G push origin main --force'
+run deny  Bash  'git${IFS}push${IFS}origin${IFS}main${IFS}--force'
+run deny  Bash  'git$IFS''reset$IFS--hard'
+run allow Bash  'git -c user.name=a -c user.email=a@b log -1'
+run allow Bash  'git config user.name'
+mode=default
+run deny  Bash  'git push origin main --forc'
+run deny  Bash  'git push --repo=origin v1'
+mode=auto
+
+# B1. Deploys con versión
+run deny  Bash  'npx --yes vercel@latest deploy --prod'
+run deny  Bash  'npx wrangler@3 deploy'
+run deny  Bash  'vc deploy'
+run deny  Bash  'pnpm dlx netlify-cli@17 deploy'
+run deny  Bash  'npx @railway/cli up'
+
+# B2. GraphQL y curl
+run deny  Bash  'gh api graphql -f query="$(cat m.graphql)"'
+run deny  Bash  'Q=$(cat m.graphql); gh api graphql -f query="$Q"'
+run deny  Bash  'curl -X PUT -H "Authorization: token $(gh auth token)" https://api.github.com/repos/o/r/pulls/3/merge'
+run deny  Bash  'curl -X PUT https://api.github.com/repos/o/r/pulls/3/merge'
+run deny  Bash  'curl -d "{}" https://api.github.com/repos/o/r/issues'
+run deny  Bash  'wget --method=DELETE https://api.github.com/repos/o/r'
+run allow Bash  'curl -s https://api.github.com/repos/o/r'
+run allow Bash  'curl -X POST https://example.com/x'
+
+# B3. Secretos sin nombrarlos y credenciales
+run deny  Bash  'gh auth token'
+run deny  Bash  'gh auth status --show-token'
+run deny  Bash  'gh auth status -t'
+run deny  Bash  'printenv'
+run deny  Bash  'printenv GH_TOKEN'
+run deny  Bash  'env'
+run deny  Bash  'env | grep TOKEN'
+run deny  Bash  'export -p'
+run deny  Bash  'set'
+run deny  Bash  'cat ~/.netrc'
+run deny  Bash  'cat ~/.git-credentials'
+run deny  Bash  'cat ~/.npmrc'
+run deny  Bash  'cat ~/.aws/credentials'
+run deny  Bash  'f=.en; cat ${f}v'
+run deny  Bash  'cat $(printf .e%sv n)'
+run deny  Bash  'cat $(echo LmVudg== | base64 -d)'
+run deny  Bash  'cat .ENV'
+run deny  Bash  'cat .Env.local'
+run deny  Bash  'ls .DATA'
+run deny  Bash  'python3 -c "import sqlite3; sqlite3.connect(x)"'
+run deny  Bash  'node --experimental-sqlite -e "x"'
+run deny  Bash  'node -e "require(\"node:sqlite\")"'
+run allow Bash  'gh auth status'
+run allow Bash  'env FOO=1 npm test'
+# Lectura recursiva: se bloquea si la carpeta tiene secretos o datos.
+sec=$(mktemp -d)
+mkdir -p "$sec/src" && : > "$sec/.env" && : > "$sec/src/a.ts"
+run deny  Bash  'grep -r RESEND .'                    "$sec"
+run deny  Bash  'grep -rn RESEND'                     "$sec"
+run deny  Bash  "grep -R x $sec"
+run deny  Bash  'tar czf /tmp/repo.tgz .'             "$sec"
+run deny  Bash  'cp -r . /tmp/copia'                  "$sec"
+run deny  Bash  'rg --hidden --no-ignore KEY'         "$sec"
+run deny  Bash  'find . -type f -exec cat {} +'       "$sec"
+run allow Bash  'grep -rn RESEND src'                 "$sec"
+run allow Bash  'grep -n RESEND src/a.ts'             "$sec"
+run allow Bash  'rg KEY'                              "$sec"
+run allow Bash  'find . -name "*.ts"'                 "$sec"
+rm -r "$sec"
+run allow Bash  'grep -rn RESEND .'
+
+# B4. Administración de GitHub, también envuelta
+run deny  Bash  'bash -c "gh repo delete violetasicilia4/WEDAV2 --yes"'
+run deny  Bash  'bash -c "gh secret set X --body y"'
+run deny  Bash  'bash -c "gh repo edit --visibility public"'
+run deny  Bash  'bash -c "gh release create v1"'
+run deny  Bash  'gh workflow run deploy.yml'
+run deny  Bash  'gh extension install alguien/algo'
+run deny  Bash  'gh gist create notas.md --public'
+run deny  Bash  'gh variable set X'
+run deny  Bash  'gh repo create otro --public'
+run allow Bash  'gh repo view'
+run allow Bash  'gh release list'
+run allow Bash  'gh workflow list'
+run allow Bash  'gh secret list'
+
+# B5. Esquema por Bash
+run deny  Bash  "sed -i '' 's/a/b/' src/server/db.ts"
+run deny  Bash  'cat migracion.sql >> src/server/db.ts'
+run deny  Bash  'git checkout otra-rama -- src/server/db.ts'
+run deny  Bash  'git apply cambio.patch'
+run deny  Bash  'cp /tmp/db.ts src/server/db.ts'
+run allow Bash  'grep -n MIGRATIONS src/server/db.ts'
+run allow Bash  'git diff src/server/db.ts'
+run allow Bash  "sed -n '1,20p' src/server/db.ts"
+mode=default
+run ask   Bash  "sed -i '' 's/a/b/' src/server/db.ts"
+run ask   Bash  'git apply cambio.patch'
+mode=auto
+
+# B6. Opciones de git que ejecutan programas, escriben archivos o mueven ramas
+run deny  Bash  'git fetch --upload-pack="touch /tmp/x" origin'
+run deny  Bash  'git ls-remote --upload-pack="touch /tmp/x" origin'
+run deny  Bash  'git ls-remote --upl=x origin'
+run deny  Bash  'git clone -u x https://example.com/r.git'
+run deny  Bash  'git log --output=/tmp/x -1'
+run deny  Bash  'git diff --output=/tmp/x'
+run deny  Bash  'git branch -f main HEAD~3'
+run deny  Bash  'git branch --force main HEAD~3'
+run deny  Bash  'git branch -M otra main'
+run deny  Bash  'git branch -C otra main'
+run deny  Bash  'git fetch origin +main:main'
+run deny  Bash  'git fetch -f origin main:main'
+run allow Bash  'git fetch origin'
+run allow Bash  'git fetch --prune origin'
+run allow Bash  'git ls-remote --tags origin'
+run allow Bash  'git log --oneline -3'
+run allow Bash  'git diff --output-indicator-new=+ HEAD'
+run allow Bash  'git branch -m vieja nueva'
+run allow Bash  'git branch -d vieja'
+
+# B7. Tags: opciones que no implican listado crean un tag
+run deny  Bash  'git tag --sort=refname v9'
+run deny  Bash  'git tag --format=x v9'
+run deny  Bash  'git tag --column v9'
+run deny  Bash  'git tag -i v9'
+run deny  Bash  'git tag --no-column v9'
+run allow Bash  'git tag --sort=-creatordate'
+run allow Bash  'git tag -l --sort=refname "v*"'
+run allow Bash  'git tag --contains HEAD'
+run allow Bash  'git tag -v v1'
+
+# C4 parcial. Historial y archivos de trabajo
+run deny  Bash  'git stash clear'
+run deny  Bash  'git stash drop'
+run deny  Bash  'git update-ref -d refs/heads/main'
+run deny  Bash  'git reflog expire --expire=now --all'
+run deny  Bash  'git gc --prune=now'
+run deny  Bash  'git restore .'
+run deny  Bash  'git checkout -- .'
+run deny  Bash  'git rebase main'
+run deny  Bash  'git merge otra'
+run deny  Bash  'git rm -r -q src'
+run allow Bash  'git restore --staged x.ts'
+run allow Bash  'git checkout chore/x'
+run allow Bash  'git rm --cached -r viejo'
+run allow Bash  'git stash list'
+
+# C1. Comandos demasiado largos (el hook no llegaría a revisarlos antes del timeout)
+largo=$(printf 'x%.0s' $(seq 1 70000))
+run deny  Bash  "echo $largo"
+
+# Falsos positivos corregidos o aceptados
+run deny  Bash  'gh pr create --title "merge de ramas" --body x'
+mode=default
+run ask   Bash  'gh pr create --title "merge de ramas" --body x'
+run allow Bash  'gh pr comment 3 --body "listo para merge"'
+run allow Bash  'gh pr list --search merge'
+run allow Bash  'gh pr view 3 --json mergeable'
+run allow Bash  'git status'
+run allow Bash  'npm run typecheck'
+mode=auto
+
+# C2. Falla cerrada sin parser
+sinparser=$(mktemp -d)
+for t in bash tr sed cat git dirname; do ln -s "$(command -v "$t")" "$sinparser/$t"; done
+got=$(printf '%s' '{"tool_name":"Bash","tool_input":{"command":"ls"},"permission_mode":"default"}' | env PATH="$sinparser" bash "$hook" | jq -r '.hookSpecificOutput.permissionDecision // "allow"')
+if [[ $got == deny ]]; then echo 'ok    deny  sin jq ni python3: falla cerrada'; else echo "FALLA esperaba deny sin parser, dio $got"; fail=1; fi
+rm -r "$sinparser"
+got=$(printf '%s' '{"tool_name":"Bash", roto' | "$hook" | jq -r '.hookSpecificOutput.permissionDecision // "allow"')
+if [[ $got == deny ]]; then echo 'ok    deny  JSON inválido: falla cerrada'; else echo "FALLA esperaba deny con JSON inválido, dio $got"; fail=1; fi
 mode=default
 
 exit $fail
