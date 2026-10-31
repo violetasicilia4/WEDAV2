@@ -438,6 +438,14 @@ Esta decisión **reemplaza** el modelo anterior (plan de 6 meses, permanencia p�
 - Pendientes (`02d` §10 y `06` §2): **P30, P6, P26 y P5** requieren asesoramiento legal, contable o de seguridad; **P35** (requisitos mínimos de publicación) requiere definición; ninguna se implementa hasta resolverse.
 - **El código y los textos actuales NO coinciden** (no se cambió código): hoy el pago confirmado solo habilita el botón «Publicar mi página» (dos acciones separadas); la vigencia es de **6 meses** (`PUBLICATION_MONTHS = 6` y `PUBLICATION_TERM = '6 meses'` en `plans.ts`, textos en la landing, el diálogo de publicar y Ayuda); la página, el RSVP y los regalos devuelven `410` a los 6 meses; el servidor bloquea publicar pero no editar al vencer; no existe el estado «finalizado», el cierre del panel ni las exportaciones; y cada cuenta tiene un solo casamiento. Lo descripto en «Pagos» y «Vencimiento» más arriba es el comportamiento **actual**.
 
+## Revisión manual de aportes en el panel (2026-10-31, IC-08)
+
+- En «Aportes», cada aporte con cuenta muestra sus acciones según el estado (BR-24): «A revisar» → «Confirmar» (solo si tiene comprobante; sin él queda «Pedir comprobante») y «Rechazar»; «Confirmado» → «Rechazar»; «Rechazado» → «Volver a revisar».
+- «Rechazar» pide confirmación en el lugar («Sus regalos vuelven a quedar libres para otros invitados») porque libera los regalos en la página pública.
+- Los rechazados siguen en la lista con la etiqueta «Rechazado», sin «Pedir comprobante», y no suman en los totales ni en el contador de la pestaña.
+- «Volver a revisar» falla con un aviso si otro invitado eligió alguno de sus regalos mientras tanto: un regalo nunca queda tomado dos veces.
+- Supuesto: los textos de la sección («Aportes recibidos», «Regalos recibidos») no se tocaron; su redacción definitiva sigue pendiente (IC-07).
+
 ## Cambiar la clave desde el perfil (2026-10-31, pedido de la dueña)
 
 Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la clave no se guardaba y el cambio avisaba que no se aplicó).
