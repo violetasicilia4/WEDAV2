@@ -446,6 +446,21 @@ Esta decisión **reemplaza** el modelo anterior (plan de 6 meses, permanencia p�
 - «Volver a revisar» falla con un aviso si otro invitado eligió alguno de sus regalos mientras tanto: un regalo nunca queda tomado dos veces.
 - Supuesto: los textos de la sección («Aportes recibidos», «Regalos recibidos») no se tocaron; su redacción definitiva sigue pendiente (IC-07).
 
+## Cambiar la clave desde el perfil (2026-10-31, pedido de la dueña)
+
+Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la clave no se guardaba y el cambio avisaba que no se aplicó).
+- En «Tu cuenta», debajo del correo, la fila **Clave** (`••••••••`) con «Cambiar». Al tocarlo se abre ahí mismo el formulario (sin diálogo ni pantalla nueva), con el foco en «Clave actual».
+- Campos: clave actual, clave nueva (mismas reglas que al registrarse y distinta de la actual) y su repetición; un solo «ojo» muestra u oculta las tres. Validación en el navegador antes de enviar; el servidor vuelve a validar y exige la clave actual.
+- Mientras espera: «Un momento…» y los dos botones desactivados. Clave actual equivocada: el error va en su campo, que se vacía. Demasiados intentos, sesión vencida o sin conexión: aviso arriba de los botones.
+- Al terminar: «Listo: cambiaste tu clave. Cerramos las sesiones abiertas en otros dispositivos; en este seguís adentro.» El servidor cierra las demás sesiones y anula los enlaces de recuperación pendientes.
+- «Si no recordás tu clave, pedí un enlace por correo» sigue disponible (`/clave`). Sin cuenta, el perfil no muestra la fila Clave.
+
+## Cerrar las demás sesiones (2026-10-31, siguiente incremento del backend)
+
+- En «Tu cuenta», debajo de «Clave», la fila **Sesiones**: «Solo en este dispositivo» o «Abierta también en N lugares más» con «Cerrar las demás». Al tocarlo: «Listo: cerramos las demás. Acá seguís adentro.»
+- Es solo un número: el servidor no guarda navegador ni lugar de cada sesión, así que no hay lista por dispositivo (requeriría cambiar el esquema).
+- Después de cambiar la clave, la fila se vuelve a consultar (el cambio de clave ya cerró las demás).
+
 ## Aviso de «cambios sin publicar» (2026-10-31, implementación de DASH-04 / NE-03)
 - **Quién lo decide:** el servidor. Al guardar el borrador y al abrir el panel compara la página que publicaría ahora con la que está publicada (`pendingChanges`). Solo cuenta lo que ve un invitado: cambiar la lista de invitados no genera aviso; cambiar textos, fotos, regalos o el plan, sí.
 - **Arriba a la derecha:** con la página publicada y cambios pendientes, el botón «Publicada» pasa a decir «Publicar cambios» y abre «Tu publicación». Al publicar vuelve a «Publicada».

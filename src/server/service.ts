@@ -46,6 +46,8 @@ export class Service {
   /** Pedidos de recuperación: por correo y por IP, para no usar el formulario para mandar correos en masa. */
   private resetLimiter = new RateLimiter(5, 60 * 60_000);
   private resetIpLimiter = new RateLimiter(20, 60 * 60_000);
+  /** Intentos con la clave actual al cambiarla, por cuenta. */
+  private changeLimiter = new RateLimiter(8, 15 * 60_000);
   constructor(public db: Db, public cfg: ServerConfig) {}
 
   /* ------------------------------------------------------------------ cuentas y sesiones */
@@ -155,6 +157,42 @@ export class Service {
       this.db.prepare('DELETE FROM sessions WHERE user_id = ?').run(row['user_id'] as string);
     });
     return { ok: true };
+  }
+
+  /**
+   * Cambia la clave desde el perfil (con sesión). Exige la clave actual: una sesión robada sola no alcanza para quedarse con la cuenta.
+   * Cierra las demás sesiones (sigue abierta la de quien la cambió) y anula los enlaces de recuperación pendientes.
+   */
+  async changePassword(token: string | undefined, current: unknown, next: unknown): Promise<{ ok: true }> {
+    const s = this.requireSession(this.sessionFromToken(token));
+    if (typeof current !== 'string' || !current) throw invalid('wrong_password');
+    if (typeof next !== 'string' || !strongPassword(next) || next.length > 200) throw invalid('weak_password');
+    if (!this.changeLimiter.take(s.userId)) throw new ApiError(429, 'too_many_attempts');
+    const row = this.db.prepare('SELECT password_hash FROM users WHERE id = ?').get(s.userId) as Row | undefined;
+    if (!row || !(await verifyPassword(current, row['password_hash'] as string))) throw invalid('wrong_password');
+    this.changeLimiter.reset(s.userId);
+    const hash = await hashPassword(next);
+    tx(this.db, () => {
+      const t = now();
+      this.db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, s.userId);
+      this.db.prepare('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(s.userId, sha256(token!));
+      this.db.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(t, s.userId);
+    });
+    return { ok: true };
+  }
+
+  /** Cuántas sesiones vigentes tiene la cuenta además de esta. Sin ids ni tokens: solo el número. */
+  otherSessions(token: string | undefined): { others: number } {
+    const s = this.requireSession(this.sessionFromToken(token));
+    const row = this.db.prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND id != ? AND expires_at > ?').get(s.userId, sha256(token!), now()) as Row;
+    return { others: Number(row['n']) };
+  }
+
+  /** Cierra las demás sesiones de la cuenta (otros dispositivos o navegadores); esta sigue abierta. */
+  closeOtherSessions(token: string | undefined): { closed: number } {
+    const s = this.requireSession(this.sessionFromToken(token));
+    const r = this.db.prepare('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(s.userId, sha256(token!));
+    return { closed: Number(r.changes) };
   }
 
   logout(token: string | undefined) {
