@@ -96,10 +96,13 @@ function PublishButton({ className, children }: { className: string; children: R
 
 function PublishLabel() {
   const state = useAppState();
-  const online = !!useRemote().user;
+  const remote = useRemote();
+  const online = !!remote.user;
   const live = isLive(state) && online;
   const down = online && !!state.publication && !live;
-  return <><Heart size={16} aria-hidden="true" /><span>{live ? 'Publicada' : down ? 'Despublicada' : 'Publicar'}</span></>;
+  // Con cambios guardados que la página pública todavía no muestra (lo dice el servidor), el botón invita a publicarlos.
+  const pending = live && remote.publication?.pendingChanges === true;
+  return <><Heart size={16} aria-hidden="true" /><span>{pending ? 'Publicar cambios' : live ? 'Publicada' : down ? 'Despublicada' : 'Publicar'}</span></>;
 }
 
 /* Ayuda: preguntas frecuentes (cada respuesta se abre al tocar la pregunta) y el correo de consultas. Precios y duración salen de `plans.ts`.
