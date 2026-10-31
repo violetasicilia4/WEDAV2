@@ -56,7 +56,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Ver también: [inventari
 | BR-27 | La cantidad de aportantes solo se ve en el panel privado, nunca en lo público; no se exponen nombres ni importes públicamente | DECIDIDO (Q2) | `02` | **PARCIAL**: el sitio público expone solo los ids de regalos tomados (sin nombres, montos ni cantidades) | U (`wedding-flow` «solo expone lo público») | Desaparece al cumplirse BR-19 |
 | BR-28 | La tarjeta no está disponible hasta que exista un proveedor | DOCUMENTADO | `BR` | **IMPLEMENTADO** (501) | U | El plan «Regalos» promete «Alias y tarjeta» |
 | BR-29 | El comprobante es privado: solo lo ve la pareja dueña | DOCUMENTADO | `BR`, `DP` | **IMPLEMENTADO** | U (`wedding-flow`) | |
-| BR-30 | **Cambiar alias o datos bancarios**: solo el propietario, con contraseña reciente, confirmación explícita, auditoría, aviso al propietario y validación en el servidor; extras (confirmación fuera de banda, espera, TOTP) abiertos | DECIDIDO (Q4); extras PENDIENTES (P5) | `02` §5.4 | **NO IMPLEMENTADO**: el alias se edita en el borrador sin controles; no hay versiones ni auditoría | — | IC-04 |
+| BR-30 | **Cambiar alias o datos bancarios**: solo el propietario, con contraseña reciente, confirmación explícita, auditoría, aviso al propietario y validación en el servidor; extras (confirmación fuera de banda, espera, TOTP) abiertos | DECIDIDO (Q4); extras PENDIENTES (P5) | `02` §5.4 | **IMPLEMENTADO el nivel base** (2026-10-31): clave en la misma operación, confirmación con el destino anterior enmascarado, versiones en `payout_methods`, aviso por correo, límite de 3 cambios por día, validación en el servidor; extras (DP-01) pendientes | — | IC-04 |
 
 ## D. Invitados, invitaciones y RSVP
 
