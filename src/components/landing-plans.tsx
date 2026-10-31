@@ -53,7 +53,6 @@ export function LandingPlans() {
       <div className="section-inner">
         <div className="plans-head">
           <h2><span className="plans-l1">Armá tu casamiento gratis.</span> <span className="plans-l2">Publicalo cuando estés listo.</span></h2>
-          <p>Creá tu evento, personalizá tu sitio y probá las herramientas de Weda.</p>
         </div>
         <div className="plans-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
       </div>

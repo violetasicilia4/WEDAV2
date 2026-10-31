@@ -1833,3 +1833,6 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 /* Legibilidad en Windows: Geist es una fuente variable sin hinting y a peso 400 se ve fina y borrosa en pantallas comunes. Un peso intermedio (450) la
    deja más firme sin llegar a negrita. Solo panel y onboarding; el micrositio conserva su tipografía. */
 .pn-root, .pn-dialog { font-weight: 450; }
+
+/* «Registrarme / Ingresar con Google»: botón del flujo, con la G de colores; se acomoda en una sola fila y nunca desborda la tarjeta. */
+.pn-account .pn-btn.pn-social { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; padding: 8px 12px; min-width: 0; max-width: 100%; height: auto; min-height: 48px; white-space: normal; text-align: center; }

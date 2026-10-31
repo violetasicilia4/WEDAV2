@@ -23,11 +23,14 @@ test.describe('Cuenta · el evento guardado se conserva', () => {
     await expect(page).toHaveURL(/\/panel/);
   });
 
-  test('2. no hay botones de Google ni Apple: no existe OAuth y un botón así prometería un registro que no hace (auditoría 2026-10-28)', async ({ page }) => {
+  test('2. «Registrarme / Ingresar con Google» está en el flujo, pero sin OAuth no simula una cuenta: avisa y se sigue con el correo; Apple no existe', async ({ page }) => {
     await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: /Google|Apple/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Apple/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Registrarme con Google' }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'todavía no está habilitado' })).toBeVisible();
+    await expect(page).toHaveURL(/\/crear\/cuenta/);                       // no avanzó como si hubiera cuenta
     await page.goto('/crear/cuenta?modo=ingresar', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: /Google|Apple/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Ingresar con Google' })).toBeVisible();
   });
 
   test('4. onboarding empezado (nombres cargados, falta fecha y foto) → registro simulado: se conserva el progreso', async ({ page }) => {
