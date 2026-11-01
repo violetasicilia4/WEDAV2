@@ -461,6 +461,12 @@ Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la c
 - Es solo un número: el servidor no guarda navegador ni lugar de cada sesión, así que no hay lista por dispositivo (requeriría cambiar el esquema).
 - Después de cambiar la clave, la fila se vuelve a consultar (el cambio de clave ya cerró las demás).
 
+## Aviso de «cambios sin publicar» (2026-10-31, implementación de DASH-04 / NE-03)
+- **Quién lo decide:** el servidor. Al guardar el borrador y al abrir el panel compara la página que publicaría ahora con la que está publicada (`pendingChanges`). Solo cuenta lo que ve un invitado: cambiar la lista de invitados no genera aviso; cambiar textos, fotos, regalos o el plan, sí.
+- **Arriba a la derecha:** con la página publicada y cambios pendientes, el botón «Publicada» pasa a decir «Publicar cambios» y abre «Tu publicación». Al publicar vuelve a «Publicada».
+- **En «Tu publicación»:** el estado dice «Publicada, con cambios sin publicar» y un texto explica que la página todavía muestra la versión anterior, con el botón «Publicar los cambios». Si está al día dice «Tu página ya muestra todo lo que guardaste» y no ofrece volver a publicar lo mismo. Mientras no llegó el dato del servidor, se mantiene el texto y el botón anteriores, sin afirmar nada.
+- **Supuesto:** con la página dada de baja no hay aviso; «Volver a publicar» ya publica lo último guardado.
+
 ## Regalos repetibles (2026-10-31, GIFT-08 / BR-19; decisión Q1 de la dueña, plan aprobado)
 - **Reemplaza** lo anterior sobre «Ya elegido» y la nota de la revisión de aportes («Volver a revisar falla si otro invitado eligió alguno de sus regalos»): **ningún regalo se agota**. El mismo regalo se puede regalar las veces que quieran los invitados, y una persona puede hacer los aportes que quiera.
 - **Página publicada:** todas las tarjetas dicen «Regalar», aunque el regalo ya tenga aportes. Después de enviar, el agradecimiento confirma el envío y la tarjeta no cambia. La página no muestra cuántos regalaron ni quiénes (BR-27).
