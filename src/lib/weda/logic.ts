@@ -135,6 +135,10 @@ export function validateCbu(v: string): string | undefined {
   return /^\d{22}$/.test(cleanCbu(v)) ? undefined : 'El CBU tiene 22 números.';
 }
 
+/** Datos de cobro enmascarados (confirmación del cambio y avisos por correo): nunca el alias ni el CBU completos. */
+export const maskAlias = (v: string) => (v.length <= 4 ? '••••' : `${v.slice(0, 2)}•••${v.slice(-2)}`);
+export const maskCbu = (v: string) => (v ? `••••${v.slice(-4)}` : '');
+
 export function validateGroupName(v: string, groups: Group[], ignoreId?: string): string | undefined {
   const t = v.trim();
   if (t.length < 2) return 'Poné un nombre para el grupo o la mesa.';

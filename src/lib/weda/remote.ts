@@ -28,7 +28,13 @@ export type RemoteState = {
   publication: { status: string; planId: string; version: number; publishedAt: string; pendingChanges?: boolean | null } | null;
   /** Cobro: si el servidor tiene un proveedor de pagos y qué plan está pagado (confirmado por el proveedor). null = todavía no se sabe. */
   payments: { enabled: boolean; paidPlan: string | null } | null;
+  /** Destino de cobro vigente según el servidor (solo cambia con la clave, `changePayout`). null = sin cuenta o todavía no se sabe. */
+  payout: Payout | null;
+  /** Datos de cobro cargados en este navegador antes de tener cuenta: no se suben solos, se confirman con la clave. */
+  pendingPayout: PayoutData | null;
 };
+export type PayoutData = { alias: string; bank: string; cbu: string };
+export type Payout = PayoutData & { version: number; changedAt: string | null };
 
 export class ApiFailure extends Error {
   constructor(public status: number, public code: string, public detail?: string) { super(code); }
@@ -49,7 +55,7 @@ export async function api<T = any>(method: string, url: string, body?: unknown):
 
 /* ------------------------------------------------------------------ estado observable */
 
-let remote: RemoteState = { settled: false, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null };
+let remote: RemoteState = { settled: false, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null, payout: null, pendingPayout: null };
 const listeners = new Set<() => void>();
 const set = (p: Partial<RemoteState>) => { remote = { ...remote, ...p }; listeners.forEach(l => l()); };
 const SERVER_REMOTE: RemoteState = remote;
@@ -85,6 +91,16 @@ function reconcilePublication(local: Publication | null, server: { status: strin
   const live = server.status === 'live';
   if (local) return { ...local, live, planId: server.planId as PlanId };
   return { planId: server.planId as PlanId, live, publishedAt: server.publishedAt, expiresAt: addTerm(server.publishedAt), payments: [] };
+}
+
+const payoutOf = (s: AppState): PayoutData => ({ alias: s.gifts.alias.trim(), bank: s.gifts.bank.trim(), cbu: s.gifts.cbu.trim() });
+const withPayout = (s: AppState, p: PayoutData): AppState => ({ ...s, gifts: { ...s.gifts, alias: p.alias, bank: p.bank, cbu: p.cbu } });
+
+function adoptPayout(local: AppState, server: Payout): AppState {
+  const mine = payoutOf(local);
+  const differs = (mine.alias || mine.bank || mine.cbu) && (mine.alias !== server.alias || mine.bank !== server.bank || mine.cbu !== server.cbu);
+  set({ payout: server, pendingPayout: differs && server.version === 0 ? mine : null });
+  return withPayout(local, server);
 }
 
 function mergeFromServer(local: AppState, w: any, email: string): AppState {
@@ -124,7 +140,8 @@ async function attach(email: string): Promise<void> {
     set({ settled: true, user: { email }, error: e instanceof ApiFailure ? e.code : 'network', save: 'error' });
     return;
   }
-  const local = getState();
+  // El destino de cobro manda el del servidor. Si este navegador tenía otro (cargado antes de tener cuenta), queda aparte para confirmarlo con la clave.
+  const local = adoptPayout(getState(), w.payout as Payout);
   const serverHasData = !!w.draft.onboarded || !!w.draft.couple.first || !!w.draft.couple.second;
   if (!serverHasData && hasEvent(local)) {
     // Primer ingreso con un borrador local: se sube a la cuenta (el local no se borra).
@@ -297,7 +314,7 @@ export async function logout(): Promise<void> {
   try { window.localStorage.removeItem(META_KEY); } catch { /* nada que borrar */ }
   reset();
   started = Promise.resolve();
-  set({ settled: true, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null });
+  set({ settled: true, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null, payout: null, pendingPayout: null });
 }
 
 /** Publica de verdad en el servidor lo último guardado. Primero se asegura de que el servidor tenga el borrador actual. */
@@ -324,6 +341,24 @@ export async function unpublishRemote(): Promise<{ ok: true } | { ok: false; cod
   catch (e) { return { ok: false, code: e instanceof ApiFailure ? e.code : 'network' }; }
 }
 
+/**
+ * Cambia adónde transfieren los invitados: con la clave actual y sobre la versión que se vio (si cambió en otro dispositivo, el servidor lo rechaza).
+ * Los invitados lo ven cuando se publican los cambios.
+ */
+export async function changePayout(data: PayoutData, currentPassword: string): Promise<AuthResult> {
+  if (!remote.user || !remote.payout) return { ok: false, code: 'session_expired' };
+  try {
+    const r = await api<{ payout: Payout; pendingChanges: boolean | null }>('POST', '/api/wedding/payout', { ...data, currentPassword, baseVersion: remote.payout.version });
+    const pub = remote.publication;
+    set({ payout: r.payout, pendingPayout: null, ...(pub && typeof r.pendingChanges === 'boolean' ? { publication: { ...pub, pendingChanges: r.pendingChanges } } : {}) });
+    replace(withPayout(getState(), r.payout));
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 401) return { ok: false, code: 'session_expired' };
+    return { ok: false, code: e instanceof ApiFailure ? e.code : 'network' };
+  }
+}
+
 /** Mensajes para la persona (nunca el texto crudo del servidor). */
 export const ERROR_TEXT: Record<string, string> = {
   backend_unavailable: 'Las cuentas no están disponibles en este momento.',
@@ -344,6 +379,12 @@ export const ERROR_TEXT: Record<string, string> = {
   no_plan: 'Elegí un plan para publicar.',
   invalid_or_expired_token: 'El enlace venció o ya se usó. Pedí uno nuevo.',
   too_many_requests: 'Hiciste demasiados pedidos seguidos. Esperá un rato y probá de nuevo.',
+  invalid_alias: 'El alias tiene entre 6 y 20 caracteres: letras, números, puntos o guiones.',
+  invalid_cbu: 'El CBU tiene 22 números.',
+  invalid_bank: 'El nombre del banco es demasiado largo.',
+  payout_changed: 'Tus datos de cobro cambiaron desde otro dispositivo. Recargá la página para ver los vigentes.',
+  payout_unchanged: 'Son los mismos datos que ya tenías.',
+  too_many_changes: 'Ya cambiaste tus datos de cobro 3 veces hoy. Por seguridad, probá de nuevo mañana.',
 };
 export const errorText = (code: string | null) => (code && ERROR_TEXT[code]) || 'Algo salió mal de nuestro lado. Probá de nuevo en un rato.';
 

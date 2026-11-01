@@ -77,3 +77,9 @@ export async function saveDraft(c: Client, draft: AppState, guests?: unknown) {
 }
 
 export const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+/** Cambia el destino de cobro como lo hace el panel: con la clave y sobre la versión vigente. */
+export async function setPayout(c: Client, data: { alias?: string; bank?: string; cbu?: string }, password = PASSWORD) {
+  const w = await c.get('/api/wedding');
+  return c.post('/api/wedding/payout', { currentPassword: password, baseVersion: w.body.payout.version, ...data });
+}

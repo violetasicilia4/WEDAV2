@@ -87,7 +87,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
 | GIFT-01 | Catálogo, sets y regalo propio; ordenar; quitar | DOCUMENTADO | **Implementada** (`panel.regalos.tsx`, `logic.ts`) | U (`weda-logic` regalos) | |
-| GIFT-02 | Datos de cobro: banco, CBU y alias, con validación de formato | DOCUMENTADO | **Implementada** | U (validaciones de alias) | Se guardan **dentro del borrador**, sin versiones, sin reautenticación ni auditoría (IC-04) |
+| GIFT-02 | Datos de cobro: banco, CBU y alias, con validación de formato | DOCUMENTADO | **Implementada** | U (validaciones de alias, `payout`) | Desde 2026-10-31 se guardan **fuera del borrador**, con versiones (`payout_methods`); ver GIFT-14 |
 | GIFT-03 | Lista pública de regalos y flujo de regalar (elegir → datos → comprobante) | DOCUMENTADO | **Implementada** (`gifts-page.tsx`) | U (`wedding-flow`) · E2E | |
 | GIFT-04 | **Comprobante obligatorio en el mismo envío** («sin comprobante no hay regalo») | DECIDIDO (dueña, 2026-10-28) | **Implementada y probada** | U (`wedding-flow`) | |
 | GIFT-05 | Correo del invitado obligatorio y constancia por correo | DECIDIDO | **Implementada**; el envío real no se probó | U (`wedding-flow`) | Sin `RESEND_API_KEY` no sale ningún correo |
@@ -99,7 +99,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | GIFT-11 | Tarjeta como medio para regalar | PENDIENTE | **No disponible**: 501 `card_not_available`; el plan «Regalos» igual dice «Alias y tarjeta» | U | IC-07 |
 | GIFT-12 | Libro inmutable de transacciones | **DECIDIDO** (A5) | **No implementada** (el estado del aporte es mutable) | — | |
 | GIFT-13 | Exportar regalos, aportes y resumen financiero; ZIP de comprobantes | **DECIDIDO** | **No implementada** | — | Hoy solo se exportan invitados |
-| GIFT-14 | Cambio de alias con reautenticación, confirmación, auditoría y aviso (Q4) | **DECIDIDO** (extras en P5) | **No implementada** | — | |
+| GIFT-14 | Cambio de alias con reautenticación, confirmación, auditoría y aviso (Q4) | **DECIDIDO** (extras en P5) | **Implementada y probada, nivel base** (2026-10-31): `POST /api/wedding/payout` con la clave, sobre la versión vigente, hasta 3 cambios por día; versiones de solo agregado; correo al dueño con datos enmascarados; un guardado del borrador ya no cambia el destino | U (`payout`: 8, `auth-isolation`, `payout-form`: 4) | Los invitados lo ven al publicar los cambios. Extras de DP-01 pendientes; los aportes todavía no registran a qué destino se informaron |
 
 ## 7. Micrositio y constructor (SITE)
 

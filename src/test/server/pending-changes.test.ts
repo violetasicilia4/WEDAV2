@@ -1,7 +1,7 @@
 // @vitest-environment node
 // Aviso «cambios sin publicar» (DASH-04): el servidor compara lo que publicaría ahora con la página pública, al leer y al guardar el casamiento.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, saveDraft, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeEach(() => { env = makeEnv(); });
@@ -41,6 +41,22 @@ describe('cambios sin publicar', () => {
     const r = await saveDraft(c, base, { upsert: [{ id: 'inv-1', first: 'Rosa', last: 'Gómez', status: 'confirmed', menu: '', groupId: null, source: 'manual' }] });
     expect(r.pendingChanges).toBe(false);
     expect((await saveDraft(c, { ...base, planId: 'regalos' })).pendingChanges).toBe(true);
+  });
+
+  it('cambiar el alias (con clave) enciende el aviso; un alias que viaje en el borrador no', async () => {
+    const c = env.client(); await signUp(c, 'alias@correo.com');
+    await saveDraft(c, draftFor('Ana', 'Leo'));
+    await setPayout(c, { alias: 'ana.leo.mp' });
+    await c.post('/api/wedding/publish');
+    expect(await pendingOf(c)).toBe(false);
+    const w = (await c.get('/api/wedding')).body;
+    const sneaky = await c.put('/api/wedding', { baseRevision: w.revision, draft: { ...w.draft, gifts: { ...w.draft.gifts, alias: 'otro.alias.mp' } } });
+    expect(sneaky.body.pendingChanges).toBe(false); // se descarta: no cambia la página
+    const r = await setPayout(c, { alias: 'nuevo.alias.mp' });
+    expect(r.body.pendingChanges).toBe(true);
+    expect(await pendingOf(c)).toBe(true);
+    await c.post('/api/wedding/publish');
+    expect(await pendingOf(c)).toBe(false);
   });
 
   it('cada pareja ve solo el estado de su propia página', async () => {

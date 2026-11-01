@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createFileRoute } from '@tanstack/react-router';
 import { Check, ChevronRight, Copy, Eye, Gift as GiftIcon, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
 import { Field, Locked, useToast } from '@/components/panel/ui';
+import { PayoutForm } from '@/components/panel/payout-form';
 import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
 import { ContributionReview } from '@/components/panel/contribution-review';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -309,6 +310,9 @@ function GiftsModule() {
   const [packOpen, setPackOpen] = useState<GiftSet | null>(null);
   const [creating, setCreating] = useState(false);
   const [cfg, setCfg] = useState<'bank' | 'mp' | null>(null);
+  // Con cuenta, el destino de cobro solo cambia con la clave (PayoutForm); sin cuenta se carga en este navegador y se confirma al crearla.
+  const remote = useRemote();
+  const payout = remote.user ? remote.payout : null;
   const [editing, setEditing] = useState<ListGift | null>(null);
   // El botón de la barra superior (panel.tsx) pide abrir la vista previa de la lista.
 
@@ -551,8 +555,10 @@ function GiftsModule() {
                     {s.gifts.cbu.trim() && <div><dt>CBU</dt><dd>{s.gifts.cbu.trim()}</dd></div>}
                   </dl>
                 ) : <p className="pn-muted">Configurá los datos de tu cuenta para que tus invitados puedan transferirte a esta cuenta.</p>}
+                {payout && remote.pendingPayout && <p className="pn-note" role="status">Cargaste un alias antes de crear tu cuenta ({remote.pendingPayout.alias || 'sin alias'}). Confirmalo con tu clave para que tus invitados lo vean.</p>}
+                {payout && alias && <p className="pn-hint">Por seguridad, cambiarlos pide tu clave y te avisamos por correo.</p>}
                 <div className="pn-cfg-actions">
-                  <button type="button" className="pn-btn" onClick={() => setCfg('bank')}>{alias ? 'Editar' : 'Configurar'}</button>
+                  <button type="button" className="pn-btn" onClick={() => setCfg('bank')}>{payout && remote.pendingPayout ? 'Confirmar' : alias ? (payout ? 'Cambiar' : 'Editar') : 'Configurar'}</button>
                   {alias && <button type="button" className="pn-link" onClick={() => { void navigator.clipboard?.writeText(alias).catch(() => undefined); toast('Alias copiado.'); }}><Copy size={14} aria-hidden="true" />Copiar alias</button>}
                 </div>
               </section>
@@ -572,9 +578,19 @@ function GiftsModule() {
         <Dialog open onOpenChange={o => { if (!o) setCfg(null); }}>
           <DialogContent className="pn-dialog">
             <DialogTitle>Transferencia bancaria</DialogTitle>
-            <DialogDescription>Se guarda sola mientras escribís. El alias alcanza para cobrar; el banco y el CBU son opcionales.</DialogDescription>
-            <BankFields bank={s.gifts.bank} cbu={s.gifts.cbu} alias={s.gifts.alias} />
-            <div className="pn-actions is-end"><button type="button" className="pn-btn" onClick={() => setCfg(null)}>Listo</button></div>
+            {payout ? (
+              <>
+                <DialogDescription>El alias alcanza para cobrar; el banco y el CBU son opcionales. Para cambiarlos te pedimos tu clave.</DialogDescription>
+                <PayoutForm current={payout} initial={remote.pendingPayout} onCancel={() => setCfg(null)}
+                  onDone={() => { setCfg(null); toast('Listo: guardamos tus datos de cobro. Tus invitados los ven cuando publiques los cambios.'); }} />
+              </>
+            ) : (
+              <>
+                <DialogDescription>Se guarda sola mientras escribís. El alias alcanza para cobrar; el banco y el CBU son opcionales.{remote.user ? '' : ' Al crear tu cuenta, vas a confirmarlos con tu clave.'}</DialogDescription>
+                <BankFields bank={s.gifts.bank} cbu={s.gifts.cbu} alias={s.gifts.alias} />
+                <div className="pn-actions is-end"><button type="button" className="pn-btn" onClick={() => setCfg(null)}>Listo</button></div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       )}

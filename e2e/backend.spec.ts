@@ -40,6 +40,8 @@ async function prepareAndPublish(api: APIRequestContext) {
     { id: 'g2', name: 'Spa para dos', text: '', amount: 300000, category: 'Luna de miel', icon: 'compass' },
   ] }, site: { ...w.draft.site, rsvp: { ...w.draft.site.rsvp, enabled: true } } };
   expect((await api.put('/api/wedding', { data: { baseRevision: w.revision, draft } })).status()).toBe(200);
+  // El alias no viaja en el borrador: se carga aparte, con la clave (GIFT-14).
+  expect((await api.post('/api/wedding/payout', { data: { alias: 'ana.luis.mp', currentPassword: PASS, baseVersion: w.payout.version } })).status()).toBe(200);
   const p = await api.post('/api/wedding/publish');
   expect(p.status()).toBe(200);
   return (await p.json()).slug as string;
