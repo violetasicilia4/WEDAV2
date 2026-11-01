@@ -140,6 +140,7 @@ export async function handleApi(req: Request, cfg: ServerConfig, injected?: Serv
         const g = (body['guests'] ?? undefined) as { upsert?: unknown; remove?: unknown } | undefined;
         return json(200, svc.saveWedding(session().userId, { baseRevision: body['baseRevision'], draft: body['draft'], ...(g ? { guests: g } : {}) }));
       }
+      if (b === 'payout' && !c && method === 'POST') { const body = await readJson(req); return json(200, await svc.changePayout(session(), body)); }
       if (b === 'publish' && method === 'POST') return json(200, svc.publish(session().userId));
       if (b === 'unpublish' && method === 'POST') { svc.unpublish(session().userId); return json(200, { ok: true }); }
     }

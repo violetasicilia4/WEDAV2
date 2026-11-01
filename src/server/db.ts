@@ -192,6 +192,28 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX funnel_events_name_at ON funnel_events(name, at);
   `,
+  // 7 (2026-10-31): destino de cobro (alias, banco y CBU) fuera del borrador, con versiones (GIFT-14, BR-30). Solo se agregan filas: la vigente es
+  // la versión más alta y las anteriores quedan como historial. Sin CASCADE: es un registro financiero. La copia inicial toma lo que había en el borrador.
+  `
+  CREATE TABLE payout_methods (
+    id TEXT PRIMARY KEY,
+    wedding_id TEXT NOT NULL REFERENCES weddings(id),
+    version INTEGER NOT NULL,
+    alias TEXT NOT NULL,
+    bank TEXT NOT NULL,
+    cbu TEXT NOT NULL,
+    created_by TEXT,                     -- usuario que hizo el cambio (en la copia inicial, el dueño)
+    created_at TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('owner','migrated')),
+    UNIQUE (wedding_id, version)
+  );
+  INSERT INTO payout_methods (id, wedding_id, version, alias, bank, cbu, created_by, created_at, source)
+    SELECT 'pay_' || lower(hex(randomblob(12))), id, 1,
+      trim(coalesce(json_extract(draft, '$.gifts.alias'), '')), trim(coalesce(json_extract(draft, '$.gifts.bank'), '')), trim(coalesce(json_extract(draft, '$.gifts.cbu'), '')),
+      owner_id, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 'migrated'
+    FROM weddings
+    WHERE trim(coalesce(json_extract(draft, '$.gifts.alias'), '')) != '' OR trim(coalesce(json_extract(draft, '$.gifts.bank'), '')) != '' OR trim(coalesce(json_extract(draft, '$.gifts.cbu'), '')) != '';
+  `,
 ];
 
 export function openDb(file: string): Db {

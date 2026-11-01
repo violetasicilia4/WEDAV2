@@ -8,7 +8,7 @@ import { tx, type Db } from './db';
 import { ApiError, conflict, forbidden, invalid, notFound, unauthorized } from './errors';
 import { hashPassword, newId, newToken, RateLimiter, sha256, verifyPassword } from './security';
 import type { ServerConfig } from './config';
-import { emptyState, isEmail, slugify, strongPassword } from '@/lib/weda/logic';
+import { cleanCbu, emptyState, isEmail, maskAlias, maskCbu, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
 import { planById, isPlanId } from '@/lib/weda/plans';
 import type { Guest, PlanId } from '@/lib/weda/types';
 import type { SiteData } from '@/lib/weda/site-model';
@@ -27,6 +27,9 @@ const SESSION_DAYS = 30;
 /** Cuánto vale el enlace para cambiar la clave. */
 const RESET_TTL_MS = 60 * 60 * 1000;
 const MAX_DRAFT_BYTES = 6 * 1024 * 1024;
+/** Cambios del destino de cobro: como mucho PAYOUT_MAX_CHANGES por casamiento en PAYOUT_WINDOW_MS (contados en la base). */
+const PAYOUT_MAX_CHANGES = 3;
+const PAYOUT_WINDOW_MS = 24 * 60 * 60 * 1000;
 export const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
 const now = () => new Date().toISOString();
 type Row = Record<string, unknown>;
@@ -39,6 +42,7 @@ export const CONTRIBUTION_TRANSITIONS: Record<string, string[]> = {
 };
 
 export type Session = { userId: string; email: string };
+export type Payout = { version: number; alias: string; bank: string; cbu: string; changedAt: string | null };
 export type GuestInput = { id: string; first: string; last: string; status: Guest['status']; menu: string; groupId: string | null; source: Guest['source'] };
 
 export class Service {
@@ -48,6 +52,9 @@ export class Service {
   private resetIpLimiter = new RateLimiter(20, 60 * 60_000);
   /** Intentos con la clave actual al cambiarla, por cuenta. */
   private changeLimiter = new RateLimiter(8, 15 * 60_000);
+
+  /** Intentos de cambiar el destino de cobro con la clave equivocada, por usuario. */
+  private payoutLimiter = new RateLimiter(8, 15 * 60_000);
   constructor(public db: Db, public cfg: ServerConfig) {}
 
   /* ------------------------------------------------------------------ cuentas y sesiones */
@@ -228,9 +235,10 @@ export class Service {
       id: wid,
       revision: w['revision'] as number,
       slug: (w['slug'] as string | null) ?? null,
-      draft: JSON.parse(w['draft'] as string) as DraftState,
+      draft: this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid),
       guests: this.guestsOf(wid),
       publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, expiresAt: (pub['expires_at'] as string | null) ?? null, pendingChanges: this.pendingChanges(w) } : null,
+      payout: this.activePayout(wid),
     };
   }
 
@@ -243,7 +251,8 @@ export class Service {
     const slug = w['slug'] as string | null;
     const pub = this.db.prepare('SELECT plan_id, snapshot FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
     if (!pub || !slug) return null;
-    const draft = JSON.parse(w['draft'] as string) as DraftState;
+    // Con el destino de cobro vigente, como lo publicaría `publish`: cambiar el alias (con clave) enciende el aviso; un alias que viaje en el borrador no.
+    const draft = this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid);
     let planId = pub['plan_id'] as PlanId;
     try { planId = this.entitledPlan(wid, draft.planId); } catch { /* sin plan o sin pago: publicar fallaría; se compara con el plan publicado */ }
     return JSON.stringify(publicSite(draft, planId, slug)) !== (pub['snapshot'] as string);
@@ -267,7 +276,8 @@ export class Service {
       if (w['revision'] !== input.baseRevision) throw new ApiError(409, 'revision_conflict', String(w['revision']));
       const t = now();
       const next = (w['revision'] as number) + 1;
-      this.db.prepare('UPDATE weddings SET draft = ?, revision = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(draft), next, t, wid);
+      // El destino de cobro que mande el cliente se descarta: solo cambia por changePayout (con clave).
+      this.db.prepare('UPDATE weddings SET draft = ?, revision = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(this.withPayout(draft, wid)), next, t, wid);
       for (const g of upserts) {
         const owner = this.db.prepare('SELECT wedding_id FROM guests WHERE id = ?').get(g.id) as Row | undefined;
         if (owner && owner['wedding_id'] !== wid) throw conflict('guest_id_in_use'); // nunca se toca un invitado de otro casamiento
@@ -277,6 +287,70 @@ export class Service {
       for (const id of removes) this.db.prepare('DELETE FROM guests WHERE id = ? AND wedding_id = ?').run(id, wid);
       return { revision: next, guests: this.guestsOf(wid), pendingChanges: this.pendingChanges({ ...w, draft: JSON.stringify(draft) }) };
     });
+  }
+
+  /* ------------------------------------------------------------------ destino de cobro (GIFT-14, BR-30) */
+
+  /** Destino vigente: la versión más alta de `payout_methods`. Versión 0 = todavía no se cargó ninguno. */
+  private activePayout(wid: string): Payout {
+    const r = this.db.prepare('SELECT version, alias, bank, cbu, created_at FROM payout_methods WHERE wedding_id = ? ORDER BY version DESC LIMIT 1').get(wid) as Row | undefined;
+    return r
+      ? { version: r['version'] as number, alias: r['alias'] as string, bank: r['bank'] as string, cbu: r['cbu'] as string, changedAt: r['created_at'] as string }
+      : { version: 0, alias: '', bank: '', cbu: '', changedAt: null };
+  }
+
+  /** El borrador siempre lleva el destino vigente: así lo leen el panel, la publicación y el snapshot, y ningún guardado lo reescribe. */
+  private withPayout(draft: DraftState, wid: string): DraftState {
+    const p = this.activePayout(wid);
+    return { ...draft, gifts: { ...draft.gifts, alias: p.alias, bank: p.bank, cbu: p.cbu } };
+  }
+
+  /**
+   * Cambia adónde transfieren los invitados. Solo el dueño, con su clave en la misma operación, sobre la versión que vio (`baseVersion`) y con un
+   * límite de cambios por día. Nunca edita una versión: agrega la siguiente. Avisa por correo al dueño (con los datos enmascarados).
+   * Los invitados lo ven recién al publicar los cambios (la página pública es una copia).
+   */
+  async changePayout(s: Session, input: Row): Promise<{ payout: Payout; pendingChanges: boolean | null }> {
+    const next = parsePayout(input);
+    const password = typeof input['currentPassword'] === 'string' ? input['currentPassword'] : '';
+    if (!password) throw invalid('wrong_password');
+    const baseVersion = input['baseVersion'];
+    if (typeof baseVersion !== 'number' || !Number.isInteger(baseVersion)) throw invalid('invalid_version');
+    if (!this.payoutLimiter.take(s.userId)) throw new ApiError(429, 'too_many_attempts');
+    const user = this.db.prepare('SELECT password_hash FROM users WHERE id = ?').get(s.userId) as Row | undefined;
+    if (!user || !(await verifyPassword(password, user['password_hash'] as string))) throw invalid('wrong_password');
+    const prev = tx(this.db, () => {
+      const wid = this.ensureWedding(s.userId)['id'] as string;
+      const cur = this.activePayout(wid);
+      if (cur.version !== baseVersion) throw conflict('payout_changed', String(cur.version));
+      if (cur.alias === next.alias && cur.bank === next.bank && cur.cbu === next.cbu) throw invalid('payout_unchanged');
+      const since = new Date(Date.now() - PAYOUT_WINDOW_MS).toISOString();
+      const recent = this.db.prepare("SELECT COUNT(*) AS n FROM payout_methods WHERE wedding_id = ? AND source = 'owner' AND created_at > ?").get(wid, since) as Row;
+      if (Number(recent['n']) >= PAYOUT_MAX_CHANGES) throw new ApiError(429, 'too_many_changes');
+      this.db.prepare("INSERT INTO payout_methods (id,wedding_id,version,alias,bank,cbu,created_by,created_at,source) VALUES (?,?,?,?,?,?,?,?,'owner')")
+        .run(newId('pay'), wid, cur.version + 1, next.alias, next.bank, next.cbu, s.userId, now());
+      return cur;
+    });
+    this.payoutLimiter.reset(s.userId);
+    void this.mailPayoutChanged(s.email, prev, next);
+    const w = this.ensureWedding(s.userId);
+    return { payout: this.activePayout(w['id'] as string), pendingChanges: this.pendingChanges(w) };
+  }
+
+  private mailPayoutChanged(to: string, prev: Payout, next: { alias: string; bank: string; cbu: string }) {
+    const show = (p: { alias: string; bank: string; cbu: string }) => [`Alias: ${p.alias ? maskAlias(p.alias) : 'sin alias'}`, ...(p.cbu ? [`CBU: ${maskCbu(p.cbu)}`] : []), ...(p.bank ? [`Banco: ${p.bank}`] : [])].join(' · ');
+    const body = layout({
+      title: prev.version ? 'Cambiaron tus datos de cobro' : 'Cargaste tus datos de cobro',
+      paragraphs: [
+        `${prev.version ? 'Se cambió' : 'Se cargó'} adónde transfieren tus invitados los regalos, desde tu cuenta de Weda.`,
+        ...(prev.version ? [`Antes: ${show(prev)}`] : []),
+        `${prev.version ? 'Ahora' : 'Datos'}: ${show(next)}`,
+        'Tus invitados lo van a ver cuando publiques los cambios de tu página.',
+        'Si no fuiste vos, cambiá tu clave ahora y escribinos a hola@weda.app.',
+      ],
+      button: { label: 'Cambiar mi clave', url: `${this.cfg.publicUrl}/clave` },
+    });
+    return sendMail(this.db, this.cfg, 'payout_changed', { to, subject: prev.version ? 'Cambiaron tus datos de cobro en Weda' : 'Cargaste tus datos de cobro en Weda', ...body });
   }
 
   /* ------------------------------------------------------------------ publicación */
@@ -297,7 +371,7 @@ export class Service {
     return tx(this.db, () => {
       const w = this.ensureWedding(userId);
       const wid = w['id'] as string;
-      const draft = JSON.parse(w['draft'] as string) as DraftState;
+      const draft = this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid);
       if (!draft.couple.first.trim() || !draft.couple.second.trim()) throw conflict('incomplete', 'couple_names');
       const planId = this.entitledPlan(wid, draft.planId);
       let slug = w['slug'] as string | null;
@@ -731,6 +805,19 @@ function parseGuestInputs(v: unknown): GuestInput[] {
     if (status !== 'confirmed' && status !== 'declined' && status !== 'pending') throw invalid('invalid_guest_status');
     return { id: o['id'], first: reqStr(o['first'], 1, 80, 'invalid_guest_name'), last: typeof o['last'] === 'string' ? o['last'].trim().slice(0, 80) : '', status, menu: typeof o['menu'] === 'string' ? o['menu'].slice(0, 60) : '', groupId: typeof o['groupId'] === 'string' ? o['groupId'].slice(0, 80) : null, source: o['source'] === 'rsvp' ? 'rsvp' : 'manual' } as GuestInput;
   });
+}
+
+/** Destino de cobro que manda el panel: alias en minúsculas (6–20 letras, números, puntos o guiones), CBU de 22 números y banco corto. Vacío = sin dato. */
+function parsePayout(v: Row): { alias: string; bank: string; cbu: string } {
+  const text = (x: unknown, code: string) => { if (x === undefined || x === null) return ''; if (typeof x !== 'string') throw invalid(code); return x.trim(); };
+  const alias = text(v['alias'], 'invalid_alias').toLowerCase();
+  if (alias && validateAlias(alias)) throw invalid('invalid_alias');
+  const cbu = cleanCbu(text(v['cbu'], 'invalid_cbu'));
+  if (cbu && validateCbu(cbu)) throw invalid('invalid_cbu');
+  const bank = text(v['bank'], 'invalid_bank');
+  // eslint-disable-next-line no-control-regex -- se rechazan justamente los caracteres de control
+  if (bank.length > 60 || /[\u0000-\u001f\u007f]/.test(bank)) throw invalid('invalid_bank');
+  return { alias, bank, cbu };
 }
 
 /** Vencimiento de una publicación. Las anteriores a la migración 5 no lo tienen guardado: se calcula desde su primera publicación. */
