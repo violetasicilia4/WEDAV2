@@ -9,6 +9,7 @@ Este archivo es un índice. Las reglas por área se cargan solas al trabajar en 
 - Estado vigente del producto, reglas de negocio y decisiones abiertas: [docs/product-blueprint/](docs/product-blueprint/00-product-blueprint.md). Modelo de datos decidido: [docs/data-architecture/](docs/data-architecture/06-consolidation-report.md).
 - **No inventes** features, precios, planes, beneficios, reglas de publicación, integraciones, estados de pago, testimonios ni métricas. Los planes están en `src/lib/weda/plans.ts`.
 - Una sola fuente de datos: panel, vista previa y página pública leen el mismo estado (`src/lib/weda/`). No dupliques contenido ni crees una segunda versión de una página.
+- Las funcionalidades medianas y críticas (dinero, permisos, esquema, privacidad) llevan spec y plan en [specs/](specs/README.md) antes de construir; los cambios chicos no.
 
 ## Autonomía y decisiones
 - Resolvé por tu cuenta lo habitual de implementación y de UX/UI.
