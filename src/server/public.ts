@@ -5,7 +5,7 @@ import { loadConfig } from './config';
 import { ApiError } from './errors';
 
 export type PublicLookup =
-  | { status: 'live'; site: SiteData; takenGiftIds: string[] }
+  | { status: 'live'; site: SiteData }
   | { status: 'unpublished' }
   | { status: 'expired' }
   | { status: 'missing' };
@@ -13,7 +13,7 @@ export type PublicLookup =
 export function lookupPublicSite(slug: string): PublicLookup {
   try {
     const r = getService(loadConfig()).getPublicSite(slug);
-    return { status: 'live', site: r.site, takenGiftIds: r.takenGiftIds };
+    return { status: 'live', site: r.site };
   } catch (e) {
     if (e instanceof ApiError && e.status === 410) return { status: e.code === 'site_expired' ? 'expired' : 'unpublished' };
     if (e instanceof ApiError && e.status === 404) return { status: 'missing' };

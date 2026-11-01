@@ -21,11 +21,11 @@ const icons: Record<IconKey, LucideIcon> = {
 
 /* Misma tarjeta que la escena "Lista de regalos" de la landing: foto cuadrada, monto sobre la foto,
    nombre y un botón. */
-function GiftCard({ gift, chosen, inCart, onPick }: { gift: Gift; chosen: boolean; inCart: boolean; onPick: (g: Gift) => void }) {
+/* Los regalos son simbólicos (BR-19): ningún aporte anterior, propio o ajeno, cambia su disponibilidad. Sin «Ya elegido», «Agotado» ni stock. */
+function GiftCard({ gift, inCart, onPick }: { gift: Gift; inCart: boolean; onPick: (g: Gift) => void }) {
   const Icon = icons[gift.icon];
-  const done = gift.taken || chosen;
   return (
-    <article className={`rg-card${done ? ' is-done' : ''}${inCart ? ' in-cart' : ''}`}>
+    <article className={`rg-card${inCart ? ' in-cart' : ''}`}>
       <div className={`rg-photo${gift.fit ? ' is-contain' : ''}${gift.fit === 'white' ? ' is-white' : ''}`} style={gift.fit && gift.image ? ({ '--bg': `url(${gift.image})` } as React.CSSProperties) : undefined}>
         {gift.image
           ? <img src={gift.image} alt="" loading="lazy" style={gift.pos || gift.zoom ? { objectPosition: gift.pos, ...(gift.zoom ? { transform: `scale(${gift.zoom.scale})`, transformOrigin: gift.zoom.origin } : {}) } : undefined} />
@@ -33,8 +33,8 @@ function GiftCard({ gift, chosen, inCart, onPick }: { gift: Gift; chosen: boolea
         <span className="rg-price">{formatARS(gift.amount)}</span>
       </div>
       <h3 title={gift.name}>{gift.name}</h3>
-      <button type="button" className="rg-btn" disabled={done} onClick={() => onPick(gift)}>
-        {done ? <><Check size={14} aria-hidden="true" />{chosen ? 'Elegido por vos' : 'Ya elegido'}</> : inCart ? <><Check size={14} aria-hidden="true" />En tu regalo</> : 'Regalar'}
+      <button type="button" className="rg-btn" onClick={() => onPick(gift)}>
+        {inCart ? <><Check size={14} aria-hidden="true" />En tu regalo</> : 'Regalar'}
       </button>
     </article>
   );
@@ -231,14 +231,13 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
 export function GiftsPage() {
   const rsvp = useRsvp();
   const site = useSite();
-  const { given, recordGift } = useSiteActions();
+  const { recordGift } = useSiteActions();
   const gifts = site.gifts;
   const categories = site.giftCategories;
   const [filter, setFilter] = useState<Category | 'Todos'>('Todos');
   const [cart, setCart] = useState<Gift[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(null);
-  const chosen = given.map(x => x.id);
   const [range, setRange] = useState<'all' | 'asc' | 'desc' | 'low' | 'mid' | 'high'>('all');
   const [query, setQuery] = useState('');
   const inRange = (g: Gift) => range === 'all' || range === 'asc' || range === 'desc' || (range === 'low' ? g.amount <= 200000 : range === 'mid' ? g.amount > 200000 && g.amount <= 500000 : g.amount > 500000);
@@ -312,7 +311,7 @@ export function GiftsPage() {
       {visible.length === 0 && <p className="rg-empty">No encontramos regalos con esos filtros. Probá con otra búsqueda o limpiá los filtros.</p>}
       <h2 className="dm-sr">Regalos</h2>
       <div className="rg-grid">
-        {visible.map(g => <GiftCard key={g.id} gift={g} chosen={site.kind === 'demo' && chosen.includes(g.id)} inCart={cart.some(c => c.id === g.id)} onPick={g => { returnFocus.current = document.activeElement as HTMLElement | null; setCart(c => c.some(x => x.id === g.id) ? c : [...c, g]); setCartOpen(true); }} />)}
+        {visible.map(g => <GiftCard key={g.id} gift={g} inCart={cart.some(c => c.id === g.id)} onPick={g => { returnFocus.current = document.activeElement as HTMLElement | null; setCart(c => c.some(x => x.id === g.id) ? c : [...c, g]); setCartOpen(true); }} />)}
       </div>
       <p className="rg-live" aria-live="polite">{visible.length} {visible.length === 1 ? 'regalo' : 'regalos'}{filter === 'Todos' ? '' : ` en ${filter}`}{range === 'all' || range === 'asc' || range === 'desc' ? '' : ' en ese rango de monto'}</p>
       <div className="rg-next">

@@ -125,8 +125,6 @@ export type Gift = {
   /** 'contain': se ve la foto entera, con su propio fondo difuminado a los costados. */
   fit?: 'contain' | 'white' | undefined;
   icon: IconKey;
-  /** Regalo simbólico ya elegido por otro invitado (ficticio). */
-  taken?: boolean | undefined;
 };
 
 /** Catálogo curado de la demo: 26 regalos repartidos entre cuatro categorías (8 · 6 · 8 · 4). */

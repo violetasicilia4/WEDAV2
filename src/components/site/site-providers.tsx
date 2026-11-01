@@ -55,7 +55,7 @@ let stickyPreview = false;
 
 /* Sitio publicado en el servidor: lo ve cualquier invitado, sin sesión y sin depender del navegador de la pareja. Los envíos son reales. */
 function PublishedSite({ slug, lookup, children }: { slug: string; lookup: Extract<PublicLookup, { status: 'live' }>; children: ReactNode }) {
-  const [taken, setTaken] = useState<string[]>(lookup.takenGiftIds);
+  // Regalos repetibles (BR-19): la página no marca ningún regalo como elegido; después de enviar, el agradecimiento confirma el envío.
   const actions = useMemo<SiteActions>(() => ({
     remote: true,
     given: [],
@@ -63,12 +63,9 @@ function PublishedSite({ slug, lookup, children }: { slug: string; lookup: Extra
     recordGift: async (gs, who, extra) => {
       if (!extra) throw new Error('No pudimos completar el envío. Probá de nuevo en un rato.');
       await sendGift(slug, gs, who, extra);
-      setTaken(t => [...new Set([...t, ...gs.map(g => g.id)])]);
     },
-  }), [slug, taken]);
-  // Los regalos que otro invitado ya eligió se ven como «Ya elegido».
-  const data = useMemo(() => ({ ...lookup.site, gifts: lookup.site.gifts.map(g => (taken.includes(g.id) ? { ...g, taken: true } : g)) }), [lookup.site, taken]);
-  return <SiteProvider data={data} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
+  }), [slug]);
+  return <SiteProvider data={lookup.site} actions={actions}><SiteShell>{children}</SiteShell></SiteProvider>;
 }
 
 export function AppSite({ slug, remote, children }: { slug: string; remote?: PublicLookup | undefined; children: ReactNode }) {

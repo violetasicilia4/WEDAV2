@@ -302,16 +302,19 @@ describe('aportes, comprobantes y órdenes', () => {
     expect(n.n).toBe(1);
   });
 
-  it('un regalo ya tomado no se puede tomar de nuevo, ni dos envíos simultáneos', async () => {
+  it('un regalo se puede regalar varias veces (BR-19), también en envíos simultáneos, y lo público no cuenta cuántos', async () => {
     const g = env.client();
-    const dup = await g.post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0002', manageToken: 'token-del-invitado-0002' }));
-    expect(dup.status).toBe(409); expect(dup.body.error).toBe('gift_taken');
+    const again = await g.post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0002', manageToken: 'token-del-invitado-0002' }));
+    expect(again.status).toBe(201); // el mismo regalo g1, otro aporte
     const [x, y] = await Promise.all([
       g.post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0003', manageToken: 'token-del-invitado-0003', giftIds: ['g2'] })),
       env.client().post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0004', manageToken: 'token-del-invitado-0004', giftIds: ['g2'] })),
     ]);
-    expect([x.status, y.status].sort()).toEqual([201, 409]);
-    expect((await env.client().get(`/api/public/${slug}`)).body.takenGiftIds.sort()).toEqual(['g1', 'g2']);
+    expect([x.status, y.status]).toEqual([201, 201]);
+    const items = env.svc.db.prepare("SELECT i.gift_id AS id, COUNT(*) AS n FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ? GROUP BY i.gift_id ORDER BY i.gift_id").all(slug);
+    expect(items.map(r => ({ ...r }))).toEqual([{ id: 'g1', n: 2 }, { id: 'g2', n: 2 }]);
+    const pub = (await env.client().get(`/api/public/${slug}`)).body;
+    expect(Object.keys(pub)).toEqual(['site']); // ni ids elegidos ni cantidades (BR-27)
   });
 
   it('rechaza regalos inexistentes, tarjeta (sin proveedor) y datos inválidos', async () => {
@@ -366,25 +369,15 @@ describe('aportes, comprobantes y órdenes', () => {
     expect(guestView.body.status).toBe('confirmed');
   });
 
-  it('un aporte rechazado libera el regalo', async () => {
+  it('rechazar y volver a revisar un aporte no depende de los demás aportes del mismo regalo', async () => {
     const owner = env.client(); await owner.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
     const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
     expect((await owner.patch(`/api/contributions/${row.id}`, { status: 'rejected' })).status).toBe(200);
-    expect((await env.client().get(`/api/public/${slug}`)).body.takenGiftIds).not.toContain('g1');
-  });
-
-  it('volver a revisar un rechazado solo si sus regalos siguen libres (un regalo nunca queda tomado dos veces)', async () => {
-    const owner = env.client(); await owner.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
-    const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
-    // Mientras estaba rechazado, otro invitado eligió el mismo regalo.
+    // Mientras estaba rechazado, otro invitado regaló lo mismo: no lo impide nada.
     const other = await env.client().post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0007', manageToken: 'token-del-invitado-0007' }));
     expect(other.status).toBe(201);
-    const back = await owner.patch(`/api/contributions/${row.id}`, { status: 'pending_review' });
-    expect([back.status, back.body.error, back.body.detail]).toEqual([409, 'gift_taken', 'g1']);
-    // Si la pareja rechaza el otro, el primero puede volver a revisión.
-    expect((await owner.patch(`/api/contributions/${other.body.id}`, { status: 'rejected' })).status).toBe(200);
     expect((await owner.patch(`/api/contributions/${row.id}`, { status: 'pending_review' })).status).toBe(200);
-    expect((await env.client().get(`/api/public/${slug}`)).body.takenGiftIds).toContain('g1');
+    expect((await owner.patch(`/api/contributions/${row.id}`, { status: 'pending_review' })).status).toBe(409); // ya está pendiente: transición inválida
   });
 
   it('el pago no se puede marcar desde el cliente; el webhook de pagos no está configurado', async () => {

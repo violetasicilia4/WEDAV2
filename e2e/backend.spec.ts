@@ -203,10 +203,11 @@ test.describe('sitio publicado, confirmaciones y regalos', () => {
     const anon = await guest.request.get(`/api/contributions/${list[0].id}/receipt`);
     expect(anon.status()).toBe(401);
     expect((await (await guest.request.get(`/api/public/${slug}`)).text())).not.toContain('comprobante');
-    // El regalo elegido ya no se ofrece a otros invitados.
+    // Regalos repetibles (BR-19): otro invitado ve todos los regalos disponibles, el ya regalado incluido.
     const other = await (await browser.newContext({ baseURL: baseURL! })).newPage();
     await other.goto(`/sitio/${slug}/regalos`, { waitUntil: 'networkidle' });
-    await expect(other.getByRole('button', { name: /Ya elegido/ })).toHaveCount(1);
+    await expect(other.getByRole('button', { name: /Ya elegido/ })).toHaveCount(0);
+    await expect(other.getByRole('button', { name: 'Regalar', exact: true })).toHaveCount(2);
     await owner.close(); await guest.close();
   });
 

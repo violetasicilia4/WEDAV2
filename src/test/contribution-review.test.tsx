@@ -47,7 +47,7 @@ describe('revisión manual de un aporte', () => {
     const fetch = vi.fn(async () => reply(200, { id: 'apo_1', status: 'rejected' })); vi.stubGlobal('fetch', fetch);
     const onChange = renderReview();
     fireEvent.click(button('Rechazar')!);
-    expect(screen.getByText(/Sus regalos vuelven a quedar libres/)).toBeInTheDocument();
+    expect(screen.getByText(/Deja de sumar en tus totales/)).toBeInTheDocument();
     fireEvent.click(button('Cancelar')!);
     expect(fetch).not.toHaveBeenCalled();
     fireEvent.click(button('Rechazar')!);
@@ -56,11 +56,11 @@ describe('revisión manual de un aporte', () => {
     expect(onChange).toHaveBeenCalledWith('rejected');
   });
 
-  it('volver a revisar con un regalo ya tomado: explica el motivo y no cambia el estado', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => reply(409, { error: 'gift_taken', detail: 'g1' })));
+  it('si el cambio ya no corresponde (otro dispositivo lo cambió): lo explica y no cambia el estado', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => reply(409, { error: 'invalid_transition' })));
     const onChange = renderReview({ status: 'rejected' });
     fireEvent.click(button('Volver a revisar')!);
-    await toasted(/^No se puede volver a revisar: otro invitado ya eligió uno de esos regalos\.$/, 'error');
+    await toasted(/^Ese cambio ya no se puede hacer\. Actualizá la página\.$/, 'error');
     expect(onChange).not.toHaveBeenCalled();
   });
 });
