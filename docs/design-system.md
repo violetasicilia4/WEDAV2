@@ -57,7 +57,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 | `ConfirmDialog` | Confirmación de acciones destructivas (eliminar invitado, grupo, reiniciar la demo). |
 | `Locked`, `LockedBlock` | Función no incluida en el plan elegido: qué es, en qué plan está y que lo cargado se conserva como borrador; el botón «Ver los planes» abre el diálogo de planes. Sin upsell en el resto de las pantallas. |
 | `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. |
-| Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver todo lo que incluye» en `<details>`, CTA «Empezar gratis»). Sin plan «recomendado». Todo sale de `plans.ts`. |
+| Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver lo que incluye» abre un diálogo, CTA «Empezar gratis»). Cada tarjeta es una sola superficie crema (`--section`), sin caja gris arriba ni borde (2026-11-01). Sin plan «recomendado». Todo sale de `plans.ts`. |
 | `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`; `jump` repite el pedido para la misma sección y espera si la sección todavía no existe). |
 | `PublishDialog` (`panel/publish-dialog.tsx`) | Elegir → revisar y pagar (pago de prueba) → publicada; con publicación existente, «Tu publicación» (mejorar pagando la diferencia, bajar, volver a publicar). Clases `.pn-pay` (lista de datos), `.pn-upgrade`, `.pn-spin`. Ver `ux-flows.md`. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |
@@ -85,6 +85,16 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 ## 4b. Landing en celular (hasta 640 px)
 
 Detalle y causas en [auditorias/auditoria-landing-mobile-2026-10-19.md](auditorias/auditoria-landing-mobile-2026-10-19.md). Reglas vigentes: la barra superior (`FloatNav`) **conserva sus dos píldoras translúcidas** (sin relleno arriba de todo, «globo» de vidrio al scrollear); no se le pone `backdrop-filter` ni `transform` al header, porque el menú es `position: fixed` y se desancla; alturas de pantalla con `svh` (no `lvh`/`vh`); objetivos táctiles de 44 px; los ajustes de celular van al final de `styles.css`, dentro de `@media (max-width: 640px)`, para no tocar tablet, escritorio ni `/encontrar`.
+
+## 4b-bis. Landing · rediseño de secciones (2026-11-01, pedido de la dueña)
+
+Se mantienen la tipografía (Geist), la paleta, el video, las fotos, la barra (`FloatNav`) y el texto y los botones del hero. Cambió la composición de las secciones de abajo. Los estilos van en un bloque al final de `styles.css` («REDISEÑO LANDING 2026-11»).
+
+- **Regalos (`#regalos`):** los cuatro pasos son tarjetas blancas (radio 20 px) en una grilla de 2 × 2 en todos los anchos: ícono arriba a la izquierda, número del paso arriba a la derecha y el texto abajo. Sin líneas finas entre pasos. El botón «Crear mi lista de regalos» queda debajo.
+- **Testimonios (`.tq.is-people`):** rótulo «Testimonios» en minúscula y sin barra, sin comillas decorativas ni barra de progreso. El nombre de la pareja va bajo la cita (`.tq-by`, `aria-live`). Las cuatro parejas quedan a la vista como botones (`.tq-people`, `aria-pressed`, nombre accesible «Testimonio de …»): foto y nombre en compu, solo la foto hasta 900 px. Las flechas siguen. La sección usa `overflow: clip` (con `hidden` se desplazaba de costado al tocar una pareja).
+- **Planes:** ver `LandingPlans` en la tabla de componentes.
+- **Pie:** botón «Crear mi evento» (blanco) debajo de la frase; texto legal a 13 px.
+- **«Todo para compartir su casamiento»:** sin cambios. Agrandar la demo de regalos deformaba las tres escenas, que están armadas para cajas cuadradas (`container-type: size`).
 
 ## 4c. Panel · mejora visual móvil (2026-10)
 

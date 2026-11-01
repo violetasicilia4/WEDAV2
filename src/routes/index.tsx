@@ -88,20 +88,23 @@ function Testimonials() {
   const n = testimonials.length;
   const go = (d: number) => setI(v => (v + d + n) % n);
   const t = testimonials[i]!;
-  const num = (v: number) => String(v).padStart(2, '0');
   return (
-    <div className="tq" role="group" aria-roledescription="carrusel" aria-label="Testimonios">
-      <p className="tq-label">/Testimonios</p>
-      <span className="tq-mark" aria-hidden="true">“</span>
+    <div className="tq is-people" role="group" aria-roledescription="carrusel" aria-label="Testimonios">
+      <p className="tq-label">Testimonios</p>
       <div className="tq-quotes">
         {testimonials.map((q, k) => <blockquote key={q.who} className={k === i ? 'on' : undefined} aria-hidden={k === i ? undefined : true}>{q.quote}</blockquote>)}
       </div>
-      <div className="tq-rule" aria-hidden="true"><i style={{ width: `${100 / n}%`, transform: `translateX(${i * 100}%)` }} /></div>
+      <p className="tq-by" aria-live="polite">{t.who}</p>
       <div className="tq-foot">
-        <figure className="tq-who" aria-live="polite">
-          {t.photo && <img key={t.who} src={t.photo} alt="" width={48} height={48} loading="lazy" draggable={false} />}
-          <figcaption><strong>{t.who}</strong><span>{num(i + 1)} / {num(n)}</span></figcaption>
-        </figure>
+        {/* Las parejas a la vista: se ve que son varias y se puede ir directo a cada una. */}
+        <div className="tq-people">
+          {testimonials.map((q, k) => (
+            <button key={q.who} type="button" className={k === i ? 'on' : undefined} aria-pressed={k === i} aria-label={`Testimonio de ${q.who}`} onClick={() => setI(k)}>
+              {q.photo && <img src={q.photo} alt="" width={44} height={44} loading="lazy" draggable={false} />}
+              <span>{q.who}</span>
+            </button>
+          ))}
+        </div>
         <div className="tq-nav">
           <button type="button" onClick={() => go(-1)} aria-label="Testimonio anterior"><ArrowLeft size={18} aria-hidden="true" /></button>
           <button type="button" onClick={() => go(1)} aria-label="Testimonio siguiente"><ArrowRight size={18} aria-hidden="true" /></button>
@@ -157,7 +160,7 @@ function Index() {
     </main>
     <footer className="seed-footer"><div className="section-inner">
       <div className="footer-top">
-        <div><SeedLogo/><p className="footer-mission">Tu casamiento empieza antes del gran día.</p></div>
+        <div><SeedLogo/><p className="footer-mission">Tu casamiento empieza antes del gran día.</p><div className="footer-cta"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink></div></div>
         <nav className="footer-nav" aria-label="Secciones de Weda">
           <a href="#regalos">Lista de regalos</a>
           <Link to="/ejemplo">Sitio del casamiento</Link>

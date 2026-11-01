@@ -1469,3 +1469,58 @@ html.lenis, html.lenis body { height: auto; }
 
 /* Escenas de la landing: pausadas mientras no se ven (ver useLive en feature-demos.tsx). */
 .fd:not([data-live]), .fd:not([data-live]) *, .fd:not([data-live]) *::before, .fd:not([data-live]) *::after { animation-play-state: paused !important; }
+
+/* =========================================================================================================
+   REDISEÑO LANDING 2026-11 · Regalos: los cuatro pasos en tarjetas blancas (decisión de la dueña) en lugar de
+   filas con líneas finas; el botón queda debajo. Misma tipografía, paleta y foto. Va al final para ganar a las reglas previas.
+   ========================================================================================================= */
+.duo-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 600px; }
+.duo-steps li,
+.duo-steps li:last-child { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "ico n" "title title"; align-content: space-between; align-items: start; gap: 20px 12px; min-height: 148px; padding: 20px; border: 0; border-radius: 20px; background: #fff; }
+.duo-steps li .duo-step-ico { grid-area: ico; }
+.duo-steps li .duo-step-n { grid-area: n; justify-self: end; font-size: 13px; }
+.duo-steps li b { grid-area: title; }
+.duo-steps b { font-size: clamp(17px, 1.35vw, 20px); font-weight: var(--w-medium); line-height: 1.25; text-wrap: balance; }
+@media (max-width: 900px) {
+  .duo-steps { gap: 10px; }
+  .duo-steps li, .duo-steps li:last-child { min-height: 132px; padding: 16px; gap: 16px 10px; }
+  .duo-steps b { font-size: 16px; }
+}
+
+/* =========================================================================================================
+   REDISEÑO LANDING 2026-11 · Testimonios, planes y pie. Misma tipografía, paleta y fotos.
+   ========================================================================================================= */
+
+/* Testimonios: sin comillas en Georgia ni barra de progreso; el nombre va bajo la cita y las cuatro parejas quedan a la vista. */
+/* La foto de fondo desborda unos px: con «clip» la sección no se puede desplazar de costado al tocar una pareja (con «hidden» sí). */
+.viacap-section { overflow: clip; }
+.tq.is-people .tq-label { padding-top: 0; border-top: 0; font-size: 14px; letter-spacing: 0; text-transform: none; color: rgb(255 255 255 / .8); }
+.tq.is-people .tq-label::before { content: none; }
+.tq.is-people .tq-quotes { grid-column: 1 / -1; }
+.tq.is-people .tq-by { grid-column: 1 / -1; margin: clamp(18px, 2.4vw, 28px) 0 0; font-size: clamp(16px, 1.3vw, 18px); font-weight: var(--w-medium); }
+.tq.is-people .tq-foot { grid-column: 1 / -1; margin-top: clamp(32px, 4.5vw, 56px); }
+.tq-people { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.tq-people button { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 16px 4px 4px; border: 0; border-radius: 999px; background: rgb(255 255 255 / .12); color: rgb(255 255 255 / .8); font: inherit; font-size: 14px; cursor: pointer; transition: background-color .2s ease, color .2s ease; }
+.tq-people button:hover { background: rgb(255 255 255 / .22); color: #fff; }
+.tq-people button.on { background: #fff; color: var(--foreground); }
+.tq-people img { flex: none; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; pointer-events: none; }
+@media (max-width: 900px) {
+  /* Celular y tablet: solo las fotos (el nombre de la pareja ya está bajo la cita). */
+  .tq-people button { position: relative; padding: 4px; }
+  .tq-people button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tq-people button.on { box-shadow: 0 0 0 2px #fff; background: rgb(255 255 255 / .12); }
+}
+@media (max-width: 640px) { .tq.is-people .tq-by { grid-row: 4; } .tq.is-people .tq-foot { grid-row: 5; } }
+@media (prefers-reduced-motion: reduce) { .tq-people button { transition: none; } }
+
+/* Planes: la tarjeta es una sola superficie crema, sin la caja gris de arriba ni el borde. */
+.plans-grid .plan-card { background: var(--section); border-color: transparent; }
+.plan-media { background: transparent; padding: 18px clamp(10px, 1.6vw, 18px) 8px; }
+
+/* Pie: cierre con el botón para empezar y textos legibles. */
+.footer-cta { margin-top: 24px; }
+.seed-footer .footer-cta .seed-button { background: #fff; color: var(--foreground); }
+.seed-footer .footer-cta .seed-button:hover { background: var(--paper); }
+.footer-bottom { font-size: 13px; }
+.footer-legal { font-size: 13px; }
+@media (max-width: 640px) { .footer-cta { display: flex; justify-content: center; } .footer-bottom { font-size: 13px; } }
