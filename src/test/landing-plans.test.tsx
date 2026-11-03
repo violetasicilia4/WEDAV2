@@ -20,10 +20,11 @@ async function renderPlans() {
 }
 
 describe('Planes en la landing', () => {
-  it('muestra los tres planes con su precio, leído de la configuración central', async () => {
+  it('muestra los dos planes (Regalos y Celebración) con su precio, leído de la configuración central', async () => {
     await renderPlans();
     const cards = screen.getAllByRole('article');
-    expect(cards).toHaveLength(3);
+    expect(cards).toHaveLength(2);
+    expect(PLANS.map(p => [p.name, p.price])).toEqual([['Regalos', 95000], ['Celebración', 140000]]);
     PLANS.forEach((plan, i) => {
       const card = within(cards[i]!);
       expect(card.getByRole('heading', { level: 3, name: plan.name })).toBeTruthy();
@@ -34,25 +35,29 @@ describe('Planes en la landing', () => {
     expect(screen.getByText(/Armá tu casamiento gratis/)).toBeTruthy();
   });
 
-  it('las tarjetas no llevan botón; hay una sola acción «Empezar gratis» debajo de los tres planes, hacia el registro', async () => {
+  it('cada plan lleva su «Empezar» al registro, y Celebración lleva el cartel «Más elegido»', async () => {
     await renderPlans();
-    const ctas = screen.getAllByRole('link', { name: 'Empezar gratis' });
-    expect(ctas).toHaveLength(1);
-    expect(ctas[0]!.getAttribute('href')).toBe('/crear/cuenta');
-    expect(ctas[0]!.closest('.plan-card')).toBeNull();
+    const ctas = screen.getAllByRole('link', { name: 'Empezar' });
+    expect(ctas).toHaveLength(2);
+    ctas.forEach(a => { expect(a.getAttribute('href')).toBe('/crear/cuenta'); expect(a.closest('.pl-card')).not.toBeNull(); });
+    const badges = screen.getAllByText('Más elegido');
+    expect(badges).toHaveLength(1);
+    expect(badges[0]!.closest('.pl-card')?.querySelector('h3')?.textContent).toBe('Celebración');
   });
 
-  it('cada plan despliega el detalle y los planes siguientes muestran lo heredado', async () => {
+  it('todo lo que incluye cada plan se ve sin abrir nada; Celebración muestra que incluye lo de Regalos', async () => {
     await renderPlans();
-    expect(screen.getAllByText('Ver lo que incluye')).toHaveLength(3);
-    const [, invitacion, completo] = screen.getAllByRole('article').map(a => within(a));
-    expect(invitacion!.getByText('Todo lo de Regalos')).toBeTruthy();
-    expect(completo!.getByText('Todo lo de Celebración')).toBeTruthy();
+    expect(screen.queryByText('Ver lo que incluye')).toBeNull();
+    const [basico, celebracion] = screen.getAllByRole('article').map(a => within(a));
+    PLANS[0]!.highlights.forEach(h => expect(basico!.getByText(h.label)).toBeTruthy());
+    PLANS[1]!.highlights.forEach(h => expect(celebracion!.getByText(h.label)).toBeTruthy());
+    expect(celebracion!.getByText('Todo lo de Regalos')).toBeTruthy();
+    for (const t of ['Sitio con tu invitación', 'Confirmación de asistencia', 'Invitados y mesas', 'Música, fotos y mensaje final']) expect(celebracion!.getByText(t)).toBeTruthy();
   });
 
-  it('destaca el pago único y que la página queda publicada seis meses, sin hablar de suscripción', async () => {
+  it('destaca el pago único y que la página queda publicada un año, sin hablar de suscripción', async () => {
     await renderPlans();
-    expect(screen.getAllByText('Publicada 6 meses')).toHaveLength(3);
+    expect(screen.getAllByText(/Publicada 1 año/)).toHaveLength(2);
     expect(document.body.textContent).not.toMatch(/suscripci|por mes|mensual/i);
   });
 });

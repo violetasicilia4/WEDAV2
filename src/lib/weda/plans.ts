@@ -1,10 +1,12 @@
 // Planes de Weda: ÚNICA fuente de nombres, precios y funciones por plan. La landing, el panel y la página pública leen de acá.
-// Los planes son acumulativos: cada uno incluye lo del anterior y suma funciones.
-//   Regalos    → lista de regalos
-//   Celebración → + micrositio, confirmación de asistencia (RSVP), invitados y mesas
-//   Celebración Plus → + música de la fiesta, galería de fotos con hashtag y mensaje final
-// Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante SEIS MESES (definiciones comerciales de la
-// autora: pago único 2026-10-21; seis meses en lugar de un año, 2026-10-28). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
+// Dos planes (decisión de la dueña, 2026-11-03), acumulativos:
+//   Regalos     → la lista de regalos
+//   Celebración → todo lo de Regalos + el sitio completo con la invitación y la gestión: confirmación de asistencia (RSVP), invitados, mesas
+//                 y grupos, música de la fiesta, galería de fotos y mensaje final
+// «Celebración Plus» (id `completo`) dejó de ofrecerse: sus funciones pasaron a Celebración. El id sigue siendo válido para no romper datos
+// guardados (borradores, órdenes, publicaciones) y se trata como Celebración (`normalizePlanId`).
+// Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante UN AÑO (definiciones comerciales de la
+// autora: pago único 2026-10-21; un año, 2026-11-03). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
 // Mientras no se elige plan (planId null) la pareja prueba todo: el plan se elige al publicar. Cambiar de plan nunca borra datos:
 // lo que el plan no incluye se conserva como borrador y solo se oculta al mostrar (editor, navegación, página pública).
 // La música es SOLO configuración y vista previa: no hay conexión real con Spotify ni con ningún servicio.
@@ -36,16 +38,16 @@ export type Plan = {
 
 export const CURRENCY = 'ARS';
 export const PRICE_UNIT = 'pago único';
-/** Cuánto tiempo queda publicada la página con cualquiera de los planes (definición comercial de la autora: 6 meses, 2026-10-28; antes 1 año). */
-export const PUBLICATION_TERM = '6 meses';
+/** Cuánto tiempo queda publicada la página con cualquiera de los planes (definición comercial de la autora: 1 año, 2026-11-03; antes 6 meses). */
+export const PUBLICATION_TERM = '1 año';
 /** La misma duración, en meses (para calcular el vencimiento). */
-export const PUBLICATION_MONTHS = 6;
+export const PUBLICATION_MONTHS = 12;
 export const HIGHLIGHTS = 3;
 
 export const PLANS: Plan[] = [
   {
-    id: 'regalos', name: 'Regalos', tagline: 'Tu lista de regalos, lista para compartir.',
-    product: 'Solo la lista de regalos',
+    id: 'regalos', name: 'Regalos', tagline: 'Tus invitados regalan desde el celular y la plata va directo a tu cuenta.',
+    product: 'La lista de regalos',
     highlights: [
       { icon: 'gift', label: 'Lista de regalos' },
       { icon: 'card', label: 'Alias y tarjeta para recibir' },
@@ -63,12 +65,13 @@ export const PLANS: Plan[] = [
     features: ['gifts'],
   },
   {
-    id: 'invitacion', name: 'Celebración', tagline: 'Tu invitación digital, con todo lo esencial para tus invitados.',
-    product: 'Sitio básico, RSVP y regalos',
+    id: 'invitacion', name: 'Celebración', tagline: 'Tu invitación digital, las confirmaciones y la organización de tus invitados, junto con la lista de regalos.',
+    product: 'Sitio completo, invitación y gestión',
     highlights: [
-      { icon: 'globe', label: 'Página con los datos de la fiesta' },
+      { icon: 'globe', label: 'Sitio con tu invitación' },
       { icon: 'check', label: 'Confirmación de asistencia' },
-      { icon: 'users', label: 'Invitados, mesas y grupos' },
+      { icon: 'users', label: 'Invitados y mesas' },
+      { icon: 'music', label: 'Música, fotos y mensaje final' },
     ],
     price: 140000, inherits: 'regalos',
     items: [
@@ -76,23 +79,10 @@ export const PLANS: Plan[] = [
       'Ceremonia y recepción, con ubicación en Google Maps',
       'Confirmación de asistencia (RSVP) online',
       'Panel para ver las respuestas y organizar a tus invitados',
+      'Mesas y grupos',
       'Foto principal',
       'Dress code',
-      'Mesas y grupos',
       'Cuenta regresiva',
-    ],
-    features: ['gifts', 'site', 'rsvp', 'guests', 'groups'],
-  },
-  {
-    id: 'completo', name: 'Celebración Plus', tagline: 'Cada detalle de su historia, en una experiencia para compartir.',
-    product: 'Sitio plus, RSVP y regalos',
-    highlights: [
-      { icon: 'music', label: 'Música de la fiesta' },
-      { icon: 'photos', label: 'Galería de fotos' },
-      { icon: 'heart', label: 'Mensaje final' },
-    ],
-    price: 150000, inherits: 'invitacion',
-    items: [
       'Música de la fiesta: tus invitados suman las canciones',
       'Galería de fotos con hashtag e Instagram',
       'Mensaje final personalizado',
@@ -101,7 +91,10 @@ export const PLANS: Plan[] = [
   },
 ];
 
-export const planById = (id: PlanId | null): Plan | undefined => PLANS.find(p => p.id === id);
+/** «Celebración Plus» (`completo`) se integró a Celebración: los datos guardados con ese id se leen como Celebración. */
+export const normalizePlanId = <T extends PlanId | null>(id: T): T => (id === 'completo' ? 'invitacion' : id) as T;
+
+export const planById = (id: PlanId | null): Plan | undefined => { const n = normalizePlanId(id); return PLANS.find(p => p.id === n); };
 
 /** «ARS 140.000». */
 export const formatPrice = (n: number) => `${CURRENCY} ${new Intl.NumberFormat('es-AR').format(n)}`;

@@ -79,37 +79,34 @@ test.describe('Landing · celular 390 px', () => {
     const blocks = sec.locator('.gift-feature');
     await expect(blocks).toHaveCount(3);                                                   // sin comisión, cada bolsillo y quién te regaló («Pedí en grande» se sacó)
     await expect(blocks.locator('.mk')).toHaveCount(3);
-    for (const t of ['Sin comisión: el regalo entero es para ustedes', 'Regalos para cada bolsillo', 'Sabé quién te regaló qué']) await expect(sec.getByRole('heading', { name: t })).toBeVisible();
+    for (const t of ['Sin comisión: el regalo entero es para ustedes', 'Regalos que se adaptan a cada bolsillo', 'Sabé quién te regaló qué']) await expect(sec.getByRole('heading', { name: t })).toBeVisible();
     const tops = await blocks.evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)));
     expect(tops[0]! < tops[1]! && tops[1]! < tops[2]!).toBe(true);                       // uno debajo del otro
   });
 
-  test('planes: precios intactos, «Ver lo que incluye» se abre y las tarjetas no llevan «Empezar gratis»', async ({ page }) => {
+  test('planes: dos tarjetas (Regalos y Celebración) con todo lo que incluyen a la vista, «Empezar» al pie y «Más elegido» en Celebración', async ({ page }) => {
     await goLanding(page);
-    const cards = page.locator('.plan-card');
-    await expect(cards).toHaveCount(3);
-    const prices = await cards.locator('.plan-price strong').allInnerTexts();
-    expect(prices.map(p => p.replace(/\s/g, ' '))).toEqual(['ARS 95.000', 'ARS 140.000', 'ARS 150.000']);
-    for (let i = 0; i < 3; i++) {
+    const cards = page.locator('.pl-card');
+    await expect(cards).toHaveCount(2);
+    await expect(cards.locator('h3')).toHaveText(['Regalos', 'Celebración']);
+    const prices = await cards.locator('.pl-price strong').allInnerTexts();
+    expect(prices.map(p => p.replace(/\s/g, ' '))).toEqual(['ARS 95.000', 'ARS 140.000']);
+    const [b0, b1] = [await cards.nth(0).boundingBox(), await cards.nth(1).boundingBox()];
+    expect(b1!.y).toBeLessThan(b0!.y);                     // en celular Celebración se ve primero
+    for (let i = 0; i < 2; i++) {
       const card = cards.nth(i);
-      const m = await card.evaluate(c => { const cr = c.getBoundingClientRect(), s = c.querySelector('.plan-more-btn')!.getBoundingClientRect(); return { gapBottom: cr.bottom - s.bottom, sumH: s.height }; });
-      expect(m.gapBottom).toBeLessThan(48);                 // «Ver lo que incluye» cierra la tarjeta
-      expect(m.sumH).toBeGreaterThanOrEqual(44);
-      await expect(card.getByRole('link', { name: 'Empezar gratis' })).toHaveCount(0);   // sin botón (pedido de la dueña, 2026-11-03)
+      const cta = card.getByRole('link', { name: 'Empezar', exact: true });
+      await expect(cta).toHaveAttribute('href', '/crear/cuenta');
+      const m = await card.evaluate(c => { const cr = c.getBoundingClientRect(), b = c.querySelector('.pl-cta')!.getBoundingClientRect(); return { gapBottom: cr.bottom - b.bottom, btnH: b.height, btnW: b.width, cardW: cr.width }; });
+      expect(m.gapBottom).toBeLessThan(40);                 // «Empezar» cierra la tarjeta
+      expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.btnW).toBeGreaterThan(m.cardW * 0.8);   // a todo el ancho en celular
     }
-    await cards.nth(1).getByRole('button', { name: 'Ver lo que incluye' }).click();
-    const dlg = page.getByRole('dialog');
-    await expect(dlg).toBeVisible();                         // el detalle abre en una ventana: la tarjeta no crece
-    await expect(dlg).toContainText('Incluye todo lo de Regalos');   // lo heredado va en una línea, no repetido
-    expect(await dlg.evaluate(d => d.scrollHeight <= d.clientHeight)).toBe(true);   // todo entra en pantalla: sin scroll
-    await expect(dlg.getByRole('link', { name: 'Empezar gratis' })).toHaveCount(0);
-    for (const t of ['Sitio con portada, nombres y fecha', 'Confirmación de asistencia (RSVP) online']) await expect(dlg).toContainText(t);
-    await page.keyboard.press('Escape');
-    await expect(dlg).toHaveCount(0);
-    await expect(cards.nth(1).locator('.plan-inherit')).toContainText('Todo lo de Regalos');
-    // Funcionalidades de los tres planes presentes (no se elimina ninguna).
+    await expect(cards.locator('.pl-badge')).toHaveCount(1);
+    await expect(cards.nth(1).locator('.pl-badge')).toHaveText('Más elegido');
+    await expect(page.getByRole('button', { name: 'Ver lo que incluye' })).toHaveCount(0);   // nada que abrir: todo a la vista
+    await expect(cards.nth(1).locator('.pl-inherit')).toContainText('Todo lo de Regalos');
     const all = await cards.allInnerTexts();
-    for (const t of ['Lista de regalos', 'Confirmación de asistencia', 'Música de la fiesta', 'Galería de fotos', 'Mensaje final', 'Pago único', 'Publicada 6 meses']) expect(all.join('\n')).toContain(t);
+    for (const t of ['Lista de regalos', 'Sitio con tu invitación', 'Confirmación de asistencia', 'Invitados y mesas', 'Música, fotos y mensaje final', 'Pago único', 'Publicada 1 año']) expect(all.join('\n')).toContain(t);
   });
 
   test('Testimonios: una cita a la vez sobre blanco, con la foto y el contador de la pareja y flechas a la derecha', async ({ page }) => {

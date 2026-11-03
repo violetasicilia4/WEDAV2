@@ -16,8 +16,8 @@ const ITEMS: Item[] = [
     Mock: NoFeeMock, cta: { label: 'Crear mi lista de regalos', to: '/crear/cuenta' },
   },
   {
-    title: 'Regalos para cada bolsillo',
-    text: 'Armá tu lista con regalos de distintos montos. Tus invitados filtran por precio y encuentran enseguida uno que les quede cómodo.',
+    title: 'Regalos que se adaptan a cada bolsillo',
+    text: 'Armá tu lista de regalos con distintos montos. Tus invitados filtran por precio y encuentran uno que les quede cómodo.',
     Mock: BudgetMock, cta: { label: 'Ver regalos', to: '/ejemplo/regalos' },
   },
   {
@@ -27,8 +27,9 @@ const ITEMS: Item[] = [
   },
 ];
 
-/** `withCta`: un botón en cada bloque (/lista-de-regalos). `endCta`: un único botón dentro del último bloque (landing). */
-export function GiftFeatures({ level = 2, withCta = false, endCta }: { level?: 2 | 3; withCta?: boolean; endCta?: ReactNode }) {
+/** `withCta`: un botón en cada bloque (/lista-de-regalos). `endCta`: un único botón dentro del último bloque (landing).
+ *  `label`: un rótulo chico arriba del primer título, para presentar de qué habla la sección (landing: «Lista de regalos»). */
+export function GiftFeatures({ level = 2, withCta = false, endCta, label }: { level?: 2 | 3; withCta?: boolean; endCta?: ReactNode; label?: string }) {
   const H = level === 2 ? 'h2' : 'h3';
   return (
     <div className="gift-features">
@@ -36,6 +37,7 @@ export function GiftFeatures({ level = 2, withCta = false, endCta }: { level?: 2
         <article key={title} className={`gift-feature${i % 2 ? ' is-flip' : ''}`}>
           <Mock />
           <div className="gift-feature-copy">
+            {label && i === 0 && <p className="gift-feature-label">{label}</p>}
             <H>{title}</H>
             <p>{text}</p>
             {withCta && <Button variant="seed" asChild><Link to={cta.to}>{cta.label}</Link></Button>}

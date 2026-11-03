@@ -51,7 +51,7 @@ export function GiftListPage() {
 
       <section className="closing-section" aria-labelledby="lr-closing-title"><div className="section-inner closing-inner">
         <h2 id="lr-closing-title">Armá tu lista de regalos gratis y pagá recién al publicarla.</h2>
-        <div className="closing-actions"><Cta /><Link to="/encontrar" className="closing-link">Encontrá una lista de regalos</Link></div>
+        <div className="closing-actions"><Cta /></div>
       </div></section>
     </main>
     <SiteFooter />

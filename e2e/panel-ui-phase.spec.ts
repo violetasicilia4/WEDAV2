@@ -183,13 +183,13 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     await expect.poll(async () => (await stored(page)).guests).toHaveLength(1);
   });
 
-  test('Publicar: tres productos con precio y «Ver link», y todos los diálogos son hojas con botones a la vista', async ({ page }) => {
+  test('Publicar: dos productos (Regalos y Celebración) con precio y «Ver link», y todos los diálogos son hojas con botones a la vista', async ({ page }) => {
     await page.goto('/panel/vista-previa', { waitUntil: 'networkidle' });
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     const dlg = page.getByRole('dialog');
     await expect(dlg.getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
-    await expect(dlg.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
-    await expect(dlg.getByText('Publicada 6 meses')).toHaveCount(3);
+    await expect(dlg.getByRole('link', { name: /Ver el link de/ })).toHaveCount(2);
+    await expect(dlg.getByText('Publicada 1 año')).toHaveCount(2);
     const box = (await dlg.boundingBox())!;
     expect(box.x).toBe(0);
     expect(Math.round(box.y + box.height)).toBe(844);

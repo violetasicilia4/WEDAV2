@@ -46,7 +46,7 @@ test.describe('Perfil A · pareja apurada: de la landing al panel en el menor n�
     // Publicar está siempre a mano y abre la elección de producto.
     await topPublish(page).click();
     await expect(publishDialog(page).getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
-    await expect(publishDialog(page).getByRole('button', { name: /^Publicar (Regalos|Celebración|Celebración Plus)$/ })).toHaveCount(3);
+    await expect(publishDialog(page).getByRole('button', { name: /^Publicar (Regalos|Celebración)$/ })).toHaveCount(2);
   });
 });
 
@@ -411,7 +411,7 @@ test.describe('Perfil G · cambia de idea', () => {
     await publishDialog(page).getByRole('button', { name: 'Publicar Regalos' }).click();
     await expect(publishDialog(page).getByText('ARS 95.000 · pago único', { exact: false }).first()).toBeVisible();
     await publishDialog(page).getByRole('button', { name: 'Volver', exact: true }).click();
-    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración Plus' }).click();
+    await publishDialog(page).getByRole('button', { name: 'Publicar Celebración' }).click();
     await expect(publishDialog(page).getByRole('button', { name: 'Publicar', exact: true })).toBeVisible();
     await expect(publishDialog(page).getByRole('button', { name: /Pagar/ })).toHaveCount(0);
     await publishDialog(page).getByRole('button', { name: 'Cerrar' }).click();

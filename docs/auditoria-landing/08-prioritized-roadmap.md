@@ -114,3 +114,8 @@ La dueña eligió corregir ocho puntos y desestimar el resto. Las mediciones son
 | 8 | F-09, F-11 | CSP, `X-Frame-Options: SAMEORIGIN`, `frame-ancestors 'self'` y `Permissions-Policy` en `vite.config.ts` (Nitro); dominio canónico único `https://www.weda.app` | Sin bloqueos de la CSP en `/`, `/lista-de-regalos`, `/crear/cuenta`, `/crear`, `/ejemplo`, `/ejemplo/regalos`, `/encontrar` y `/terminos`. Canonical, `og:url`, sitemap y robots apuntan a `www.weda.app` |
 
 FCP pasó de 2,1–2,3 s a 1,2–1,5 s y LCP de 3,4–3,6 s a 2,5 s. Pendiente de verificar después del deploy: las mismas mediciones sobre `www.weda.app`, y la búsqueda de lugares de Google y la playlist de Spotify con la CSP activa (no se pudieron probar sin una clave de Google ni con un sitio publicado con playlist).
+
+### Cambios posteriores pedidos por la dueña (2026-11-03)
+- Planes: el «Empezar gratis» único debajo de los planes se reemplazó por un «Empezar» al pie de cada tarjeta, y Celebración lleva el cartel «Más elegido».
+- Cierre: se quitó el link «Encontrá una lista de regalos» (los invitados siguen teniendo la barra superior «¿Invitado? Encontrá una lista de regalos»).
+- **F-25 resuelto:** la página queda publicada **1 año** (`PUBLICATION_TERM = '1 año'`, `PUBLICATION_MONTHS = 12`); se actualiza en la landing, el panel, los términos, la privacidad y el vencimiento que calcula el servidor.

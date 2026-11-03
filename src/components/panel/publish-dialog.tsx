@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { dateLabel, draftsFor, sitePath } from '@/lib/weda/logic';
 import { isLive, publishPaid, republish, takeDown, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
 import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
-import { formatPrice, PLANS, planById, PRICE_UNIT, PUBLICATION_TERM, type HighlightIcon } from '@/lib/weda/plans';
+import { formatPrice, normalizePlanId, PLANS, planById, PRICE_UNIT, PUBLICATION_TERM, type HighlightIcon } from '@/lib/weda/plans';
 import { errorText, publishRemote, startCheckout, unpublishRemote, useRemote } from '@/lib/weda/remote';
 import { getState, update, useAppState } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
@@ -100,7 +100,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
                 // «Ver link»: la página pública real, armada como se vería con este producto (no cambia el plan guardado).
                 const link = `${sitePath(state)}${p.id === 'regalos' ? '/regalos' : ''}?plan=${p.id}`;
                 return (
-                  <article key={p.id} className={`pn-prod${state.planId === p.id ? ' is-current' : ''}`} aria-labelledby={`pn-prod-${p.id}`}>
+                  <article key={p.id} className={`pn-prod${normalizePlanId(state.planId) === p.id ? ' is-current' : ''}`} aria-labelledby={`pn-prod-${p.id}`}>
                     <header className="pn-prod-head">
                       <span className="pn-prod-ico" aria-hidden="true"><Head size={22} strokeWidth={1.5} /></span>
                       <div>
@@ -108,7 +108,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
                         <p className="pn-prod-what">{p.product}</p>
                       </div>
                     </header>
-                    {state.planId === p.id && <span className="pn-prod-tag">Tu elección actual</span>}
+                    {normalizePlanId(state.planId) === p.id && <span className="pn-prod-tag">Tu elección actual</span>}
                     <p className="pn-prod-price"><strong>{formatPrice(p.price)}</strong></p>
                     <ul className="pn-prod-facts">
                       <li><BadgeCheck size={16} strokeWidth={1.6} aria-hidden="true" /> {PRICE_UNIT.charAt(0).toUpperCase() + PRICE_UNIT.slice(1)}</li>

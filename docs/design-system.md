@@ -248,3 +248,8 @@ Enlace «Ir al contenido», `aria-current` en la navegación, `aria-live` en avi
 - Las maquetas de las demos (`calc(N * var(--px))`, `cqw`) quedan con su escala propia.
 - Los CSS de cada pantalla se importan desde un componente que solo usa esa pantalla (`components/panel/ui.tsx`, `components/panel/create-layout.tsx`, `components/gift-list-page.tsx`), no desde el archivo de la ruta: así no se cargan en la landing.
 - Hero: el texto y los botones no se animan con opacidad (siempre visibles); en celular se usa `hero-mobile.mp4` (vertical, recortado).
+
+### Planes de la landing (2026-11-03)
+- Dos planes, de `src/lib/weda/plans.ts`: **Regalos** (lista de regalos, ARS 95.000) y **Celebración** (sitio completo con invitación y gestión + lista de regalos, ARS 140.000), publicados 1 año, pago único. «Celebración Plus» se integró a Celebración (`normalizePlanId`).
+- `src/components/landing-plans.tsx`: dos tarjetas lado a lado (`.pl-card`), con todo lo que incluye cada una a la vista (sin «Ver lo que incluye»). Regalos en blanco con botón oscuro; Celebración en el verde #959571 con texto blanco, botón blanco y el cartel «Más elegido». Celebración muestra «Todo lo de Regalos, y además:». Precio, «Pago único · Publicada 1 año» y «Empezar» al pie. En celular van una debajo de la otra y Celebración se ve primero (`order: -1`).
+- Se quitaron las reglas viejas de `.plan-card`, `.plan-media`, `.plan-dialog` y afines (74 reglas).

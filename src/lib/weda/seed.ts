@@ -28,8 +28,8 @@ export function seedState(): AppState {
     couple: { first: 'Tomás', second: 'Martina' },
     date: '2027-04-17',
     photo: { kind: 'upload', src: '/pareja-portada-8.webp', name: 'portada.webp' },
-    planId: 'completo',
-    preferredPlan: 'completo',
+    planId: 'invitacion',
+    preferredPlan: 'invitacion',
     gifts: {
       cover: null,
       alias: 'tomas.martina',

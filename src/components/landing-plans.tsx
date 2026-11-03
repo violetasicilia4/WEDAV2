@@ -1,63 +1,49 @@
 import { Link } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { ArrowRight, Plus } from 'lucide-react';
 import { HIGHLIGHT_ICON } from '@/components/plan-icons';
 import { formatPrice, PLANS, planById, PUBLICATION_TERM, type Plan } from '@/lib/weda/plans';
 
-/** Lo que incluye un plan, de más básico a más completo: cada plan suma lo suyo a lo del anterior. */
-const chain = (plan: Plan): Plan[] => (plan.inherits ? [...chain(planById(plan.inherits) as Plan), plan] : [plan]);
+/* Planes de la landing (2026-11-03): dos tarjetas, con todo lo que incluye cada una a la vista para no tener que abrir nada.
+   Regalos es la lista de regalos; Celebración, el sitio completo con la invitación y la gestión, destacado como «Más elegido».
+   Todo sale de `src/lib/weda/plans.ts`: no se repite ningún precio ni función acá. */
 
 function PlanCard({ plan }: { plan: Plan }) {
   const base = plan.inherits ? planById(plan.inherits) : undefined;
-  const [open, setOpen] = useState(false);
+  const featured = plan.id === 'invitacion';
   return (
-    <article className="plan-card" aria-labelledby={`plan-${plan.id}`}>
-      <header className="plan-media">
-        <div className="plan-media-top">
-          <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
-          <p className="plan-sub">{plan.product}</p>
-        </div>
-        <div className="plan-media-bottom">
-          <p className="plan-price"><strong>{formatPrice(plan.price)}</strong></p>
-          <p className="plan-term"><b>Pago único</b> · <span>Publicada {PUBLICATION_TERM}</span></p>
-        </div>
+    <article className={`pl-card${featured ? ' is-featured' : ''}`} aria-labelledby={`plan-${plan.id}`}>
+      <header className="pl-head">
+        {featured && <span className="pl-badge">Más elegido</span>}
+        <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
+        <p className="pl-product">{plan.product}</p>
       </header>
-      <ul>
-        {base && <li className="plan-inherit"><Plus size={18} strokeWidth={1.6} aria-hidden="true" /><span><strong>Todo lo de {base.name}</strong>, y además:</span></li>}
+      <ul className="pl-list">
+        {base && <li className="pl-inherit"><Plus size={18} strokeWidth={1.8} aria-hidden="true" /><span><strong>Todo lo de {base.name}</strong>, y además:</span></li>}
         {plan.highlights.map(h => {
           const Icon = HIGHLIGHT_ICON[h.icon];
           return <li key={h.label}><Icon size={18} strokeWidth={1.5} aria-hidden="true" /><span>{h.label}</span></li>;
         })}
       </ul>
-      <button type="button" className="plan-more-btn" onClick={() => setOpen(true)} aria-haspopup="dialog">Ver lo que incluye</button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="plan-dialog">
-          <DialogTitle>{plan.name}: lo que incluye</DialogTitle>
-          <DialogDescription>{formatPrice(plan.price)} · Pago único · Publicada {PUBLICATION_TERM}</DialogDescription>
-          {base && <p className="plan-dialog-base"><Plus size={16} strokeWidth={1.6} aria-hidden="true" /><span>Incluye todo lo de {chain(plan).slice(0, -1).map(p => p.name).join(' y ')}</span></p>}
-          <ul>{plan.items.map(it => <li key={it}>{it}</li>)}</ul>
-        </DialogContent>
-      </Dialog>
+      <footer className="pl-foot">
+        <div className="pl-price">
+          <strong>{formatPrice(plan.price)}</strong>
+          <span><b>Pago único</b> · Publicada {PUBLICATION_TERM}</span>
+        </div>
+        <Link to="/crear/cuenta" className="pl-cta">Empezar<ArrowRight size={16} aria-hidden="true" /></Link>
+      </footer>
     </article>
   );
 }
 
-/** Planes y precios de la landing. Todo sale de `src/lib/weda/plans.ts`: no se repite ningún precio ni función acá. */
 export function LandingPlans() {
   return (
     <section className="plans-section" id="planes">
       <div className="section-inner">
         <div className="plans-head">
           <h2><span className="plans-l1">Armá tu casamiento gratis.</span> <span className="plans-l2">Publicalo cuando estés listo.</span></h2>
+          <p className="pl-intro">Probás todo sin pagar. Elegís el plan y pagás una sola vez recién al publicar.</p>
         </div>
-        <div className="plans-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
-        {/* Una sola acción para los tres planes (las tarjetas no llevan botón): se empieza gratis y el plan se elige al publicar. */}
-        <div className="plans-cta">
-          <Button variant="seed" asChild><Link to="/crear/cuenta">Empezar gratis</Link></Button>
-          <p>Elegís el plan recién al publicar.</p>
-        </div>
+        <div className="pl-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
       </div>
     </section>
   );

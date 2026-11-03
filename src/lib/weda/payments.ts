@@ -1,13 +1,13 @@
 // Pago y publicación SIMULADOS (frontend-only): no hay cobro ni publicación en Internet. Los montos salen de la matriz de planes (`plans.ts`);
-// la vigencia es la del plan (`PUBLICATION_TERM`, seis meses). Dar de baja la página NO devuelve el pago ni cambia el plan.
+// la vigencia es la del plan (`PUBLICATION_TERM`, un año). Dar de baja la página NO devuelve el pago ni cambia el plan.
 import { setPlan } from './logic';
 import { PLANS, PUBLICATION_MONTHS, planById, type Plan } from './plans';
 import type { AppState, PlanId, Publication } from './types';
 
 const priceOf = (id: PlanId): number => planById(id)?.price ?? 0;
 
-/** Fecha de vencimiento: seis meses después de publicar (`PUBLICATION_MONTHS`, misma regla que `PUBLICATION_TERM`).
- *  Si el día no existe en el mes de destino (31 de agosto + 6 meses), vence el último día de ese mes. */
+/** Fecha de vencimiento: un año después de publicar (`PUBLICATION_MONTHS`, misma regla que `PUBLICATION_TERM`).
+ *  Si el día no existe en el mes de destino (29 de febrero + 1 año), vence el último día de ese mes. */
 export function addTerm(iso: string): string {
   const d = new Date(iso);
   const day = d.getUTCDate();

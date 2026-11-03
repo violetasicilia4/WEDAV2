@@ -156,13 +156,13 @@ function Index() {
       <div className="feat-grid">{features.map((f)=><Link to="/crear/cuenta" className="feat-card is-link" key={f.title}><span className="feat-stage fd-stage" aria-hidden="true">{f.icon}</span><h3>{f.title}</h3><p>{f.note}</p></Link>)}</div>
     </div></section>
     {/* Regalos: arranca directo en «Sin comisión» (sin título de sección) y el botón va dentro del último bloque (pedido de la dueña, 2026-11-03). */}
-    <section className="duo-section" id="regalos" aria-label="Lista de regalos"><div className="duo-split is-path"><div className="duo-panel"><GiftFeatures level={2} endCta={<SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink>} /></div></div></section>
+    <section className="duo-section" id="regalos" aria-label="Lista de regalos"><div className="duo-split is-path"><div className="duo-panel"><GiftFeatures level={2} label="Lista de regalos" endCta={<SeedLink pill to="/crear/cuenta">Crear mi lista de regalos</SeedLink>} /></div></div></section>
     <section className="viacap-section" id="por-que-weda"><div className="section-inner">{testimonials.length > 0 ? <Testimonials/> : <Benefits/>}</div></section>
     <LandingPlans />
     {/* Cierre antes del pie: una frase grande con la acción principal y el acceso para invitados. */}
     <section className="closing-section" aria-labelledby="closing-title"><div className="section-inner closing-inner">
       <h2 id="closing-title">Weda reúne la lista de regalos, el sitio y las confirmaciones de tu casamiento.</h2>
-      <div className="closing-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Link to="/encontrar" className="closing-link">Encontrá una lista de regalos</Link></div>
+      <div className="closing-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink></div>
     </div></section>
     </main>
     <SiteFooter />

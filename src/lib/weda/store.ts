@@ -4,15 +4,15 @@
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
 import { useRef, useSyncExternalStore } from 'react';
 import { defaultColors, defaultGroup, EVENT_ICON_IDS, defaultSite, emptyState, isHexColor, normalizeOrder } from './logic';
-import { isPlanId } from './plans';
+import { isPlanId, normalizePlanId } from './plans';
 import type { AppState, EventIconId, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
 export const STORAGE_KEY = 'weda-app';
 export const STORAGE_VERSION = 2;
-/** Versión 1 llamaba «completo» a lo que hoy es «invitacion» y «premium» a lo que hoy es «completo». */
+/** Versión 1 llamaba «completo» a lo que hoy es «invitacion» y «premium» a lo que fue «completo» (Celebración Plus), que hoy es parte de Celebración. */
 const planOf = (v: unknown, from: number): PlanId | null => {
   const id = from === 1 ? (v === 'completo' ? 'invitacion' : v === 'premium' ? 'completo' : v) : v;
-  return isPlanId(id) ? id : null;
+  return isPlanId(id) ? normalizePlanId(id) : null;
 };
 
 /* ------------------------------------------------------------------ saneado de datos guardados */

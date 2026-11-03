@@ -436,24 +436,6 @@ html { scroll-padding-top: 80px; }
 .plans-head { max-width: 640px; }
 .plans-head h2 { font-size: clamp(var(--t-page), 3.4vw, var(--t-display-l)); line-height: 1.08; letter-spacing: -.01em; text-wrap: balance; margin: 0 0 16px; }
 .plans-head p { margin: 0; font-size: clamp(15px, 1.25vw, 18px); line-height: 1.5; color: var(--muted-foreground); max-width: 52ch; }
-.plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.plan-card { display: flex; flex-direction: column; padding: clamp(28px, 3vw, 44px); border-radius: var(--r-2xl); background: #f4f4f2; color: var(--foreground); }
-.plan-card h3 { margin: 0; font-size: clamp(24px, 2.2vw, 32px); line-height: 1.1; font-weight: var(--w-medium); letter-spacing: var(--ls-section); }
-.plan-sub { margin: 10px 0 0; font-size: var(--fs-15); line-height: 1.45; color: var(--muted-foreground); min-height: 2.9em; }
-.plan-card ul { list-style: none; margin: clamp(24px, 3vw, 36px) 0 clamp(28px, 3.4vw, 44px); padding: 24px 0 0; border-top: 1px solid rgb(59 60 58 / .14); display: grid; gap: 14px; }
-.plan-card li { display: flex; align-items: flex-start; gap: 12px; font-size: var(--fs-16); line-height: 1.35; }
-.plan-card li svg { flex: none; margin-top: 2px; color: var(--foreground); }
-.plan-card .seed-button { margin-top: auto; align-self: flex-start; height: 48px; }
-.plan-price { margin: 22px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.plan-price strong { font-size: clamp(30px, 2.8vw, 38px); line-height: 1.05; font-weight: var(--w-semibold); letter-spacing: var(--ls-title); font-variant-numeric: tabular-nums; }
-.plan-price span { font-size: var(--fs-14); color: var(--muted-foreground); }
-.plan-card ul { margin-bottom: 20px; }
-.plan-inherit span strong { font-weight: var(--w-semibold); }
-@media(max-width: 900px) { .plans-grid { grid-template-columns: 1fr; gap: 12px; } .plan-sub { min-height: 0; } .plan-card ul { margin: 22px 0 26px; padding-top: 20px; } }
-
-/* Planes: botón en el azul Weda (celeste de la paleta) */
-.plan-card .seed-button { background: var(--slate); color: #fff; }
-.plan-card .seed-button:hover { background: color-mix(in srgb, var(--slate) 85%, #000); }
 .viacap-section::before { background-position: center 72%; }
 
 /* Botones sin destino (pendientes): no muestran cursor de enlace */
@@ -671,9 +653,6 @@ a:not([href]) { cursor: default; }
 
 /* CTA inactivos (todavía sin pantalla de registro): se ven como lo que son */
 .seed-button:disabled { opacity: .55; cursor: not-allowed; }
-
-/* Planes: tres tarjetas con la misma jerarquía (no hay un plan recomendado) */
-.plan-card { border: 1px solid transparent; }
 
 
 
@@ -943,8 +922,7 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   .feat-head-side .feat-cta { display: flex; justify-content: center; }
   .plans-head { text-align: center; }
   .plans-head p { margin-left: auto; margin-right: auto; }
-  .plan-card h3, .plan-sub, .plan-price, .plan-for,   .plan-card h3, .plan-sub, .plan-price, .plan-for { text-align: center; }
-  .plan-price { justify-content: center; }
+  .plan-for, .plan-for { text-align: center; }
   .seed-footer .footer-top, .seed-footer .footer-bottom { text-align: center; justify-items: center; justify-content: center; }
   .seed-footer .footer-nav { align-items: center; justify-content: center; }
   /* Hero: «Tu gran día empieza acá.» en un solo renglón (≈11,3 em de ancho: 7,6 vw entra en el 88 % desde 320 px). */
@@ -976,15 +954,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
   /* Dos renglones en celular: una frase por línea, con el tamaño escalado al ancho para que la más larga entre entera. */
   .plans-head h2 { font-size: clamp(17px, 5.7vw, 27px); line-height: 1.18; letter-spacing: -.02em; }
   .plans-head p { font-size: var(--fs-15); line-height: 1.5; max-width: 34ch; }
-  .plan-card { padding: 22px 20px; }
-  .plan-card .plan-price { margin-top: 14px; }
-  .plan-card ul { margin: 16px 0 14px; padding-top: 16px; gap: 10px; }
-  .plan-card li { font-size: var(--fs-15); gap: 10px; }
-  .plan-card li.plan-inherit { font-size: var(--fs-13); color: var(--muted-foreground); }
-  .plan-card li.plan-inherit strong { font-weight: 400; }
-  .plan-card li:not(.plan-inherit) { font-weight: 500; }
-  /* Botón de plan en el verde de Weda. */
-  .plan-card .seed-button { align-self: stretch; width: 100%; margin-top: auto; background: #959571; }
 
   /* Cierre: el footer sube con la misma curva que la sección de regalos y respira menos. */
   .seed-footer { border-radius: 24px 24px 0 0; padding-top: 36px; }
@@ -1043,9 +1012,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 
 /* Planes: para quién es cada uno, visible antes de abrir el detalle. */
 .plan-for-line { margin: 12px 0 0; font-size: var(--fs-14); line-height: 1.45; color: var(--muted-foreground); min-height: 2.9em; }
-/* Los tres planes tienen el mismo tamaño, con el botón siempre abajo. */
-.plans-grid { grid-auto-rows: 1fr; }
-.plan-card { height: 100%; }
 @media (max-width: 900px) { .plan-for-line { min-height: 0; } }
 
 /* Auditoría 2026-10-21: áreas de toque de 44 px en la barra flotante y los puntos de testimonios, sin cambiar el tamaño visible. */
@@ -1081,55 +1047,11 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 @media (min-width: 901px) {
   .viacap-section .section-inner { padding-inline: clamp(12px, 1.4vw, 20px); }
 }
-
-/* Planes de la landing: mismo criterio que «¿Qué querés publicar?» (ícono, precio, pago único y vigencia, tres puntos con ícono y el detalle plegado). */
-.plan-term { margin: 10px 0 0; font-size: var(--fs-14); color: var(--foreground); }
-.plan-term b { font-weight: var(--w-semibold); }
-.plan-card ul li svg { margin-top: 1px; }
 @media (min-width: 901px) { .plans-head { max-width: 760px; } }
 /* Regalos: el bloque ocupa un poco más de alto al scrollear (solo escritorio y tablet ancha; en celular la foto va arriba sin aire). */
 @media (min-width: 901px) { .duo-split { padding-block: clamp(96px, 16svh, 176px); } }
-.plan-card .plan-for-line { margin: 14px 0 0; font-size: var(--fs-15); line-height: 1.4; color: var(--muted-foreground); }
-@media (max-width: 900px) { .plan-card .plan-for-line { text-align: center; } }
 
 /* Alineación: en escritorio las tarjetas comparten filas (cabecera, precio, frase, vigencia, funciones, detalle y botón quedan a la misma altura). */
-@media (min-width: 901px) {
-  .plans-grid { column-gap: 16px; row-gap: 0; grid-template-rows: repeat(4, auto); }
-  .plan-card { display: grid; grid-row: span 4; grid-template-rows: subgrid; align-items: start; }
-  .plan-card .seed-button { align-self: end; justify-self: start; margin-top: 0; }
-  .plan-card .plan-sub { min-height: 0; }
-}
-
-/* Cabecera con foto (reemplaza al ícono): nombre arriba y precio abajo sobre la foto; debajo, para quién es, funciones y botón. */
-.plans-grid .plan-card { padding: 12px 12px clamp(20px, 2.4vw, 28px); border: 1px solid rgb(59 60 58 / .08); }
-.plans-grid .plan-card > :not(.plan-media) { margin-inline: clamp(10px, 1.6vw, 18px); }
-/* Cabecera del plan: gris muy claro y liso, sin foto, para que el precio sea lo principal. */
-.plan-media { position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 190px; border-radius: var(--r-xl); color: var(--foreground); }
-.plans-grid .plan-media h3 { margin: 0; color: var(--foreground); text-align: left; font-size: clamp(22px, 2vw, 28px); }
-.plans-grid .plan-media .plan-sub { margin: 6px 0 0; min-height: 0; color: var(--muted-foreground); text-align: left; font-size: var(--fs-14); }
-.plans-grid .plan-media .plan-price { margin: 0; justify-content: flex-start; }
-.plans-grid .plan-media .plan-price strong { color: var(--foreground); font-size: clamp(32px, 3vw, 42px); }
-.plans-grid .plan-media .plan-term { margin: 6px 0 0; color: var(--foreground); text-align: left; font-size: var(--fs-14); }
-.plans-grid .plan-card ul { padding-top: 18px; }
-@media (max-width: 900px) { .plans-grid .plan-card { padding-bottom: 20px; } .plans-grid .plan-card ul { text-align: left; } .plan-media { min-height: 180px; } }
-/* Botón a todo el ancho de la tarjeta, al pie. */
-.plans-grid .plan-card .seed-button { width: auto; align-self: stretch; justify-self: stretch; height: 54px; justify-content: center; }
-.plans-grid .plan-card ul { margin-top: 22px; }
-/* «Ver lo que incluye» abre una ventana: la tarjeta no crece y el botón no baja. */
-.plan-more-btn { justify-self: start; align-self: center; display: inline-flex; align-items: center; min-height: 44px; margin-block: 8px; padding: 0; background: none; border: 0; font: inherit; font-size: var(--fs-14); color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
-.plan-more-btn:focus-visible { outline: 2px solid var(--slate); outline-offset: 3px; border-radius: var(--r-xs); }
-.plan-dialog { max-width: 480px; max-height: 94svh; overflow-y: auto; border-radius: var(--r-2xl); padding: 26px 26px 22px; background: #fff; color: var(--foreground); }
-.plan-dialog h2 { margin: 0; font-size: var(--fs-22); line-height: 1.15; font-weight: var(--w-medium); letter-spacing: var(--ls-section); }
-.plan-dialog > p { margin: 0; font-size: var(--fs-14); color: var(--muted-foreground); }
-.plan-dialog-base { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: #f4f4f2; font-size: var(--fs-14); }
-.plan-dialog ul { margin: 0; padding: 0; display: grid; gap: 8px; list-style: none; }
-.plan-dialog li { position: relative; padding-left: 18px; font-size: var(--fs-15); line-height: 1.4; }
-.plan-dialog li::before { content: ''; position: absolute; left: 3px; top: .55em; width: 5px; height: 5px; border-radius: var(--r-round); background: var(--slate); }
-.plan-dialog .seed-button { margin-top: 6px; width: 100%; justify-content: center; height: 52px; background: var(--slate); color: #fff; }
-@media (max-width: 900px) { .plan-more-btn { justify-self: center; } }
-/* «Empezar gratis»: blanco con borde fino (en las tarjetas y en la ventana de detalle). */
-.plans-grid .plan-card .seed-button, .plan-dialog .seed-button { background: #fff; color: var(--foreground); box-shadow: var(--ring-inset-strong); }
-.plans-grid .plan-card .seed-button:hover, .plan-dialog .seed-button:hover { background: #f4f4f2; }
 
 /* ---------- Testimonios: una cita grande a la vez (etiqueta con línea, comilla, cita, regla con progreso, pareja y flechas) sobre la foto de fondo ---------- */
 .tq { display: grid; grid-template-columns: clamp(64px, 11vw, 150px) minmax(0, 1fr); column-gap: clamp(8px, 2vw, 24px); width: 100%; }
@@ -1159,10 +1081,6 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 }
 @media (prefers-reduced-motion: reduce) { .tq-quotes blockquote, .tq-quotes .tq-text, .tq-rule i, .tq-nav button { transition: none; } }
 @media (min-width: 641px) { .viacap-section .tq { padding-inline: clamp(24px, 7vw, 110px); box-sizing: border-box; } }
-/* Tarjetas de plan compactas: «Ver lo que incluye» queda pegado a la lista y el botón justo debajo, todo a la misma altura en las tres. */
-.plans-grid .plan-card ul { margin-bottom: 0; }
-.plans-grid .plan-card .plan-more-btn { align-self: start; min-height: 44px; margin-block: 0 2px; }
-.plans-grid .plan-card .seed-button { margin-top: 6px; }
 /* Tablet (641–900 px): las tarjetas de «Todo para compartir» van en una columna centrada, así que el título, el texto y el botón se centran con ellas (antes quedaban a la izquierda). */
 @media (min-width: 641px) and (max-width: 900px) {
   .products-section .feat-head { justify-items: center; text-align: center; }
@@ -1280,10 +1198,6 @@ html.lenis, html.lenis body { height: auto; }
 @media (max-width: 640px) { .tq.is-people .tq-by { grid-row: 4; } .tq.is-people .tq-foot { grid-row: 5; } }
 @media (prefers-reduced-motion: reduce) { .tq-avatar img { transition: none; } }
 
-/* Planes: la tarjeta es una sola superficie crema, sin la caja gris de arriba ni el borde. */
-.plans-grid .plan-card { border-color: transparent; }
-.plan-media { background: transparent; padding: 18px clamp(10px, 1.6vw, 18px) 8px; }
-
 /* Pie: cierre con el botón para empezar y textos legibles. */
 .footer-cta { margin-top: 24px; }
 .seed-footer .footer-cta .seed-button { background: #fff; color: var(--foreground); }
@@ -1357,7 +1271,6 @@ html.lenis, html.lenis body { height: auto; }
 .viacap-section::before, .viacap-section::after { content: none; }
 .viacap-section { padding-block: clamp(72px, 12svh, 140px); }
 .plans-section { background: var(--section); }
-.plans-grid .plan-card { background: #fff; }
 .seed-footer { background: var(--foreground); border-radius: 0; }
 main:has(.closing-section) + .seed-footer { margin-top: 0; }
 @media (max-width: 640px) {
@@ -1559,9 +1472,51 @@ main:has(.closing-section) + .seed-footer { margin-top: 0; }
    descargaba las fotos (191 KB + 64 KB). Sin imagen de fondo ya no se piden (auditoría F-17). */
 .viacap-section::before, .fd-stage::before { background: none; }
 
-/* Planes: una acción debajo de las tres tarjetas (auditoría F-12). */
-.plans-cta { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 40px; text-align: center; }
-.plans-cta .seed-button { height: 48px; padding: 0 28px; font-size: var(--fs-15); background: #959571; color: #fff; }
-.plans-cta .seed-button:hover { background: #868662; color: #fff; }
-.plans-cta p { margin: 0; font-size: var(--fs-14); color: var(--muted-foreground, #6f7070); }
-@media (max-width: 640px) { .plans-cta { margin-top: 28px; } .plans-cta .seed-button { height: 52px; font-size: var(--fs-16); } }
+/* Planes (2026-11-03): dos tarjetas lado a lado (una debajo de la otra en celular, con Celebración primero). Regalos en blanco;
+   Celebración en el verde de Weda con texto blanco y el cartel «Más elegido». Precio y botón al pie de cada una. */
+.pl-intro { margin: 12px 0 0; max-width: 34em; font-size: var(--fs-16); line-height: 1.5; color: var(--muted-foreground, #6f7070); }
+.pl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 40px; align-items: stretch; }
+.pl-card { position: relative; display: flex; flex-direction: column; gap: 28px; padding: 36px; border-radius: var(--r-2xl); background: #fff; color: var(--foreground); }
+.pl-card.is-featured { background: #959571; color: #fff; }
+.pl-head h3 { margin: 0; font-size: clamp(28px, 2.6vw, 36px); line-height: 1.05; letter-spacing: -.03em; font-weight: var(--w-medium, 500); }
+.pl-product { margin: 10px 0 0; font-size: var(--fs-16); font-weight: var(--w-medium, 500); }
+.pl-tagline { margin: 6px 0 0; font-size: var(--fs-15); line-height: 1.45; opacity: .78; max-width: 30em; }
+.pl-badge { position: absolute; top: 28px; right: 28px; padding: 7px 14px; border-radius: var(--r-pill); background: #fff; color: #6f6f50; font-size: var(--fs-13); font-weight: var(--w-medium, 500); line-height: 1.2; }
+.pl-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.pl-list li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 12px; align-items: start; font-size: var(--fs-16); line-height: 1.35; }
+.pl-list li svg { margin-top: 1px; }
+.pl-list .pl-inherit { padding-bottom: 14px; border-bottom: 1px solid rgb(59 60 58 / .12); }
+.pl-card.is-featured .pl-inherit { border-bottom-color: rgb(255 255 255 / .28); }
+.pl-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 24px; border-top: 1px solid rgb(59 60 58 / .12); }
+.pl-card.is-featured .pl-foot { border-top-color: rgb(255 255 255 / .28); }
+.pl-price { display: grid; gap: 6px; }
+.pl-price strong { font-size: clamp(30px, 3vw, 42px); line-height: 1; letter-spacing: -.03em; font-weight: var(--w-medium, 500); }
+.pl-price span { font-size: var(--fs-13); opacity: .8; }
+.pl-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 24px; border-radius: var(--r-pill); background: var(--foreground); color: #fff; font-size: var(--fs-15); font-weight: var(--w-medium, 500); text-decoration: none; transition: background .2s ease; }
+.pl-cta:hover { background: #2b2c2a; }
+.pl-card.is-featured .pl-cta { background: #fff; color: var(--foreground); }
+.pl-card.is-featured .pl-cta:hover { background: var(--paper, #f3f0e8); }
+.pl-cta:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+@media (max-width: 760px) {
+  .pl-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 28px; }
+  .pl-card.is-featured { order: -1; }
+  .pl-card { padding: 28px 22px; gap: 24px; }
+  .pl-badge { top: 24px; right: 22px; }
+  .pl-foot { flex-direction: column; align-items: stretch; }
+  .pl-cta { min-height: 52px; font-size: var(--fs-16); }
+}
+
+/* Testimonios: flechas en el verde de Weda con la flecha en blanco (2026-11-03). */
+.tq-nav button { background: #959571; color: #fff; }
+.tq-nav button:hover { background: #868662; color: #fff; }
+.tq-nav button:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+/* Planes más compactos (2026-11-03): sin la frase larga y con menos aire, para que en celular cada tarjeta entre casi entera. */
+.pl-card { gap: 22px; }
+.pl-list { gap: 12px; }
+@media (max-width: 760px) {
+  .pl-card { padding: 24px 20px; gap: 18px; }
+  .pl-list { gap: 10px; }
+  .pl-list .pl-inherit { padding-bottom: 10px; }
+  .pl-foot { padding-top: 18px; gap: 14px; }
+  .pl-price strong { font-size: 30px; }
+}

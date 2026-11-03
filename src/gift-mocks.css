@@ -130,3 +130,7 @@
 }
 @media (max-width: 640px) { .mk-badge { top: 19%; left: 0; width: 22%; } }
 @media (max-width: 360px) { .mk-phone img { aspect-ratio: 2 / 1; } }
+
+/* Rótulo chico arriba del primer título (landing: «Lista de regalos»), igual al de /lista-de-regalos. */
+.gift-feature-label { margin: 0 0 14px; font-size: var(--fs-14, 14px); text-transform: uppercase; letter-spacing: .08em; color: #6f6f50; font-weight: var(--w-medium, 500); }
+@media (max-width: 640px) { .gift-feature-label { margin-bottom: 10px; font-size: var(--fs-13, 13px); } }

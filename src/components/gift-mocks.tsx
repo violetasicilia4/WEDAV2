@@ -47,16 +47,16 @@ export function BudgetMock() {
 }
 
 export function ReceivedMock() {
-  // Invitados y regalo de la pareja de ejemplo (src/lib/weda/seed.ts): Lucía Ferreyra regaló el set de vajilla con ese mensaje;
+  // Invitados y regalo de la pareja de ejemplo (src/lib/weda/seed.ts): Lucía Ferreyra (con su mensaje) muestra la Cata en Mendoza, a tono con la foto de fondo;
   // «Familia Bianchi» (por Ramiro Bianchi) muestra un regalo de monto más alto.
   const rows = [
-    { who: 'Lucía Ferreyra', gift: g('vajilla'), note: '«¡Que sean muy felices!»', ok: true },
+    { who: 'Lucía Ferreyra', gift: g('vinos'), note: '«¡Que sean muy felices!»', ok: true },
     { who: 'Familia Bianchi', gift: g('globo'), ok: false },
     { who: 'Paula Domínguez', gift: g('ollas'), ok: false },
   ];
   return (
     <div className="mk mk-received" aria-hidden="true">
-      <img className="mk-photo" src={g('cena-mar').image} alt="" loading="lazy" />
+      <img className="mk-photo" src={g('vinos').image} alt="" loading="lazy" />
       <div className="mk-list">
         <b>Regalos recibidos</b>
         {rows.map(r => (

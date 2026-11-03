@@ -68,12 +68,12 @@ describe('pagos y publicación', () => {
     await saveDraft(o, draftFor('Flor', 'Gus'));
     const r = (await o.post('/api/checkout', { planId: 'regalos' })).body;
     await o.post(`/api/test-payments/${r.id}`, { outcome: 'paid' });
-    const up = (await o.post('/api/checkout', { planId: 'completo' })).body;
-    expect(up.amount).toBe(planById('completo')!.price - planById('regalos')!.price);
+    const up = (await o.post('/api/checkout', { planId: 'invitacion' })).body;
+    expect(up.amount).toBe(planById('invitacion')!.price - planById('regalos')!.price);
     expect((await o.post('/api/checkout', { planId: 'regalos' })).body.error).toBe('already_paid');
     await o.post(`/api/test-payments/${up.id}`, { outcome: 'paid' });
-    expect((await o.get('/api/payments')).body.paidPlan).toBe('completo');
-    expect((await o.post('/api/wedding/publish')).body.planId).toBe('completo');
+    expect((await o.get('/api/payments')).body.paidPlan).toBe('invitacion');
+    expect((await o.post('/api/wedding/publish')).body.planId).toBe('invitacion');
   });
 
   it('otra pareja no ve ni completa órdenes ajenas', async () => {

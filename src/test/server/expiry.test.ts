@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { draftFor, makeEnv, saveDraft, signUp, type Env } from './helpers';
 import { addTerm } from '@/lib/weda/payments';
 
-/* Vencimiento de la publicación aplicado por el servidor (6 meses desde la primera publicación, UTC). */
+/* Vencimiento de la publicación aplicado por el servidor (1 año desde la primera publicación, UTC). */
 let env: Env;
 beforeAll(() => { env = makeEnv(); });
 afterAll(() => env.close());
@@ -19,7 +19,7 @@ describe('vencimiento de la publicación', () => {
     slug = (await owner.post('/api/wedding/publish')).body.slug;
   });
 
-  it('al publicar se guarda el vencimiento: 6 meses desde la primera publicación', () => {
+  it('al publicar se guarda el vencimiento: 1 año desde la primera publicación', () => {
     const r = pubRow(slug);
     expect(r.expires_at).toBe(addTerm(r.published_at));
   });
