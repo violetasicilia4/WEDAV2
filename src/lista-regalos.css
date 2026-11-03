@@ -2,7 +2,7 @@
    #f6f7f8, 60/40 px de aire vertical, contenido hasta 1200 px y títulos de 36/28 px. El verde (#959571) queda solo en el cierre y los botones. */
 .lr { background: #fff; color: var(--foreground); }
 .lr-inner { width: var(--k-inner, min(100% - 64px, 1200px)); margin-inline: auto; }
-.lr h2 { font-size: var(--k-h2, clamp(28px, 3vw, 36px)); line-height: 1.1; letter-spacing: -.02em; font-weight: var(--w-medium, 500); margin: 0; text-wrap: balance; }
+:where(.lr) h2 { font-size: var(--k-h2, clamp(28px, 3vw, 36px)); line-height: 1.1; letter-spacing: -.02em; font-weight: var(--w-medium, 500); margin: 0; text-wrap: balance; }
 .lr .seed-button { background: #959571; color: #fff; }
 .lr .seed-button:hover { background: #868662; color: #fff; }
 
@@ -48,3 +48,5 @@
 /* En el cierre verde el botón va blanco, como en la landing. */
 .lr .closing-section .seed-button { background: #fff; color: var(--foreground); }
 .lr .closing-section .seed-button:hover { background: var(--paper, #f3f0e8); color: var(--foreground); }
+/* El título del cierre conserva la escala de los títulos de esta página. */
+.lr .closing-section h2 { font-size: var(--k-h2, clamp(28px, 3vw, 36px)); line-height: 1.1; letter-spacing: -.02em; }

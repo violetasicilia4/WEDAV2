@@ -112,8 +112,9 @@ function Index() {
   useEffect(() => { track('landing_viewed'); }, []);
   const heroVideo = useRef<HTMLVideoElement>(null);
   const router = useRouter();
-  // El video (1,8 MB, 60 cps sin cuadros repetidos) se pide recién cuando la página terminó de cargar y el navegador está libre: la portada (póster) es lo primero que se ve
+  // El video se pide recién cuando la página terminó de cargar y el navegador está libre: la portada (póster) es lo primero que se ve
   // y no compite con el resto. Con movimiento reducido, ahorro de datos, conexión lenta o como fondo del registro (iframe) no se descarga: queda el póster.
+  // En celular (hasta 640 px) va una versión vertical recortada a lo que se ve en pantalla (0,37 MB en vez de 1,7 MB, auditoría F-05).
   useEffect(() => {
     const v = heroVideo.current;
     if (!v) return;
@@ -126,11 +127,15 @@ function Index() {
       if (window.self === window.top) void router.preloadRoute({ to: '/crear/cuenta' }).catch(() => {});
       if (started || lean()) return;
       started = true;
-      v.src = '/hero.mp4?v=8';
+      const phone = window.matchMedia('(max-width: 640px)').matches;
+      v.classList.toggle('is-portrait', phone);
+      v.src = phone ? '/hero-mobile.mp4?v=1' : '/hero.mp4?v=9';
       v.play().catch(() => {});
     };
     const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-    const idle = () => { if (ric) ric.call(window, start, { timeout: 2500 }); else window.setTimeout(start, 800); };
+    // En celular se espera un poco más: primero tiene que quedar lista la página para responder a los toques.
+    const wait = window.matchMedia('(max-width: 640px)').matches ? 1200 : 0;
+    const idle = () => window.setTimeout(() => { if (ric) ric.call(window, start, { timeout: 2500 }); else window.setTimeout(start, 800); }, wait);
     if (document.readyState === 'complete') idle(); else window.addEventListener('load', idle, { once: true });
     // Si el usuario activa movimiento reducido con la página abierta, se pausa.
     const onChange = () => { if (mq.matches) v.pause(); else if (started) v.play().catch(() => {}); };
@@ -143,7 +148,7 @@ function Index() {
     <FloatNav onLanding />
     <main id="main">
     <section className="seed-hero" id="top">
-      <video className="hero-image" poster="/hero-poster.jpg?v=4" muted loop playsInline preload="none" aria-hidden="true" ref={heroVideo}/>
+      <video className="hero-image" poster="/hero-poster.jpg?v=5" muted loop playsInline preload="none" aria-hidden="true" ref={heroVideo}/>
       <div className="hero-inner"><div className="hero-copy"><h1>Tu casamiento empieza antes del gran día.</h1><p>Creá el sitio de tu casamiento, armá tu lista de regalos y organizá tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">

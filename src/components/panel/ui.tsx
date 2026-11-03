@@ -7,6 +7,8 @@ import { coupleLabel, dateLabel, isSamplePhoto, photoPosition, resolvePhoto } fr
 import { planFor, type Feature } from '@/lib/weda/plans';
 import { PublishDialog } from '@/components/panel/publish-dialog';
 import { update, useAppState } from '@/lib/weda/store';
+// Estilos del panel: viajan con el código de las pantallas que usan estos componentes, no con la landing (auditoría F-06).
+import '@/panel.css';
 
 /* ------------------------------------------------------------------ campos */
 

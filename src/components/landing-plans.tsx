@@ -1,5 +1,7 @@
+import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { HIGHLIGHT_ICON } from '@/components/plan-icons';
 import { formatPrice, PLANS, planById, PUBLICATION_TERM, type Plan } from '@/lib/weda/plans';
@@ -51,6 +53,11 @@ export function LandingPlans() {
           <h2><span className="plans-l1">Armá tu casamiento gratis.</span> <span className="plans-l2">Publicalo cuando estés listo.</span></h2>
         </div>
         <div className="plans-grid">{PLANS.map(p => <PlanCard key={p.id} plan={p} />)}</div>
+        {/* Una sola acción para los tres planes (las tarjetas no llevan botón): se empieza gratis y el plan se elige al publicar. */}
+        <div className="plans-cta">
+          <Button variant="seed" asChild><Link to="/crear/cuenta">Empezar gratis</Link></Button>
+          <p>Elegís el plan recién al publicar.</p>
+        </div>
       </div>
     </section>
   );

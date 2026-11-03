@@ -12,7 +12,6 @@ import { can, formatPrice, PLANS, PUBLICATION_TERM, type Feature } from '@/lib/w
 import { ensureRemote, errorText, hasUnsaved, dismissNotice, reloadFromServer, retrySave, useRemote } from '@/lib/weda/remote';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import { isLive } from '@/lib/weda/payments';
-import '@/panel.css';
 
 export const Route = createFileRoute('/panel')({
   head: () => ({

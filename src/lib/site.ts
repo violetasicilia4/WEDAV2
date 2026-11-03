@@ -1,7 +1,11 @@
 // URL pública del sitio y metadatos para compartir. Los metadatos sociales y el canonical necesitan una URL absoluta: se toma de
 // VITE_SITE_URL en el build (por ejemplo "https://weda.example"). Si no está definida quedan rutas relativas y no se emite
 // canonical ni og:url, que es lo único honesto sin dominio definitivo.
-export const SITE_URL = ((import.meta.env['VITE_SITE_URL'] as string | undefined) ?? '').trim().replace(/\/+$/, '');
+// Un solo dominio canónico (auditoría F-11): `weda.app` redirige con 308 a `www.weda.app`, así que el canonical, `og:url` y el sitemap
+// apuntan siempre a la dirección final, aunque la variable del hosting diga el dominio sin «www».
+const CANONICAL_ORIGIN = 'https://www.weda.app';
+const fromEnv = ((import.meta.env['VITE_SITE_URL'] as string | undefined) ?? '').trim().replace(/\/+$/, '');
+export const SITE_URL = fromEnv === 'https://weda.app' ? CANONICAL_ORIGIN : fromEnv;
 
 export const absolute = (path: string) => (SITE_URL && path.startsWith('/') ? `${SITE_URL}${path}` : path);
 
