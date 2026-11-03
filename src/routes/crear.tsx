@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Outlet, useRouterState } from '@tanstack/react-router';
 import { ensureRemote } from '@/lib/weda/remote';
 import '@/panel.css';
@@ -26,12 +26,17 @@ function CreateLayout() {
   const path = useRouterState({ select: s => (s.resolvedLocation ?? s.location).pathname.replace(/\/$/, '') });
   const onboarding = ONBOARDING.includes(path);
   const showBackdrop = !onboarding && path.startsWith('/crear');
+  // El fondo aparece recién cuando la landing terminó de pintarse: antes el iframe vacío se veía como un destello blanco.
+  const [bgReady, setBgReady] = useState(false);
+  const bg = useRef<HTMLIFrameElement>(null);
+  // Si el iframe terminó de cargar antes de que React escuchara (entrada directa a /crear/cuenta), igual se muestra.
+  useEffect(() => { if (bg.current?.contentDocument?.readyState === 'complete' && bg.current.contentDocument.URL !== 'about:blank') setBgReady(true); }, [showBackdrop]);
   return (
     <div className={`pn-root pn-flow${onboarding ? ' is-onboarding' : ''}`}>
       {showBackdrop && (
         <>
           {/* De fondo, la propia página de Weda, translúcida: decorativa, sin foco ni lectura de pantalla. */}
-          <iframe className="pn-flow-bg" src="/" title="" aria-hidden="true" tabIndex={-1} />
+          <iframe ref={bg} className={`pn-flow-bg${bgReady ? ' is-ready' : ''}`} src="/" title="" aria-hidden="true" tabIndex={-1} onLoad={() => setBgReady(true)} />
           <div className="pn-flow-veil" aria-hidden="true" />
         </>
       )}

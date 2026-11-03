@@ -33,7 +33,7 @@ export function pageMeta(o: { title: string; description: string; ogDescription?
 }
 
 /** Páginas públicas que se listan en el sitemap. Solo las indexables: la demo (/ejemplo) lleva noindex y no va. */
-export const SITEMAP_PATHS = ['/'] as const;
+export const SITEMAP_PATHS = ['/', '/lista-de-regalos'] as const;
 
 export function buildSitemap(siteUrl: string = SITE_URL): string | null {
   if (!siteUrl) return null;

@@ -1,0 +1,50 @@
+/* Página /lista-de-regalos. Mismo ritmo que la landing (ver «Ritmo Knot» en styles.css): secciones que alternan blanco y gris
+   #f6f7f8, 60/40 px de aire vertical, contenido hasta 1200 px y títulos de 36/28 px. El verde (#959571) queda solo en el cierre y los botones. */
+.lr { background: #fff; color: var(--foreground); }
+.lr-inner { width: var(--k-inner, min(100% - 64px, 1200px)); margin-inline: auto; }
+.lr h2 { font-size: var(--k-h2, clamp(28px, 3vw, 36px)); line-height: 1.1; letter-spacing: -.02em; font-weight: var(--w-medium, 500); margin: 0; text-wrap: balance; }
+.lr .seed-button { background: #959571; color: #fff; }
+.lr .seed-button:hover { background: #868662; color: #fff; }
+
+/* Portada: texto a la izquierda y la maqueta real de la lista a la derecha. Deja lugar arriba para la barra flotante. */
+.lr-hero { padding: calc(var(--k-pad, 60px) + 88px) 0 var(--k-pad, 60px); }
+.lr-hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 56px; align-items: center; }
+.lr-hero .eyebrow { margin: 0 0 16px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: #6f6f50; }
+.lr-hero h1 { margin: 0; font-size: clamp(34px, 4.2vw, 56px); line-height: 1.04; letter-spacing: -.03em; font-weight: var(--w-medium, 500); text-wrap: balance; }
+.lr-lead { margin: 20px 0 0; max-width: 34em; font-size: clamp(16px, 1.3vw, 18px); line-height: 1.5; color: #4a4b48; text-wrap: pretty; }
+.lr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 28px; }
+.lr-actions .seed-button { height: 44px; padding: 0 22px; font-size: 14px; }
+.lr-actions .seed-link-button { color: var(--foreground); font-size: 14px; }
+.lr-hero-demo { width: 100%; max-width: 520px; justify-self: end; }
+.lr-hero-demo .fd-stage { margin: 0; aspect-ratio: 1 / 1; min-height: 0; border-radius: 24px; background: #f6f7f8; }
+
+/* Ventajas, como The Knot: maqueta (foto inclinada + pieza de interfaz) y texto grande con su botón, alternando el lado */
+.lr-features { padding-block: var(--k-pad, 60px); }
+
+
+/* Preguntas frecuentes: acordeón nativo (<details>), sin JavaScript */
+.lr-faq { padding-block: var(--k-pad, 60px); }
+.lr-faq-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 56px; align-items: start; }
+.lr-faq-list { border-top: 1px solid #e3e4e6; }
+.lr-faq details { border-bottom: 1px solid #e3e4e6; }
+.lr-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 14px 0; cursor: pointer; list-style: none; }
+.lr-faq summary::-webkit-details-marker { display: none; }
+.lr-faq summary h3 { margin: 0; font-size: 17px; line-height: 1.35; font-weight: var(--w-medium, 500); }
+.lr-faq-ico { flex: none; transition: transform .25s ease; }
+.lr-faq details[open] .lr-faq-ico { transform: rotate(45deg); }
+.lr-faq summary:focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; border-radius: 4px; }
+.lr-faq details p { margin: 0 0 20px; max-width: 40em; font-size: 16px; line-height: 1.55; color: #4a4b48; }
+
+@media (max-width: 900px) {
+  .lr-hero-grid, .lr-faq-inner { grid-template-columns: 1fr; gap: 28px; }
+  .lr-hero-demo { justify-self: stretch; max-width: none; }
+  .lr-hero-demo .fd-stage { aspect-ratio: 4 / 3; }
+}
+@media (max-width: 640px) {
+  .lr-hero { padding-top: calc(var(--k-pad, 40px) + 72px); }
+}
+@media (prefers-reduced-motion: reduce) { .lr-faq-ico { transition: none; } }
+
+/* En el cierre verde el botón va blanco, como en la landing. */
+.lr .closing-section .seed-button { background: #fff; color: var(--foreground); }
+.lr .closing-section .seed-button:hover { background: var(--paper, #f3f0e8); color: var(--foreground); }

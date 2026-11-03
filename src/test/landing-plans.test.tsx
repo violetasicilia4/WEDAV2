@@ -34,11 +34,9 @@ describe('Planes en la landing', () => {
     expect(screen.getByText(/Armá tu casamiento gratis/)).toBeTruthy();
   });
 
-  it('cada tarjeta lleva al registro con el mismo CTA gratuito, sin elegir plan', async () => {
+  it('las tarjetas no llevan «Empezar gratis»: el registro queda en el hero, la barra y el cierre (pedido de la dueña, 2026-11-03)', async () => {
     await renderPlans();
-    const ctas = screen.getAllByRole('link', { name: 'Empezar gratis' });
-    expect(ctas).toHaveLength(3);
-    ctas.forEach(a => expect(a.getAttribute('href')).toBe('/crear/cuenta'));
+    expect(screen.queryAllByRole('link', { name: 'Empezar gratis' })).toHaveLength(0);
   });
 
   it('cada plan despliega el detalle y los planes siguientes muestran lo heredado', async () => {

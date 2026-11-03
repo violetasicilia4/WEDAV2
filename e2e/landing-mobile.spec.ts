@@ -43,10 +43,10 @@ test.describe('Landing · celular 390 px', () => {
     }
   });
 
-  test('las anclas del pie dejan el título de la sección por debajo de la barra', async ({ page }) => {
+  test('el ancla del pie deja el título de la sección por debajo de la barra', async ({ page }) => {
     await goLanding(page);
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    for (const [name, id] of [['Lista de regalos', 'regalos'], ['Confirmación de asistencia', 'products']] as const) {
+    for (const [name, id] of [['Confirmación de asistencia', 'products']] as const) {
       await page.locator('.footer-nav a', { hasText: name }).click();
       await expect.poll(() => page.evaluate(id => Math.round(document.getElementById(id)!.getBoundingClientRect().top), id)).toBeGreaterThanOrEqual(65);
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -61,31 +61,30 @@ test.describe('Landing · celular 390 px', () => {
       const link = [...document.querySelectorAll('.seed-hero .hero-actions a')].find(a => !a.classList.contains('seed-button'))!;
       const next = document.querySelector('.feat-head h2')!;
       const copy = document.querySelector('.hero-copy')!;
-      return { copyCenter: (r(copy).top + r(copy).bottom) / 2, lines: Math.round(r(h1).height / parseFloat(getComputedStyle(h1).lineHeight)), btnH: r(btn).height, btnR: r(btn).right, linkH: r(link).height, linkR: r(link).right, vw: innerWidth, vh: innerHeight, nextTop: r(next).top, nextBottom: r(next).bottom, copy: document.querySelector('.seed-hero p')!.textContent };
+      return { copyCenter: (r(copy).top + r(copy).bottom) / 2, lines: Math.round(r(h1).height / parseFloat(getComputedStyle(h1).lineHeight)), btnH: r(btn).height, btnW: r(btn).width, btnFs: getComputedStyle(btn).fontSize, linkFs: getComputedStyle(link).fontSize, btnR: r(btn).right, linkH: r(link).height, linkR: r(link).right, vw: innerWidth, vh: innerHeight, nextTop: r(next).top, nextBottom: r(next).bottom, copy: document.querySelector('.seed-hero p')!.textContent };
     });
     expect(m.lines).toBeLessThanOrEqual(2);                     // el título (copy actual: «Tu casamiento empieza antes del gran día.») ocupa 1 o 2 renglones, nunca se corta
     expect(Math.abs(m.copyCenter - m.vh / 2)).toBeLessThan(12);   // el bloque de texto queda en el centro de la pantalla
-    expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.linkH).toBeGreaterThanOrEqual(44);
+    expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.linkH).toBeGreaterThanOrEqual(44); expect(m.linkFs).toBe(m.btnFs); // botones táctiles y «Ver ejemplo» con la misma letra que «Crear mi evento»
     expect(m.btnR).toBeLessThanOrEqual(m.vw); expect(m.linkR).toBeLessThanOrEqual(m.vw);
-    expect(m.nextBottom).toBeLessThanOrEqual(m.vh);          // el título de la sección siguiente se ve…
+    expect(m.nextTop).toBeLessThanOrEqual(m.vh - 24);        // el título de la sección siguiente asoma en la primera pantalla…
     expect(m.copy).toContain('regalos');                      // …y los regalos se mencionan desde el primer pantallazo
   });
 
-  test('regalos: copy nuevo, mismo CTA y una foto grande sin deformar', async ({ page }) => {
+  test('regalos: sin título de sección, tres ventajas apiladas y el botón dentro de la última', async ({ page }) => {
     await goLanding(page);
     const sec = page.locator('#regalos');
-    await expect(sec.getByRole('heading', { name: 'Una lista de regalos hecha para ustedes.' })).toBeVisible();
-    await expect(sec.getByRole('link', { name: 'Crear mi lista de regalos' })).toHaveAttribute('href', '/crear/cuenta');
-    // La sección tiene una sola foto (antes eran tres): cubre su recuadro sin deformarse y entra en el ancho de la pantalla.
-    const imgs = await sec.locator('.duo-photo img').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, fit: getComputedStyle(e).objectFit, vw: innerWidth }; }));
-    expect(imgs).toHaveLength(1);
-    expect(imgs[0]!.fit).toBe('cover');
-    expect(imgs[0]!.w).toBeGreaterThan(imgs[0]!.vw * 0.9);
-    expect(imgs[0]!.w).toBeLessThanOrEqual(imgs[0]!.vw);
-    expect(imgs[0]!.h).toBeGreaterThan(200);
+    await expect(sec.getByRole('heading', { name: 'Una lista de regalos hecha para ustedes.' })).toHaveCount(0);   // se sacó: la sección arranca en «Sin comisión»
+    await expect(sec.locator('.gift-feature').last().getByRole('link', { name: 'Crear mi lista de regalos' })).toHaveAttribute('href', '/crear/cuenta');   // el botón cierra el último bloque
+    const blocks = sec.locator('.gift-feature');
+    await expect(blocks).toHaveCount(3);                                                   // sin comisión, cada bolsillo y quién te regaló («Pedí en grande» se sacó)
+    await expect(blocks.locator('.mk')).toHaveCount(3);
+    for (const t of ['Sin comisión: el regalo entero es para ustedes', 'Regalos para cada bolsillo', 'Sabé quién te regaló qué']) await expect(sec.getByRole('heading', { name: t })).toBeVisible();
+    const tops = await blocks.evaluateAll(els => els.map(e => Math.round(e.getBoundingClientRect().top)));
+    expect(tops[0]! < tops[1]! && tops[1]! < tops[2]!).toBe(true);                       // uno debajo del otro
   });
 
-  test('planes: precios intactos, «Ver lo que incluye» se abre y el CTA queda al pie de cada tarjeta', async ({ page }) => {
+  test('planes: precios intactos, «Ver lo que incluye» se abre y las tarjetas no llevan «Empezar gratis»', async ({ page }) => {
     await goLanding(page);
     const cards = page.locator('.plan-card');
     await expect(cards).toHaveCount(3);
@@ -93,19 +92,17 @@ test.describe('Landing · celular 390 px', () => {
     expect(prices.map(p => p.replace(/\s/g, ' '))).toEqual(['ARS 95.000', 'ARS 140.000', 'ARS 150.000']);
     for (let i = 0; i < 3; i++) {
       const card = cards.nth(i);
-      const m = await card.evaluate(c => { const cr = c.getBoundingClientRect(), b = c.querySelector('.seed-button')!.getBoundingClientRect(), s = c.querySelector('.plan-more-btn')!.getBoundingClientRect(); return { gapBottom: cr.bottom - b.bottom, btnH: b.height, btnW: b.width, cardW: cr.width, sumH: s.height, sumAbove: b.top > s.bottom }; });
-      expect(m.gapBottom).toBeLessThan(40);                 // el botón es lo último de la tarjeta
-      expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.btnW).toBeGreaterThan(m.cardW * 0.8);
-      expect(m.sumH).toBeGreaterThanOrEqual(44); expect(m.sumAbove).toBe(true);
-      await expect(card.getByRole('link', { name: 'Empezar gratis' })).toHaveAttribute('href', '/crear/cuenta');
+      const m = await card.evaluate(c => { const cr = c.getBoundingClientRect(), s = c.querySelector('.plan-more-btn')!.getBoundingClientRect(); return { gapBottom: cr.bottom - s.bottom, sumH: s.height }; });
+      expect(m.gapBottom).toBeLessThan(48);                 // «Ver lo que incluye» cierra la tarjeta
+      expect(m.sumH).toBeGreaterThanOrEqual(44);
+      await expect(card.getByRole('link', { name: 'Empezar gratis' })).toHaveCount(0);   // sin botón (pedido de la dueña, 2026-11-03)
     }
     await cards.nth(1).getByRole('button', { name: 'Ver lo que incluye' }).click();
     const dlg = page.getByRole('dialog');
     await expect(dlg).toBeVisible();                         // el detalle abre en una ventana: la tarjeta no crece
     await expect(dlg).toContainText('Incluye todo lo de Regalos');   // lo heredado va en una línea, no repetido
     expect(await dlg.evaluate(d => d.scrollHeight <= d.clientHeight)).toBe(true);   // todo entra en pantalla: sin scroll
-    await expect(dlg.getByRole('link', { name: 'Empezar gratis' })).toBeInViewport();
-    await expect(dlg.getByRole('link', { name: 'Empezar gratis' })).toHaveAttribute('href', '/crear/cuenta');
+    await expect(dlg.getByRole('link', { name: 'Empezar gratis' })).toHaveCount(0);
     for (const t of ['Sitio con portada, nombres y fecha', 'Confirmación de asistencia (RSVP) online']) await expect(dlg).toContainText(t);
     await page.keyboard.press('Escape');
     await expect(dlg).toHaveCount(0);
@@ -115,28 +112,22 @@ test.describe('Landing · celular 390 px', () => {
     for (const t of ['Lista de regalos', 'Confirmación de asistencia', 'Música de la fiesta', 'Galería de fotos', 'Mensaje final', 'Pago único', 'Publicada 6 meses']) expect(all.join('\n')).toContain(t);
   });
 
-  test('Testimonios: una cita a la vez, las cuatro parejas a la vista y flechas que la cambian', async ({ page }) => {
+  test('Testimonios: una cita a la vez sobre blanco, con la foto y el contador de la pareja y flechas a la derecha', async ({ page }) => {
     await goLanding(page);
     const tq = page.locator('.tq');
     await tq.scrollIntoViewIfNeeded();
-    await expect(tq.getByText('Testimonios', { exact: true })).toBeVisible();
     await expect(page.getByText('Por qué Weda')).toHaveCount(0);
-    await expect(page.locator('.tq-quotes blockquote.on')).toHaveCount(1);
-    const first = await page.locator('.tq-quotes blockquote.on').innerText();
-    await expect(tq.locator('.tq-by')).toHaveText('Camila & Lucas');
-    await expect(tq.locator('.tq-people button')).toHaveCount(4);
-    await expect(tq.getByRole('button', { name: 'Testimonio de Camila & Lucas' })).toHaveAttribute('aria-pressed', 'true');
-    await tq.getByRole('button', { name: 'Testimonio de Juan & Claudia' }).click();
-    await expect(tq.locator('.tq-by')).toHaveText('Juan & Claudia');
-    await tq.getByRole('button', { name: 'Testimonio de Camila & Lucas' }).click();
-    const m = await tq.evaluate(el => { const q = el.querySelector('blockquote.on')!.getBoundingClientRect(); return { left: q.left, right: innerWidth - q.right }; });
-    expect(m.left).toBeGreaterThanOrEqual(12); expect(m.right).toBeGreaterThanOrEqual(12);
+    expect(await page.locator('#por-que-weda').evaluate(e => getComputedStyle(e).backgroundColor)).toBe('rgb(255, 255, 255)');   // fondo blanco, sin foto
+    await expect(tq.locator('blockquote.on')).toHaveCount(1);
+    await expect(tq.locator('.tq-who strong')).toHaveText('Camila & Lucas');
+    await expect(tq.locator('.tq-who span')).toHaveText('01 / 04');
     await tq.getByRole('button', { name: 'Testimonio siguiente' }).click();
-    await expect(tq.locator('.tq-by')).toHaveText('Valentina & Mariano');
-    expect(await page.locator('.tq-quotes blockquote.on').innerText()).not.toBe(first);
+    await expect(tq.locator('.tq-who span')).toHaveText('02 / 04');
     await tq.getByRole('button', { name: 'Testimonio anterior' }).click();
-    await tq.getByRole('button', { name: 'Testimonio anterior' }).click();                  // da la vuelta al final
-    await expect(tq.locator('.tq-by')).toHaveText('Juan & Claudia');
+    await tq.getByRole('button', { name: 'Testimonio anterior' }).click();
+    await expect(tq.locator('.tq-who span')).toHaveText('04 / 04');                                // da la vuelta
+    const nav = await tq.locator('.tq-nav').boundingBox(), foot = await tq.locator('.tq-foot').boundingBox();
+    expect(Math.abs(nav!.x + nav!.width - (foot!.x + foot!.width))).toBeLessThan(2);              // flechas a la derecha
     const btn = await tq.getByRole('button', { name: 'Testimonio siguiente' }).boundingBox();
     expect(btn!.width).toBeGreaterThanOrEqual(44); expect(btn!.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
@@ -162,8 +153,25 @@ test.describe('Landing · escritorio no cambia', () => {
     const m = await page.evaluate(() => { const pills = [...document.querySelectorAll('.float-pill')]; return { n: pills.length, radius: getComputedStyle(pills[0]!).borderRadius, h1: getComputedStyle(document.querySelector('.seed-hero h1')!).fontSize, ws: getComputedStyle(document.querySelector('.seed-hero h1')!).whiteSpace, pad: getComputedStyle(document.querySelector('.products-section')!).paddingTop, weight: getComputedStyle(document.querySelector('.feat-head h2')!).fontWeight, vh: innerHeight }; });
     expect(m.n).toBe(2);
     expect(m.radius).not.toBe('0px');
-    expect(m.h1).toBe('64px'); // Display XL (token --t-display-xl)
-    expect(m.pad).toBe(`${Math.min(140, Math.max(72, m.vh * 0.12))}px`); // padding de la sección: clamp(72px, 12svh, 140px)
+    expect(m.h1).toBe('72px'); // hero: clamp(52px, 5vw, 76px)
+    expect(m.pad).toBe('60px'); // espaciado de sección como The Knot: 60 px en compu (40 px en celular)
     expect(m.weight).toBe('500'); // Medium
+  });
+});
+
+test.describe('Página de la lista de regalos (/lista-de-regalos)', () => {
+  test('se llega desde el pie, tiene un solo h1, preguntas que se despliegan y datos estructurados para buscadores', async ({ page }) => {
+    await goLanding(page);
+    await page.locator('.seed-footer').getByRole('link', { name: 'Lista de regalos' }).click();
+    await expect(page).toHaveURL(/\/lista-de-regalos$/);
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page).toHaveTitle(/Lista de regalos/);
+    const types = await page.evaluate(() => [...document.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!)['@type']));
+    expect(types).toContain('FAQPage');
+    const first = page.locator('.lr-faq details').first();
+    await first.locator('summary').click();
+    await expect(first).toHaveAttribute('open', '');
+    await expect(page.locator('.float-nav a', { hasText: 'Lista de regalos' })).toHaveCount(0); // no figura en el menú de arriba
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
   });
 });

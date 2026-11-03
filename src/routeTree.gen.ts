@@ -14,6 +14,7 @@ import { Route as ComprobanteRouteImport } from './routes/comprobante'
 import { Route as CrearRouteImport } from './routes/crear'
 import { Route as EjemploRouteImport } from './routes/ejemplo'
 import { Route as EncontrarRouteImport } from './routes/encontrar'
+import { Route as ListaDeRegalosRouteImport } from './routes/lista-de-regalos'
 import { Route as PagoDePruebaRouteImport } from './routes/pago-de-prueba'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
@@ -62,6 +63,11 @@ const EjemploRoute = EjemploRouteImport.update({
 const EncontrarRoute = EncontrarRouteImport.update({
   id: '/encontrar',
   path: '/encontrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListaDeRegalosRoute = ListaDeRegalosRouteImport.update({
+  id: '/lista-de-regalos',
+  path: '/lista-de-regalos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PagoDePruebaRoute = PagoDePruebaRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
+  '/lista-de-regalos': typeof ListaDeRegalosRoute
   '/pago-de-prueba': typeof PagoDePruebaRoute
   '/panel': typeof PanelRouteWithChildren
   '/privacidad': typeof PrivacidadRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/comprobante': typeof ComprobanteRoute
   '/encontrar': typeof EncontrarRoute
+  '/lista-de-regalos': typeof ListaDeRegalosRoute
   '/pago-de-prueba': typeof PagoDePruebaRoute
   '/privacidad': typeof PrivacidadRoute
   '/terminos': typeof TerminosRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/crear': typeof CrearRouteWithChildren
   '/ejemplo': typeof EjemploRouteWithChildren
   '/encontrar': typeof EncontrarRoute
+  '/lista-de-regalos': typeof ListaDeRegalosRoute
   '/pago-de-prueba': typeof PagoDePruebaRoute
   '/panel': typeof PanelRouteWithChildren
   '/privacidad': typeof PrivacidadRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/crear'
     | '/ejemplo'
     | '/encontrar'
+    | '/lista-de-regalos'
     | '/pago-de-prueba'
     | '/panel'
     | '/privacidad'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/'
     | '/comprobante'
     | '/encontrar'
+    | '/lista-de-regalos'
     | '/pago-de-prueba'
     | '/privacidad'
     | '/terminos'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/crear'
     | '/ejemplo'
     | '/encontrar'
+    | '/lista-de-regalos'
     | '/pago-de-prueba'
     | '/panel'
     | '/privacidad'
@@ -373,6 +385,7 @@ export interface RootRouteChildren {
   CrearRoute: typeof CrearRouteWithChildren
   EjemploRoute: typeof EjemploRouteWithChildren
   EncontrarRoute: typeof EncontrarRoute
+  ListaDeRegalosRoute: typeof ListaDeRegalosRoute
   PagoDePruebaRoute: typeof PagoDePruebaRoute
   PanelRoute: typeof PanelRouteWithChildren
   PrivacidadRoute: typeof PrivacidadRoute
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/encontrar'
       fullPath: '/encontrar'
       preLoaderRoute: typeof EncontrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lista-de-regalos': {
+      id: '/lista-de-regalos'
+      path: '/lista-de-regalos'
+      fullPath: '/lista-de-regalos'
+      preLoaderRoute: typeof ListaDeRegalosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pago-de-prueba': {
@@ -665,6 +685,7 @@ const rootRouteChildren: RootRouteChildren = {
   CrearRoute: CrearRouteWithChildren,
   EjemploRoute: EjemploRouteWithChildren,
   EncontrarRoute: EncontrarRoute,
+  ListaDeRegalosRoute: ListaDeRegalosRoute,
   PagoDePruebaRoute: PagoDePruebaRoute,
   PanelRoute: PanelRouteWithChildren,
   PrivacidadRoute: PrivacidadRoute,

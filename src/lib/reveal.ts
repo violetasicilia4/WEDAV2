@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 
 const TARGETS = [
   '.feat-head', '.feat-card',
-  '.duo-photo', '.duo-panel',
+  '.duo-panel', '.lr .gift-feature',
   '.tq',
   '.plans-head', '.plan-card',
   '.footer-top',

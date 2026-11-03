@@ -1,0 +1,129 @@
+/* Maquetas de la lista de regalos (src/components/gift-mocks.tsx): foto inclinada con una pieza de la interfaz encima, al estilo de The Knot.
+   Se usan en la sección Regalos de la landing y en /lista-de-regalos. */
+.mk { position: relative; width: 100%; max-width: 520px; aspect-ratio: 1 / 1; margin-inline: auto; font-size: 13px; color: var(--foreground); }
+.mk img { display: block; object-fit: cover; }
+.mk-photo { position: absolute; inset: 6% 6% 6% 22%; width: 72%; height: 88%; border-radius: 14px; transform: rotate(3deg); box-shadow: 0 18px 40px rgb(0 0 0 / .12); }
+
+/* Sin comisión: pantalla de «Hacer un regalo» con el sello y el panel de pago */
+.mk-phone { position: absolute; left: 14%; top: 4%; width: 52%; padding: 0 16px 18px; border-radius: 16px; background: #fff; box-shadow: 0 14px 40px rgb(0 0 0 / .12); display: flex; flex-direction: column; }
+.mk-phone-bar { display: flex; align-items: center; gap: 10px; margin: 0 -16px 14px; padding: 14px 16px; border-bottom: 1px solid #eceded; }
+.mk-phone-bar b { flex: 1; font-size: 13px; }
+.mk-phone img { width: 100%; aspect-ratio: 4 / 3; border-radius: 8px; }
+.mk-phone small { margin-top: 12px; color: #6f7070; }
+.mk-phone strong { font-size: 17px; font-weight: var(--w-medium, 500); }
+.mk-amount { margin-top: 10px; padding: 10px 12px; border: 1px solid #dcdddd; border-radius: 6px; font-size: 18px; font-weight: var(--w-medium, 500); }
+.mk-pay { position: absolute; right: 0; top: 16%; width: 44%; padding: 16px; border-radius: 12px; background: #fff; box-shadow: 0 14px 40px rgb(0 0 0 / .14); display: grid; gap: 10px; }
+.mk-opt { display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #eceded; }
+.mk-opt i { width: 16px; height: 16px; border-radius: 50%; border: 5px solid var(--foreground); }
+.mk-note { color: #6f7070; font-size: 12px; }
+.mk-badge { position: absolute; left: 2%; top: 10%; z-index: 2; width: 30%; transform: rotate(-12deg); }
+.mk-badge circle { fill: #959571; }
+.mk-badge text { fill: #fff; font-size: 11.5px; font-weight: 600; letter-spacing: .14em; }
+.mk-badge .mk-badge-big { font-size: 30px; letter-spacing: 0; }
+
+/* Para cada bolsillo: filtros por monto reales de la página de regalos */
+.mk-budget .mk-photo { inset: 4% 4% 4% 24%; transform: rotate(-3deg); }
+.mk-panel { position: absolute; left: 0; top: 18%; width: 58%; padding: 16px; border-radius: 12px; background: #fff; box-shadow: 0 14px 40px rgb(0 0 0 / .14); display: grid; gap: 12px; }
+.mk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-chips span { padding: 5px 10px; border: 1px solid #dcdddd; border-radius: 999px; font-size: 11px; white-space: nowrap; }
+.mk-chips .is-on { background: var(--foreground); border-color: var(--foreground); color: #fff; }
+.mk-gifts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mk-gifts span { display: grid; gap: 4px; }
+.mk-gifts img { width: 100%; aspect-ratio: 1 / 1; border-radius: 6px; }
+.mk-gifts em { font-style: normal; font-size: 12px; }
+.mk-more { padding: 9px; border-radius: 999px; background: var(--foreground); color: #fff; text-align: center; font-size: 12px; font-weight: var(--w-medium, 500); }
+
+/* Sabé quién te regaló */
+.mk-received .mk-photo { transform: rotate(-2deg); }
+
+@media (max-width: 640px) {
+  .mk { font-size: 11px; }
+  .mk-chips span { font-size: 9.5px; padding: 4px 7px; }
+  .mk-phone strong { font-size: 14px; }
+  .mk-amount { font-size: 14px; padding: 7px 9px; }
+  .mk-budget { aspect-ratio: 4 / 5; }
+  .mk-panel { top: 6%; width: 66%; padding: 12px; gap: 9px; }
+  .mk-phone { left: 20%; width: 54%; }
+  .mk-phone-bar b { white-space: nowrap; font-size: 11px; }
+  .mk-badge { left: -2%; top: -2%; width: 27%; }
+  .mk-pay { width: 46%; padding: 12px; }
+}
+
+/* Sabé quién te regaló: lista de regalos recibidos con el nombre de cada invitado */
+.mk-list { position: absolute; left: 0; top: 24%; width: 74%; padding: 16px; border-radius: 12px; background: #fff; box-shadow: 0 14px 40px rgb(0 0 0 / .14); display: grid; gap: 4px; }
+.mk-list > b { margin-bottom: 6px; }
+.mk-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid #eceded; }
+.mk-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #e8e8dd; font-size: 11px; font-weight: 600; color: #6f6f50; }
+.mk-row-main { display: grid; gap: 1px; min-width: 0; }
+.mk-row-main strong { font-size: 14px; font-weight: var(--w-medium, 500); }
+.mk-row-main small { color: #6f7070; font-size: 12px; }
+.mk-row-main em { font-style: normal; font-size: 12px; color: #4a4b48; }
+.mk-state { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; border: 1px solid #dcdddd; font-size: 11px; white-space: nowrap; }
+.mk-state.is-ok { border-color: #959571; background: #959571; color: #fff; }
+
+/* Bloques de ventajas (src/components/gift-features.tsx): maqueta y explicación, uno debajo del otro, alternando el lado. */
+.gift-features { display: grid; gap: 96px; text-align: left; }
+.gift-feature { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+.gift-feature.is-flip .mk { order: 2; }
+.gift-feature h2, .gift-feature h3 { margin: 0; font-size: clamp(30px, 3.4vw, 48px); line-height: 1.04; letter-spacing: -.03em; font-weight: var(--w-medium, 500); text-wrap: balance; }
+.gift-feature p { margin: 18px 0 0; font-size: 18px; line-height: 1.55; color: #4a4b48; max-width: 32em; text-wrap: pretty; }
+.gift-feature .seed-button { margin-top: 28px; height: 48px; padding: 0 26px; font-size: 15px; background: #959571; color: #fff; }
+.gift-feature .seed-button:hover { background: #868662; color: #fff; }
+@media (max-width: 900px) {
+  .gift-features { gap: 64px; }
+  .gift-feature { grid-template-columns: 1fr; gap: 28px; }
+  .gift-feature.is-flip .mk { order: 0; }
+}
+@media (max-width: 640px) {
+  .gift-features { gap: 56px; }
+  .gift-feature p { font-size: 16px; margin-top: 14px; }
+  .gift-feature .seed-button { margin-top: 22px; }
+}
+
+/* Celular: la lista de regalos recibidos más compacta (va al final para ganarle a las reglas de arriba). */
+@media (max-width: 640px) {
+  .mk-received { aspect-ratio: 5 / 6; }
+  .mk-list { top: 10%; width: 86%; padding: 12px; }
+  .mk-row { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; padding: 8px 0; }
+  .mk-avatar { width: 28px; height: 28px; font-size: 10px; }
+  .mk-row-main strong { font-size: 12.5px; }
+  .mk-row-main small, .mk-row-main em { font-size: 11px; }
+  .mk-state { padding: 5px; }
+  .mk-state span, .mk-row-main em { display: none; }
+  .mk-row-main strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* Celular primero (2026-11-03): las tres maquetas ocupan la misma caja (mismo alto, crece con el ancho de la pantalla) y su contenido
+   queda dentro, sin salirse; el texto de cada bloque va centrado debajo, con los mismos espacios en los tres. */
+@media (max-width: 640px) {
+  .mk { aspect-ratio: auto; width: 100%; max-width: 420px; height: clamp(300px, 92vw, 400px); }
+  .mk-received, .mk-budget { aspect-ratio: auto; }
+  /* Sin comisión: el sello y la pantalla bajan un poco para no salirse por arriba */
+  .mk-badge { left: 0; top: 2%; width: 26%; }
+  .mk-phone { top: 7%; left: 18%; width: 56%; }
+  .mk-pay { top: 22%; }
+  /* Cada bolsillo: filtros en una sola fila y fotos más bajas */
+  .mk-budget .mk-photo { inset: 4% 3% 4% 26%; }
+  .mk-panel { top: 6%; width: 70%; gap: 8px; }
+  .mk-chips { flex-wrap: nowrap; overflow: hidden; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .mk-gifts img { aspect-ratio: 4 / 3; }
+  .mk-more { padding: 7px; }
+  /* Quién te regaló */
+  .mk-received .mk-photo { inset: 4% 4% 4% 20%; }
+  .mk-list { top: 9%; }
+}
+@media (max-width: 900px) {
+  .gift-feature { justify-items: center; }
+  .gift-feature-copy { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .gift-feature h2, .gift-feature h3 { text-align: center; }
+  .gift-feature p { margin-inline: auto; }
+}
+
+/* «Hacer un regalo»: más aire en la parte de abajo de la tarjeta (debajo del monto). */
+.mk-phone { padding-bottom: 30px; }
+.mk-amount { margin-top: 12px; padding: 13px 14px; }
+@media (max-width: 640px) {
+  .mk-phone { padding-bottom: 24px; }
+  .mk-amount { padding: 10px 11px; }
+}
+@media (max-width: 640px) { .mk-phone img { aspect-ratio: 16 / 10; } }

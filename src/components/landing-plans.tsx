@@ -1,7 +1,5 @@
-import { Link } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { HIGHLIGHT_ICON } from '@/components/plan-icons';
 import { formatPrice, PLANS, planById, PUBLICATION_TERM, type Plan } from '@/lib/weda/plans';
@@ -38,10 +36,8 @@ function PlanCard({ plan }: { plan: Plan }) {
           <DialogDescription>{formatPrice(plan.price)} · Pago único · Publicada {PUBLICATION_TERM}</DialogDescription>
           {base && <p className="plan-dialog-base"><Plus size={16} strokeWidth={1.6} aria-hidden="true" /><span>Incluye todo lo de {chain(plan).slice(0, -1).map(p => p.name).join(' y ')}</span></p>}
           <ul>{plan.items.map(it => <li key={it}>{it}</li>)}</ul>
-          <Button variant="seed" asChild><Link to="/crear/cuenta">Empezar gratis</Link></Button>
         </DialogContent>
       </Dialog>
-      <Button variant="seed" asChild><Link to="/crear/cuenta">Empezar gratis</Link></Button>
     </article>
   );
 }
