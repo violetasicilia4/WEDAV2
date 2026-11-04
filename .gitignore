@@ -52,6 +52,9 @@ playwright-report/
 capturas/
 explore-results
 
+# Estado local de la fábrica (/fabrica): backlog, encargos y revisiones
+.fabrica/
+
 # Datos locales del servidor (base SQLite y comprobantes)
 .data/
 .data-e2e/
