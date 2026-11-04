@@ -1,12 +1,12 @@
 // Quién provee los datos de la página pública:
 //  - DemoSite: /ejemplo (Ignacio & Martina). Los regalos elegidos duran lo que dure la sesión del navegador.
-//  - AppSite: /sitio/$slug y la vista previa. Lee y escribe el estado local de la pareja (lista, invitados, respuestas).
+//  - AppSite: /sitio/$slug y la vista previa. Publicado: lee y escribe por la API. Local o vista previa: solo lee, nunca escribe (BR-62).
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { sendGift, sendRsvp } from '@/lib/weda/public-api';
 import type { PublicLookup } from '@/lib/weda/public-site';
 import { useSessionState } from '@/lib/demo-session';
-import { applyRsvp, siteSlug } from '@/lib/weda/logic';
+import { siteSlug } from '@/lib/weda/logic';
 import { isLive } from '@/lib/weda/payments';
 import { isPlanId } from '@/lib/weda/plans';
 import { demoSiteData, siteFromState, SiteProvider, type SiteActions } from '@/lib/weda/site-model';
@@ -87,13 +87,9 @@ function LocalSite({ slug, children }: { slug: string; children: ReactNode }) {
     const as = readPlanOverride();
     return siteFromState(as ? { ...state, planId: as } : state);
   }, [mine, state]);
-  const actions = useMemo<SiteActions>(() => ({
-    given: state.gifts.given,
-    recordGift: (gs, who) => update(s => ({
-      ...s, gifts: { ...s.gifts, given: [...s.gifts.given.filter(x => !gs.some(g => g.id === x.id)), ...(() => { const ref = `env-${Date.now().toString(36)}`; return gs.map(g => ({ id: g.id, name: who.name, message: who.message, how: who.how, giftName: g.name, amount: g.amount, at: Date.now(), email: who.email, ref })); })()] },
-    })),
-    recordRsvp: people => update(s => applyRsvp(s, people)),
-  }), [state.gifts.given]);
+  // La vista previa y la página local no escriben nada (BR-62, PAY-01 F6): la confirmación y el regalo muestran el agradecimiento, pero no
+  // crean invitados ni regalos recibidos. Lo real entra solo por la página publicada (PublishedSite → API).
+  const actions = useMemo<SiteActions>(() => ({ given: [], recordGift: () => {}, recordRsvp: () => {} }), []);
   // Los datos de la pareja solo existen en este navegador: el título con sus nombres se pone recién al hidratar (el HTML del servidor es genérico).
   const heading = data ? `${state.couple.first} y ${state.couple.second}`.trim() : '';
   useEffect(() => {

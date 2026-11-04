@@ -1,4 +1,4 @@
-import { closePreview, expect, onboard, openPreview, previewFrame, stored, test } from './helpers';
+import { closePreview, expect, onboard, publishCelebration, openPreview, previewFrame, stored, test } from './helpers';
 
 const WIDTHS = [320, 360, 390, 430];
 
@@ -70,6 +70,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
   test.beforeEach(async ({ page }) => { await onboard(page); });
 
   test('Invitados: filas compactas, edición en hoja inferior y la hoja entra en pantalla', async ({ page }) => {
+    await publishCelebration(page); // operar invitados y mesas exige Celebración publicada (BR-62)
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
@@ -92,6 +93,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
   });
 
   test('Mesas: resumen de lugares, quién queda sin mesa y asignación desde el selector de cada mesa', async ({ page }) => {
+    await publishCelebration(page); // operar invitados y mesas exige Celebración publicada (BR-62)
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
@@ -171,6 +173,7 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
   });
 
   test('Invitados: se elimina desde la hoja de edición y se puede deshacer', async ({ page }) => {
+    await publishCelebration(page); // operar invitados y mesas exige Celebración publicada (BR-62)
     await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Lola');

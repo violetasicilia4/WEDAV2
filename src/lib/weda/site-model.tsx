@@ -8,7 +8,7 @@ import {
   social as demoSocial, wedding as demoWedding, weddingStart as demoStart,
   type Category, type Gift, type WeddingEvent,
 } from '@/lib/demo-wedding';
-import { can } from './plans';
+import { publishes } from './plans';
 import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath, spotifyEmbed } from './logic';
 import type { AppState, BlockId, GivenGift } from './types';
 
@@ -114,8 +114,8 @@ export function siteFromState(s: AppState): SiteData {
   const names = coupleLabel(s.couple);
   const date = s.date && parseDate(s.date) ? s.date : null;
   const spotify = spotifyEmbed(s.site.playlist.spotify);
-  const premiumMusic = can(s.planId, 'playlist') && s.site.playlist.enabled && (s.site.playlist.tracks.length > 0 || !!spotify);
-  const events: WeddingEvent[] = can(s.planId, 'site')
+  const premiumMusic = publishes(s.planId, 'playlist') && s.site.playlist.enabled && (s.site.playlist.tracks.length > 0 || !!spotify);
+  const events: WeddingEvent[] = publishes(s.planId, 'site')
     // Un evento aparece apenas se prende «Mostrar», aunque esté vacío: mientras falta el lugar, la tarjeta dice «Lugar a confirmar».
     ? s.site.events.filter(e => e.enabled).map(e => ({
         key: e.key, icon: e.icon, label: e.title.trim() || `Evento ${SLOT[e.key]}`, time: e.time ? `${e.time} hs` : '', name: e.name.trim() || (e.address.trim() ? e.title.trim() || `Evento ${SLOT[e.key]}` : 'Lugar a confirmar'), address: shortAddress(e.address),
@@ -129,7 +129,7 @@ export function siteFromState(s: AppState): SiteData {
     id: g.id, name: g.name, text: g.text, amount: g.amount, category: g.category, icon: g.icon, image: g.image, pos: g.pos, fit: g.fit, zoom: g.zoom,
   }));
   const present = demoCategories.filter(c => gifts.some(g => g.category === c));
-  const hasPhotos = can(s.planId, 'gallery') && s.site.gallery.enabled && s.site.gallery.photos.length > 0;
+  const hasPhotos = publishes(s.planId, 'gallery') && s.site.gallery.enabled && s.site.gallery.photos.length > 0;
   const dressOn = s.site.dressCode.enabled && (s.site.dressCode.title.trim() !== '' || s.site.dressCode.text.trim() !== '');
   return {
     kind: 'app',
@@ -150,19 +150,19 @@ export function siteFromState(s: AppState): SiteData {
     events,
     order: normalizeOrder(s.site.order),
     blocks: {
-      invitation: can(s.planId, 'site'),
+      invitation: publishes(s.planId, 'site'),
       save: s.site.saveDate,
       countdown: s.site.countdown && !!date,
       day: events.length > 0,
-      rsvp: can(s.planId, 'rsvp') && s.site.rsvp.enabled,
+      rsvp: publishes(s.planId, 'rsvp') && s.site.rsvp.enabled,
       dress: dressOn,
       photos: hasPhotos,
       playlist: premiumMusic,
-      message: can(s.planId, 'message') && s.site.message.enabled,
+      message: publishes(s.planId, 'message') && s.site.message.enabled,
       // La lista de regalos que incluye el plan se ve también en la invitación (una muestra y el acceso a la lista completa).
-      gifts: can(s.planId, 'gifts') && gifts.length > 0,
-      giftsSection: can(s.planId, 'gifts') && gifts.length > 0 && s.site.giftsSection.enabled,
-      note: can(s.planId, 'site') && s.site.note.enabled && (s.site.note.title.trim() !== '' || s.site.note.text.trim() !== ''),
+      gifts: publishes(s.planId, 'gifts') && gifts.length > 0,
+      giftsSection: publishes(s.planId, 'gifts') && gifts.length > 0 && s.site.giftsSection.enabled,
+      note: publishes(s.planId, 'site') && s.site.note.enabled && (s.site.note.title.trim() !== '' || s.site.note.text.trim() !== ''),
     },
     giftsSection: { title: s.site.giftsSection.title.trim() || DEFAULT_GIFTS_TITLE, text: s.site.giftsSection.text.trim() || DEFAULT_GIFTS_TEXT, button: s.site.giftsSection.button.trim() || DEFAULT_GIFTS_BUTTON },
     note: { title: s.site.note.title.trim(), text: s.site.note.text.trim() },

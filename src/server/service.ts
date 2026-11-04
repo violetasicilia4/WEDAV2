@@ -9,7 +9,7 @@ import { ApiError, conflict, forbidden, invalid, notFound, unauthorized } from '
 import { hashPassword, newId, newToken, RateLimiter, sha256, verifyPassword } from './security';
 import type { ServerConfig } from './config';
 import { cleanCbu, emptyState, isEmail, maskAlias, maskCbu, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
-import { planById, isPlanId } from '@/lib/weda/plans';
+import { planById, isPlanId, normalizePlanId, operates, planForOperation, planRank, type Access, type Operation } from '@/lib/weda/plans';
 import type { Guest, PlanId } from '@/lib/weda/types';
 import type { SiteData } from '@/lib/weda/site-model';
 import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
@@ -239,6 +239,7 @@ export class Service {
       guests: this.guestsOf(wid),
       publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, expiresAt: (pub['expires_at'] as string | null) ?? null, pendingChanges: this.pendingChanges(w) } : null,
       payout: this.activePayout(wid),
+      access: this.access(wid),
     };
   }
 
@@ -274,6 +275,9 @@ export class Service {
       const w = this.ensureWedding(userId);
       const wid = w['id'] as string;
       if (w['revision'] !== input.baseRevision) throw new ApiError(409, 'revision_conflict', String(w['revision']));
+      // BR-62: el contenido se guarda siempre; las operaciones de gestión (invitados, mesas) solo con el plan publicado y vigente. Todo o nada.
+      if (upserts.length > 0 || removes.length > 0) this.assertOperates(wid, 'guests');
+      if (JSON.stringify(draft.groups) !== JSON.stringify(sanitizeDraft(JSON.parse(w['draft'] as string)).groups)) this.assertOperates(wid, 'groups');
       const t = now();
       const next = (w['revision'] as number) + 1;
       // El destino de cobro que mande el cliente se descarta: solo cambia por changePayout (con clave).
@@ -285,7 +289,7 @@ export class Service {
         else this.db.prepare('INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(g.id, wid, g.first, g.last, normalizeName(g.first, g.last), g.status, g.menu, g.groupId, g.source, t, t);
       }
       for (const id of removes) this.db.prepare('DELETE FROM guests WHERE id = ? AND wedding_id = ?').run(id, wid);
-      return { revision: next, guests: this.guestsOf(wid), pendingChanges: this.pendingChanges({ ...w, draft: JSON.stringify(draft) }) };
+      return { revision: next, guests: this.guestsOf(wid), pendingChanges: this.pendingChanges({ ...w, draft: JSON.stringify(draft) }), access: this.access(wid) };
     });
   }
 
@@ -355,11 +359,35 @@ export class Service {
 
   /* ------------------------------------------------------------------ publicación */
 
+  /**
+   * Acceso operativo (PAY-01 F1–F2, BR-62, DP-25). Se calcula, no se guarda. Opera solo un evento PUBLICADO, vigente y (con la compuerta de
+   * pago) con una orden pagada de ese mismo plan: pagar sin publicar no habilita nada. Bajar la página no lo cierra (supuesto S-1 del plan).
+   * Sin compuerta (desarrollo y pruebas, IC-17) alcanza con la publicación. El plan del borrador nunca cuenta.
+   */
+  private access(wid: string): Access {
+    const paid = (this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[]).map(r => normalizePlanId(r['plan_id'] as PlanId));
+    const pub = this.db.prepare('SELECT plan_id, published_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+    if (!pub) return { state: paid.length ? 'paid_unpublished' : 'trial', plan: null, expiresAt: null };
+    const plan = normalizePlanId(pub['plan_id'] as PlanId);
+    const expiresAt = expiresOf(pub);
+    if (Date.parse(expiresAt) <= Date.now()) return { state: 'expired', plan, expiresAt };
+    // Publicado sin una orden pagada de su plan (por ejemplo, antes de encender la compuerta): no opera.
+    if (this.cfg.requirePaidOrder && !paid.includes(plan)) return { state: paid.length ? 'paid_unpublished' : 'trial', plan: null, expiresAt };
+    return { state: 'active', plan, expiresAt };
+  }
+
+  /** Rechaza la operación si el plan publicado no la incluye (403) o si el evento venció (410). Las lecturas no pasan por acá. */
+  private assertOperates(wid: string, op: Operation) {
+    const a = this.access(wid);
+    if (a.state === 'expired') throw new ApiError(410, 'event_expired');
+    if (!operates(a, op)) throw new ApiError(403, 'feature_requires_plan', `${op}:${planForOperation(op)?.id ?? ''}`);
+  }
+
   /** Plan con el que se publica: el que el servidor puede respaldar. Con `requirePaidOrder`, el de la orden pagada; si no, el elegido en el borrador. */
   private entitledPlan(wid: string, draftPlan: PlanId | null): PlanId {
     if (this.cfg.requirePaidOrder) {
       const paid = this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[];
-      const best = paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => b!.price - a!.price)[0];
+      const best = paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => planRank(b!.id) - planRank(a!.id))[0];
       if (!best) throw new ApiError(402, 'payment_required');
       return best.id;
     }
@@ -383,14 +411,16 @@ export class Service {
       }
       const snapshot = publicSite(draft, planId, slug);
       const t = now();
-      const prev = this.db.prepare('SELECT version, published_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
-      // Vencimiento (PUBLICATION_MONTHS desde la PRIMERA publicación, en UTC): publicar cambios, bajar y volver a publicar o mejorar el plan no lo extienden.
+      const prev = this.db.prepare('SELECT plan_id, version, published_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+      // F8 (D-05): mientras DP-23 siga pendiente, una página publicada no cambia de plan.
+      if (prev && normalizePlanId(prev['plan_id'] as PlanId) !== normalizePlanId(planId)) throw conflict('plan_change_pending');
+      // Vencimiento (PUBLICATION_MONTHS desde la PRIMERA publicación, en UTC): publicar cambios o bajar y volver a publicar no lo extienden.
       // Una publicación vencida no se reabre sola: renovar es una decisión comercial pendiente (production-readiness.md). El contenido no se borra.
       if (prev && Date.parse(expiresOf(prev)) <= Date.now()) throw conflict('publication_expired');
       if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=?, expires_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, expiresOf(prev), wid);
       else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,?)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t, addTerm(t));
       this.track('publication_completed', { plan_id: planId, is_republish: !!prev });
-      return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1 };
+      return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1, access: this.access(wid) };
     });
   }
 
@@ -545,6 +575,7 @@ export class Service {
   async remindReceipt(userId: string, id: string): Promise<{ status: 'sent' | 'skipped' | 'failed' }> {
     const { to, link, giver, couple } = tx(this.db, () => {
       const c = this.ownedContribution(userId, id);
+      this.assertOperates(c['wedding_id'] as string, 'contributions');
       if (c['status'] === 'rejected') throw conflict('contribution_rejected');
       if (this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_already_attached');
       const to = (c['giver_email'] as string | undefined) ?? '';
@@ -643,6 +674,7 @@ export class Service {
     if (typeof to !== 'string' || !['pending_review', 'confirmed', 'rejected'].includes(to)) throw invalid('invalid_status');
     return tx(this.db, () => {
       const c = this.ownedContribution(userId, id);
+      this.assertOperates(c['wedding_id'] as string, 'contributions');
       const from = c['status'] as string;
       if (!CONTRIBUTION_TRANSITIONS[from]?.includes(to)) throw conflict('invalid_transition');
       if (to === 'confirmed' && !this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_required');
@@ -668,6 +700,7 @@ export class Service {
     if (!isPlanId(planIdRaw)) throw invalid('invalid_plan');
     const w = this.ensureWedding(userId);
     const plan = planById(planIdRaw)!;
+    this.assertNoPlanChange(w['id'] as string, plan.id);
     const id = newId('ord');
     const t = now();
     this.db.prepare("INSERT INTO orders (id,wedding_id,plan_id,amount,status,created_at,updated_at) VALUES (?,?,?,?,'pending',?,?)").run(id, w['id'] as string, plan.id, plan.price, t, t);
@@ -683,7 +716,14 @@ export class Service {
   /** Plan más alto que esta pareja ya pagó (con confirmación del proveedor), o null. */
   private paidPlan(wid: string): PlanId | null {
     const paid = this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[];
-    return paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => b!.price - a!.price)[0]?.id ?? null;
+    return paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => planRank(b!.id) - planRank(a!.id))[0]?.id ?? null;
+  }
+
+  /** Con un plan ya pagado: el mismo → `already_paid`; otro → `plan_change_pending` (F8, D-05: DP-23 pendiente). No crea ninguna orden. */
+  private assertNoPlanChange(wid: string, planId: PlanId) {
+    const current = this.paidPlan(wid);
+    if (!current) return;
+    throw conflict(normalizePlanId(current) === normalizePlanId(planId) ? 'already_paid' : 'plan_change_pending');
   }
 
   /** Para el panel: hay cobro configurado y qué plan está pagado. Sin proveedor, `payments: false` (publicar no cobra). */
@@ -693,7 +733,7 @@ export class Service {
   }
 
   /**
-   * Empieza un pago. El monto lo calcula el servidor: el precio del plan, o la diferencia si ya hay uno pagado (mejora). Si ya hay una orden
+   * Empieza un pago. El monto lo calcula el servidor: el precio del plan. Con un plan ya pagado no se cobra nada más (F8, D-05). Si ya hay una orden
    * pendiente para el mismo plan y monto (doble clic, recarga, volver atrás), se reusa: no se crean dos cobros para lo mismo.
    */
   startCheckout(userId: string, planIdRaw: unknown) {
@@ -704,10 +744,9 @@ export class Service {
       const w = this.ensureWedding(userId);
       const wid = w['id'] as string;
       const plan = planById(planIdRaw)!;
-      const current = this.paidPlan(wid);
-      const currentPrice = current ? planById(current)!.price : 0;
-      if (currentPrice >= plan.price) throw conflict('already_paid');
-      const amount = plan.price - currentPrice;
+      this.assertNoPlanChange(wid, plan.id);
+      // Sin mejoras ni cobros adicionales (D-05): se cobra el precio completo del plan, una sola vez.
+      const amount = plan.price;
       const open = this.db.prepare("SELECT id FROM orders WHERE wedding_id = ? AND plan_id = ? AND amount = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1").get(wid, plan.id, amount) as Row | undefined;
       const id = (open?.['id'] as string | undefined) ?? newId('ord');
       if (!open) {

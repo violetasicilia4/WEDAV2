@@ -3,7 +3,7 @@
 import { readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, PASSWORD, PNG, saveDraft, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, signUp, type Env } from './helpers';
 import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
 import { unsubscribeToken } from '@/server/mail';
 
@@ -21,6 +21,7 @@ describe('persistencia del casamiento', () => {
   it('sobrevive a una sesión nueva (otro dispositivo) con los mismos datos', async () => {
     const phone = env.client();
     await signUp(phone, 'p1@correo.com');
+    await publishWith(phone, draftFor('Pía', 'Juan')); // operar invitados exige Celebración publicada (BR-62)
     await saveDraft(phone, draftFor('Pía', 'Juan'), { upsert: [{ id: 'inv-1', first: 'Rosa', last: 'Gómez', status: 'confirmed', menu: 'vegano', groupId: null, source: 'manual' }] });
     const laptop = env.client();
     expect((await laptop.post('/api/auth/login', { email: 'p1@correo.com', password: PASSWORD })).status).toBe(200);
@@ -28,7 +29,7 @@ describe('persistencia del casamiento', () => {
     expect(w.draft.couple).toMatchObject({ first: 'Pía', second: 'Juan' });
     expect(w.draft.gifts.items).toHaveLength(2);
     expect(w.guests[0]).toMatchObject({ first: 'Rosa', status: 'confirmed', menu: 'vegano' });
-    expect(w.revision).toBe(2);
+    expect(w.revision).toBe(3);
   });
 
   it('no pisa cambios más recientes: un guardado con revisión vieja devuelve 409 y no modifica nada', async () => {
@@ -68,6 +69,7 @@ describe('persistencia del casamiento', () => {
 describe('publicación y sitio público', () => {
   it('lo publicado se abre sin sesión desde otro contexto y solo expone lo público', async () => {
     const owner = env.client(); await signUp(owner, 'pub@correo.com');
+    await publishWith(owner, draftFor('Camila', 'Lucas'));
     await saveDraft(owner, draftFor('Camila', 'Lucas'), { upsert: [{ id: 'inv-x', first: 'Privado', last: 'Secreto', status: 'pending', menu: '', groupId: null, source: 'manual' }] });
     const p = (await owner.post('/api/wedding/publish')).body;
     expect(p.slug).toBe('camila-y-lucas');

@@ -34,9 +34,9 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Ver también: [inventari
 
 | ID | Regla | Aprobación | Documentos | Implementación actual | Pruebas | Inconsistencias o dudas |
 |---|---|---|---|---|---|---|
-| BR-13 | Tres planes acumulativos (Regalos, Celebración, Celebración Plus); precios de referencia en ARS de **pago único** (95.000 / 140.000 / 150.000) | DECIDIDO como valores de referencia (autora) | `plans.ts`, `UX` §3 | **IMPLEMENTADO** | U (`weda-logic`, `landing-plans`) | `PRODUCT.md` cita 180.000/320.000 y «1 año»; `UX` §3 dice «no se afirma pago único»; impuestos y facturación sin decidir |
-| BR-14 | Cada plan habilita solo sus funciones; lo no incluido se conserva como borrador y se oculta | DECIDIDO | `plans.ts`, `UX` | **IMPLEMENTADO** | U (`weda-logic` planes, `publish-todo`) | |
-| BR-15 | Mejora de plan solo hacia uno más completo y pagando la diferencia; no cambia la vigencia | DECIDIDO | `UX`, `PI`, `02d` | **IMPLEMENTADO** (la vigencia sigue desde la primera publicación) | U (`payments-flow`, `payments`) | |
+| BR-13 | **Dos planes acumulativos** (D-01, 2026-11-03): **Regalos ARS 95.000** y **Celebración ARS 140.000**, de **pago único**. Celebración incluye todo lo de Regalos. «Celebración Plus» (`completo`) dejó de ofrecerse; los datos guardados con ese id se leen como Celebración | DECIDIDO (dueña, 2026-11-03) | `03` §4 D-01, `plans.ts` | **IMPLEMENTADO** (`plans.ts`, `normalizePlanId`; verificado 2026-11-03) | U (`weda-logic`, `landing-plans`, `payments`) | Impuestos y facturación sin decidir (DP-17); «agradecimientos» sin definir (DP-27). *Antes: tres planes 95.000 / 140.000 / 150.000* |
+| BR-14 | **El plan define qué se publica.** Regalos publica solo la lista de regalos; Celebración publica la lista y el micrositio completo. Lo que el plan no publica se conserva como borrador (nunca se borra al elegir o cambiar de plan). Lo que se puede **ver, editar u operar** en el panel lo fija BR-62 | DECIDIDO (D-01, D-02, 2026-11-03) | `03` §4, `plans.ts` | **IMPLEMENTADO** en la publicación (el snapshot se arma con el plan con derecho; RSVP y aportes públicos se rechazan si la publicación no los incluye). en el panel desde el 2026-11-04 (PAY-01): todo se edita con cualquier plan y lo bloqueado se ve | U (`weda-logic` planes, `publish-todo`, `wedding-flow`) | *Antes: «cada plan habilita solo sus funciones… y se oculta», también en el editor* |
+| BR-15 | Cambio de Regalos a Celebración después de contratar | **PENDIENTE** (DP-23, registrada 2026-11-03) | `03` DP-23 | Cambio **bloqueado** desde el 2026-11-04 (PAY-01): el servidor responde `409 plan_change_pending` y ningún texto lo promete | U (`payments-flow`, `plan-access`) | *Antes figuraba como DECIDIDO («solo hacia uno más completo y pagando la diferencia; no cambia la vigencia»), con origen en `UX` y `PI`, no en una decisión de la dueña. La dueña pidió dejarla pendiente. Mientras tanto el cambio queda **bloqueado**, sin promesas ni cobros adicionales (D-05)* |
 | BR-16 | Los precios y los planes los gestiona solo Weda desde una administración interna, con historial y sin cambios retroactivos | DECIDIDO (Q5) | `02` | **NO IMPLEMENTADO** (precios en el código; no hay administración) | — | |
 | BR-17 | El monto de una orden lo calcula el servidor; el cliente no puede marcar «pagado» | DOCUMENTADO | `PI`, `BR` | **IMPLEMENTADO** | U (`payments-flow`, `wedding-flow`) | Solo con el adaptador de prueba |
 | BR-18 | Cancelación y reembolso de planes | PENDIENTE (P26) | `02d`, `06` | **NO IMPLEMENTADO** | — | No se inventa política |
@@ -78,6 +78,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Ver también: [inventari
 | BR-39 | Una persona puede ser propietaria de **varios** eventos; un evento nuevo es independiente y no hereda nada | DECIDIDO | `02d` §4 | **NO IMPLEMENTADO** (`owner_id UNIQUE`) | — | IC-06 |
 | BR-40 | El evento finalizado aparece en la cuenta del propietario solo con información comercial y contractual (nombres, fecha de la boda, plan, fechas, órdenes y pagos, comprobantes de compra de Weda) | PROPUESTA ADOPTADA (P34) | `02d` §3.4 | **NO IMPLEMENTADO** | — | La conservación de cada categoría requiere validación |
 | BR-41 | La cuenta de la pareja es independiente del estado del evento | DECIDIDO (P32) | `02d` §3.3 | **NO IMPLEMENTADO** (un evento por cuenta) | — | |
+| BR-62 | **Ver, editar contenido y operar.** *Ver* (recorrer una sección y entender cómo funciona) y *editar contenido* (textos, fotos, bloques, regalos de la lista: solo el borrador) no dependen del plan; ver DP-28 para el contenido del micrositio. *Operar* (acciones de gestión que crean o cambian datos reales) depende del **plan contratado** y de la **vigencia**: invitados (agregar, editar, importar, borrar), mesas y grupos (crear, asignar) y RSVP solo con **Celebración** vigente; lista de regalos, datos de cobro y aportes con **Regalos o Celebración** vigentes. Sin contratar no se opera nada. Las acciones bloqueadas se ven deshabilitadas y explican qué las desbloquea. **El servidor rechaza** la operación aunque se llame directo a la API; **la vista previa no escribe** | DECIDIDO (D-02, dueña, 2026-11-03) | `03` §4 D-02 | **IMPLEMENTADO** (2026-11-04, PAY-01): `access()` y `assertOperates()` en `service.ts`; el panel muestra lo bloqueado con `OperationNotice`; la vista previa no escribe | U (`plan-access`, `auth-isolation`, `weda-logic`) · E2E (`desktop/journeys`) | «Contratado» con orden pagada sin publicar: DP-25. Qué queda permitido al vencer: DP-24. Se construye en [PAY-01](../../specs/PAY-01-plan-alcance/spec.md) |
 
 ## F. Retención, eliminación y derechos
 
@@ -118,10 +119,12 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Ver también: [inventari
 
 | Estado de implementación | Reglas |
 |---|---:|
-| IMPLEMENTADO | 20 |
+| IMPLEMENTADO | 21 |
 | PARCIAL | 11 |
 | CONTRADICE (total o en parte) | 4 (BR-03, BR-19, BR-33, BR-43) |
 | NO IMPLEMENTADO | 26 |
-| **Total** | **61** |
+| **Total** | **62** |
+
+*Recuento ajustado el 2026-11-04 (PAY-01): BR-14 y BR-62 están implementadas; BR-15 sigue PENDIENTE de decisión (DP-23) con el cambio de plan bloqueado, y se cuenta como implementada en ese bloqueo.*
 
 Las reglas decididas más importantes del negocio (BR-01, BR-03, BR-07, BR-09, BR-10, BR-19, BR-21, BR-26, BR-30, BR-31, BR-32, BR-37 y BR-39) **no están implementadas o están contradichas por el código actual**.

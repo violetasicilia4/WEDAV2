@@ -7,8 +7,10 @@
 // guardados (borradores, órdenes, publicaciones) y se trata como Celebración (`normalizePlanId`).
 // Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante UN AÑO (definiciones comerciales de la
 // autora: pago único 2026-10-21; un año, 2026-11-03). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
-// Mientras no se elige plan (planId null) la pareja prueba todo: el plan se elige al publicar. Cambiar de plan nunca borra datos:
-// lo que el plan no incluye se conserva como borrador y solo se oculta al mostrar (editor, navegación, página pública).
+// El plan define QUÉ SE PUBLICA (BR-14, `publishes`) y QUÉ SE OPERA (BR-62, `operates`); ver y editar contenido no dependen del plan
+// (D-02, 2026-11-03). El plan se elige al publicar; lo que no publica se conserva como borrador. Las operaciones (invitados, mesas, revisión
+// de aportes) las habilita el SERVIDOR con el plan publicado y vigente (`Access`, PAY-01); el plan del borrador nunca cuenta.
+// El cambio de Regalos a Celebración después de contratar está bloqueado mientras DP-23 siga pendiente (D-05).
 // La música es SOLO configuración y vista previa: no hay conexión real con Spotify ni con ningún servicio.
 import type { PlanId } from './types';
 
@@ -99,8 +101,33 @@ export const planById = (id: PlanId | null): Plan | undefined => { const n = nor
 /** «ARS 140.000». */
 export const formatPrice = (n: number) => `${CURRENCY} ${new Intl.NumberFormat('es-AR').format(n)}`;
 
-/** Sin plan elegido (prueba gratuita) todo está disponible: el plan se elige al publicar. */
-export const can = (planId: PlanId | null, feature: Feature): boolean => planId === null || !!planById(planId)?.features.includes(feature);
+/** Qué publica el plan (BR-14). Sin plan elegido (null) se muestra todo: es la vista previa de lo que se puede publicar. */
+export const publishes = (planId: PlanId | null, feature: Feature): boolean => planId === null || !!planById(planId)?.features.includes(feature);
+
+/** Lugar del plan en la herencia (Regalos 0, Celebración 1): ordena los planes sin depender del precio. */
+export const planRank = (id: PlanId | null): number => {
+  let n = -1;
+  for (let p = planById(id); p; p = p.inherits ? planById(p.inherits) : undefined) n++;
+  return n;
+};
+
+/** Operaciones de gestión (BR-62): crean o cambian datos reales, a diferencia de ver o editar contenido. */
+export type Operation = 'guests' | 'groups' | 'contributions';
+const OPERATION_FEATURE: Record<Operation, Feature> = { guests: 'guests', groups: 'groups', contributions: 'gifts' };
+
+/**
+ * Acceso operativo que calcula el servidor (PAY-01, F1–F2): `trial` sin publicar; `paid_unpublished` con pago confirmado y sin publicación
+ * (no opera, DP-25); `active` publicado con su plan pagado y vigente; `expired` con la publicación vencida.
+ */
+export type AccessState = 'trial' | 'paid_unpublished' | 'active' | 'expired';
+export type Access = { state: AccessState; plan: PlanId | null; expiresAt: string | null };
+
+/** ¿Se puede ejecutar la operación? Solo con el evento activo y un plan que la incluya. Sin acceso conocido (sin cuenta), no. */
+export const operates = (access: Access | null | undefined, op: Operation): boolean =>
+  !!access && access.state === 'active' && access.plan !== null && publishes(access.plan, OPERATION_FEATURE[op]);
+
+/** Plan más barato que habilita la operación (para explicar qué la desbloquea). */
+export const planForOperation = (op: Operation): Plan | undefined => planFor(OPERATION_FEATURE[op]);
 
 /** Plan más barato que incluye la función (para decirle a la pareja dónde la encuentra). */
 export const planFor = (feature: Feature): Plan | undefined => PLANS.find(p => p.features.includes(feature));

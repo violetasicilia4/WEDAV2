@@ -59,7 +59,7 @@ Pesos: `--w-regular` 400 (texto), `--w-medium` 500 (navegación, botones, etique
 | `PlansProvider` / `usePlans` | Diálogo «Elegí tu plan para publicar» (precio por evento, qué incluye, borradores). Se abre desde «Publicar», «Elegir plan» y `Locked`. |
 | Landing: `LandingPlans` | Tres tarjetas con la misma jerarquía (nombre, frase, precio, 4–5 funciones, «Ver lo que incluye» abre un diálogo, CTA «Empezar gratis»). Cada tarjeta es una sola superficie crema (`--section`), sin caja gris arriba ni borde (2026-11-01). Sin plan «recomendado». Todo sale de `plans.ts`. |
 | `PreviewFrame` | La página pública real en un `iframe` del mismo origen; puede llevar la vista a una sección (`anchor`; `jump` repite el pedido para la misma sección y espera si la sección todavía no existe). |
-| `PublishDialog` (`panel/publish-dialog.tsx`) | Elegir → revisar y pagar (pago de prueba) → publicada; con publicación existente, «Tu publicación» (mejorar pagando la diferencia, bajar, volver a publicar). Clases `.pn-pay` (lista de datos), `.pn-upgrade`, `.pn-spin`. Ver `ux-flows.md`. |
+| `PublishDialog` (`panel/publish-dialog.tsx`) | Elegir → revisar y pagar (pago de prueba) → publicada; con publicación existente, «Tu publicación» (bajar, volver a publicar; el cambio de plan está bloqueado mientras DP-23 siga pendiente, D-05). Clases `.pn-pay` (lista de datos), `.pn-upgrade` (se retira con PAY-01), `.pn-spin`. Ver `ux-flows.md`. |
 | `SaveStatus` | «Cambios guardados en este dispositivo» / «Guardando…» / «No se pudieron guardar los últimos cambios». |
 | `PhotoPicker`, `CoupleDialog` | Foto de portada y datos del casamiento. Patrón compacto: botón «Subir una foto» + fila de miniaturas (`pn-cover-pick`: «Tu foto» si ya subió una, y las imágenes de muestra), selección visible con borde y nombre en negrita. |
 | `GroupsView` | Mesas y grupos dentro de Invitados. |
@@ -167,6 +167,10 @@ Se definen en `.pn-root, .pn-dialog` (arriba de `panel.css`). Solo valen dentro 
 - Regla: una pantalla puede tener una capa principal (con pasos y un cierre destacado) y otra de administración quieta; no mezclar los accesos de ambas en la misma grilla.
 
 ## 4d-ter. Publicar: tres cuadrados de producto (2026-10-21)
+
+> **Reemplazado 2026-11-03 (D-01):** con dos planes el diálogo muestra **dos** cuadrados (Regalos y Celebración), con las mismas piezas. Lo que sigue describe la versión de tres.
+>
+> **Operaciones bloqueadas (2026-11-04, PAY-01, BR-62):** `OperationNotice` (`panel/ui.tsx`, `.pn-opnotice`) reemplaza a `Locked` (`.pn-locked`, retirados): un aviso en línea, gris, con candado, «Se habilita al publicar con Celebración» y «Ver qué incluye»; no tapa la sección. Los controles bloqueados van dentro de `fieldset.pn-readonly disabled` (sin borde ni relleno), con `aria-describedby` al aviso. «Tu publicación» ya no tiene «Mejorar tu plan» (se retiraron `.pn-upgrade`, `.pn-nav-lock` y `.pn-spanel.is-locked`).
 
 - `.pn-prods` / `.pn-prod`: tres tarjetas sobre superficie (`--pn-surface`). Orden interno: ícono en círculo blanco (`.pn-prod-ico`) + nombre (22 px) + frase corta; precio en 28 px; fila de datos con ícono (`.pn-prod-facts`: «Pago único», «Publicada 1 año»); puntos con ícono (`.pn-feats`, 15 px, una línea por punto; el primero, «Todo lo de …», va atenuado); «Ver más» plegable (`.pn-prod-more`, con el detalle y los avisos); y dos acciones apiladas: «Ver link» (secundaria, blanca) y «Publicar» (principal). Poco texto visible: el detalle es a pedido.
 - Tres columnas desde 860 px; una columna en celular (hoja inferior, sin scroll horizontal). El diálogo se ensancha (`.is-products`, hasta 1080 px) solo al elegir; el resumen vuelve a 560 px. La elección actual lleva aro de 2 px y la etiqueta «Tu elección actual». Los íconos salen de `HIGHLIGHT_ICON` / `PLAN_ICON` en `ui.tsx` (los datos, en `plans.ts`).

@@ -5,7 +5,7 @@ import {
   validateGroupName, validateOnboarding, draftsFor, spotifyEmbed, contributionsFromState, contributionsFromServer, countsAsGift, invitationPath,
 } from '@/lib/weda/logic';
 import { SETS } from '@/lib/weda/catalog';
-import { can, formatPrice, normalizePlanId, planById, PLANS, type Feature } from '@/lib/weda/plans';
+import { formatPrice, normalizePlanId, operates, planById, planForOperation, planRank, PLANS, publishes, type Access, type Feature } from '@/lib/weda/plans';
 import { parseStored, sanitize, STORAGE_VERSION } from '@/lib/weda/store';
 import { accountDestination, hasEvent } from '@/lib/weda/account';
 import { seedState } from '@/lib/weda/seed';
@@ -46,17 +46,31 @@ describe('planes', () => {
     expect(celebracion!.features.length).toBeGreaterThan(basico!.features.length);
   });
   it('respeta la matriz de funciones por plan: Celebración incluye todo el sitio (también lo que era Celebración Plus)', () => {
-    expect(can('regalos', 'gifts')).toBe(true);
-    expect(can('regalos', 'site')).toBe(false);
-    expect(can('regalos', 'rsvp')).toBe(false);
-    (['site', 'rsvp', 'guests', 'groups', 'playlist', 'gallery', 'message'] as Feature[]).forEach(f => expect(can('invitacion', f)).toBe(true));
+    expect(publishes('regalos', 'gifts')).toBe(true);
+    expect(publishes('regalos', 'site')).toBe(false);
+    expect(publishes('regalos', 'rsvp')).toBe(false);
+    (['site', 'rsvp', 'guests', 'groups', 'playlist', 'gallery', 'message'] as Feature[]).forEach(f => expect(publishes('invitacion', f)).toBe(true));
     // el id viejo de Celebración Plus se lee como Celebración
-    ['playlist', 'gallery', 'message'].forEach(f => expect(can('completo', f as Feature)).toBe(true));
+    ['playlist', 'gallery', 'message'].forEach(f => expect(publishes('completo', f as Feature)).toBe(true));
     expect(planById('completo')?.id).toBe('invitacion');
     expect(normalizePlanId('completo')).toBe('invitacion');
   });
   it('sin plan elegido (prueba gratuita) todo está disponible', () => {
-    PLANS.flatMap(p => p.features).forEach(f => expect(can(null, f)).toBe(true));
+    PLANS.flatMap(p => p.features).forEach(f => expect(publishes(null, f)).toBe(true));
+    // BR-62: operar depende del acceso que calcula el servidor, nunca del plan del borrador.
+    const at = (state: Access['state'], plan: Access['plan']): Access => ({ state, plan, expiresAt: null });
+    expect(operates(null, 'guests')).toBe(false);
+    expect(operates(at('trial', null), 'contributions')).toBe(false);
+    expect(operates(at('paid_unpublished', null), 'guests')).toBe(false);
+    expect(operates(at('active', 'regalos'), 'contributions')).toBe(true);
+    expect(operates(at('active', 'regalos'), 'guests')).toBe(false);
+    expect(operates(at('active', 'regalos'), 'groups')).toBe(false);
+    expect(operates(at('active', 'invitacion'), 'guests')).toBe(true);
+    expect(operates(at('active', 'completo'), 'groups')).toBe(true);
+    expect(operates(at('expired', 'invitacion'), 'guests')).toBe(false);
+    expect(planForOperation('guests')?.id).toBe('invitacion');
+    expect(planForOperation('contributions')?.id).toBe('regalos');
+    expect([planRank('regalos'), planRank('invitacion'), planRank('completo'), planRank(null)]).toEqual([0, 1, 1, -1]);
   });
   it('el plan Regalos no publica el sitio; Celebración sí, con música, galería y mensaje final', () => {
     const s = { ...seedState(), planId: 'regalos' as const };
@@ -431,10 +445,9 @@ describe('recorrido guiado (journey)', () => {
     expect(progress(stages(s))).toBe(100);
     expect(headline(100)).toContain('preparado');
   });
-  it('con plan Regalos la invitación queda bloqueada y no cuenta para el progreso', () => {
+  it('con plan Regalos la invitación se sigue armando: editar no depende del plan (BR-62, F5)', () => {
     const s = { ...seedState(), planId: 'regalos' as const };
-    expect(stages(s)[1]!.locked).toBe(true);
-    expect(nextAction(s).stage).not.toBe('sitio');
+    expect(stages(s).every(x => !x.locked)).toBe(true);
   });
 });
 

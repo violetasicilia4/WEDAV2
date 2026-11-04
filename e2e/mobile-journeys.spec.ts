@@ -1,4 +1,4 @@
-import { closePreview, expect, nav, onboard, openPreview, previewFrame, previewText, stored, test } from './helpers';
+import { closePreview, expect, nav, onboard, publishCelebration, openPreview, previewFrame, previewText, stored, test } from './helpers';
 
 test.describe('Recorridos del panel en celular (390 px)', () => {
   test.beforeEach(async ({ page }) => { await onboard(page); });
@@ -199,6 +199,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
   });
 
   test('Flujo 5: invitados → alta manual → importar (duplicados y errores) → exportar', async ({ page }) => {
+    await publishCelebration(page);
     await nav(page, 'Invitados').click();
     await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Ana');
@@ -230,6 +231,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
   });
 
   test('Flujo 6: mesas y grupos → crear y asignar sin ser obligatorio', async ({ page }) => {
+    await publishCelebration(page);
     await nav(page, 'Invitados').click();
     await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
     await page.getByLabel('Nombre', { exact: true }).fill('Marta');
@@ -257,15 +259,15 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByRole('list', { name: 'Mesas y grupos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Familia' }) })).toContainText('Marta Sosa');
   });
 
-  test('Publicar → «Ver link» de Celebración y de Celebración Plus muestran la sección de regalos con su botón, porque esos planes incluyen la lista', async ({ page }) => {
+  test('Publicar → «Ver link» de Celebración muestra la sección de regalos con su botón, porque el plan incluye la lista', async ({ page }) => {
     await nav(page, 'Regalos').click();
     await page.getByRole('tab', { name: 'Catálogo' }).click();
     await page.getByRole('list', { name: 'Packs de regalos' }).getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Luna de miel' }) }).getByRole('button', { name: 'Agregar' }).click();
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
     const links: Record<string, string> = {};
-    for (const plan of ['Regalos', 'Celebración', 'Celebración Plus']) links[plan] = (await page.getByRole('link', { name: new RegExp(`Ver el link de ${plan} \\(`) }).getAttribute('href'))!;
+    for (const plan of ['Regalos', 'Celebración']) links[plan] = (await page.getByRole('link', { name: new RegExp(`Ver el link de ${plan} \\(`) }).getAttribute('href'))!;
     await page.keyboard.press('Escape');
-    for (const plan of ['Celebración', 'Celebración Plus']) {
+    for (const plan of ['Celebración']) {
       await page.goto(links[plan]!, { waitUntil: 'networkidle' });
       const sec = page.locator('#regalos');
       // Solo título, texto y botón: la invitación no muestra regalos de la lista; el botón lleva a la página de regalos.
@@ -285,7 +287,7 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await page.goto('/panel/vista-previa');
     await expect(page.getByText('Todavía no está publicada')).toBeVisible();
     await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
-    await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(3);
+    await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(2);
     await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
     const dlg = page.getByRole('dialog');
     await expect(dlg.getByText('Para publicar necesitás una cuenta')).toBeVisible();

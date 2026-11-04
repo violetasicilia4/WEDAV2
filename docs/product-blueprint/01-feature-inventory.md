@@ -25,7 +25,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
-| LAN-01 | Landing comercial con hero, funciones, planes con precio y CTA a `/crear/cuenta` | DOCUMENTADO (`ux-flows` §1) | **Implementada** (`src/routes/index.tsx`, `landing-plans.tsx`) | U (`landing-plans`: 4) · E2E | Muestra «Pago único · Publicada **6 meses**» (`PUBLICATION_TERM`): contradice la vigencia decidida de 12 meses (IC-02) |
+| LAN-01 | Landing comercial con hero, funciones, planes con precio y CTA a `/crear/cuenta` | DOCUMENTADO (`ux-flows` §1) | **Implementada** (`src/routes/index.tsx`, `landing-plans.tsx`): dos tarjetas, Regalos y Celebración (D-01) | U (`landing-plans`) · E2E | *Actualizado 2026-11-03:* muestra «Pago único · Publicada 1 año» (`PUBLICATION_TERM`); el inicio de la vigencia sigue abierto (IC-16). Regalos todavía menciona «tarjeta» (IC-07) |
 | LAN-02 | Testimonios (4) o «Por qué Weda» si la lista queda vacía | DECIDIDO por la dueña (2026-10-29) | **Implementada** (`src/lib/testimonials.ts`) | U (landing) | La dueña responde por su autenticidad; `PRODUCT.md` los llama ficticios y el hallazgo F-10 sigue «pendiente» (IC-19) |
 | LAN-03 | Sitio de ejemplo `/ejemplo`, `/ejemplo/regalos` | DOCUMENTADO | **Implementada** (datos de muestra) | U (`demo-lib`) | Pareja ficticia; es un ejemplo, no un evento real |
 | LAN-04 | Buscador de invitaciones por enlace `/encontrar` | DOCUMENTADO (F-04) | **Implementada** | E2E | Pide pegar el enlace; no hay directorio público (decisión de privacidad pendiente) |
@@ -50,7 +50,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
 | ONB-01 | Alta en pasos: cuenta → nombres → fecha (opcional) → foto (opcional) → panel | DOCUMENTADO | **Implementada** (`crear.*`) | U (`weda-logic` onboarding) · E2E | El plan ya no se elige acá: se elige al publicar |
-| ONB-02 | Prueba gratuita: todo habilitado sin plan | DOCUMENTADO | **Implementada** (`can(null, …)` es verdadero) | U (planes) | |
+| ONB-02 | Prueba gratuita: se ve y se arma todo sin plan; el plan se elige al publicar | DECIDIDO (D-01, D-02, 2026-11-03) | **Implementada** (2026-11-04, PAY-01): se ve y se edita todo; operar invitados y mesas exige Celebración publicada | U (planes) | PAY-01 | Dos planes acumulativos de pago único: **Regalos ARS 95.000** · **Celebración ARS 140.000** (BR-13) | DECIDIDO (dueña, 2026-11-03, D-01) | **Implementada** (`plans.ts`; `completo` se lee como Celebración) | U (`weda-logic` planes, `landing-plans`, `payments`) | Impuestos sin decidir (DP-17). *Antes: tres planes con Celebración Plus 150.000* |
 | ONB-03 | Banner «Primeros pasos» y progreso por etapas | DOCUMENTADO | **Implementada** (`journey.ts`) | U (`weda-logic` journey) | |
 | ONB-04 | Panel sin cuenta (borrador local) | DOCUMENTADO | **Implementada**: sin cuenta se guarda en `localStorage`; publicar exige cuenta | U (`store-performance`, `app-routing`) | Alineado con lo auditado (F-02) |
 
@@ -58,9 +58,9 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
-| PAY-01 | Tres planes acumulativos con precios en ARS: Regalos 95.000 · Celebración 140.000 · Celebración Plus 150.000 | DECIDIDO como valores de referencia (autora; «pago único» 2026-10-21) | **Implementada** (`plans.ts`) | U (`weda-logic` planes, `landing-plans`) | `PRODUCT.md` cita otros precios (180.000/320.000) y `ux-flows` §3 dice «no se afirma pago único» (IC-11) |
-| PAY-02 | Funciones restringidas por plan | DECIDIDO | **Implementada** (`can()`; lo no incluido se oculta, no se borra) | U | |
-| PAY-03 | Mejora de plan pagando la diferencia; sin bajar de plan | DOCUMENTADO | **Implementada** | U (`payments-flow`, `payments`) | |
+| PAY-01 | Dos planes acumulativos de pago único: **Regalos ARS 95.000** · **Celebración ARS 140.000** (BR-13) | DECIDIDO (dueña, 2026-11-03, D-01) | **Implementada** (`plans.ts`; `completo` se lee como Celebración) | U (`weda-logic` planes, `landing-plans`, `payments`) | Impuestos sin decidir (DP-17). *Antes: tres planes con Celebración Plus 150.000* | Tres planes acumulativos con precios en ARS: Regalos 95.000 · Celebración 140.000 · Celebración Plus 150.000 | DECIDIDO como valores de referencia (autora; «pago único» 2026-10-21) | **Implementada** (`plans.ts`) | U (`weda-logic` planes, `landing-plans`) | `PRODUCT.md` cita otros precios (180.000/320.000) y `ux-flows` §3 dice «no se afirma pago único» (IC-11) |
+| PAY-02 | El plan define qué se publica (BR-14) y qué se puede operar (BR-62); ver y editar contenido no dependen del plan | DECIDIDO (D-02, 2026-11-03) | **Implementada** (2026-11-04, PAY-01): `publishes()` y `operates()`; el servidor rechaza con `403`/`410` | U (publicación) | [PAY-01](../../specs/PAY-01-plan-alcance/spec.md) |
+| PAY-03 | Cambio de Regalos a Celebración después de contratar | **PENDIENTE** (DP-23, BR-15) | **Bloqueada** (2026-11-04, PAY-01): `409 plan_change_pending`, sin mejoras ni cobros adicionales | U (`payments-flow`, `payments`) | Bloqueada mientras DP-23 siga pendiente (D-05). *Antes: «mejora pagando la diferencia», DOCUMENTADO* |
 | PAY-04 | Orden de compra con monto calculado por el servidor, reusada ante doble clic | DOCUMENTADO | **Implementada** (`startCheckout`) | U (`payments-flow`) | |
 | PAY-05 | Notificaciones del proveedor firmadas e idempotentes | DOCUMENTADO | **Implementada solo con el adaptador de PRUEBA** | U | **No existe un proveedor real**; el webhook general responde 501 |
 | PAY-06 | Cobro real (Mercado Pago u otro) | PENDIENTE (proveedor, impuestos, facturación) | **No implementada** | — | Sin esto, publicar es gratis salvo que se active `WEDA_REQUIRE_PAID_ORDER` (IC-17) |
@@ -75,8 +75,8 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
 | DASH-01 | Inicio con etapas, siguiente paso y estado de publicación | DOCUMENTADO | **Implementada** | U (journey) · E2E | |
-| DASH-02 | Ayuda con preguntas frecuentes y contacto | DOCUMENTADO (respuestas de la dueña) | **Implementada** (`panel.tsx`) | — | El FAQ habla de «6 meses» y de ver el comprobante |
-| DASH-03 | Vista previa privada de la invitación (celular/compu) | DOCUMENTADO | **Implementada** | E2E | |
+| DASH-02 | Ayuda con preguntas frecuentes y contacto | DOCUMENTADO (respuestas de la dueña) | **Implementada** (`panel.tsx`) | — | *Actualizado 2026-11-03:* la vigencia sale de `PUBLICATION_TERM` (1 año); la respuesta sobre cambiar de plan promete «pagás la diferencia» (IC-27) |
+| DASH-03 | Vista previa privada de la invitación (celular/compu) | DOCUMENTADO | **Implementada**; desde el 2026-11-04 no escribe nada (PAY-01, F6) | E2E | PAY-01 |
 | DASH-04 | Aviso «hay cambios sin publicar» | DOCUMENTADO como pendiente (NE-03) | **Implementada y probada** (2026-10-31): el servidor compara lo que publicaría con la página pública (`pendingChanges` en `GET`/`PUT /api/wedding`); el botón de arriba pasa a «Publicar cambios» y «Tu publicación» lo explica | U (`pending-changes`: 4, `publish-pending`: 3) · E2E (`audit` T-02, actualizada, no ejecutada) | Solo cuenta lo que ve un invitado (invitados no). Sin cambios de esquema |
 | DASH-05 | Fecha exacta de vencimiento y avisos 30/7/1 días | **DECIDIDO** (P23) | **No implementada** | — | Hoy el panel muestra una vigencia calculada en el cliente (6 meses) |
 | DASH-06 | Perfil: datos del casamiento y de la cuenta | DOCUMENTADO | **Parcial** (ver AUTH-05) | E2E | |
@@ -117,9 +117,9 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
-| GST-01 | Alta, edición y baja de invitados; restricción alimentaria; grupo o mesa | DOCUMENTADO | **Implementada** | U (`weda-logic`, `wedding-flow`) | |
-| GST-02 | Importar desde Excel/CSV y exportar a Excel | DOCUMENTADO | **Implementada** en el navegador, sin dependencias | U (`guests-io`: 6) | Una sola hoja; el servidor no participa |
-| GST-03 | Mesas y grupos | DOCUMENTADO | **Implementada** dentro del borrador (no relacional) | U (`weda-logic`) | |
+| GST-01 | Alta, edición y baja de invitados; restricción alimentaria; grupo o mesa | DOCUMENTADO; operar solo con Celebración vigente (BR-62, 2026-11-03) | **Implementada**; el servidor la habilita solo con Celebración publicada y vigente (2026-11-04) | U (`weda-logic`, `wedding-flow`) | |
+| GST-02 | Importar desde Excel/CSV y exportar a Excel | DOCUMENTADO; importar es operar (BR-62) | **Implementada** en el navegador, sin dependencias | U (`guests-io`: 6) | Una sola hoja; el servidor solo recibe el resultado como altas de invitados |
+| GST-03 | Mesas y grupos | DOCUMENTADO; crear y asignar es operar (BR-62) | **Implementada** dentro del borrador (`draft.groups`, no relacional); el servidor compara el borrador y rechaza cambios sin Celebración (2026-11-04) | U (`weda-logic`) | |
 | GST-04 | Formulario de confirmación de asistencia en el sitio público (1 a 10 personas por envío) | DOCUMENTADO | **Implementada y probada** | U (`wedding-flow`) | |
 | GST-05 | Identificación por nombre y apellido normalizados; responder otra vez **actualiza** a la misma persona | DOCUMENTADO como riesgo | **Implementada y probada** | U | Contradice A6 (IC-09): cualquiera puede responder por otro nombre |
 | GST-06 | **Invitación individual o grupal con enlace personal, token hasheado y revocable** | **DECIDIDO** (D5/A6) | **No implementada** | — | |
@@ -238,3 +238,5 @@ Cada una de las 102 funcionalidades de este inventario recibe **una** clasificac
 - **No verificada** (2): SITE-03, PRIV-01
 
 **Lectura:** lo construido hoy es una plataforma de armado, publicación manual, confirmación de asistencia y regalos con comprobante, bien probada en el servidor. **Lo decidido en las últimas rondas de diseño** (pagar = activar + publicar, vigencia de 12 meses y cierre, libro, invitaciones con cupo, roles, retención, administración, analítica en capas) **está casi todo sin construir**.
+
+> **Actualización 2026-11-03 (D-01, D-02).** Los conteos de arriba son del 2026-10-31 y no se recalcularon. Desde entonces: PAY-01 describe dos planes; ONB-02, PAY-02 y DASH-03 pasan a **parcial** (IC-25, IC-26); PAY-03 queda **construida sin regla aprobada** (DP-23). GIFT-08 y las demás entregas de los PR #6 a #9 están en [`auditoria-estado-2026-11-03.md`](../auditoria-estado-2026-11-03.md) §4.1.

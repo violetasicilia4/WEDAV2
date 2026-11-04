@@ -64,7 +64,7 @@ Estados: **Implementado** · **Parcial** · **Ausente** · **Futuro** (propuesto
 | Sesiones | Parcial | Cookie `weda_session`, 30 días, hash en base. Sin lista de dispositivos, sin rotación, sin cierre remoto. |
 | Onboarding | Implementado | `crear.index/fecha/foto.tsx` (estado local, luego sincronizado). |
 | Crear casamiento | Implementado | `ensureWedding()` lo crea **al primer acceso** (incluso en un `GET`). Uno por usuario. |
-| Plan y contratación | Parcial | Matriz en `plans.ts` (3 planes, precio único, 6 meses). Orden de compra y checkout con proveedor de **prueba**. Sin renovación ni cancelación. |
+| Plan y contratación | Parcial | Matriz en `plans.ts` (3 planes, precio único, 6 meses; *desde el 2026-11-03: 2 planes, Regalos 95.000 y Celebración 140.000, 12 meses; el id `completo` se lee como Celebración, sin cambio de esquema*). Orden de compra y checkout con proveedor de **prueba**. Sin renovación ni cancelación. |
 | Lista de regalos | Implementado | Catálogo en el código (`catalog.ts`), lista elegida dentro del JSON del borrador. |
 | Configuración de cobro | Parcial | Alias/CBU/banco en el borrador (JSON). Mercado Pago: «Próximamente». |
 | Invitados | Implementado | Tabla `guests`; alta manual, importación CSV/XLSX en el navegador (`guests-io.ts`, `xlsx.ts`). |
@@ -220,7 +220,7 @@ flowchart TD
   PL --> UP[Mejora de plan: paga la diferencia]
 ```
 
-[C] Existen mejora de plan (paga la diferencia), reutilización de orden pendiente y vencimiento. **Ausentes:** renovación, cancelación, reembolsos, cupones, facturación. [C] Renovar tras el vencimiento es una "decisión comercial pendiente" en el código.
+[C] Existen mejora de plan (paga la diferencia; *2026-11-03: queda bloqueada por D-05 y se retira con PAY-01*), reutilización de orden pendiente y vencimiento. **Ausentes:** renovación, cancelación, reembolsos, cupones, facturación. [C] Renovar tras el vencimiento es una "decisión comercial pendiente" en el código.
 
 ---
 

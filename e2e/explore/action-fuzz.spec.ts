@@ -7,10 +7,14 @@ import { COUNT, rng, randomState, SEED, type Rng } from './rng';
    agregar/quitar/deshacer regalos, invitados y mesas, editar la portada y los datos, abrir la vista previa, mirar y cerrar el diálogo de publicar).
    Las acciones se eligen con una semilla, así que cualquier fallo se reproduce con WEDA_SEED y el número de recorrido.
    Invariantes después de cada acción: sin errores de consola, sin desborde horizontal, sin pantalla de error, y un formulario que se rechaza dice por qué
-   y no cambia nada; uno que se acepta cambia el estado guardado exactamente en una unidad. */
+   y no cambia nada; uno que se acepta cambia el estado guardado exactamente en una unidad.
+   PAY-01 (BR-62): operar invitados y mesas exige Celebración publicada y vigente. Con la semilla, cada recorrido sigue uno de dos caminos:
+   «contratado» (cuenta propia, Celebración publicada por la API y los invitados del estado sintético cargados en el servidor) o «sin contratar»
+   (solo en el navegador: invitados y mesas se ven, sus acciones están deshabilitadas con el aviso y nada se escribe). La vista previa nunca escribe. */
 
 const STEPS = Number(process.env['WEDA_EXPLORE_STEPS'] ?? 14);
-const SEQUENCES = Math.max(1, Math.round(COUNT / 4));
+// Al menos dos recorridos: uno por camino (B3). Con WEDA_SEQ se reproduce uno solo, a propósito.
+const SEQUENCES = Math.max(2, Math.round(COUNT / 4));
 // Fuera de test-results: Playwright vacía esa carpeta al empezar cada proyecto y borraría los informes.
 const OUT = 'explore-results';
 const ONLY = process.env['WEDA_SEQ'] === undefined ? null : Number(process.env['WEDA_SEQ']);
@@ -20,7 +24,7 @@ const AMOUNTS_OK = ['1000', '45.000', '$ 250000', '99999999'];
 const AMOUNTS_BAD = ['', 'abc', '0', '999', '100000001', '-5', '12,5'];
 
 type Failure = { project: string; seed: number; sequence: number; step: number; action: string; reason: string };
-type Ctx = { page: Page; r: Rng; log: string[] };
+type Ctx = { page: Page; r: Rng; log: string[]; contracted: boolean };
 
 const stored = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('weda-app') ?? '{}'));
 const settle = (page: Page) => page.waitForFunction(() => document.body && !/Cargando/.test(document.body.innerText) && document.body.innerText.trim().length > 20, undefined, { timeout: 15000 }).catch(() => undefined);
@@ -34,6 +38,45 @@ async function storedSoon(page: Page, ok: (s: any) => boolean) { const t = Date.
 async function afterSubmit(page: Page, dlg: ReturnType<Page['locator']>) {
   await page.waitForFunction(() => !document.querySelector('[role=dialog]') || !!document.querySelector('[role=dialog] .pn-error'), undefined, { timeout: 3000 }).catch(() => undefined);
   void dlg;
+}
+
+const PASS = 'Clave1234';
+/** Camino «contratado»: cuenta nueva, borrador del estado sintético, Celebración publicada y recién ahí sus mesas e invitados (en ese orden lo exige el servidor). */
+async function contract(page: Page, state: any, tag: string) {
+  expect((await page.request.post('/api/auth/register', { data: { email: `explore-${tag}@example.com`, password: PASS } })).status(), 'registro').toBe(201);
+  const put = async (draft: any, guests?: any) => {
+    const w = await (await page.request.get('/api/wedding')).json();
+    const res = await page.request.put('/api/wedding', { data: { baseRevision: w.revision, draft, ...(guests ? { guests } : {}) } });
+    expect(res.status(), `guardado: ${await res.text()}`).toBe(200);
+  };
+  // Las mesas también son una operación: el primer guardado va con las de fábrica y las del estado sintético entran después de publicar.
+  await put({ ...state, guests: [], groups: [], email: '', publication: null, planId: 'invitacion', gifts: { ...state.gifts, given: [] } });
+  expect((await page.request.post('/api/wedding/publish')).status(), 'publicación de Celebración').toBe(200);
+  const w = await (await page.request.get('/api/wedding')).json();
+  expect(w.access, 'después de publicar, el servidor habilita las operaciones de Celebración').toMatchObject({ state: 'active', plan: 'invitacion' });
+  // Los ids de invitado son únicos en todo el servidor: con la misma semilla en celular y compu se les agrega el recorrido.
+  const guests = state.guests.map((g: any) => ({ ...g, id: `${g.id}-${tag}` }));
+  state.guests = guests;
+  await put({ ...w.draft, groups: state.groups.length ? state.groups : w.draft.groups }, guests.length ? { upsert: guests } : undefined);
+}
+/** Sin Celebración publicada: la acción se ve deshabilitada y el aviso explica qué la desbloquea (CA-8). */
+async function blocked(page: Page, control: ReturnType<Page['locator']>) {
+  await expect(control.first(), 'sin Celebración la operación está deshabilitada').toBeDisabled();
+  await expect(page.getByRole('note').filter({ hasText: 'Se habilita al publicar con Celebración' }).first()).toBeVisible();
+  return 'bloqueado sin Celebración';
+}
+/** Camino contratado: la operación tiene que estar habilitada. Si no lo está es un fallo del producto (una aserción), no un clic que agota el tiempo
+ *  y se confunde con un error de la prueba. */
+async function enabled(control: ReturnType<Page['locator']>) {
+  await expect(control.first(), 'con Celebración publicada la operación está habilitada').toBeEnabled();
+}
+/** Lo que una escritura indebida cambiaría: invitados, mesas y regalos recibidos. */
+const fingerprint = (s: any) => JSON.stringify({ guests: s.guests, groups: s.groups, given: s.gifts?.given });
+/** El guardado local es diferido: se lee hasta que dos lecturas seguidas coinciden, para no comparar contra una copia a medio escribir. */
+async function steadyFingerprint(page: Page) {
+  let a = fingerprint(await stored(page));
+  for (let i = 0; i < 12; i++) { await page.waitForTimeout(250); const b = fingerprint(await stored(page)); if (b === a) return b; a = b; }
+  return a;
 }
 
 class Skip extends Error {}
@@ -50,7 +93,28 @@ const actions: Action[] = [
     if (!new URL(page.url()).pathname.startsWith('/panel')) { await page.goForward(); await settle(page); return 'salió del panel y volvió'; }
   } },
   { name: 'recargar', run: async ({ page }) => { const before = await storedSoon(page, () => true); await page.waitForTimeout(500); await page.reload({ waitUntil: 'domcontentloaded' }); await settle(page); const after = await stored(page); expect(after.guests?.length, 'invitados tras recargar').toBe(before.guests?.length); expect(after.gifts?.items?.length, 'regalos tras recargar').toBe(before.gifts?.items?.length); } },
-  { name: 'abrir y cerrar la vista previa', run: async ({ page }) => { const b = page.getByRole('button', { name: 'Vista previa', exact: true }).first(); need(await visible(b), 'sin botón'); await b.click(); await expect(page.getByRole('dialog').locator('iframe')).toBeVisible(); await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0); } },
+  { name: 'abrir y cerrar la vista previa', run: async ({ page }) => { const before = await steadyFingerprint(page); const b = page.getByRole('button', { name: 'Vista previa', exact: true }).first(); need(await visible(b), 'sin botón'); await b.click(); await expect(page.getByRole('dialog').locator('iframe')).toBeVisible(); await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);  await page.waitForTimeout(300); expect(fingerprint(await stored(page)), 'la vista previa no escribe').toBe(before); } },
+  { name: 'confirmar asistencia en la vista previa (no escribe)', run: async ({ page, r, contracted }) => {
+    const b = page.getByRole('button', { name: 'Vista previa', exact: true }).first(); need(await visible(b), 'sin botón');
+    const before = await steadyFingerprint(page);
+    const server = contracted ? (await (await page.request.get('/api/wedding')).json()).guests.length : 0;
+    await b.click(); const frame = page.getByRole('dialog').frameLocator('iframe');
+    const rsvp = frame.getByRole('button', { name: 'Confirmá asistencia' }).first();
+    if (!(await rsvp.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false))) { await page.keyboard.press('Escape'); throw new Skip('sin confirmación en la página'); }
+    await rsvp.click();
+    await frame.locator('#rsvp-name').fill(r.pick(NAMES_OK)); await frame.locator('#rsvp-surname').fill(r.pick(['Pérez', 'Sosa']));
+    await frame.locator('#rsvp-contact').fill('vista@example.com');
+    await frame.locator('label.dm-rsvp-opt').first().click();
+    const menu = frame.locator('label.dm-rsvp-menu').first(); if (await menu.isVisible().catch(() => false)) await menu.click();
+    const ok = frame.getByRole('button', { name: 'Confirmar', exact: true }); if (await ok.isVisible().catch(() => false)) await ok.click();
+    await frame.getByRole('button', { name: 'Enviar confirmación' }).click();
+    await expect(frame.getByRole('heading', { name: /¡Gracias/ })).toBeVisible();
+    await page.keyboard.press('Escape'); await page.keyboard.press('Escape').catch(() => undefined);
+    await page.waitForTimeout(1200);                                     // margen para un guardado automático que no debería ocurrir
+    expect(fingerprint(await stored(page)), 'la confirmación en la vista previa no escribe en el navegador').toBe(before);
+    if (contracted) expect((await (await page.request.get('/api/wedding')).json()).guests.length, 'ni en el servidor').toBe(server);
+    return 'sin escrituras';
+  } },
   { name: 'agregar un regalo propio', run: async ({ page, r }) => {
     await nav(page, 'Regalos').click(); await settle(page);
     const open = page.getByRole('button', { name: 'Crear regalo' }).first(); need(await visible(open), 'sin botón');
@@ -72,9 +136,11 @@ const actions: Action[] = [
     await storedSoon(page, x => x.gifts.items.length === n0 - 1); expect((await stored(page)).gifts.items.length).toBe(n0 - 1);
     if (r.chance(0.6)) { await page.getByRole('button', { name: 'Deshacer' }).click(); const s = await storedSoon(page, x => x.gifts.items.length === n0); expect(s.gifts.items.length, 'deshacer devuelve el regalo').toBe(n0); return 'deshecho'; }
   } },
-  { name: 'agregar un invitado', run: async ({ page, r }) => {
+  { name: 'agregar un invitado', run: async ({ page, r, contracted }) => {
     await nav(page, 'Invitados').click(); await settle(page);
     const open = page.getByRole('button', { name: 'Agregar invitado' }).first(); need(await visible(open), 'sin botón');
+    if (!contracted) return blocked(page, open);
+    await enabled(open);
     const n0 = (await stored(page)).guests.length; await open.click(); const dlg = page.getByRole('dialog');
     const ok = r.chance(0.6);
     const nm = ok ? r.pick(NAMES_OK) : r.pick(NAMES_BAD), ap = ok ? r.pick(['Pérez', 'Sosa', 'Núñez']) : r.pick(NAMES_BAD);
@@ -84,24 +150,30 @@ const actions: Action[] = [
     if (await dlg.count()) { expect(await dlg.locator('.pn-error').count(), `un invitado rechazado debe explicar por qué · nombre «${nm}» apellido «${ap}» · diálogo: ${(await dlg.innerText()).replace(/\s+/g, ' ').slice(0, 300)}`).toBeGreaterThan(0); expect((await stored(page)).guests.length).toBe(n0); await page.keyboard.press('Escape'); return 'rechazado'; }
     const s = await storedSoon(page, x => x.guests.length === n0 + 1); expect(s.guests.length, 'invitado aceptado suma exactamente uno').toBe(n0 + 1); return 'aceptado';
   } },
-  { name: 'eliminar un invitado y deshacer', run: async ({ page, r }) => {
+  { name: 'eliminar un invitado y deshacer', run: async ({ page, r, contracted }) => {
     await nav(page, 'Invitados').click(); await settle(page);
     const del = page.getByRole('button', { name: /^Eliminar a / }).first(); need(await visible(del), 'sin invitados');
+    if (!contracted) return blocked(page, del);
+    await enabled(del);
     const n0 = (await stored(page)).guests.length; await del.click();
     await storedSoon(page, x => x.guests.length === n0 - 1); expect((await stored(page)).guests.length).toBe(n0 - 1);
     if (r.chance(0.7)) { await page.getByRole('button', { name: 'Deshacer' }).click(); const s = await storedSoon(page, x => x.guests.length === n0); expect(s.guests.length).toBe(n0); return 'deshecho'; }
   } },
-  { name: 'cambiar la asistencia de un invitado', run: async ({ page, r }) => {
+  { name: 'cambiar la asistencia de un invitado', run: async ({ page, r, contracted }) => {
     await nav(page, 'Invitados').click(); await settle(page);
     const ed = page.getByRole('button', { name: /^Editar a / }).first(); need(await visible(ed), 'sin invitados');
+    if (!contracted) return blocked(page, ed);
+    await enabled(ed);
     await ed.click(); const dlg = page.getByRole('dialog'); const label = r.pick(['Confirmado', 'Pendiente', 'No asiste']);
     const sel = dlg.getByLabel('Asistencia'); const opts = await sel.locator('option').allInnerTexts(); need(opts.some(o => o.trim() === label) || opts.length > 0, 'sin opciones');
     await sel.selectOption({ label: opts.find(o => o.trim() === label) ?? opts[0]! }); await dlg.getByRole('button', { name: 'Guardar' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
   } },
-  { name: 'crear una mesa', run: async ({ page, r }) => {
+  { name: 'crear una mesa', run: async ({ page, r, contracted }) => {
     await page.goto('/panel/invitados?vista=mesas', { waitUntil: 'domcontentloaded' }); await settle(page);
     const open = page.getByRole('button', { name: 'Crear mesa' }).first(); need(await visible(open), 'sin botón');
+    if (!contracted) return blocked(page, open);
+    await enabled(open);
     // Sin mesas guardadas la pantalla muestra «Mesa 1» de ejemplo y la guarda junto con la primera mesa nueva: el oráculo compara ids, no cantidades.
     const before: string[] = (await stored(page)).groups.map((g: { id: string }) => g.id);
     await open.click(); const dlg = page.getByRole('dialog'); const ok = r.chance(0.6);
@@ -130,12 +202,32 @@ const actions: Action[] = [
     if (await dlg.count()) { expect(await dlg.locator('.pn-error').count(), 'datos rechazados deben explicar por qué').toBeGreaterThan(0); expect((await stored(page)).couple.first).toBe(before); await page.keyboard.press('Escape'); return 'rechazado'; }
     const s = await storedSoon(page, x => x.couple.first === nv.trim()); expect(s.couple.first).toBe(nv.trim()); return 'aceptado';
   } },
-  { name: 'mirar los productos de publicación y cerrar', run: async ({ page, r }) => {
+  { name: 'mirar los productos de publicación y cerrar', run: async ({ page, r, contracted }) => {
     const pub = page.locator('.pn-top').getByRole('button', { name: /^Publicar$|^Publicada$/ }); need(await visible(pub), 'sin botón');
     await pub.first().click(); const dlg = page.getByRole('dialog'); await expect(dlg).toBeVisible();
-    const plan = dlg.getByRole('button', { name: /^Publicar (Regalos|Celebración|Celebración Plus)$/ });
-    if (await plan.count() && r.chance(0.6)) { await plan.nth(r.int(0, 2)).click(); await expect(dlg.getByText('Al publicar, cualquiera que tenga el link')).toBeVisible(); await dlg.getByRole('button', { name: 'Volver', exact: true }).click(); }
+    const plan = dlg.getByRole('button', { name: /^Publicar (Regalos|Celebración)$/ });
+    // El texto tiene que corresponder a la sesión real (revisión B2): el equivocado hace fallar la prueba.
+    if (contracted) {
+      // Con sesión y Celebración publicada: «Tu publicación», sin elegir plan ni pedir una cuenta, y sin cambio de plan (D-05).
+      await expect(dlg.getByRole('heading', { name: 'Tu publicación' }), 'con sesión y publicado se gestiona la publicación').toBeVisible();
+      await expect(dlg.getByText('Por ahora el plan no se puede cambiar después de contratarlo.')).toBeVisible();
+      await expect(plan, 'publicado no se vuelve a elegir plan').toHaveCount(0);
+      await expect(dlg.getByText('Para publicar necesitás una cuenta'), 'con sesión no se pide crear una cuenta').toHaveCount(0);
+      await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
+      return 'con sesión: Tu publicación';
+    }
+    await expect(plan, 'sin publicar se ofrecen los dos planes').toHaveCount(2);
+    let shown = 'sin sesión: productos';
+    if (r.chance(0.6)) {
+      await plan.nth(r.int(0, 1)).click();
+      // Sin sesión (auditoría 2026-10-28): se pide crear la cuenta y nunca se promete publicar.
+      await expect(dlg.getByText('Para publicar necesitás una cuenta'), 'sin sesión se pide crear una cuenta').toBeVisible();
+      await expect(dlg.getByText('Al publicar, cualquiera que tenga el link'), 'sin sesión no se promete publicar').toHaveCount(0);
+      await dlg.getByRole('button', { name: 'Volver', exact: true }).click();
+      shown = 'sin sesión: pide crear la cuenta';
+    }
     await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
+    return shown;
   } },
 ];
 
@@ -153,6 +245,7 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
   let steps = 0, done = 0;
   const t0 = Date.now();
 
+  const paths = { contracted: 0, free: 0 };
   for (let q = 0; q < SEQUENCES; q++) {
     if (ONLY !== null && q !== ONLY) continue;
     const r = rng(SEED * 7919 + q);
@@ -161,9 +254,20 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
     state.guests = state.guests.slice(0, 30); state.gifts.items = state.gifts.items.slice(0, 12);
     state.couple.first = r.pick(NAMES_OK); state.couple.second = r.pick(NAMES_OK);
     state.date = null;
+    // Revisión B3: el camino lo fija el número de recorrido, no la semilla. Los pares contratan y los impares no, así toda corrida tiene los dos;
+    // la semilla sigue eligiendo el estado y las acciones de cada recorrido.
+    const contracted = q % 2 === 0;
+    paths[contracted ? 'contracted' : 'free']++;
+    await page.context().clearCookies();
     await page.goto('/crear/cuenta', { waitUntil: 'domcontentloaded' });
-    await page.evaluate(s => localStorage.setItem('weda-app', JSON.stringify(s)), state);
+    if (contracted) {
+      await contract(page, state, `${project}-${SEED}-${q}-${Date.now().toString(36)}`);
+      await page.evaluate(() => { localStorage.removeItem('weda-app'); localStorage.removeItem('weda-sync'); });
+    } else {
+      await page.evaluate(s => localStorage.setItem('weda-app', JSON.stringify(s)), state);
+    }
     await page.goto('/panel', { waitUntil: 'domcontentloaded' }); await settle(page); realErrors();
+    trace(`SEQ  q${q} ${contracted ? 'contratado (Celebración publicada)' : 'sin contratar'}`);
     const log: string[] = [];
     let broke = false;
     for (let k = 0; k < STEPS && !broke; k++) {
@@ -172,7 +276,7 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
       const rec = (reason: string, bucket: Failure[]) => { bucket.push({ project, seed: SEED, sequence: q, step: k, action: a.name, reason: reason.slice(0, 300) }); };
       const ts = Date.now();
       try {
-        const res = await a.run({ page, r, log }); log.push(`${a.name}${res ? ' · ' + res : ''}`);
+        const res = await a.run({ page, r, log, contracted }); log.push(`${a.name}${res ? ' · ' + res : ''}`);
         // Invariantes comunes.
         const errs = realErrors(); if (errs.length) throw new Error(`errores de consola: ${errs[0]}`);
         const body = await page.locator('body').innerText();
@@ -198,9 +302,11 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
       }
     }
   }
-  const summary = { project, seed: SEED, sequences: SEQUENCES, stepsAttempted: steps, stepsPassed: done, productFailures: failures.length, testInfraErrors: infra.length, seconds: Math.round((Date.now() - t0) / 1000), byAction: counts };
+  const summary = { project, seed: SEED, sequences: SEQUENCES, paths, stepsAttempted: steps, stepsPassed: done, productFailures: failures.length, testInfraErrors: infra.length, seconds: Math.round((Date.now() - t0) / 1000), byAction: counts };
   writeFileSync(`${OUT}/explore-actions-${project}.json`, JSON.stringify({ summary, failures, infra }, null, 1));
   for (const f of failures) appendFileSync(`${OUT}/explore-failures.jsonl`, JSON.stringify({ kind: 'acciones', ...f }) + '\n');
   console.log('EXPLORE-ACTIONS ' + JSON.stringify({ ...summary, byAction: undefined }));
+  // B3: una corrida completa ejercita los dos caminos (salvo que WEDA_SEQ pida reproducir un único recorrido).
+  if (ONLY === null) { expect(paths.contracted, 'la corrida incluye recorridos contratados').toBeGreaterThan(0); expect(paths.free, 'la corrida incluye recorridos sin contratar').toBeGreaterThan(0); }
   expect(failures.slice(0, 10), `fallos del producto en secuencias (${failures.length}); ver ${OUT}/explore-actions-${project}.json`).toEqual([]);
 });

@@ -29,11 +29,11 @@ Weda tiene un servidor real: API `/api/*` (`src/server/api.ts` → `service.ts`)
 - Los importes salen del servidor (`plans.ts` y el snapshot publicado), nunca del cliente.
 - Weda no verifica transferencias: un aporte queda pendiente hasta que la pareja lo confirma a mano.
 - No hay proveedor de pagos real (DP-15). `WEDA_PAYMENTS_PROVIDER=test` y `/pago-de-prueba` existen solo para pruebas automáticas y locales: nunca se enlazan desde la interfaz ni se activan en producción.
-- No cambies precios, planes, vigencia (hoy 6 meses en el código; la decisión de 12 meses todavía no está implementada) ni reglas de publicación sin una decisión documentada.
+- No cambies precios, planes, vigencia (12 meses desde la primera publicación en el código; el inicio decidido sigue en discusión, IC-16) ni reglas de publicación sin una decisión documentada. Planes vigentes: BR-13; permisos por plan y vigencia: BR-62 (se aplican en `service.ts`, no solo en la interfaz).
 
 ## Secretos y configuración
 - Solo las variables `VITE_*` llegan al navegador. Las demás (`WEDA_*`, `RESEND_API_KEY`) son de servidor; documentá las nuevas en `.env.example` sin valores reales.
 - Nunca leas `.env*` ni `.data*/` (bloqueado en `.claude/settings.json`).
 
 ## Decisiones abiertas
-No implementes nada que dependa de una decisión pendiente (DP-01 a DP-22, en `docs/product-blueprint/03-open-decisions-and-risks.md`) sin la aprobación de la dueña: hosting, proveedor de pagos, reembolsos, requisitos para publicar, condiciones, precios, controles del alias, retención y borrado.
+No implementes nada que dependa de una decisión pendiente (DP-01 a DP-28, en `docs/product-blueprint/03-open-decisions-and-risks.md`) sin la aprobación de la dueña: hosting, proveedor de pagos, reembolsos, requisitos para publicar, condiciones, precios, controles del alias, retención y borrado.

@@ -2,7 +2,6 @@
 // Todo se deriva del AppState real (nadie marca nada a mano) y no bloquea nada: sirve para orientar, no para exigir.
 // `tasks`/`readiness` de logic.ts siguen existiendo para el resto del panel; esta es la vista de «recorrido» del Inicio.
 import { hasEventDetails, spotifyEmbed } from './logic';
-import { can } from './plans';
 import type { AppState, SiteEvent } from './types';
 
 export type StageId = 'regalos' | 'sitio' | 'invitados' | 'publicar';
@@ -22,7 +21,7 @@ export type Stage = {
   cta: string;
   to: string;
   optional: boolean;
-  /** La función no está en el plan elegido: el contenido se conserva como borrador. */
+  /** Siempre false desde PAY-01: editar no depende del plan (BR-62). Se conserva el campo para quien lo lea. */
   locked: boolean;
 };
 
@@ -61,7 +60,7 @@ export function giftsStage(s: AppState): Stage {
     : `${plural(n, 'regalo elegido', 'regalos elegidos')}${alias ? '' : ' · falta cómo vas a recibirlos (podés hacerlo después)'}`;
   return {
     id: 'regalos', step: 'Paso 1', title: 'Prepará tu lista de regalos', description: 'Elegí los regalos que querés compartir y configurá cómo vas a recibir los aportes.',
-    status, detail, cta: ctaFor(status), to: '/panel/regalos', optional: false, locked: !can(s.planId, 'gifts'),
+    status, detail, cta: ctaFor(status), to: '/panel/regalos', optional: false, locked: false,
   };
 }
 
@@ -75,7 +74,7 @@ export function siteStage(s: AppState): Stage {
     : `${plural(complete.length, 'momento listo', 'momentos listos')} en tu sitio.`;
   return {
     id: 'sitio', step: 'Paso 2', title: 'Diseñá tu invitación', description: 'Personalizá el sitio de tu casamiento y elegí qué querés mostrar.',
-    status, detail, cta: ctaFor(status), to: '/panel/sitio', optional: false, locked: !can(s.planId, 'site'),
+    status, detail, cta: ctaFor(status), to: '/panel/sitio', optional: false, locked: false,
   };
 }
 
@@ -88,7 +87,7 @@ export function guestsStage(s: AppState): Stage {
     : `${plural(n, 'invitado', 'invitados')} · ${plural(confirmed, 'confirmó', 'confirmaron')} · ${pending} sin responder`;
   return {
     id: 'invitados', step: 'Gestión', title: 'Organizá a tus invitados', description: 'Cargá tu lista y seguí las confirmaciones de asistencia.',
-    status, detail, cta: ctaFor(status), to: '/panel/invitados', optional: false, locked: !can(s.planId, 'guests'),
+    status, detail, cta: ctaFor(status), to: '/panel/invitados', optional: false, locked: false,
   };
 }
 

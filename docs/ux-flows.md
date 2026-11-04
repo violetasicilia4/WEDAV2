@@ -479,3 +479,29 @@ Reemplaza, para quien tiene cuenta, el supuesto de «Perfil (2026-10-21)» (la c
 - **Página publicada:** todas las tarjetas dicen «Regalar», aunque el regalo ya tenga aportes. Después de enviar, el agradecimiento confirma el envío y la tarjeta no cambia. La página no muestra cuántos regalaron ni quiénes (BR-27).
 - **Panel:** cada aporte se ve por separado, aunque varios tengan el mismo regalo. Al rechazar se pregunta «¿Rechazar el aporte? Deja de sumar en tus totales; si te equivocás, podés volver a revisarlo.» y se avisa «Rechazaste el aporte de … Ya no suma en tus totales.». «Volver a revisar» ya no depende de otros aportes.
 - **Aclaración de la dueña (2026-10-31):** los regalos son conceptos simbólicos de contribución, sin inventario ni unidades. Un mismo regalo admite aportes ilimitados e independientes, de distintos invitados o de la misma persona, y los aportes anteriores nunca cambian su disponibilidad. No se muestra «Ya elegido», «Agotado», «Reservado» ni porcentajes de stock. Por eso `/ejemplo` tampoco marca «Elegido por vos»: lo que ya regaló ese navegador se puede regalar otra vez.
+
+## Planes: alcance de publicación y de operación (2026-11-03, decisión de la dueña D-01 y D-02)
+
+Origen: decisiones de la dueña registradas en [`product-blueprint/03`](product-blueprint/03-open-decisions-and-risks.md) §4. **Reemplaza** lo anterior sobre planes en este documento: la matriz de tres planes (§3), «Incluido en Celebración Plus» en Tu página, los tres cuadrados de «¿Qué querés publicar?», «Qué hay en Celebración Plus» y «Publicación: 6 meses» (hoy el código usa 1 año).
+
+- **Dos planes** de pago único (BR-13): **Regalos ARS 95.000** (la lista de regalos y su gestión) y **Celebración ARS 140.000** (todo lo de Regalos y el micrositio completo). El plan se elige solo al publicar.
+- **Qué se publica** (BR-14): Regalos publica solo la lista; Celebración, la lista y el micrositio.
+- **Ver, editar y operar** (BR-62): la pareja recorre y arma todo desde el inicio, pero las operaciones de gestión (agregar o importar invitados, crear mesas, asignar personas, RSVP) solo funcionan con Celebración contratada y vigente; la lista, los datos de cobro y los aportes funcionan con cualquiera de los dos. Lo bloqueado se ve deshabilitado, con la explicación de qué lo desbloquea. La vista previa no escribe nada.
+- **Pendientes:** cambio de Regalos a Celebración (DP-23), qué se permite al vencer (DP-24), si una orden pagada sin publicar ya habilita las operaciones (DP-25), cómo se registra la modalidad publicada (DP-26), qué incluye «agradecimientos» (DP-27) y si el contenido del micrositio se edita sin Celebración (DP-28; supuesto: sí).
+- **Cambio de plan (D-05, 2026-11-03):** mientras DP-23 siga pendiente, **no** se puede pasar de Regalos a Celebración después de contratar; no hay mejoras ni cobros adicionales. **Reemplaza** «mejorar de plan (se paga solo la diferencia…)» de «Tu publicación» y «Cambio de plan: solo a uno más completo, pagando la diferencia» de «Publicación: 6 meses».
+- **Operaciones después de pagar (D-05):** se habilitan recién cuando la publicación con ese plan se completó. Si falla, «Publicar mi página» se puede reintentar con el mismo pago.
+- **El código todavía no lo hace** (IC-25, IC-26, IC-27): se construye en [PAY-01](../specs/PAY-01-plan-alcance/spec.md).
+
+## Panel: ver, editar y operar (2026-11-04, PAY-01, decisión de la dueña D-02 y D-05)
+
+Origen: [PAY-01](../specs/PAY-01-plan-alcance/spec.md), aprobada por la dueña. **Reemplaza** el estado bloqueado «… se activa con el plan …» (`Locked`) y la opción «Volver a probar todo».
+
+- **Tu página y Regalos** se editan siempre, con cualquier plan o sin plan. Lo que el plan elegido no publica se conserva y no se publica.
+- **Invitados y Mesas** se ven siempre. Sin Celebración publicada y vigente: «Agregar invitado», «Importar», editar, borrar, «Crear mesa» y asignar quedan deshabilitados, con el aviso «Se habilita al publicar con Celebración. Mientras tanto podés ver cómo funciona.» y «Ver qué incluye» (abre «Publicar»). Sin invitados se muestran tres filas marcadas «Ejemplo». «Exportar» sigue disponible.
+- **Aportes recibidos**: con Regalos o Celebración vigentes se confirman, rechazan y se pide el comprobante; si no, se ven con las acciones deshabilitadas y el aviso. «Ver comprobante» sigue disponible.
+- **Pagado y sin publicar:** el aviso dice «Tu pago está confirmado: se habilita cuando publiques tu página.» Si la publicación falla, «Publicar mi página» se reintenta con el mismo pago.
+- **Vencido:** el aviso dice «Tu publicación venció: ya no se pueden hacer cambios de gestión.»
+- **Inicio:** las tarjetas de Invitados y Mesas llevan «Se habilita con Celebración» mientras no se puedan operar. La navegación ya no muestra candados.
+- **Publicar:** sin «Mejorar tu plan». Con un plan ya contratado, elegir el otro muestra «Ya contrataste … Por ahora el plan no se puede cambiar después de contratarlo» y ofrece publicar el contratado. Preguntas frecuentes y términos: «Por ahora el plan no se puede cambiar después de contratarlo».
+- **Vista previa:** confirmar asistencia o regalar muestra el agradecimiento sin guardar nada.
+- **Supuesto (S-1):** con la página dada de baja y vigente se sigue operando.

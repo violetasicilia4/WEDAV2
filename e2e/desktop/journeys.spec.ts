@@ -1,4 +1,4 @@
-import { closePreview, expect, fillNamesAndContinue, nav, onboard, openPreview, previewText, skipDateAndPlace, stored, test } from '../helpers';
+import { closePreview, expect, fillNamesAndContinue, nav, onboard, publishCelebration, openPreview, previewText, skipDateAndPlace, stored, test } from '../helpers';
 
 /* Recorridos de compu (1280 × 800). Cada test es un perfil conductual del documento docs/e2e-coverage.md (A–J).
    Verifican resultados (contenido visible, URL, estado guardado), no solo que los botones existan. */
@@ -77,8 +77,13 @@ test.describe('Perfil C · pareja que empieza desde cero', () => {
   test('estado vacío de invitados y de regalos: explica qué hacer y no muestra números inventados', async ({ page }) => {
     await onboard(page);
     await nav(page, 'Invitados').click();
-    await expect(page.getByRole('button', { name: 'Agregar invitado' }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Importar desde Excel' })).toBeVisible();
+    // CA-8 (BR-62): sin Celebración publicada se ve cómo funciona, con las acciones deshabilitadas y el aviso de qué las desbloquea.
+    await expect(page.getByText('Se habilita al publicar con Celebración')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Agregar invitado' }).first()).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Importar', exact: true })).toBeDisabled();
+    await expect(page.getByRole('list', { name: 'Ejemplo de lista de invitados' })).toBeVisible();
+    await page.getByRole('button', { name: /^Mesas y grupos/ }).click();
+    await expect(page.getByRole('button', { name: 'Crear mesa' })).toBeDisabled();
     await nav(page, 'Regalos').click();
     await expect(page.getByRole('heading', { name: 'Lista de regalos' })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Catálogo/ })).toBeVisible();
@@ -290,7 +295,7 @@ test.describe('Perfil D/E · regalos: elegir, quitar y ver el resultado en la p�
 
 test.describe('Perfil E · invitados: alta, edición, confirmación desde el sitio y errores de importación', () => {
   test('alta manual, edición de asistencia y baja con «Deshacer»', async ({ page }) => {
-    await onboard(page);
+    await onboard(page); await publishCelebration(page);
     await nav(page, 'Invitados').click();
     for (const [n, a] of [['Marta', 'Sosa'], ['Pablo', 'Ruiz']]) {
       await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
@@ -309,36 +314,27 @@ test.describe('Perfil E · invitados: alta, edición, confirmación desde el sit
     await expect(page.getByRole('list', { name: 'Lista de invitados' }).getByRole('listitem')).toHaveCount(2);
   });
 
-  test('la confirmación hecha en el sitio público llega a la lista de invitados, y enviarla dos veces no duplica a la persona', async ({ page }) => {
+  test('la confirmación enviada desde la vista previa no crea invitados (CA-7, F6)', async ({ page }) => {
     await onboard(page);
-    const confirm = async () => {
-      await page.goto('/sitio/lucia-y-violeta?borrador', { waitUntil: 'networkidle' });
-      await page.getByRole('button', { name: 'Confirmá asistencia' }).first().click();
-      const dlg = page.getByRole('dialog');
-      // Si ya se envió una confirmación en esta sesión, el diálogo reabre en el agradecimiento: se pasa a «Cargar otra persona».
-      const again = dlg.getByRole('button', { name: 'Cargar otra persona' });
-      if (await again.isVisible().catch(() => false)) await again.click();
-      await dlg.locator('#rsvp-name').fill('Marta');
-      await dlg.locator('#rsvp-surname').fill('Sosa');
-      await dlg.locator('#rsvp-contact').fill('marta@example.com');
-      await dlg.locator('label.dm-rsvp-opt', { hasText: 'Sí, ahí estoy' }).click();
-      await dlg.locator('label.dm-rsvp-menu', { hasText: 'Sin restricciones' }).click();
-      await dlg.getByRole('button', { name: 'Confirmar', exact: true }).click();
-      await dlg.getByRole('button', { name: 'Enviar confirmación' }).click();
-      await expect(dlg.getByRole('heading', { name: /¡Gracias/ })).toBeVisible();
-    };
-    await confirm();
-    await confirm();
-    await expect.poll(async () => (await stored(page)).guests.length).toBe(1);
-    const g = (await stored(page)).guests[0];
-    expect(g).toMatchObject({ first: 'Marta', last: 'Sosa', status: 'confirmed', source: 'rsvp' });
-    await page.goto('/panel/invitados', { waitUntil: 'networkidle' });
-    await expect(page.getByRole('button', { name: 'Editar a Marta Sosa' }).first()).toBeVisible();
-    await expect(page.getByRole('list', { name: 'Lista de invitados' }).getByRole('listitem')).toHaveCount(1);
+    const slug = await publishCelebration(page);
+    await page.goto(`/sitio/${slug}?borrador`, { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: 'Confirmá asistencia' }).first().click();
+    const dlg = page.getByRole('dialog');
+    await dlg.locator('#rsvp-name').fill('Marta');
+    await dlg.locator('#rsvp-surname').fill('Sosa');
+    await dlg.locator('#rsvp-contact').fill('marta@example.com');
+    await dlg.locator('label.dm-rsvp-opt', { hasText: 'Sí, ahí estoy' }).click();
+    await dlg.locator('label.dm-rsvp-menu', { hasText: 'Sin restricciones' }).click();
+    await dlg.getByRole('button', { name: 'Confirmar', exact: true }).click();
+    await dlg.getByRole('button', { name: 'Enviar confirmación' }).click();
+    await expect(dlg.getByRole('heading', { name: /¡Gracias/ })).toBeVisible();
+    await page.waitForTimeout(1500);                                       // margen para un guardado automático que no debería ocurrir
+    expect((await stored(page)).guests).toHaveLength(0);
+    expect((await (await page.request.get('/api/wedding')).json()).guests).toHaveLength(0);
   });
 
   test('importar una planilla con errores: muestra qué filas fallan, no cambia nada hasta confirmar y se puede reintentar', async ({ page }) => {
-    await onboard(page);
+    await onboard(page); await publishCelebration(page);
     await nav(page, 'Invitados').click();
     await page.getByRole('button', { name: 'Importar desde Excel' }).click();
     const bad = 'Nombre,Apellido,Asistencia,Restricción alimentaria\n,Gómez,Pendiente,\nLaura,,Pendiente,\nNico,Paz,Quizás,\n';
@@ -358,7 +354,7 @@ test.describe('Perfil E · invitados: alta, edición, confirmación desde el sit
 
 test.describe('Mesas', () => {
   test('crear una mesa, asignarle una persona, y eliminar la mesa deja a esa persona sin lugar (no la borra)', async ({ page }) => {
-    await onboard(page);
+    await onboard(page); await publishCelebration(page);
     await nav(page, 'Invitados').click();
     for (const [n, a] of [['Ana', 'Gil'], ['Beto', 'Mar']]) {
       await page.getByRole('button', { name: 'Agregar invitado' }).first().click();

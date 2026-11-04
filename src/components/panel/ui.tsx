@@ -1,10 +1,11 @@
-// Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, módulos bloqueados y vista previa.
+// Piezas chicas compartidas por el flujo de creación y el panel: campos, avisos, confirmaciones, operaciones bloqueadas y vista previa.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Lock, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { coupleLabel, dateLabel, isSamplePhoto, photoPosition, resolvePhoto } from '@/lib/weda/logic';
-import { planFor, type Feature } from '@/lib/weda/plans';
+import { planForOperation, type Operation } from '@/lib/weda/plans';
+import { useRemote } from '@/lib/weda/remote';
 import { PublishDialog } from '@/components/panel/publish-dialog';
 import { update, useAppState } from '@/lib/weda/store';
 // Estilos del panel: viajan con el código de las pantallas que usan estos componentes, no con la landing (auditoría F-06).
@@ -108,26 +109,27 @@ export function ConfirmDialog({ open, title, text, confirmLabel, onConfirm, onCa
 
 /* ------------------------------------------------------------------ módulos que el plan no incluye */
 
-const FEATURE_NAMES: Record<Feature, string> = {
-  gifts: 'La lista de regalos', site: 'El sitio del casamiento', rsvp: 'La confirmación de asistencia',
-  guests: 'La gestión de invitados', groups: 'Los grupos y las mesas', playlist: 'La música de la fiesta',
-  gallery: 'La galería de fotos', message: 'El mensaje final',
-};
-
-/** Estado bloqueado: explica qué falta y a qué plan pertenece. Lo cargado se conserva como borrador. */
-export function Locked({ feature, children }: { feature: Feature; children?: ReactNode }) {
-  const plan = planFor(feature);
+/**
+ * Aviso de una operación bloqueada (BR-62): la sección se sigue viendo y los botones de gestión quedan deshabilitados; esto explica qué los
+ * desbloquea. `id` va en el `aria-describedby` de esos botones. Con el evento vencido explica eso en lugar del plan.
+ */
+export function OperationNotice({ id, op }: { id: string; op: Operation }) {
   const plans = usePlans();
-  const planId = useAppState().planId;
+  const access = useRemote().access;
+  const plan = planForOperation(op);
+  const expired = access?.state === 'expired';
+  const paidWaiting = access?.state === 'paid_unpublished';
   return (
-    <div className="pn-locked">
-      <span className="pn-locked-icon" aria-hidden="true"><Lock size={22} strokeWidth={1.5} /></span>
-      <h2>{FEATURE_NAMES[feature]} se activa con el plan {plan?.name ?? 'Celebración'}</h2>
-      <p>{children ?? 'Lo que ya cargaste se conserva como borrador. Podés cambiar de plan cuando quieras: no se cobra nada al elegirlo.'}</p>
-      <div className="pn-actions is-tight">
-        <button type="button" className="pn-btn" onClick={plans.open}>Ver los planes</button>
-        {planId && <button type="button" className="pn-link" onClick={() => update(x => ({ ...x, planId: null }))}>Volver a probar todo</button>}
-      </div>
+    <div className="pn-opnotice" id={id} role="note">
+      <Lock size={16} strokeWidth={1.6} aria-hidden="true" />
+      <p>
+        {expired
+          ? 'Tu publicación venció: ya no se pueden hacer cambios de gestión.'
+          : paidWaiting
+            ? `Tu pago está confirmado: se habilita cuando publiques tu página.`
+            : `Se habilita al publicar con ${plan?.name ?? 'Celebración'}. Mientras tanto podés ver cómo funciona.`}
+      </p>
+      {!expired && <button type="button" className="pn-link" onClick={plans.open}>{paidWaiting ? 'Publicar' : 'Ver qué incluye'}</button>}
     </div>
   );
 }

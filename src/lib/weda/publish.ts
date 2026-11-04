@@ -2,7 +2,7 @@
 // La publicación y el pago NO están conectados (no hay servidor): esto solo informa, no publica ni cobra nada.
 import { sectionGaps } from './journey';
 import { hasEventDetails, publicPages, spotifyEmbed } from './logic';
-import { can, planFor, type Feature } from './plans';
+import { publishes, planFor, type Feature } from './plans';
 import type { AppState, PlanId } from './types';
 
 export type PublishState = 'published' | 'empty' | 'draft';
@@ -24,18 +24,18 @@ export function publishSummary(s: AppState, planId: PlanId): PublishSummary {
   const items: PublishItem[] = [];
   for (const p of PUBLIC) {
     const content = p.content(s);
-    const included = can(planId, p.feature);
+    const included = publishes(planId, p.feature);
     if (included) items.push({ feature: p.feature, label: p.label, state: content ? 'published' : 'empty', detail: content ?? 'Incluida en tu plan, pero todavía sin contenido.' });
     else if (content) items.push({ feature: p.feature, label: p.label, state: 'draft', detail: `Tu contenido se conserva (${content}).`, plan: planFor(p.feature)?.name ?? '' });
   }
   const warnings: string[] = [];
-  if (can(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') warnings.push('Falta configurar cómo vas a recibir los regalos: sin eso no se pueden activar los regalos reales.');
-  if (can(planId, 'site') && !s.date) warnings.push('Todavía no definiste la fecha: la portada va a decir «Fecha a confirmar».');
+  if (publishes(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') warnings.push('Falta configurar cómo vas a recibir los regalos: sin eso no se pueden activar los regalos reales.');
+  if (publishes(planId, 'site') && !s.date) warnings.push('Todavía no definiste la fecha: la portada va a decir «Fecha a confirmar».');
   const todo: PublishTodo[] = [];
-  if (can(planId, 'gifts') && s.gifts.items.length === 0) todo.push({ text: 'Elegí al menos un regalo para tu lista.', to: '/panel/regalos', cta: 'Elegir regalos' });
-  if (can(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') todo.push({ text: 'Configurá cómo vas a recibir los regalos (alias).', to: '/panel/regalos', cta: 'Configurar cobro', search: { tab: 'cobro' } });
-  if (can(planId, 'site') && !s.date) todo.push({ text: 'Definí la fecha del casamiento.', to: '/panel', cta: 'Definir la fecha', search: { editar: 'datos' } });
-  if (can(planId, 'site')) for (const g of sectionGaps(s)) todo.push({ text: `Completá «${g.label}»: está activada pero le faltan datos.`, to: '/panel/sitio', cta: 'Completar' });
+  if (publishes(planId, 'gifts') && s.gifts.items.length === 0) todo.push({ text: 'Elegí al menos un regalo para tu lista.', to: '/panel/regalos', cta: 'Elegir regalos' });
+  if (publishes(planId, 'gifts') && s.gifts.items.length > 0 && s.gifts.alias.trim() === '') todo.push({ text: 'Configurá cómo vas a recibir los regalos (alias).', to: '/panel/regalos', cta: 'Configurar cobro', search: { tab: 'cobro' } });
+  if (publishes(planId, 'site') && !s.date) todo.push({ text: 'Definí la fecha del casamiento.', to: '/panel', cta: 'Definir la fecha', search: { editar: 'datos' } });
+  if (publishes(planId, 'site')) for (const g of sectionGaps(s)) todo.push({ text: `Completá «${g.label}»: está activada pero le faltan datos.`, to: '/panel/sitio', cta: 'Completar' });
   return { items, todo, published: items.filter(i => i.state === 'published'), drafts: items.filter(i => i.state === 'draft'), empty: items.filter(i => i.state === 'empty'), warnings };
 }
 
@@ -44,7 +44,7 @@ export function publishSummary(s: AppState, planId: PlanId): PublishSummary {
 export function publishedPagesText(planId: PlanId): string {
   const pages = publicPages(planId);
   if (!pages.invitation) return 'solo la lista de regalos.';
-  const extras = (['playlist', 'gallery', 'message'] as Feature[]).filter(f => can(planId, f));
+  const extras = (['playlist', 'gallery', 'message'] as Feature[]).filter(f => publishes(planId, f));
   if (extras.length === 0) return 'la invitación (con confirmación de asistencia) y la lista de regalos.';
   return 'el sitio completo: la invitación con música, galería de fotos y mensaje final, y la lista de regalos.';
 }

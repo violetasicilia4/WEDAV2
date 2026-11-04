@@ -57,6 +57,18 @@ export async function skipDateAndPlace(page: Page) {
   await page.waitForURL(/\/crear\/foto/);
 }
 
+/** Publica con Celebración por la API (sin compuerta de pago en desarrollo alcanza con publicar) y recarga: operar invitados y mesas
+ *  exige Celebración publicada y vigente (BR-62, PAY-01). Usar después de `onboard`. */
+export async function publishCelebration(page: Page) {
+  await expect.poll(async () => (await (await page.request.get('/api/wedding')).json()).draft.couple.first, { timeout: 15_000 }).not.toBe('');
+  const w = await (await page.request.get('/api/wedding')).json();
+  expect((await page.request.put('/api/wedding', { data: { baseRevision: w.revision, draft: { ...w.draft, planId: 'invitacion' } } })).status()).toBe(200);
+  const r = await page.request.post('/api/wedding/publish');
+  expect(r.status()).toBe(200);
+  await page.reload({ waitUntil: 'networkidle' });
+  return (await r.json()).slug as string;                                  // el slug real (con cuentas únicas puede llevar sufijo)
+}
+
 export const nav = (page: Page, name: string) => page.getByRole('navigation', { name: 'Secciones del panel' }).getByRole('link', { name });
 export const stored = (page: Page) => page.evaluate(() => JSON.parse(localStorage.getItem('weda-app') ?? '{}'));
 /** El iframe de la vista previa (el pop-up «Vista previa»). En «Tu página» hay además la ventana en vivo (`.lc-frame`), por eso no alcanza con `iframe`. */
