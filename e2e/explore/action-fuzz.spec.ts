@@ -52,6 +52,7 @@ async function contract(page: Page, state: any, tag: string) {
   await put({ ...state, guests: [], groups: [], email: '', publication: null, planId: 'invitacion', gifts: { ...state.gifts, given: [] } });
   expect((await page.request.post('/api/wedding/publish')).status(), 'publicación de Celebración').toBe(200);
   const w = await (await page.request.get('/api/wedding')).json();
+  expect(w.access, 'después de publicar, el servidor habilita las operaciones de Celebración').toMatchObject({ state: 'active', plan: 'invitacion' });
   // Los ids de invitado son únicos en todo el servidor: con la misma semilla en celular y compu se les agrega el recorrido.
   const guests = state.guests.map((g: any) => ({ ...g, id: `${g.id}-${tag}` }));
   state.guests = guests;
@@ -62,6 +63,11 @@ async function blocked(page: Page, control: ReturnType<Page['locator']>) {
   await expect(control.first(), 'sin Celebración la operación está deshabilitada').toBeDisabled();
   await expect(page.getByRole('note').filter({ hasText: 'Se habilita al publicar con Celebración' }).first()).toBeVisible();
   return 'bloqueado sin Celebración';
+}
+/** Camino contratado: la operación tiene que estar habilitada. Si no lo está es un fallo del producto (una aserción), no un clic que agota el tiempo
+ *  y se confunde con un error de la prueba. */
+async function enabled(control: ReturnType<Page['locator']>) {
+  await expect(control.first(), 'con Celebración publicada la operación está habilitada').toBeEnabled();
 }
 /** Lo que una escritura indebida cambiaría: invitados, mesas y regalos recibidos. */
 const fingerprint = (s: any) => JSON.stringify({ guests: s.guests, groups: s.groups, given: s.gifts?.given });
@@ -133,6 +139,7 @@ const actions: Action[] = [
     await nav(page, 'Invitados').click(); await settle(page);
     const open = page.getByRole('button', { name: 'Agregar invitado' }).first(); need(await visible(open), 'sin botón');
     if (!contracted) return blocked(page, open);
+    await enabled(open);
     const n0 = (await stored(page)).guests.length; await open.click(); const dlg = page.getByRole('dialog');
     const ok = r.chance(0.6);
     const nm = ok ? r.pick(NAMES_OK) : r.pick(NAMES_BAD), ap = ok ? r.pick(['Pérez', 'Sosa', 'Núñez']) : r.pick(NAMES_BAD);
@@ -146,6 +153,7 @@ const actions: Action[] = [
     await nav(page, 'Invitados').click(); await settle(page);
     const del = page.getByRole('button', { name: /^Eliminar a / }).first(); need(await visible(del), 'sin invitados');
     if (!contracted) return blocked(page, del);
+    await enabled(del);
     const n0 = (await stored(page)).guests.length; await del.click();
     await storedSoon(page, x => x.guests.length === n0 - 1); expect((await stored(page)).guests.length).toBe(n0 - 1);
     if (r.chance(0.7)) { await page.getByRole('button', { name: 'Deshacer' }).click(); const s = await storedSoon(page, x => x.guests.length === n0); expect(s.guests.length).toBe(n0); return 'deshecho'; }
@@ -154,6 +162,7 @@ const actions: Action[] = [
     await nav(page, 'Invitados').click(); await settle(page);
     const ed = page.getByRole('button', { name: /^Editar a / }).first(); need(await visible(ed), 'sin invitados');
     if (!contracted) return blocked(page, ed);
+    await enabled(ed);
     await ed.click(); const dlg = page.getByRole('dialog'); const label = r.pick(['Confirmado', 'Pendiente', 'No asiste']);
     const sel = dlg.getByLabel('Asistencia'); const opts = await sel.locator('option').allInnerTexts(); need(opts.some(o => o.trim() === label) || opts.length > 0, 'sin opciones');
     await sel.selectOption({ label: opts.find(o => o.trim() === label) ?? opts[0]! }); await dlg.getByRole('button', { name: 'Guardar' }).click();
@@ -163,6 +172,7 @@ const actions: Action[] = [
     await page.goto('/panel/invitados?vista=mesas', { waitUntil: 'domcontentloaded' }); await settle(page);
     const open = page.getByRole('button', { name: 'Crear mesa' }).first(); need(await visible(open), 'sin botón');
     if (!contracted) return blocked(page, open);
+    await enabled(open);
     // Sin mesas guardadas la pantalla muestra «Mesa 1» de ejemplo y la guarda junto con la primera mesa nueva: el oráculo compara ids, no cantidades.
     const before: string[] = (await stored(page)).groups.map((g: { id: string }) => g.id);
     await open.click(); const dlg = page.getByRole('dialog'); const ok = r.chance(0.6);

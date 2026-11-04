@@ -119,9 +119,14 @@ Aprobadas por la dueña con la spec (2026-11-03). F1, F5 y F8 son decisiones suy
   - La vista previa compara antes y después invitados, mesas y regalos recibidos, en el navegador y, si hay cuenta, en el servidor.
   - Se agregó la acción «confirmar asistencia en la vista previa».
   - El diálogo de publicar acepta los dos planes y el caso sin cuenta.
-- **`action-fuzz`, después de adaptarla:** pasa en los dos proyectos.
-  - Compu: 140 pasos, 122 sin error, 0 fallas de producto.
-  - Celular: 140 pasos, 121 sin error, 0 fallas de producto.
-  - Invitados y mesas se ejercitaron de verdad: 10 altas, 16 y 15 mesas creadas.
-  - La vista previa no escribió en ninguno de los 16 recorridos.
-- **Límite:** «confirmar asistencia en la vista previa» llegó a enviar el formulario una sola vez (compu). En los demás casos el recorrido no tenía la confirmación activada (se saltea) o la prueba no encontró el formulario dentro del iframe a tiempo (3 errores de la prueba en compu, no del producto). Que la vista previa no escribe lo cubre la prueba fija CA-7. «Editar el texto de la portada» se saltea siempre porque la prueba no encuentra el campo; eso ya pasaba antes de este cambio.
+- **`action-fuzz`, después de adaptarla** (corrida del 2026-11-04 con las aserciones de la revisión M1): pasa en los dos proyectos, con 0 fallas de producto.
+  - Compu: 140 pasos, 121 sin error, 3 errores de la prueba (ver «Límites»). Celular: 140 pasos, 117 sin error, 0 errores de la prueba. El resto son salteos legítimos: sin regalos, sin el campo de portada, sin la confirmación activada.
+  - **Contratados: 4 de 10 recorridos por proyecto.** En cada uno, el servidor confirmó el acceso `active` con Celebración después de publicar, y cada operación exigió el botón habilitado antes del clic. Si estuviera deshabilitado, cuenta como fallo del producto, no como error de la prueba (revisión M1).
+  - **Operaciones reales en recorridos contratados, por proyecto:** 5 invitados agregados, 5 mesas creadas (más 3 nombres rechazados con su explicación), 2 bajas con «Deshacer» y 2 cambios de asistencia.
+  - **Bloqueos verificados sin contratar** (botón deshabilitado y aviso visible): en compu, 6 altas, 4 bajas, 10 cambios de asistencia y 9 mesas; en celular, 5, 5, 10 y 7.
+  - **Vista previa:** se abrió y cerró 8 veces por proyecto sin cambiar invitados, mesas ni regalos recibidos en el navegador.
+  - *Corrección:* la versión anterior de esta nota decía «10 altas, 16 y 15 mesas creadas» y «16 recorridos». Esas cifras sumaban también los resultados «bloqueado» (revisión M2).
+- **Límites (no cuentan como pruebas exitosas):**
+  - *Confirmar asistencia en la vista previa:* en compu se envió el formulario **una sola vez**, en un recorrido sin contratar, así que **la verificación del lado del servidor no se ejecutó**. En los demás casos la página no tenía la confirmación activada (3) o la prueba no encontró el formulario dentro de la vista previa (3, contados como errores de la prueba). En celular **no se llegó a enviar nunca** (8 sin confirmación). Lo cubre solo la prueba fija de CA-7.
+  - *Editar el texto de la portada:* **nunca se ejecutó** (7 de 7 salteos en compu y 8 de 8 en celular) porque la prueba no encuentra el campo. Ya pasaba antes de PAY-01.
+  - *Observaciones de la revisión sin aplicar:* B2 (el diálogo de publicar acepta los dos textos sin importar si hay cuenta) y B3 (el reparto entre contratado y sin contratar depende de la semilla).
