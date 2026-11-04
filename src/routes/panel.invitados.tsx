@@ -2,15 +2,23 @@ import { useRef, useState } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { CheckCircle2, Clock, Download, LayoutGrid, Pencil, Plus, Search, Trash2, Upload, UtensilsCrossed, Users, XCircle } from 'lucide-react';
 import { GroupsView } from '@/components/panel/groups-view';
-import { Field, Locked, useToast } from '@/components/panel/ui';
+import { Field, OperationNotice, useToast } from '@/components/panel/ui';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { menus } from '@/lib/demo-wedding';
 import { downloadXlsx, parseCsv, readXlsx } from '@/lib/weda/xlsx';
 import { exportRows, parseGuestRows, templateRows, type ImportResult } from '@/lib/weda/guests-io';
 import { addGuest, addGuests, guestName, guestStats, menuName, norm, removeGuest, STATUS_LABEL, updateGuest, validateGuest } from '@/lib/weda/logic';
-import { can } from '@/lib/weda/plans';
+import { operates, publishes } from '@/lib/weda/plans';
+import { useRemote } from '@/lib/weda/remote';
 import { update, useAppState } from '@/lib/weda/store';
 import type { Group, Guest, GuestStatus } from '@/lib/weda/types';
+
+/* Sin Celebración publicada y vigente la sección se ve pero no se opera (BR-62): estas filas muestran cómo se ve la lista con datos. */
+const SAMPLE: Guest[] = [
+  { id: 'ej-1', first: 'Sofía', last: 'Martínez', status: 'confirmed', menu: 'vegetariano', groupId: null, source: 'rsvp' },
+  { id: 'ej-2', first: 'Julián', last: 'Pérez', status: 'pending', menu: '', groupId: null, source: 'manual' },
+  { id: 'ej-3', first: 'Carla', last: 'Gómez', status: 'declined', menu: '', groupId: null, source: 'rsvp' },
+];
 
 export const Route = createFileRoute('/panel/invitados')({
   validateSearch: (s: Record<string, unknown>): { vista?: 'mesas' } => (s['vista'] === 'mesas' ? { vista: 'mesas' } : {}),
@@ -73,9 +81,10 @@ function GuestsModule() {
   const [importError, setImportError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const vista = Route.useSearch().vista === 'mesas' && can(s.planId, 'groups') ? 'mesas' : 'lista';
-
-  if (!can(s.planId, 'guests')) return <Locked feature="guests" />;
+  const access = useRemote().access;
+  // Ver es libre; operar (agregar, importar, editar, borrar, armar mesas) solo con Celebración publicada y vigente. El servidor también lo exige.
+  const canGuests = operates(access, 'guests'), canGroups = operates(access, 'groups');
+  const vista = Route.useSearch().vista === 'mesas' ? 'mesas' : 'lista';
   const st = guestStats(s);
   const groupName = (id: string | null) => s.groups.find(g => g.id === id)?.name ?? '';
   // Eliminar no pide confirmación: se puede deshacer desde el aviso (también se vuelve a su grupo).
@@ -119,23 +128,23 @@ function GuestsModule() {
           <h1>Invitados</h1>
           <p className="pn-sub">{st.total === 0 ? 'Quién viene y dónde se sienta.' : 'Quién viene, qué come y en qué mesa se sienta.'}</p>
         </div>
-        {st.total > 0 && (
+        {(st.total > 0 || !canGuests) && (
           <div className="pn-head-actions gl-actions">
-            <button type="button" className="pn-btn is-ghost" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={16} aria-hidden="true" />Exportar</button>
-            <button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={16} aria-hidden="true" />Importar</button>
-            <button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
+            {st.total > 0 && <button type="button" className="pn-btn is-ghost" onClick={() => downloadXlsx(exportRows(s), 'invitados-weda.xlsx')}><Download size={16} aria-hidden="true" />Exportar</button>}
+            <button type="button" className="pn-btn is-ghost" disabled={!canGuests} aria-describedby={canGuests ? undefined : 'gl-op'} onClick={() => setImporting(true)}><Upload size={16} aria-hidden="true" />Importar</button>
+            <button type="button" className="pn-btn" disabled={!canGuests} aria-describedby={canGuests ? undefined : 'gl-op'} onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
           </div>
         )}
       </header>
 
-      {can(s.planId, 'groups') && (
-        <div className="pn-tabs gl-tabs" role="group" aria-label="Qué querés ver">
-          <button type="button" className={vista === 'lista' ? 'on' : ''} aria-pressed={vista === 'lista'} onClick={() => void navigate({ to: '/panel/invitados', search: {}, replace: true })}><Users size={18} aria-hidden="true" />Lista de invitados <span className="pn-count">{st.total}</span></button>
-          <button type="button" className={vista === 'mesas' ? 'on' : ''} aria-pressed={vista === 'mesas'} onClick={() => void navigate({ to: '/panel/invitados', search: { vista: 'mesas' }, replace: true })}><LayoutGrid size={18} aria-hidden="true" />Mesas y grupos{st.withoutGroup > 0 && s.groups.length > 0 && <span className="pn-count" title="Personas sin lugar">{st.withoutGroup}</span>}</button>
-        </div>
-      )}
+      {!(vista === 'mesas' ? canGroups : canGuests) && <OperationNotice id="gl-op" op={vista === 'mesas' ? 'groups' : 'guests'} />}
 
-      {vista === 'mesas' ? <GroupsView /> : null}
+      <div className="pn-tabs gl-tabs" role="group" aria-label="Qué querés ver">
+        <button type="button" className={vista === 'lista' ? 'on' : ''} aria-pressed={vista === 'lista'} onClick={() => void navigate({ to: '/panel/invitados', search: {}, replace: true })}><Users size={18} aria-hidden="true" />Lista de invitados <span className="pn-count">{st.total}</span></button>
+        <button type="button" className={vista === 'mesas' ? 'on' : ''} aria-pressed={vista === 'mesas'} onClick={() => void navigate({ to: '/panel/invitados', search: { vista: 'mesas' }, replace: true })}><LayoutGrid size={18} aria-hidden="true" />Mesas y grupos{st.withoutGroup > 0 && s.groups.length > 0 && <span className="pn-count" title="Personas sin lugar">{st.withoutGroup}</span>}</button>
+      </div>
+
+      {vista === 'mesas' ? (canGroups ? <GroupsView /> : <fieldset className="pn-readonly" disabled aria-describedby="gl-op"><legend className="pn-sr">Mesas y grupos, solo lectura</legend><GroupsView /></fieldset>) : null}
       {vista === 'mesas' ? null : (
         <>
       {/* Los cuatro totales están siempre, también sin invitados (en cero). */}
@@ -146,7 +155,30 @@ function GuestsModule() {
         <li><span>Con restricción</span><strong>{withRestr}</strong><small>Menú especial</small></li>
       </ul>
 
-      {st.total === 0 ? (
+      {st.total === 0 && !canGuests ? (
+        <fieldset className="pn-readonly" disabled aria-describedby="gl-op">
+          <legend className="pn-sr">Ejemplo de cómo se ve la lista, solo lectura</legend>
+          <ul className="gl-list is-sample" aria-label="Ejemplo de lista de invitados">
+            {SAMPLE.map(g => (
+              <li key={g.id} className="gl-row">
+                <span className="gl-main">
+                  <span className="pn-avatar" aria-hidden="true">{g.first[0]}</span>
+                  <span className="gl-body">
+                    <span className="gl-top">
+                      <span className="gl-name">{guestName(g)}</span>
+                      <span className="gl-tags">
+                        <span className={`pn-gchip is-${g.status}`}>{STATUS_LABEL[g.status]}</span>
+                        <span className="gl-tag">Ejemplo</span>
+                      </span>
+                    </span>
+                    <span className="gl-sub">{g.source === 'rsvp' ? 'Respondió en el sitio' : 'Cargado por ustedes'}</span>
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
+      ) : st.total === 0 ? (
         <div className="pn-empty is-centered">
           <span className="pn-empty-ico" aria-hidden="true"><Users size={22} strokeWidth={1.6} /></span>
           <h2>Todavía no hay invitados</h2>
@@ -155,7 +187,7 @@ function GuestsModule() {
             <button type="button" className="pn-btn" onClick={() => setAdding(true)}><Plus size={16} aria-hidden="true" />Agregar invitado</button>
             <button type="button" className="pn-btn is-ghost" onClick={() => setImporting(true)}><Upload size={15} aria-hidden="true" />Importar desde Excel</button>
           </div>
-          {can(s.planId, 'rsvp') && <Link to="/panel/vista-previa" className="pn-link">Probar el formulario de confirmación</Link>}
+          {publishes(s.planId, 'rsvp') && <Link to="/panel/vista-previa" className="pn-link">Probar el formulario de confirmación</Link>}
         </div>
       ) : (
         <>
@@ -203,6 +235,8 @@ function GuestsModule() {
           </div>
 
           {shown.length === 0 ? <p className="pn-note">No hay invitados con ese filtro. <button type="button" className="pn-link" onClick={clearFilters}>Limpiar filtros</button></p> : (
+            <fieldset className="pn-readonly" disabled={!canGuests} aria-describedby={canGuests ? undefined : 'gl-op'}>
+            <legend className="pn-sr">Lista de invitados{canGuests ? '' : ', solo lectura'}</legend>
             <ul className="gl-list" aria-label="Lista de invitados">
               {shown.map(g => (
                 <li key={g.id} className="gl-row">
@@ -227,9 +261,10 @@ function GuestsModule() {
                 </li>
               ))}
             </ul>
+            </fieldset>
           )}
           <p className="pn-status-line" role="status" aria-live="polite">{shown.length} de {st.total} {st.total === 1 ? 'invitado' : 'invitados'}</p>
-          {can(s.planId, 'rsvp') && <p className="pn-note">Las personas que responden desde la página de tu casamiento se suman solas a esta lista. <Link to="/panel/vista-previa" className="pn-link">Probar el formulario</Link></p>}
+          {publishes(s.planId, 'rsvp') && <p className="pn-note">Las personas que responden desde la página de tu casamiento se suman solas a esta lista. <Link to="/panel/vista-previa" className="pn-link">Probar el formulario</Link></p>}
         </>
       )}
 

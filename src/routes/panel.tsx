@@ -2,13 +2,13 @@ import { trackOnce } from '@/lib/analytics';
 import { giftsStage, siteStage } from '@/lib/weda/journey';
 import { useEffect, useState } from 'react';
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { ChevronDown, CircleHelp, Eye, Gift, Globe, Heart, House, Lock, Mail, Users } from 'lucide-react';
+import { ChevronDown, CircleHelp, Eye, Gift, Globe, Heart, House, Mail, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { SideMenuIcon } from '@/components/panel/side-menu-icon';
 import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
-import { can, formatPrice, PLANS, PUBLICATION_TERM, type Feature } from '@/lib/weda/plans';
+import { formatPrice, PLANS, PUBLICATION_TERM } from '@/lib/weda/plans';
 import { ensureRemote, errorText, hasUnsaved, dismissNotice, reloadFromServer, retrySave, useRemote } from '@/lib/weda/remote';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import { isLive } from '@/lib/weda/payments';
@@ -24,12 +24,12 @@ export const Route = createFileRoute('/panel')({
   component: PanelLayout,
 });
 
-type NavItem = { to: string; label: string; icon: typeof House; feature?: Feature; end?: boolean };
+type NavItem = { to: string; label: string; icon: typeof House; end?: boolean };
 const NAV: NavItem[] = [
   { to: '/panel', label: 'Inicio', icon: House, end: true },
-  { to: '/panel/regalos', label: 'Regalos', icon: Gift, feature: 'gifts' },
-  { to: '/panel/sitio', label: 'Tu página', icon: Globe, feature: 'site' },
-  { to: '/panel/invitados', label: 'Invitados', icon: Users, feature: 'guests' },
+  { to: '/panel/regalos', label: 'Regalos', icon: Gift },
+  { to: '/panel/sitio', label: 'Tu página', icon: Globe },
+  { to: '/panel/invitados', label: 'Invitados', icon: Users },
 ];
 /* Perfil de la pareja arriba del menú: la misma foto que usa la portada, los nombres y el estado. «Publicada» solo con cuenta: la publicación
    real la hace el servidor (sin cuenta no hay página en Internet, aunque quede una publicación vieja guardada en este navegador).
@@ -110,7 +110,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
   const prices = PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ');
   const faq: [string, string][] = [
     ['¿Cuánto cuesta y cuándo pago?', `Armás todo gratis y pagás una sola vez, al publicar: ${prices}. Es un pago único y la página queda publicada ${PUBLICATION_TERM}.`],
-    ['¿Puedo cambiar de plan después de publicar?', 'Sí, a un plan más completo: pagás solo la diferencia. No se puede pasar a un plan más económico.'],
+    ['¿Puedo cambiar de plan después de publicar?', 'Por ahora no: el plan que elegís al publicar no se puede cambiar después de contratarlo.'],
     ['¿Cómo comparto la invitación?', 'Al publicar se genera el link de tu página. Lo podés mandar a todos tus contactos.'],
     ['¿Cómo recibo los regalos?', 'Cargás el alias de tu cuenta en Regalos → Datos de cobro. Tus invitados eligen un regalo, te transfieren directo a esa cuenta y adjuntan el comprobante. No hay comisión: el dinero va directo a tu banco y podés validar cada regalo con su comprobante.'],
     ['¿Dónde veo los regalos que recibí?', 'En Regalos → Aportes recibidos: quién te hizo el regalo, qué regalos eligió (puede ser más de uno), el monto, la fecha y el comprobante.'],
@@ -167,7 +167,6 @@ function PanelLayout() {
   const navigate = useNavigate();
   // Solo lo que usa el contenedor: así escribir en el editor o los invitados no lo vuelve a dibujar.
   const onboarded = useAppSelector(s => s.onboarded);
-  const planId = useAppSelector(s => s.planId);
   const hydrated = useHydrated();
   const full = useStorageFull();
   const [help, setHelp] = useState(false);
@@ -225,12 +224,10 @@ function PanelLayout() {
           <nav aria-label="Secciones del panel" className="pn-nav" id="pn-side-nav">
             <div className="pn-nav-group">
               {NAV.map(n => {
-                const locked = !!n.feature && !can(planId, n.feature);
                 return (
                   <Link key={n.to} to={n.to as never} activeOptions={{ exact: !!n.end }} activeProps={{ 'aria-current': 'page' }} className="pn-nav-link" title={n.label}>
                     <n.icon size={20} strokeWidth={1.5} aria-hidden="true" />
                     <span>{n.label}</span>
-                    {locked && <><Lock size={13} aria-hidden="true" className="pn-nav-lock" /><span className="pn-sr">(no incluido en tu plan)</span></>}
                   </Link>
                 );
               })}

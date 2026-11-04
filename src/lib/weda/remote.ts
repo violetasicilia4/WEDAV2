@@ -11,6 +11,7 @@
 import { useSyncExternalStore } from 'react';
 import { hasEvent } from './account';
 import { addTerm } from './payments';
+import { operates, type Access } from './plans';
 import { getState, replace, reset, subscribeState } from './store';
 import type { AppState, Guest, PlanId, Publication } from './types';
 
@@ -32,6 +33,8 @@ export type RemoteState = {
   payout: Payout | null;
   /** Datos de cobro cargados en este navegador antes de tener cuenta: no se suben solos, se confirman con la clave. */
   pendingPayout: PayoutData | null;
+  /** Qué se puede operar (BR-62), calculado por el servidor con el plan publicado y vigente. null = sin cuenta o todavía no se sabe. */
+  access: Access | null;
 };
 export type PayoutData = { alias: string; bank: string; cbu: string };
 export type Payout = PayoutData & { version: number; changedAt: string | null };
@@ -55,7 +58,7 @@ export async function api<T = any>(method: string, url: string, body?: unknown):
 
 /* ------------------------------------------------------------------ estado observable */
 
-let remote: RemoteState = { settled: false, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null, payout: null, pendingPayout: null };
+let remote: RemoteState = { settled: false, user: null, save: 'idle', error: null, notice: null, publication: null, payments: null, payout: null, pendingPayout: null, access: null };
 const listeners = new Set<() => void>();
 const set = (p: Partial<RemoteState>) => { remote = { ...remote, ...p }; listeners.forEach(l => l()); };
 const SERVER_REMOTE: RemoteState = remote;
@@ -140,6 +143,7 @@ async function attach(email: string): Promise<void> {
     set({ settled: true, user: { email }, error: e instanceof ApiFailure ? e.code : 'network', save: 'error' });
     return;
   }
+  set({ access: (w.access as Access | undefined) ?? null });
   // El destino de cobro manda el del servidor. Si este navegador tenía otro (cargado antes de tener cuenta), queda aparte para confirmarlo con la clave.
   const local = adoptPayout(getState(), w.payout as Payout);
   const serverHasData = !!w.draft.onboarded || !!w.draft.couple.first || !!w.draft.couple.second;
@@ -206,21 +210,30 @@ function scheduleSave(delay: number) {
 async function flush(): Promise<void> {
   if (frozen || !remote.user) return;
   if (inFlight) { rerun = true; return; }
-  const snapshot = getState();
+  const local = getState();
+  // BR-62: sin el plan publicado y vigente, el servidor rechaza invitados y mesas. Lo que haya local (de antes de la cuenta) no se pierde:
+  // queda en este navegador y se sube cuando se habilite; el resto del borrador se guarda igual (PAY-01, riesgo R-2).
+  const guestsOk = operates(remote.access, 'guests'), groupsOk = operates(remote.access, 'groups');
+  const syncedGroups = syncedDraft ? (JSON.parse(syncedDraft) as AppState).groups : null;
+  const snapshot = groupsOk || !syncedGroups ? local : { ...local, groups: syncedGroups };
   const draftJson = JSON.stringify(draftOf(snapshot));
-  const upsert = snapshot.guests.filter(g => syncedGuests.get(g.id) !== guestKey(g));
-  const sentIds = new Set(snapshot.guests.map(g => g.id));
-  const remove = [...syncedGuests.keys()].filter(id => !sentIds.has(id));
-  if (draftJson === syncedDraft && upsert.length === 0 && remove.length === 0) { baselineRef = snapshot; return; }
+  const changed = local.guests.filter(g => syncedGuests.get(g.id) !== guestKey(g));
+  const upsert = guestsOk ? changed : [];
+  const sentIds = new Set(local.guests.map(g => g.id));
+  const removed = [...syncedGuests.keys()].filter(id => !sentIds.has(id));
+  const remove = guestsOk ? removed : [];
+  const held = (!guestsOk && (changed.length > 0 || removed.length > 0)) || (snapshot !== local && JSON.stringify(local.groups) !== JSON.stringify(syncedGroups));
+  if (held && !remote.notice) set({ notice: 'Hay invitados o mesas que quedaron solo en este navegador: se guardan en tu cuenta cuando publiques con Celebración.' });
+  if (draftJson === syncedDraft && upsert.length === 0 && remove.length === 0) { baselineRef = local; return; }
   inFlight = true;
   set({ save: 'saving', error: null });
   try {
     const r = await api('PUT', '/api/wedding', { baseRevision: revision, draft: draftOf(snapshot), guests: { upsert, remove } });
     revision = r.revision;
     syncedDraft = draftJson;
-    syncedGuests = new Map(snapshot.guests.map(g => [g.id, guestKey(g)]));
+    if (guestsOk) syncedGuests = new Map(local.guests.map(g => [g.id, guestKey(g)]));
     // Respuestas del sitio público que llegaron mientras tanto: se suman (nunca se quita ni se pisa nada local).
-    const known = new Set([...sentIds, ...remove]);
+    const known = new Set([...sentIds, ...removed, ...syncedGuests.keys()]);
     const arrived = (r.guests as Guest[]).filter(g => !known.has(g.id));
     for (const g of arrived) syncedGuests.set(g.id, guestKey(g));
     if (arrived.length) replace({ ...getState(), guests: [...getState().guests, ...arrived.filter(g => !getState().guests.some(x => x.id === g.id))] });
@@ -228,7 +241,7 @@ async function flush(): Promise<void> {
     writeMeta();
     retry = 0;
     const pub = remote.publication;
-    set({ save: 'saved', error: null, ...(pub && typeof r.pendingChanges === 'boolean' ? { publication: { ...pub, pendingChanges: r.pendingChanges } } : {}) });
+    set({ save: 'saved', error: null, ...(r.access ? { access: r.access as Access } : {}), ...(pub && typeof r.pendingChanges === 'boolean' ? { publication: { ...pub, pendingChanges: r.pendingChanges } } : {}) });
   } catch (e) {
     if (e instanceof ApiFailure && e.status === 409 && e.code === 'revision_conflict') {
       frozen = true;
@@ -325,10 +338,11 @@ export async function publishRemote(): Promise<{ ok: true; slug: string } | { ok
     while (inFlight) await new Promise(r => setTimeout(r, 50));
     await flush();
     if (remote.save === 'error' || remote.save === 'conflict') return { ok: false, code: remote.error ?? 'save_failed' };
-    const r = await api<{ slug: string; planId: string; version: number }>('POST', '/api/wedding/publish');
+    const r = await api<{ slug: string; planId: string; version: number; access?: Access }>('POST', '/api/wedding/publish');
     replace({ ...getState(), slug: r.slug });
     baselineRef = getState();
-    set({ publication: { status: 'live', planId: r.planId, version: r.version, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString(), pendingChanges: false } });
+    set({ ...(r.access ? { access: r.access } : {}), publication: { status: 'live', planId: r.planId, version: r.version, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString(), pendingChanges: false } });
+    scheduleSave(0); // con las operaciones ya habilitadas, sube lo que hubiera quedado solo en este navegador
     return { ok: true, slug: r.slug };
   } catch (e) {
     return { ok: false, code: e instanceof ApiFailure ? e.code : 'network' };
@@ -385,6 +399,9 @@ export const ERROR_TEXT: Record<string, string> = {
   payout_changed: 'Tus datos de cobro cambiaron desde otro dispositivo. Recargá la página para ver los vigentes.',
   payout_unchanged: 'Son los mismos datos que ya tenías.',
   too_many_changes: 'Ya cambiaste tus datos de cobro 3 veces hoy. Por seguridad, probá de nuevo mañana.',
+  feature_requires_plan: 'Esto se habilita al publicar con Celebración.',
+  event_expired: 'Tu publicación venció: ya no se pueden hacer cambios de gestión. Escribinos a hola@weda.app.',
+  plan_change_pending: 'Por ahora el plan no se puede cambiar después de contratarlo.',
 };
 export const errorText = (code: string | null) => (code && ERROR_TEXT[code]) || 'Algo salió mal de nuestro lado. Probá de nuevo en un rato.';
 

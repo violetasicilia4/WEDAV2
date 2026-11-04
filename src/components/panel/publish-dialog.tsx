@@ -12,7 +12,7 @@ import { BadgeCheck, CalendarClock, Check, ChevronDown, ExternalLink, Loader2, P
 import { HIGHLIGHT_ICON, PLAN_ICON } from '@/components/plan-icons';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { dateLabel, draftsFor, sitePath } from '@/lib/weda/logic';
-import { isLive, publishPaid, republish, takeDown, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
+import { isLive, publishPaid, republish, takeDown } from '@/lib/weda/payments';
 import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
 import { formatPrice, normalizePlanId, PLANS, planById, PRICE_UNIT, PUBLICATION_TERM, type HighlightIcon } from '@/lib/weda/plans';
 import { errorText, publishRemote, startCheckout, unpublishRemote, useRemote } from '@/lib/weda/remote';
@@ -27,25 +27,26 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
   const online = !!remoteState.user;
   // Con proveedor de pagos, publicar un plan exige que el servidor lo tenga pagado (confirmado por el proveedor, nunca por esta pantalla).
   const charging = !!remoteState.payments?.enabled;
-  const paidPrice = remoteState.payments?.paidPlan ? planById(remoteState.payments.paidPlan as PlanId)?.price ?? 0 : 0;
+  const paidPlan = remoteState.payments?.paidPlan ? normalizePlanId(remoteState.payments.paidPlan as PlanId) : null;
   const [error, setError] = useState<string | null>(null);
   // Sin cuenta no hay publicación real: una guardada en este navegador (de antes) no se muestra como publicada.
   const pub = online ? state.publication : null;
   const [step, setStep] = useState<Step>(pub ? 'manage' : 'choose');
   const [picked, setPicked] = useState<PlanId | null>(null);
-  const [upgrading, setUpgrading] = useState(false);
   const [confirmDown, setConfirmDown] = useState(false);
   const [copied, setCopied] = useState(false);
   // «Publicar los cambios»: la página pública es una copia del momento de publicar; esto la actualiza con lo que se editó después.
   const [refresh, setRefresh] = useState<'idle' | 'busy' | 'done'>('idle');
 
   const plan = planById(picked);
-  const mustPay = charging && !!plan && paidPrice < plan.price;
+  // Con un plan ya pagado se publica ese, sin otro cobro; otro plan no se puede contratar mientras DP-23 siga pendiente (D-05).
+  const mustPay = charging && !!plan && paidPlan === null;
+  const otherPaid = !!plan && paidPlan !== null && paidPlan !== plan.id;
   // Ir al checkout: el servidor crea (o reusa) la orden con el monto que corresponde y devuelve adónde ir. Nada se marca como pagado acá.
   const goPay = () => {
     if (!picked || step === 'paying') return;
     setStep('paying'); setError(null);
-    track('checkout_started', { plan_id: picked, is_upgrade: upgrading });
+    track('checkout_started', { plan_id: picked, is_upgrade: false });
     void startCheckout(picked).then(r => {
       if (r.ok) { window.location.assign(r.url); return; }
       setError(errorText(r.code)); setStep('review');
@@ -56,18 +57,17 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
   // Lo calcula el servidor al guardar: true = la página pública muestra una versión anterior; false = está al día; undefined = todavía no se sabe.
   const pending = remoteState.publication?.pendingChanges;
   const upToDate = pending === false && remoteState.save !== 'saving';
-  const amount = upgrading && pub && picked ? upgradeAmount(pub.planId, picked) : plan?.price ?? 0;
+  const amount = plan?.price ?? 0;
   const path = sitePath(state);
   const close = () => { if (step !== 'paying') onClose(); };
-  const choose = (id: PlanId) => { track('plan_selected', { plan_id: id }); setPicked(id); setUpgrading(false); setStep('review'); };
-  const startUpgrade = (id: PlanId) => { setPicked(id); setUpgrading(true); setStep('review'); };
+  const choose = (id: PlanId) => { track('plan_selected', { plan_id: id }); setPicked(id); setStep('review'); };
   // Publica en el servidor (con cuenta). Si falla, se deshace y no se muestra como publicada. Sin cuenta no se llama: el botón lleva a crearla.
   const pay = () => {
     if (!picked || !online || step === 'paying') return;
-    const id = picked, up = upgrading;
+    const id = picked;
     setStep('paying'); setError(null);
     const before = getState();
-    update(s => (up ? upgradePaid(s, id) : publishPaid(s, id)));
+    update(s => publishPaid(s, id));
     void publishRemote().then(r => {
       if (r.ok) { setStep('done'); return; }
       update(s => ({ ...s, publication: before.publication, planId: before.planId }));
@@ -143,8 +143,8 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
         )}
         {(step === 'review' || step === 'paying') && plan && (
           <>
-            <DialogTitle>{upgrading ? `Mejorar a ${plan.name}` : `Publicar · ${plan.name}`}</DialogTitle>
-            <DialogDescription>{upgrading ? `El precio es la diferencia con tu plan actual. La vigencia no cambia: sigue hasta el ${until}.` : `${formatPrice(plan.price)} ${PRICE_UNIT} · publicada ${PUBLICATION_TERM}. Esto es lo que se publica.`}</DialogDescription>
+            <DialogTitle>Publicar · {plan.name}</DialogTitle>
+            <DialogDescription>{`${formatPrice(plan.price)} ${PRICE_UNIT} · publicada ${PUBLICATION_TERM}. Esto es lo que se publica.`}</DialogDescription>
             {summary && (
               <div className="pn-publish">
                 {summary.published.length > 0 && (<><p className="pn-group-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
@@ -160,34 +160,37 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             <dl className="pn-pay">
               <div><dt>Plan</dt><dd>{plan.name}</dd></div>
               <div><dt>Se publica</dt><dd>{publishedPagesText(plan.id)}</dd></div>
-              <div><dt>Duración</dt><dd>{upgrading ? `Hasta el ${until}` : `Publicada ${PUBLICATION_TERM}, desde hoy`}</dd></div>
-              {upgrading && pub && <div><dt>Plan actual</dt><dd>{planById(pub.planId)?.name}</dd></div>}
-              <div className="is-total"><dt>{upgrading ? 'Diferencia' : 'Precio'}</dt><dd>{formatPrice(amount)} · {PRICE_UNIT}</dd></div>
+              <div><dt>Duración</dt><dd>Publicada {PUBLICATION_TERM}, desde hoy</dd></div>
+              <div className="is-total"><dt>Precio</dt><dd>{formatPrice(amount)} · {PRICE_UNIT}</dd></div>
             </dl>
             {error && <p className="pn-banner" role="alert">No se pudo publicar: {error}</p>}
             {!online
               ? <p className="pn-note" role="status">Para publicar necesitás una cuenta: ahí queda guardado todo lo que armaste y tu página se puede abrir desde cualquier lugar.</p>
-              : mustPay
+              : otherPaid
+                ? <p className="pn-note" role="status">Ya contrataste {planById(paidPlan)?.name}. Por ahora el plan no se puede cambiar después de contratarlo: publicá con {planById(paidPlan)?.name}.</p>
+                : mustPay
                 ? <p className="pn-note" role="status">Vas a pagar en una página segura. Cuando el pago esté confirmado, volvés acá y publicás.</p>
                 : <p className="pn-note" role="status">Al publicar, cualquiera que tenga el link va a poder abrir tu página.</p>}
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" disabled={step === 'paying'} onClick={() => setStep(pub ? 'manage' : 'choose')}>Volver</button>
               {!online
                 ? <Link to="/crear/cuenta" className="pn-btn" onClick={onClose}>Crear cuenta para publicar</Link>
-                : mustPay
+                : otherPaid
+                  ? <button type="button" className="pn-btn" onClick={() => paidPlan && choose(paidPlan)}>Publicar {planById(paidPlan)?.name}</button>
+                  : mustPay
                   ? <button type="button" className="pn-btn" disabled={step === 'paying'} aria-busy={step === 'paying'} onClick={goPay}>
                       {step === 'paying' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Un momento…</> : `Ir a pagar ${formatPrice(amount)}`}
                     </button>
                   : <button type="button" className="pn-btn" disabled={step === 'paying'} aria-busy={step === 'paying'} onClick={pay}>
-                      {step === 'paying' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Publicando…</> : upgrading ? `Mejorar a ${plan.name}` : 'Publicar'}
+                      {step === 'paying' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Publicando…</> : 'Publicar'}
                     </button>}
             </div>
           </>
         )}
         {step === 'done' && pub && plan && (
           <>
-            <DialogTitle>{upgrading ? `Tu plan ahora es ${plan.name}` : '¡Tu página está publicada!'}</DialogTitle>
-            <DialogDescription>{upgrading ? `Tu página ya se muestra con ${plan.name}.` : 'Ya la puede abrir cualquiera que tenga el link.'}</DialogDescription>
+            <DialogTitle>¡Tu página está publicada!</DialogTitle>
+            <DialogDescription>Ya la puede abrir cualquiera que tenga el link.</DialogDescription>
             <dl className="pn-pay">
               <div><dt>Plan</dt><dd>{plan.name}</dd></div>
               <div><dt>Publicada hasta</dt><dd>{until}</dd></div>
@@ -197,7 +200,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               <a className="pn-btn" href={path} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> Ver mi página<span className="pn-sr"> (se abre en otra pestaña)</span></a>
               <button type="button" className="pn-btn is-ghost" onClick={copyLink}>{copied ? 'Link copiado' : 'Copiar link'}</button>
             </div>
-            <p className="pn-note">Tu página está publicada: cualquiera con el link la puede abrir. Desde «Publicada» podés mejorar tu plan o bajar la página cuando quieras.</p>
+            <p className="pn-note">Tu página está publicada: cualquiera con el link la puede abrir. Desde «Publicada» podés publicar los cambios o bajar la página cuando quieras.</p>
             <div className="pn-actions is-end"><button type="button" className="pn-btn is-ghost" onClick={onClose}>Listo</button></div>
           </>
         )}
@@ -235,19 +238,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
                 </div>
               </>
             )}
-            {upgradeOptions(pub.planId).length > 0 && (
-              <div className="pn-upgrade">
-                <p className="pn-group-label">Mejorar tu plan</p>
-                <ul>
-                  {upgradeOptions(pub.planId).map(p => (
-                    <li key={p.id}>
-                      <span><strong>{p.name}</strong><small>{p.product} · {formatPrice(upgradeAmount(pub.planId, p.id))} de diferencia</small></span>
-                      <button type="button" className="pn-btn is-ghost is-small" aria-label={`Mejorar a ${p.name}`} onClick={() => startUpgrade(p.id)}>Mejorar</button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <p className="pn-hint">Por ahora el plan no se puede cambiar después de contratarlo.</p>
             {confirmDown ? (
               <div className="pn-note" role="alertdialog" aria-label="Confirmar bajar la página">
                 <p><strong>¿Bajar tu página?</strong> Deja de estar publicada. Tu plan sigue vigente hasta el {until}: podés volver a publicarla cuando quieras.</p>

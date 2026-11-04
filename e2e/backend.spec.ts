@@ -1,6 +1,7 @@
 // Recorridos contra el BACKEND REAL (servidor + base de datos SQLite temporal): sin mocks de autorización ni de persistencia.
 // Cada test usa correos únicos. Solo se interceptan las llamadas para SIMULAR UNA RED CAÍDA (la falla es del cliente, no del servidor).
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
+import { publishCelebration } from './helpers';
 
 const PASS = 'Clave1234';
 const uniq = (p: string) => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}@example.com`;
@@ -94,6 +95,7 @@ test.describe('multiusuario con servidor real', () => {
   test('un guardado que falla NO aparenta éxito: avisa, reintenta y recién ahí queda guardado', async ({ page }) => {
     const email = uniq('red');
     await signUpAndOnboard(page, email, 'Rita', 'Santi');
+    await publishCelebration(page); // operar invitados exige Celebración publicada (BR-62)
     await page.route('**/api/wedding', r => (r.request().method() === 'PUT' ? r.abort('failed') : r.continue()));
     await page.goto('/panel/perfil', { waitUntil: 'networkidle' });
     // Cualquier cambio de datos dispara el guardado automático: se edita un invitado nuevo.

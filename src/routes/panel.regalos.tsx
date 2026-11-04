@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { Check, ChevronRight, Copy, Eye, Gift as GiftIcon, ImagePlus, Package, Pencil, Plus, X } from 'lucide-react';
-import { Field, Locked, useToast } from '@/components/panel/ui';
+import { Field, OperationNotice, useToast } from '@/components/panel/ui';
 import { PayoutForm } from '@/components/panel/payout-form';
 import { centerChild, useScrollFade } from '@/components/panel/scroll-row';
 import { ContributionReview } from '@/components/panel/contribution-review';
@@ -13,7 +13,7 @@ import {
   addCatalogGift, addCustomGift, addSet, contributionsFromServer, contributionsFromState, countsAsGift, hasCatalogGift, moveGiftTo, parseAmount, removeGift, removeSetGifts, sitePath, updateGift, type Contribution,
   cleanCbu, validateAlias, validateCbu, validateGift,
 } from '@/lib/weda/logic';
-import { can } from '@/lib/weda/plans';
+import { operates } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';
 import { api, useRemote } from '@/lib/weda/remote';
@@ -327,7 +327,6 @@ function GiftsModule() {
       toast(code === 'reminder_too_soon' ? 'Ya se lo pediste hoy. Podés volver a pedirlo mañana.' : code === 'receipt_already_attached' ? 'Ya adjuntó el comprobante: actualizá la página.' : 'No pudimos enviar el correo. Probá de nuevo en un rato.', 'error');
     }
   };
-  if (!can(s.planId, 'gifts')) return <Locked feature="gifts" />;
   const items = s.gifts.items;
   const received = contrib.list;
   // Los rechazados se siguen viendo (se pueden volver a revisar) pero no suman.
@@ -511,6 +510,10 @@ function GiftsModule() {
               </div>
             ) : (
               <>
+                {/* Ver es libre; confirmar, rechazar y pedir comprobante exigen el plan publicado y vigente (BR-62). El servidor también lo exige. */}
+                {!operates(remote.access, 'contributions') && <OperationNotice id="rg-op" op="contributions" />}
+                <fieldset className="pn-readonly" disabled={!operates(remote.access, 'contributions')} aria-describedby={operates(remote.access, 'contributions') ? undefined : 'rg-op'}>
+                <legend className="pn-sr">Aportes recibidos</legend>
                 <ul className="rg-recs" aria-label="Aportes recibidos">
                   {received.map(r => (
                     <li key={r.id} className="rg-rec">
@@ -535,6 +538,7 @@ function GiftsModule() {
                     </li>
                   ))}
                 </ul>
+                </fieldset>
               </>
             )}
           </>

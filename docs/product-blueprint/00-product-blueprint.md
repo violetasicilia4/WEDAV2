@@ -2,6 +2,12 @@
 
 **Auditoría integral y documento maestro del producto** · Fecha de la auditoría: 2026-10-31
 
+> **Actualización 2026-11-03 (decisiones de la dueña, [anexo 03 §4](03-open-decisions-and-risks.md)).** Lo que sigue se escribió el 2026-10-31; donde contradiga esto, manda esto:
+> - **D-01 · Dos planes** de pago único: Regalos ARS 95.000 y Celebración ARS 140.000 (BR-13). «Celebración Plus» ya no existe. El cambio de Regalos a Celebración queda **pendiente** (DP-23).
+> - **D-02 · El plan define qué se publica y qué se opera**; ver y editar contenido no dependen del plan (BR-14, BR-62). Se construye en [PAY-01](../../specs/PAY-01-plan-alcance/spec.md).
+> - **D-03 · Multiusuario postergado** (riesgo aceptado, RK-19).
+> - **Vigencia en el código:** desde el 2026-11-03 son **12 meses desde la primera publicación** (`PUBLICATION_MONTHS = 12`) y los textos dicen «1 año». Donde abajo dice «6 meses» describe el estado del 2026-10-31 (IC-02). El inicio de la vigencia sigue en discusión (IC-16, IC-28).
+
 Este documento reúne en un solo lugar qué es Weda, qué está realmente construido, qué falta y si las reglas son coherentes entre sí. **No es un diseño nuevo ni una fase de implementación:** no se modificó código, base de datos, API ni documentos originales. Todo lo que afirma sobre el código fue verificado leyendo el código (no los informes previos).
 
 **Anexos** (la profundidad vive ahí; este documento los resume y los cita):
@@ -66,7 +72,7 @@ Solo se usa el posicionamiento que respaldan `PRODUCT.md` y las decisiones docum
 | Propuesta de valor | Una página bonita y simple, más una lista de regalos que ordena y acompaña los aportes de los invitados | DOCUMENTADO |
 | Diferencial | **La lista de regalos unida al micrositio** | DOCUMENTADO (`PRODUCT.md`); la competencia no fue investigada en esta auditoría → NO VERIFICADO |
 | Función principal | Que los invitados puedan regalar (transferencia a un alias que muestra la pareja) y la pareja lleve el control | IMPLEMENTADO con límites serios (cap. 8) |
-| Planes | Matriz de planes en pesos argentinos (`src/lib/weda/plans.ts`) | IMPLEMENTADO; los precios definitivos y si incluyen impuestos son **PENDIENTES** (DP-17) |
+| Planes | Dos planes en pesos argentinos (`src/lib/weda/plans.ts`): Regalos 95.000 y Celebración 140.000, de pago único (D-01) | IMPLEMENTADO; si incluyen impuestos es **PENDIENTE** (DP-17); permisos por plan según BR-62 **NO IMPLEMENTADOS** (IC-25) |
 
 **Principio que atraviesa todo: Weda no custodia ni verifica dinero.** Los invitados transfieren directamente a la cuenta de la pareja; Weda solo registra el aporte y el comprobante que carga el invitado. La pareja confirma a mano. *(DECIDIDO.)* El código respeta esto en lo esencial (no mueve dinero), pero la interfaz todavía usa palabras como «recibido» que sugieren una verificación que no existe (IC-07).
 
@@ -189,7 +195,7 @@ El catálogo completo es el [anexo 02](02-business-rules-catalog.md): **61 regla
 
 | Regla (DECIDIDA) | Qué hace el código | Referencia |
 |---|---|---|
-| Vigencia de **12 meses desde la confirmación del pago** | 6 meses desde la primera publicación | IC-02, IC-16 |
+| Vigencia de **12 meses desde la confirmación del pago** | 6 meses desde la primera publicación (*desde el 2026-11-03: 12 meses desde la primera publicación*) | IC-02, IC-16, IC-28 |
 | **Pagar = activar + publicar** | Dos acciones separadas | IC-01 |
 | Publicar exige pago confirmado | Apagado por defecto | IC-17 |
 | Al vencer, **cierre definitivo** para todos los roles | Solo se bloquea publicar; la pareja sigue editando | IC-05 |

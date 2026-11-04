@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addTerm, isExpired, isLive, publishPaid, republish, takeDown, totalPaid, upgradeAmount, upgradeOptions, upgradePaid } from '@/lib/weda/payments';
+import { addTerm, isExpired, isLive, publishPaid, republish, takeDown, totalPaid } from '@/lib/weda/payments';
 import { emptyState } from '@/lib/weda/logic';
 import { PLANS } from '@/lib/weda/plans';
 import { parseStored } from '@/lib/weda/store';
@@ -29,25 +29,11 @@ describe('pago y publicación simulados', () => {
     const once = publishPaid(base(), 'regalos', NOW);
     expect(publishPaid(once, 'completo', NOW)).toBe(once);
   });
-  it('mejorar de Regalos a Celebración cobra solo la diferencia, cambia el plan y conserva la vigencia', () => {
+  it('no hay mejora de plan (D-05, DP-23 pendiente): las mejoras guardadas antes se siguen sumando al total pagado', () => {
     const s = publishPaid(base(), 'regalos', NOW);
-    expect(upgradeOptions('regalos').map(p => p.id)).toEqual(['invitacion']);
-    expect(upgradeAmount('regalos', 'invitacion')).toBe(price('invitacion') - price('regalos'));
-    const later = new Date('2027-01-05T10:00:00.000Z');
-    const up = upgradePaid(s, 'invitacion', later);
-    expect(up.planId).toBe('invitacion');
-    expect(up.publication!.planId).toBe('invitacion');
-    expect(up.publication!.expiresAt).toBe(s.publication!.expiresAt);
-    expect(up.publication!.payments.map(p => p.amount)).toEqual([price('regalos'), price('invitacion') - price('regalos')]);
-    expect(totalPaid(up.publication!)).toBe(price('invitacion'));        // pagó en total lo mismo que el plan más alto
-  });
-  it('no se puede mejorar al mismo plan, a uno menor, ni sin haber publicado; Celebración (y el viejo Celebración Plus) no tienen mejora', () => {
-    const s = publishPaid(base(), 'invitacion', NOW);
-    expect(upgradePaid(s, 'invitacion', NOW)).toBe(s);
-    expect(upgradePaid(s, 'regalos', NOW)).toBe(s);
-    expect(upgradePaid(base(), 'invitacion', NOW).publication).toBeNull();
-    expect(upgradeOptions('invitacion')).toEqual([]);
-    expect(upgradeOptions('completo')).toEqual([]);
+    const old = { ...s, publication: { ...s.publication!, payments: [...s.publication!.payments, { kind: 'upgrade' as const, planId: 'invitacion' as const, amount: 45000, at: NOW.toISOString() }] } };
+    expect(totalPaid(old.publication)).toBe(price('regalos') + 45000);
+    expect(publishPaid(old, 'invitacion', NOW)).toBe(old);               // con una publicación, elegir otro plan no cambia nada
   });
   it('bajar la página conserva el pago y el plan; se puede volver a publicar sin pagar mientras dure la vigencia', () => {
     const s = publishPaid(base(), 'invitacion', NOW);
@@ -62,7 +48,7 @@ describe('pago y publicación simulados', () => {
     expect(republish(down, new Date('2028-01-01T00:00:00.000Z'))).toBe(down); // vencida: no se republica gratis
   });
   it('la publicación se guarda y se recupera, y un dato inválido la descarta sin romper el resto', () => {
-    const s = upgradePaid(publishPaid(base(), 'regalos', NOW), 'invitacion', NOW);
+    const s = publishPaid(base(), 'regalos', NOW);
     const back = parseStored(JSON.stringify(s));
     expect(back.publication).toEqual(s.publication);
     const roto = JSON.parse(JSON.stringify(s)); roto.publication.expiresAt = 'no es una fecha';

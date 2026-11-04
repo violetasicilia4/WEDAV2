@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowDown, ArrowLeft, Type, ArrowUp, CalendarClock, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, MapPin, Image as ImageIcon, Images, Lock, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowLeft, Type, ArrowUp, CalendarClock, CalendarDays, Check, ChevronDown, CircleAlert, ExternalLink, EyeOff, Gift as GiftIcon, MapPin, Image as ImageIcon, Images, MessageSquareText, Music, Plus, Shirt, UserCheck, X, type LucideIcon } from 'lucide-react';
 import { EVENT_ICONS } from '@/components/event-icons';
 import { PhotoPicker } from '@/components/panel/couple-form';
 import { PlaceSearch } from '@/components/panel/place-search';
 import { LiveCard, useKeyboardState } from '@/components/panel/live-card';
 import { SitePreview, type Device, type PreviewSection } from '@/components/panel/site-preview';
-import { Field, Locked, useToast, usePlans } from '@/components/panel/ui';
+import { Field, useToast } from '@/components/panel/ui';
 import { placesEnabled } from '@/lib/weda/google-places';
 import { readImage } from '@/lib/weda/images';
 import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, defaultColors, hasEventDetails, isHexColor, isSafeMapsUrl, mapsLink, moveBlock, sitePath, spotifyEmbed, uid, validateOnboarding } from '@/lib/weda/logic';
 import { eventBlank, eventComplete } from '@/lib/weda/journey';
-import { can, planFor, type Feature } from '@/lib/weda/plans';
+import { publishes, planFor, type Feature } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
 import { update, useAppState } from '@/lib/weda/store';
 import type { AppState, BlockId, SiteConfig, SiteEvent } from '@/lib/weda/types';
@@ -34,7 +34,7 @@ const patchSite = (fn: (s: SiteConfig) => SiteConfig) => update(x => ({ ...x, si
 /** Secciones del editor. «Eventos» agrupa los momentos del día (ceremonia, recepción…): cada uno se prende y edita por separado. */
 type SectionId = 'portada' | 'fecha' | 'eventos' | 'regalos' | 'rsvp' | 'dress' | 'texto' | 'fotos' | 'mensaje' | 'musica';
 type Tone = 'ok' | 'todo' | 'off';
-type Sec = { id: SectionId; label: string; title: string; status: string; tone: Tone; locked?: Feature };
+type Sec = { id: SectionId; label: string; title: string; status: string; tone: Tone };
 const ICON: Record<SectionId, LucideIcon> = { portada: ImageIcon, fecha: CalendarClock, eventos: CalendarDays, regalos: GiftIcon, rsvp: UserCheck, dress: Shirt, texto: Type, fotos: Images, mensaje: MessageSquareText, musica: Music };
 /** Dónde está cada sección en la página pública (para llevar la vista previa hasta ahí). */
 const ANCHOR: Record<SectionId, string> = { portada: '', fecha: 'save-the-date', eventos: 'dia', regalos: 'regalos', rsvp: 'confirmar', dress: 'dresscode', texto: 'texto', fotos: 'fotos', mensaje: 'iv-close-title', musica: 'musica' };
@@ -64,23 +64,15 @@ function sectionsOf(s: AppState): Sec[] {
     { id: 'dress', label: 'Dress code', title: 'Dress code', status: !site.dressCode.enabled ? 'Oculta' : dressOk ? 'Completa' : 'Falta completar', tone: !site.dressCode.enabled ? 'off' : dressOk ? 'ok' : 'todo' },
   ];
   const gifts = s.gifts.items.length;
-  list.push(can(s.planId, 'gifts')
-    ? { id: 'regalos', label: 'Regalos', title: 'Regalos', status: !site.giftsSection.enabled ? 'Oculta' : gifts === 0 ? 'Todavía sin regalos' : `${gifts} ${gifts === 1 ? 'regalo' : 'regalos'}`, tone: !site.giftsSection.enabled ? 'off' : gifts === 0 ? 'todo' : 'ok' }
-    : { id: 'regalos', label: 'Regalos', title: 'Regalos', status: `Plan ${planFor('gifts')?.name}`, tone: 'off', locked: 'gifts' });
+  list.push({ id: 'regalos', label: 'Regalos', title: 'Regalos', status: !site.giftsSection.enabled ? 'Oculta' : gifts === 0 ? 'Todavía sin regalos' : `${gifts} ${gifts === 1 ? 'regalo' : 'regalos'}`, tone: !site.giftsSection.enabled ? 'off' : gifts === 0 ? 'todo' : 'ok' });
   const noteOk = site.note.title.trim() !== '' || site.note.text.trim() !== '';
   list.push({ id: 'texto', label: 'Texto libre', title: 'Texto libre', status: !site.note.enabled ? 'Oculta' : noteOk ? 'Completa' : 'Falta completar', tone: !site.note.enabled ? 'off' : noteOk ? 'ok' : 'todo' });
-  list.push(can(s.planId, 'gallery')
-    ? { id: 'fotos', label: 'Fotos', title: 'Fotos', status: !site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? photoWord(site.gallery.photos.length) : 'Sin fotos', tone: !site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo' }
-    : { id: 'fotos', label: 'Fotos', title: 'Fotos', status: `Plan ${planFor('gallery')?.name}`, tone: 'off', locked: 'gallery' });
-  list.push(can(s.planId, 'message')
-    ? { id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: site.message.enabled ? 'Visible' : 'Oculta', tone: site.message.enabled ? 'ok' : 'off' }
-    : { id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: `Plan ${planFor('message')?.name}`, tone: 'off', locked: 'message' });
-  list.push(can(s.planId, 'playlist')
-    ? (() => {
+  list.push({ id: 'fotos', label: 'Fotos', title: 'Fotos', status: !site.gallery.enabled ? 'Oculta' : site.gallery.photos.length ? photoWord(site.gallery.photos.length) : 'Sin fotos', tone: !site.gallery.enabled ? 'off' : site.gallery.photos.length ? 'ok' : 'todo' });
+  list.push({ id: 'mensaje', label: 'Mensaje final', title: 'Mensaje final', status: site.message.enabled ? 'Visible' : 'Oculta', tone: site.message.enabled ? 'ok' : 'off' });
+  list.push((() => {
         const linked = !!spotifyEmbed(site.playlist.spotify), n = site.playlist.tracks.length;
         return { id: 'musica' as const, label: 'Playlist de Spotify', title: 'Playlist de Spotify', status: !site.playlist.enabled ? 'Oculta' : linked ? 'Conectada' : n ? `${n} temas` : 'Falta el link', tone: (!site.playlist.enabled ? 'off' : linked || n ? 'ok' : 'todo') as Tone };
-      })()
-    : { id: 'musica', label: 'Playlist de Spotify', title: 'Playlist de Spotify', status: `Plan ${planFor('playlist')?.name}`, tone: 'off', locked: 'playlist' });
+      })());
   // Mismo orden de fábrica que la página: así «Para agregar» las muestra donde van.
   const rank: SectionId[] = ['portada', 'fecha', 'eventos', 'regalos', 'rsvp', 'dress', 'texto', 'fotos', 'musica', 'mensaje'];
   return list.sort((a, b) => rank.indexOf(a.id) - rank.indexOf(b.id));
@@ -88,15 +80,6 @@ function sectionsOf(s: AppState): Sec[] {
 
 /** La sección elegida: título, estado y solo sus campos. Agregar, quitar y ordenar viven en la estructura de la invitación. */
 function Panel({ sec, planTag, children }: { sec: Sec; planTag?: string | undefined; children: React.ReactNode }) {
-  const plans = usePlans();
-  if (sec.locked) {
-    return (
-      <section className="pn-spanel is-locked" aria-labelledby={`panel-${sec.id}`}>
-        <header className="pn-spanel-head"><div><h2 id={`panel-${sec.id}`}>{sec.title}</h2></div></header>
-        <p className="pn-note"><Lock size={14} aria-hidden="true" /> No está en tu plan: está en el plan {planFor(sec.locked)?.name}. Lo que cargaste se conserva como borrador. <button type="button" className="pn-link" onClick={plans.open}>Ver los planes</button></p>
-      </section>
-    );
-  }
   return (
     <section className="pn-spanel" aria-labelledby={`panel-${sec.id}`}>
       <header className="pn-spanel-head">
@@ -208,13 +191,13 @@ function isOn(s: AppState, id: SectionId): boolean {
     case 'portada': return true;
     case 'fecha': return site.saveDate;            // sin fecha, el bloque espera: «Aparece al definir la fecha»
     case 'eventos': return site.events.some(e => e.enabled);
-    case 'regalos': return site.giftsSection.enabled && can(s.planId, 'gifts');
+    case 'regalos': return site.giftsSection.enabled && publishes(s.planId, 'gifts');
     case 'texto': return site.note.enabled;
     case 'rsvp': return site.rsvp.enabled;
     case 'dress': return site.dressCode.enabled;
-    case 'fotos': return site.gallery.enabled && can(s.planId, 'gallery');
-    case 'mensaje': return site.message.enabled && can(s.planId, 'message');
-    case 'musica': return site.playlist.enabled && can(s.planId, 'playlist');
+    case 'fotos': return site.gallery.enabled && publishes(s.planId, 'gallery');
+    case 'mensaje': return site.message.enabled && publishes(s.planId, 'message');
+    case 'musica': return site.playlist.enabled && publishes(s.planId, 'playlist');
   }
 }
 /** Agregar o quitar una sección: solo cambia si se muestra; todo lo que cargó la pareja se conserva. */
@@ -242,7 +225,6 @@ type Row = { id: SectionId; sec?: Sec; label: string; status: string; tone: Tone
 function SiteEditor() {
   const s = useAppState();
   const toast = useToast();
-  const plans = usePlans();
   // `null` = la estructura de la invitación; una sección = su edición.
   const [sel, setSel] = useState<SectionId | null>(null);
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
@@ -257,7 +239,6 @@ function SiteEditor() {
   const kb = useKeyboardState();
   const topRef = useRef<HTMLDivElement>(null);
 
-  if (!can(s.planId, 'site')) return <Locked feature="site" />;
   const site = s.site;
   const sections = sectionsOf(s);
   const byId = (id: SectionId) => sections.find(x => x.id === id)!;
@@ -386,17 +367,14 @@ function SiteEditor() {
                       <ul className="ed-rows is-add">
                         {addable.map(x => {
                           const Icon = ICON[x.id];
-                          const tag = x.locked ? `Plan ${planFor(x.locked)?.name}` : undefined;
                           return (
                             <li key={x.id} className="ed-row">
                               <div className="ed-main is-static">
                                 <Icon size={18} strokeWidth={1.6} className="ed-ico" aria-hidden="true" />
-                                <span className="ed-text"><strong>{x.label}{tag && <em className="pn-plantag">{tag}</em>}</strong><small>{PURPOSE[x.id]}</small></span>
+                                <span className="ed-text"><strong>{x.label}</strong><small>{PURPOSE[x.id]}</small></span>
                               </div>
                               <div className="ed-acts">
-                                {x.locked
-                                  ? <button type="button" className="pn-btn is-ghost is-small" onClick={plans.open} aria-label={`Ver el plan que incluye ${x.label}`}>Ver plan</button>
-                                  : <button type="button" className="pn-btn is-small ed-add-btn" onClick={() => add(x.id)} aria-label={`Agregar ${x.label} a la invitación`}><Plus size={15} aria-hidden="true" />Agregar</button>}
+                                <button type="button" className="pn-btn is-small ed-add-btn" onClick={() => add(x.id)} aria-label={`Agregar ${x.label} a la invitación`}><Plus size={15} aria-hidden="true" />Agregar</button>
                               </div>
                             </li>
                           );
@@ -415,7 +393,7 @@ function SiteEditor() {
                   <p className="ed-now" aria-hidden="true">{(() => { const Icon = ICON[sel!]; return <Icon size={16} strokeWidth={1.7} />; })()}<span>{sec.label}</span></p>
                   <button type="button" className="pn-btn is-small ed-done" onClick={back}>Listo</button>
                 </div>
-                {!sec.locked && (
+                {(
                   <div className="pn-live ed-live">
                     <LiveCard s={s} section={sel!} label={sec.title} hidden={hiddenNow} openEvent={openEv} keyboard={kb} onSeeFull={() => setTab('preview')} />
                   </div>
@@ -517,7 +495,7 @@ function SiteEditor() {
         </Panel>
       )}
 
-                {REMOVABLE.includes(sel!) && !sec.locked && !hiddenNow && (
+                {REMOVABLE.includes(sel!) && !hiddenNow && (
                   <div className="pn-actions ed-remove-row"><button type="button" className="pn-btn is-ghost is-small" onClick={() => remove(sel!, sec.label)}>Quitar de la invitación</button></div>
                 )}
               </div>

@@ -5,7 +5,8 @@ import { CoupleDialog } from '@/components/panel/couple-form';
 import { GetStarted } from '@/components/panel/get-started';
 import { usePlans } from '@/components/panel/ui';
 import { coupleLabel, isSamplePhoto, photoPosition, resolvePhoto } from '@/lib/weda/logic';
-import { can, planFor, type Feature } from '@/lib/weda/plans';
+import { operates, planForOperation, type Operation } from '@/lib/weda/plans';
+import { useRemote } from '@/lib/weda/remote';
 import { useAppState } from '@/lib/weda/store';
 
 export const Route = createFileRoute('/panel/')({
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/panel/')({
    con el paso actual destacado, dos accesos («Diseñá tu invitación», «Elegí qué publicar») y, separadas, las herramientas que no se publican. */
 function Home() {
   const s = useAppState();
+  const access = useRemote().access;
   const plans = usePlans();
   const navigate = useNavigate();
   const { editar } = Route.useSearch();
@@ -26,27 +28,28 @@ function Home() {
   useEffect(() => { if (editar === 'datos') setEditing(true); }, [editar]);
   const closeEditing = () => { setEditing(false); if (editar) void navigate({ to: '/panel', search: {}, replace: true }); };
 
-  type Tile = { key: string; title: string; text: string; Icon: typeof Gift; tone?: string; to?: string; search?: Record<string, string>; feature?: Feature; onClick?: () => void };
+  type Tile = { key: string; title: string; text: string; Icon: typeof Gift; tone?: string; to?: string; search?: Record<string, string>; op?: Operation; onClick?: () => void };
   /* Accesos a lo que se publica (además de los pasos). */
   const build: Tile[] = [
-    { key: 'sitio', title: 'Diseñá tu invitación', text: 'Personalizá tu página con fotos, información y todos los detalles de tu día.', Icon: Globe, tone: 'sage', to: '/panel/sitio', feature: 'site' },
+    { key: 'sitio', title: 'Diseñá tu invitación', text: 'Personalizá tu página con fotos, información y todos los detalles de tu día.', Icon: Globe, tone: 'sage', to: '/panel/sitio' },
     { key: 'publicar', title: 'Elegí qué publicar', text: 'Cuando esté lista, elegí si querés publicar solo la lista de regalos o el sitio completo. Vas a ver los planes y precios antes de confirmar.', Icon: Send, tone: 'sky', onClick: plans.open },
   ];
   /* Administración de fondo. No se publica y no hace falta para publicar. */
   const manage: Tile[] = [
-    { key: 'invitados', title: 'Invitados', text: 'Cargá tu lista y seguí las confirmaciones.', Icon: Users, to: '/panel/invitados', feature: 'guests' },
-    { key: 'mesas', title: 'Mesas y grupos', text: 'Organizá dónde se sienta cada persona.', Icon: LayoutGrid, to: '/panel/invitados', search: { vista: 'mesas' }, feature: 'groups' },
+    { key: 'invitados', title: 'Invitados', text: 'Cargá tu lista y seguí las confirmaciones.', Icon: Users, to: '/panel/invitados', op: 'guests' },
+    { key: 'mesas', title: 'Mesas y grupos', text: 'Organizá dónde se sienta cada persona.', Icon: LayoutGrid, to: '/panel/invitados', search: { vista: 'mesas' }, op: 'groups' },
   ];
 
-  const renderTile = ({ title, text, Icon, tone, to, search, feature, onClick }: Tile) => {
-    const locked = !!feature && !can(s.planId, feature);
+  const renderTile = ({ title, text, Icon, tone, to, search, op, onClick }: Tile) => {
+    // Se ven y se recorren siempre; operar exige Celebración publicada y vigente (BR-62).
+    const locked = !!op && !operates(access, op);
     const body = (
       <>
         <span className={`hm-ico${tone ? ` is-${tone}` : ''}`} aria-hidden="true"><Icon size={22} strokeWidth={1.5} /></span>
         <span className="hm-text">
           <strong>{title}</strong>
           <span>{text}</span>
-          {locked && <em className="hm-tag is-lock"><Lock size={12} aria-hidden="true" /> Desde el plan {planFor(feature)?.name}</em>}
+          {locked && <em className="hm-tag is-lock"><Lock size={12} aria-hidden="true" /> Se habilita con {planForOperation(op)?.name}</em>}
         </span>
         <ArrowRight size={18} className="hm-go is-arrow" aria-hidden="true" />
         <ChevronRight size={20} className="hm-go is-chev" aria-hidden="true" />

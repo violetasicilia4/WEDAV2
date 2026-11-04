@@ -29,7 +29,7 @@ function Terms() {
       <p>Para guardar y publicar tu casamiento necesitás una cuenta con correo y clave. Sos responsable de los datos que cargás y de mantener tu clave en reserva. Si la olvidás, podés <Link to="/clave">pedir un enlace para cambiarla</Link>.</p>
 
       <h2>3. Planes, precio y pago</h2>
-      <p>Armar tu casamiento en Weda es gratis. Pagás una sola vez, al publicar, según el plan que elijas: {PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ')}. Los precios incluyen <Decide>impuestos incluidos o no</Decide>. Podés pasar a un plan más completo pagando la diferencia; no se puede pasar a uno más económico.</p>
+      <p>Armar tu casamiento en Weda es gratis. Pagás una sola vez, al publicar, según el plan que elijas: {PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ')}. Los precios incluyen <Decide>impuestos incluidos o no</Decide>. Por ahora el plan no se puede cambiar después de contratarlo.</p>
       <p>Cancelaciones y reembolsos: <Decide>si se puede pedir la devolución, en qué plazo y en qué casos</Decide>. Bajar la página no genera devolución.</p>
 
       <h2>4. Publicación y duración</h2>

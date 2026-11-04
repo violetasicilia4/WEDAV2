@@ -2,7 +2,7 @@
 // y para que, cuando exista una API, se puedan reemplazar por llamadas al servidor sin tocar los componentes.
 import { dressCode as demoDress, menus, type Category } from '@/lib/demo-wedding';
 import { catalogGift, setGifts, type GiftSet } from './catalog';
-import { can, planFor, type Feature } from './plans';
+import { publishes, planFor, type Feature } from './plans';
 import type {
   AppState, BlockId, EventIconId, Group, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig, SiteEvent, Swatch,
 } from './types';
@@ -436,7 +436,7 @@ export function draftsFor(s: AppState, planId: PlanId): { feature: Feature; labe
     ['gallery', 'La galería de fotos', s.site.gallery.photos.length > 0],
     ['message', 'El mensaje final', s.site.message.text.trim() !== ''],
   ];
-  return found.filter(([f, , has]) => has && !can(planId, f)).map(([feature, label]) => ({ feature, label, plan: planFor(feature)?.name ?? '' }));
+  return found.filter(([f, , has]) => has && !publishes(planId, f)).map(([feature, label]) => ({ feature, label, plan: planFor(feature)?.name ?? '' }));
 }
 
 /** Cambia de plan. Lo que el nuevo plan no incluye se desactiva en el sitio (los datos se conservan por si vuelve a subir). */
@@ -457,16 +457,16 @@ const mk = (t: Omit<Task, 'done'>): Task => ({ ...t, done: t.status === 'done' }
 export function tasks(s: AppState): Task[] {
   const t: Task[] = [];
   t.push(mk({ id: 'datos', label: 'Datos del casamiento', help: 'Nombres, fecha y foto de portada.', status: s.date ? 'done' : 'doing', to: '/panel', optional: true }));
-  if (can(s.planId, 'gifts')) {
+  if (publishes(s.planId, 'gifts')) {
     const items = s.gifts.items.length > 0; const alias = s.gifts.alias.trim() !== '';
     t.push(mk({ id: 'regalos', label: 'Lista de regalos', help: 'Elegí un set o sumá regalos de a uno, y cargá tu alias.', status: items && alias ? 'done' : items || alias ? 'doing' : 'todo', to: '/panel/regalos' }));
   }
-  if (can(s.planId, 'site')) {
+  if (publishes(s.planId, 'site')) {
     const ev = s.site.events;
     t.push(mk({ id: 'sitio', label: 'Tu página web', help: 'Lugares, horarios y las secciones que quieras mostrar.', status: ev.some(eventComplete) ? 'done' : ev.some(hasEventDetails) ? 'doing' : 'todo', to: '/panel/sitio' }));
   }
-  if (can(s.planId, 'guests')) t.push(mk({ id: 'invitados', label: 'Invitados', help: 'Cargá a las personas y seguí sus confirmaciones.', status: s.guests.length ? 'done' : 'todo', to: '/panel/invitados' }));
-  if (can(s.planId, 'groups')) {
+  if (publishes(s.planId, 'guests')) t.push(mk({ id: 'invitados', label: 'Invitados', help: 'Cargá a las personas y seguí sus confirmaciones.', status: s.guests.length ? 'done' : 'todo', to: '/panel/invitados' }));
+  if (publishes(s.planId, 'groups')) {
     const loose = s.guests.filter(g => g.status !== 'declined' && !g.groupId).length;
     t.push(mk({ id: 'mesas', label: 'Mesas y grupos', help: 'Organizá dónde se sienta cada persona.', status: !tablesInUse(s) ? 'todo' : loose === 0 && s.guests.length > 0 ? 'done' : 'doing', to: '/panel/mesas', optional: true }));
   }
@@ -480,7 +480,7 @@ export function readiness(s: AppState) {
 }
 
 /** Qué páginas públicas existen según el plan (el plan Regalos solo tiene la lista de regalos). */
-export const publicPages = (planId: PlanId | null) => ({ invitation: can(planId, 'site'), gifts: can(planId, 'gifts') });
+export const publicPages = (planId: PlanId | null) => ({ invitation: publishes(planId, 'site'), gifts: publishes(planId, 'gifts') });
 
 export const siteSlug = (s: AppState) => s.slug || slugify(s.couple.first, s.couple.second);
 export const sitePath = (s: AppState) => `/sitio/${siteSlug(s)}`;

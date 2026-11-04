@@ -1,7 +1,7 @@
 // @vitest-environment node
 /* eslint-disable @typescript-eslint/no-explicit-any -- respuestas JSON de la API, sin esquema compartido todavía */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, PASSWORD, saveDraft, setPayout, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeAll(() => { env = makeEnv(); });
@@ -74,6 +74,8 @@ describe('aislamiento entre parejas', () => {
   it('dos usuarios crean casamientos independientes y cada uno solo ve el suyo', async () => {
     const a = env.client(), b = env.client();
     await signUp(a, 'a1@correo.com'); await signUp(b, 'b1@correo.com');
+    // Operar invitados exige Celebración publicada (BR-62): cada pareja publica la suya antes.
+    await publishWith(a, draftFor('Ana', 'Luis')); await publishWith(b, draftFor('Bea', 'Tomás'));
     await saveDraft(a, draftFor('Ana', 'Luis'), { upsert: [{ id: 'inv-a', first: 'Invitado', last: 'De Ana', status: 'pending', menu: '', groupId: null, source: 'manual' }] });
     await saveDraft(b, draftFor('Bea', 'Tomás'), { upsert: [{ id: 'inv-b', first: 'Invitado', last: 'De Bea', status: 'pending', menu: '', groupId: null, source: 'manual' }] });
     const wa = (await a.get('/api/wedding')).body, wb = (await b.get('/api/wedding')).body;
@@ -129,5 +131,18 @@ describe('aislamiento entre parejas', () => {
     expect((await b.post('/api/wedding/payout/otro', { currentPassword: PASSWORD, baseVersion: 1, alias: 'robado.mp.x' })).status).toBe(404);
     expect((await a.get('/api/wedding')).body.payout.alias).toBe('pareja.a.mp');
     expect((await b.get('/api/wedding')).body.payout.alias).toBe('pareja.b.mp');
+  });
+
+  it('el plan de una pareja nunca habilita operar el casamiento de otra (BR-62, PAY-01)', async () => {
+    const a = env.client(); await signUp(a, 'plan-a@correo.com');
+    const slugA = (await publishWith(a, draftFor('Rita', 'Ciro', { planId: 'regalos' }))).slug;
+    const giver = { idempotencyKey: 'key-iso-0001', manageToken: 'token-del-invitado-iso1', giverName: 'Tía', giverEmail: 't@correo.com', message: '', how: 'alias', giftIds: ['g1'], receipt: { data: Buffer.from(PNG).toString('base64') } };
+    const c = (await env.client().post(`/api/public/${slugA}/contributions`, giver)).body;
+    const b = env.client(); await signUp(b, 'plan-b@correo.com');
+    await publishWith(b, draftFor('Sara', 'Dino'));                              // B tiene Celebración publicada
+    expect((await b.patch(`/api/contributions/${c.id}`, { status: 'rejected' })).status).toBe(404);
+    expect((await b.post(`/api/contributions/${c.id}/remind`)).status).toBe(404);
+    const w = (await a.get('/api/wedding')).body;                                  // A, con Regalos, sigue sin poder operar invitados
+    expect((await a.put('/api/wedding', { baseRevision: w.revision, draft: w.draft, guests: { upsert: [{ id: 'inv-z', first: 'X', last: '', status: 'pending', menu: '', groupId: null, source: 'manual' }] } })).status).toBe(403);
   });
 });

@@ -8,7 +8,7 @@ El estado del panel (`AppState`) vive en `localStorage` de este navegador y, cua
 - TanStack Start/Router (rutas por archivo) + React 19 + Vite + Tailwind 4 + Radix Dialog + shadcn (`src/components/ui` conserva solo `button` y `dialog`, que son los que se usan; el resto se puede volver a agregar con `npx shadcn add`).
 - `/` landing; `/ejemplo`, `/ejemplo/regalos` casamiento ficticio (Ignacio & Martina); `/encontrar` buscador de invitados.
 - Datos de la demo en `src/lib/demo-wedding.ts` (catálogo de 26 regalos, 4 categorías, menús, eventos, dress code…).
-- Planes (`src/lib/weda/plans.ts`, única fuente; la landing los muestra en `src/components/landing-plans.tsx`): **Regalos** ARS 95.000, **Celebración** ARS 140.000, **Celebración Plus** ARS 150.000, por evento y acumulativos.
+- Planes (`src/lib/weda/plans.ts`, única fuente; la landing los muestra en `src/components/landing-plans.tsx`): **Regalos** ARS 95.000 y **Celebración** ARS 140.000, de pago único (D-01, 2026-11-03). Ver §5.
 - No existía ningún flujo de registro ni de creación de evento, ni panel.
 
 ## 2. Rutas
@@ -60,21 +60,29 @@ src/lib/weda/
 - **Imágenes:** se leen en el navegador, se reducen (máx. 1100–1600 px, JPEG 82 %) y se guardan como data URL. **Limitación:** `localStorage` admite ~5 MB; si se llena, el panel avisa y los cambios quedan solo en memoria. Con una API, se subirían a un bucket y se guardaría la URL.
 - Reemplazar el almacenamiento por una API implica cambiar `store.ts` (`update`, `getState`, `reset`) y `images.ts`; los componentes no cambian.
 
-## 5. Matriz de planes (y su supuesto)
+## 5. Matriz de planes (2026-11-03, D-01 y D-02)
 
-| Función | Regalos | Celebración | Celebración Plus |
+Dos planes de pago único (BR-13): **Regalos ARS 95.000** y **Celebración ARS 140.000**, en `src/lib/weda/plans.ts`. «Celebración Plus» (`completo`) dejó de ofrecerse y se lee como Celebración (`normalizePlanId`). El plan define **qué se publica** (BR-14) y **qué se opera** (BR-62); ver y editar contenido no dependen del plan.
+
+V = ver · E = editar contenido · O = operar · P = se publica
+
+| Función | Sin contratar | Regalos | Celebración |
 |---|---|---|---|
-| Lista de regalos, alias/tarjeta y registro de regalos recibidos | sí | sí | sí |
-| Sitio (portada, eventos con Google Maps, foto principal, dress code, cuenta regresiva) | no | sí | sí |
-| Confirmación de asistencia (RSVP) | no | sí | sí |
-| Invitados (panel de respuestas) y mesas/grupos | no | sí | sí |
-| Música de la fiesta (solo configuración y vista previa; sin conexión real a Spotify) | no | no | sí |
-| Galería de fotos con hashtag e Instagram | no | no | sí |
-| Mensaje final personalizado | no | no | sí |
+| Lista de regalos | V E | V E · P | V E · P |
+| Datos de cobro y aportes (comprobantes, confirmar, rechazar) | V E (datos de cobro) | V E O | V E O |
+| Contenido del micrositio (portada, momentos, ubicación, dress code, galería, playlist, mensaje, bloques) | V E (DP-28) | V E | V E · P |
+| Invitados, importar planilla, mesas y grupos | V | V | V O |
+| RSVP público | — | — | O · P |
+| Vista previa | V, sin escrituras | V, sin escrituras | V, sin escrituras |
 
-Los precios son de referencia, **por evento**, y viven solo en `src/lib/weda/plans.ts`. No se afirma pago único, ausencia de suscripción ni duración de la publicación (sin definir). Los planes son acumulativos.
+Las operaciones también dependen de la vigencia (DP-24) y el servidor las rechaza aunque se llame directo a la API. Cambiar de Regalos a Celebración: **pendiente** (DP-23).
 
-Sin plan elegido (prueba gratuita) `can()` devuelve verdadero para todo. Las restricciones se aplican al mostrar y solo con plan elegido: al bajar de plan los datos se conservan como borrador. Qué hay cargado y no se incluye: `draftsFor()`.
+**Cómo lo hace el código (2026-11-04, [PAY-01](../specs/PAY-01-plan-alcance/spec.md)):**
+- `plans.ts`: `publishes(plan, feature)` decide lo publicado (y la vista previa); `operates(access, op)` decide las operaciones (`guests`, `groups`, `contributions`).
+- El servidor calcula `access` (`trial`, `paid_unpublished`, `active`, `expired`) con el plan **publicado** y vigente (y, con compuerta de pago, una orden pagada de ese plan) y lo devuelve en `GET /api/wedding`, al guardar y al publicar. `remote.ts` lo guarda en `useRemote().access`.
+- Panel: nada se oculta por plan. Invitados, Mesas y la revisión de aportes envuelven sus controles en `fieldset.pn-readonly disabled` y muestran `OperationNotice`; sin invitados y sin Celebración, Invitados muestra filas de ejemplo marcadas «Ejemplo».
+- La sincronización no manda invitados ni mesas sin permiso; lo que haya local se conserva y se sube al habilitarse.
+- La vista previa y la página local no escriben (`LocalSite` sin acciones).
 
 ## 6. Qué es real en el frontend y qué depende del backend
 

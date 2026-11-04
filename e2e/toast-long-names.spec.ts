@@ -1,4 +1,4 @@
-import { expect, nav, onboard, stored, test } from './helpers';
+import { expect, nav, onboard, publishCelebration, stored, test } from './helpers';
 
 /* Regresión (hallazgo de las secuencias exploratorias, 2026-10-23): el aviso «Quitaste «…»» con «Deshacer» ponía el botón fuera de la pantalla cuando el nombre
    era una sola palabra larga (50 letras sin espacios): el texto no se partía y empujaba la acción. Sin «Deshacer» a la vista no se puede deshacer. */
@@ -37,6 +37,7 @@ for (const width of [320, 390, 1280]) {
     });
 
     test('eliminar un invitado de nombre largo: «Deshacer» queda a la vista y lo devuelve', async ({ page }) => {
+      await publishCelebration(page);
       await nav(page, 'Invitados').click();
       await page.getByRole('button', { name: 'Agregar invitado' }).first().click();
       await page.getByLabel('Nombre', { exact: true }).fill('B'.repeat(38));

@@ -76,6 +76,14 @@ export async function saveDraft(c: Client, draft: AppState, guests?: unknown) {
   return r.body;
 }
 
+/** Publica con el plan del borrador (por defecto Celebración). Sin compuerta de pago alcanza con publicar para operar (BR-62, PAY-01 S-2). */
+export async function publishWith(c: Client, draft: AppState) {
+  await saveDraft(c, draft);
+  const r = await c.post('/api/wedding/publish');
+  if (r.status !== 200) throw new Error(`publicación falló: ${r.status} ${JSON.stringify(r.body)}`);
+  return r.body;
+}
+
 export const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 
 /** Cambia el destino de cobro como lo hace el panel: con la clave y sobre la versión vigente. */
