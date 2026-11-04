@@ -13,7 +13,8 @@ import { COUNT, rng, randomState, SEED, type Rng } from './rng';
    (solo en el navegador: invitados y mesas se ven, sus acciones están deshabilitadas con el aviso y nada se escribe). La vista previa nunca escribe. */
 
 const STEPS = Number(process.env['WEDA_EXPLORE_STEPS'] ?? 14);
-const SEQUENCES = Math.max(1, Math.round(COUNT / 4));
+// Al menos dos recorridos: uno por camino (B3). Con WEDA_SEQ se reproduce uno solo, a propósito.
+const SEQUENCES = Math.max(2, Math.round(COUNT / 4));
 // Fuera de test-results: Playwright vacía esa carpeta al empezar cada proyecto y borraría los informes.
 const OUT = 'explore-results';
 const ONLY = process.env['WEDA_SEQ'] === undefined ? null : Number(process.env['WEDA_SEQ']);
@@ -201,12 +202,32 @@ const actions: Action[] = [
     if (await dlg.count()) { expect(await dlg.locator('.pn-error').count(), 'datos rechazados deben explicar por qué').toBeGreaterThan(0); expect((await stored(page)).couple.first).toBe(before); await page.keyboard.press('Escape'); return 'rechazado'; }
     const s = await storedSoon(page, x => x.couple.first === nv.trim()); expect(s.couple.first).toBe(nv.trim()); return 'aceptado';
   } },
-  { name: 'mirar los productos de publicación y cerrar', run: async ({ page, r }) => {
+  { name: 'mirar los productos de publicación y cerrar', run: async ({ page, r, contracted }) => {
     const pub = page.locator('.pn-top').getByRole('button', { name: /^Publicar$|^Publicada$/ }); need(await visible(pub), 'sin botón');
     await pub.first().click(); const dlg = page.getByRole('dialog'); await expect(dlg).toBeVisible();
     const plan = dlg.getByRole('button', { name: /^Publicar (Regalos|Celebración)$/ });
-    if (await plan.count() && r.chance(0.6)) { await plan.nth(r.int(0, (await plan.count()) - 1)).click(); await expect(dlg.getByText(/Al publicar, cualquiera que tenga el link|Para publicar necesitás una cuenta/)).toBeVisible(); /* sin cuenta se pide crearla (auditoría 2026-10-28) */ await dlg.getByRole('button', { name: 'Volver', exact: true }).click(); }
+    // El texto tiene que corresponder a la sesión real (revisión B2): el equivocado hace fallar la prueba.
+    if (contracted) {
+      // Con sesión y Celebración publicada: «Tu publicación», sin elegir plan ni pedir una cuenta, y sin cambio de plan (D-05).
+      await expect(dlg.getByRole('heading', { name: 'Tu publicación' }), 'con sesión y publicado se gestiona la publicación').toBeVisible();
+      await expect(dlg.getByText('Por ahora el plan no se puede cambiar después de contratarlo.')).toBeVisible();
+      await expect(plan, 'publicado no se vuelve a elegir plan').toHaveCount(0);
+      await expect(dlg.getByText('Para publicar necesitás una cuenta'), 'con sesión no se pide crear una cuenta').toHaveCount(0);
+      await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
+      return 'con sesión: Tu publicación';
+    }
+    await expect(plan, 'sin publicar se ofrecen los dos planes').toHaveCount(2);
+    let shown = 'sin sesión: productos';
+    if (r.chance(0.6)) {
+      await plan.nth(r.int(0, 1)).click();
+      // Sin sesión (auditoría 2026-10-28): se pide crear la cuenta y nunca se promete publicar.
+      await expect(dlg.getByText('Para publicar necesitás una cuenta'), 'sin sesión se pide crear una cuenta').toBeVisible();
+      await expect(dlg.getByText('Al publicar, cualquiera que tenga el link'), 'sin sesión no se promete publicar').toHaveCount(0);
+      await dlg.getByRole('button', { name: 'Volver', exact: true }).click();
+      shown = 'sin sesión: pide crear la cuenta';
+    }
     await page.keyboard.press('Escape'); await expect(page.getByRole('dialog')).toHaveCount(0);
+    return shown;
   } },
 ];
 
@@ -224,6 +245,7 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
   let steps = 0, done = 0;
   const t0 = Date.now();
 
+  const paths = { contracted: 0, free: 0 };
   for (let q = 0; q < SEQUENCES; q++) {
     if (ONLY !== null && q !== ONLY) continue;
     const r = rng(SEED * 7919 + q);
@@ -232,7 +254,10 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
     state.guests = state.guests.slice(0, 30); state.gifts.items = state.gifts.items.slice(0, 12);
     state.couple.first = r.pick(NAMES_OK); state.couple.second = r.pick(NAMES_OK);
     state.date = null;
-    const contracted = r.chance(0.5);
+    // Revisión B3: el camino lo fija el número de recorrido, no la semilla. Los pares contratan y los impares no, así toda corrida tiene los dos;
+    // la semilla sigue eligiendo el estado y las acciones de cada recorrido.
+    const contracted = q % 2 === 0;
+    paths[contracted ? 'contracted' : 'free']++;
     await page.context().clearCookies();
     await page.goto('/crear/cuenta', { waitUntil: 'domcontentloaded' });
     if (contracted) {
@@ -277,9 +302,11 @@ test('secuencias de acciones con semilla', async ({ page }, info) => {
       }
     }
   }
-  const summary = { project, seed: SEED, sequences: SEQUENCES, stepsAttempted: steps, stepsPassed: done, productFailures: failures.length, testInfraErrors: infra.length, seconds: Math.round((Date.now() - t0) / 1000), byAction: counts };
+  const summary = { project, seed: SEED, sequences: SEQUENCES, paths, stepsAttempted: steps, stepsPassed: done, productFailures: failures.length, testInfraErrors: infra.length, seconds: Math.round((Date.now() - t0) / 1000), byAction: counts };
   writeFileSync(`${OUT}/explore-actions-${project}.json`, JSON.stringify({ summary, failures, infra }, null, 1));
   for (const f of failures) appendFileSync(`${OUT}/explore-failures.jsonl`, JSON.stringify({ kind: 'acciones', ...f }) + '\n');
   console.log('EXPLORE-ACTIONS ' + JSON.stringify({ ...summary, byAction: undefined }));
+  // B3: una corrida completa ejercita los dos caminos (salvo que WEDA_SEQ pida reproducir un único recorrido).
+  if (ONLY === null) { expect(paths.contracted, 'la corrida incluye recorridos contratados').toBeGreaterThan(0); expect(paths.free, 'la corrida incluye recorridos sin contratar').toBeGreaterThan(0); }
   expect(failures.slice(0, 10), `fallos del producto en secuencias (${failures.length}); ver ${OUT}/explore-actions-${project}.json`).toEqual([]);
 });

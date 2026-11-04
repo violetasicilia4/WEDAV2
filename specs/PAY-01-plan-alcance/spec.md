@@ -119,14 +119,31 @@ Aprobadas por la dueña con la spec (2026-11-03). F1, F5 y F8 son decisiones suy
   - La vista previa compara antes y después invitados, mesas y regalos recibidos, en el navegador y, si hay cuenta, en el servidor.
   - Se agregó la acción «confirmar asistencia en la vista previa».
   - El diálogo de publicar acepta los dos planes y el caso sin cuenta.
-- **`action-fuzz`, después de adaptarla** (corrida del 2026-11-04 con las aserciones de la revisión M1): pasa en los dos proyectos, con 0 fallas de producto.
-  - Compu: 140 pasos, 121 sin error, 3 errores de la prueba (ver «Límites»). Celular: 140 pasos, 117 sin error, 0 errores de la prueba. El resto son salteos legítimos: sin regalos, sin el campo de portada, sin la confirmación activada.
-  - **Contratados: 4 de 10 recorridos por proyecto.** En cada uno, el servidor confirmó el acceso `active` con Celebración después de publicar, y cada operación exigió el botón habilitado antes del clic. Si estuviera deshabilitado, cuenta como fallo del producto, no como error de la prueba (revisión M1).
-  - **Operaciones reales en recorridos contratados, por proyecto:** 5 invitados agregados, 5 mesas creadas (más 3 nombres rechazados con su explicación), 2 bajas con «Deshacer» y 2 cambios de asistencia.
-  - **Bloqueos verificados sin contratar** (botón deshabilitado y aviso visible): en compu, 6 altas, 4 bajas, 10 cambios de asistencia y 9 mesas; en celular, 5, 5, 10 y 7.
-  - **Vista previa:** se abrió y cerró 8 veces por proyecto sin cambiar invitados, mesas ni regalos recibidos en el navegador.
-  - *Corrección:* la versión anterior de esta nota decía «10 altas, 16 y 15 mesas creadas» y «16 recorridos». Esas cifras sumaban también los resultados «bloqueado» (revisión M2).
+- **`action-fuzz`, después de adaptarla** (2026-11-04, semilla 2026, con las revisiones M1, B2 y B3; la versión M1 sola está en el commit `d8296ec`): pasa en los dos proyectos, con 0 fallas de producto.
+  - **B3, reparto garantizado:** los recorridos pares contratan y los impares no. La prueba exige al final que haya habido de los dos (salvo cuando `WEDA_SEQ` reproduce un único recorrido), y la cantidad mínima de recorridos pasa a ser 2.
+  - Compu: 5 recorridos contratados y 5 sin contratar; 140 pasos, 119 sin error, 4 errores de la prueba (ver «Límites»).
+  - Celular: 5 contratados y 5 sin contratar; 140 pasos, 115 sin error, 0 errores de la prueba.
+  - El resto de los pasos son salteos legítimos: sin regalos, sin el campo de portada, sin la confirmación activada o sin el botón de publicar a la vista.
+  - **M1 sigue activa:** en los 5 recorridos contratados de cada proyecto, el servidor confirmó el acceso `active` con Celebración después de publicar, y cada operación exigió el botón habilitado antes del clic.
+  - **Operaciones reales en recorridos contratados** (compu / celular):
+    - Invitados agregados: 2 / 2 (más 1 / 1 rechazados con su explicación).
+    - Mesas creadas: 5 / 5 (más 5 / 6 nombres rechazados con su explicación).
+    - Bajas: 4 / 3 (2 / 1 de ellas con «Deshacer»).
+    - Cambios de asistencia: 6 / 7.
+  - **Bloqueos verificados sin contratar** (botón deshabilitado y aviso visible), compu / celular:
+    - Altas de invitados: 7 / 7.
+    - Bajas: 4 / 4.
+    - Cambios de asistencia: 4 / 4.
+    - Mesas: 6 / 6.
+  - **B2, diálogo de publicar según la sesión real** (compu / celular):
+    - Con sesión y Celebración publicada: exige «Tu publicación», «Por ahora el plan no se puede cambiar después de contratarlo», ningún botón de plan y ningún pedido de cuenta. Se verificó 3 / 2 veces.
+    - Sin sesión: exige los dos planes y, al elegir uno, «Para publicar necesitás una cuenta» sin «Al publicar, cualquiera que tenga el link». Se verificó 6 / 5 veces (5 / 3 de ellas eligiendo un plan).
+    - El texto equivocado hace fallar la prueba.
+  - **Vista previa:** se abrió y cerró 6 / 6 veces sin cambiar invitados, mesas ni regalos recibidos en el navegador.
+  - *Corrección:* una versión anterior de esta nota decía «10 altas, 16 y 15 mesas creadas» y «16 recorridos». Esas cifras sumaban también los resultados «bloqueado» (revisión M2).
 - **Límites (no cuentan como pruebas exitosas):**
-  - *Confirmar asistencia en la vista previa:* en compu se envió el formulario **una sola vez**, en un recorrido sin contratar, así que **la verificación del lado del servidor no se ejecutó**. En los demás casos la página no tenía la confirmación activada (3) o la prueba no encontró el formulario dentro de la vista previa (3, contados como errores de la prueba). En celular **no se llegó a enviar nunca** (8 sin confirmación). Lo cubre solo la prueba fija de CA-7.
-  - *Editar el texto de la portada:* **nunca se ejecutó** (7 de 7 salteos en compu y 8 de 8 en celular) porque la prueba no encuentra el campo. Ya pasaba antes de PAY-01.
-  - *Observaciones de la revisión sin aplicar:* B2 (el diálogo de publicar acepta los dos textos sin importar si hay cuenta) y B3 (el reparto entre contratado y sin contratar depende de la semilla).
+  - *Confirmar asistencia en la vista previa:* en compu se envió el formulario **una sola vez**, en un recorrido sin contratar (q1), así que **la verificación del lado del servidor no se ejecutó**. En los otros intentos de compu, la prueba no encontró el formulario 4 veces (todas en recorridos sin contratar posteriores a ese envío, contadas como errores de la prueba), la página no tenía la confirmación activada 3 veces y 1 vez faltaba el botón de la vista previa. En celular **no se llegó a enviar nunca** (8 sin confirmación activada y 1 sin botón).
+    - **Causa probable del formulario que no aparece (no verificada):** después de un envío, la confirmación vuelve a abrirse en el agradecimiento con «Cargar otra persona», igual que contempla la prueba fija de compu. Corrección propuesta, sin aplicar: tocar «Cargar otra persona» si aparece, antes de completar el formulario.
+    - Lo único que cubre que la vista previa no escribe es la prueba fija de CA-7.
+  - *Editar el texto de la portada:* **nunca se ejecutó** (10 de 10 en compu y 12 de 12 en celular) porque la prueba no encuentra el campo. Ya pasaba antes de PAY-01.
+  - *Diálogo de publicar con sesión y sin publicar* («Al publicar, cualquiera que tenga el link»): este estado no existe en la exploración, porque los recorridos contratados ya publicaron. Lo cubren los E2E fijos con cuenta del panel.
