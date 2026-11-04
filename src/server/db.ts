@@ -214,6 +214,15 @@ const MIGRATIONS: string[] = [
     FROM weddings
     WHERE trim(coalesce(json_extract(draft, '$.gifts.alias'), '')) != '' OR trim(coalesce(json_extract(draft, '$.gifts.bank'), '')) != '' OR trim(coalesce(json_extract(draft, '$.gifts.cbu'), '')) != '';
   `,
+  // 8 (2026-11-04): inicio del trial de 14 días (PAY-07, BR-63). NULL = la celebración todavía no se creó (sin onboarding). Las celebraciones que ya existían
+  // toman su fecha de creación (decisión de la dueña, D-06). `publications.expires_at` se conserva como historia y deja de leerse (BR-65: sin vencimiento).
+  `
+  ALTER TABLE weddings ADD COLUMN trial_started_at TEXT;
+  UPDATE weddings SET trial_started_at = created_at
+    WHERE json_extract(draft, '$.onboarded') = 1
+      AND trim(coalesce(json_extract(draft, '$.couple.first'), '')) != ''
+      AND trim(coalesce(json_extract(draft, '$.couple.second'), '')) != '';
+  `,
 ];
 
 export function openDb(file: string): Db {

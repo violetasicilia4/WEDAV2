@@ -1,5 +1,7 @@
 # Weda · Del frontend a un producto multiusuario (backend-readiness)
 
+> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+
 > **Documento histórico.** Describe el estado de su fecha y no se actualiza. Parte de lo que dice ya no es cierto (p. ej. aportes del panel, recuperación de clave y vencimiento). Estado vigente: [docs/product-blueprint/](product-blueprint/00-product-blueprint.md) (2026-10-31).
 
 Fecha: 2026-10-26. Este documento describe **qué existe de verdad**, qué sigue simulado, el modelo de datos, la autorización, los riesgos y los próximos bloques. Todo lo que figura como «funciona» fue ejecutado contra el servidor y una base SQLite real (ver §10); lo que no se pudo probar está marcado.

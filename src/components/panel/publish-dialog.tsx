@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { dateLabel, draftsFor, sitePath } from '@/lib/weda/logic';
 import { isLive, publishPaid, republish, takeDown } from '@/lib/weda/payments';
 import { publishedPagesText, publishSummary } from '@/lib/weda/publish';
-import { formatPrice, normalizePlanId, PLANS, planById, PRICE_UNIT, PUBLICATION_TERM, type HighlightIcon } from '@/lib/weda/plans';
+import { formatPrice, normalizePlanId, PLANS, planById, PRICE_UNIT, type HighlightIcon } from '@/lib/weda/plans';
 import { errorText, publishRemote, startCheckout, unpublishRemote, useRemote } from '@/lib/weda/remote';
 import { getState, update, useAppState } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
@@ -82,7 +82,6 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
     const url = new URL(path, window.location.origin).toString();
     void navigator.clipboard?.writeText(url).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 2500); }, () => undefined);
   };
-  const until = pub ? dateLabel(pub.expiresAt.slice(0, 10)) : '';
   const since = pub ? dateLabel(pub.publishedAt.slice(0, 10)) : '';
 
   return (
@@ -108,11 +107,11 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
                         <p className="pn-prod-what">{p.product}</p>
                       </div>
                     </header>
-                    {normalizePlanId(state.planId) === p.id && <span className="pn-prod-tag">Tu elección actual</span>}
+                    {normalizePlanId(state.planId) === p.id ? <span className="pn-prod-tag">Tu elección actual</span> : p.id === 'invitacion' && <span className="pn-prod-tag is-recommended">Recomendado</span>}
                     <p className="pn-prod-price"><strong>{formatPrice(p.price)}</strong></p>
                     <ul className="pn-prod-facts">
                       <li><BadgeCheck size={16} strokeWidth={1.6} aria-hidden="true" /> {PRICE_UNIT.charAt(0).toUpperCase() + PRICE_UNIT.slice(1)}</li>
-                      <li><CalendarClock size={16} strokeWidth={1.6} aria-hidden="true" /> Publicada {PUBLICATION_TERM}</li>
+                      <li><CalendarClock size={16} strokeWidth={1.6} aria-hidden="true" /> Sin renovaciones</li>
                     </ul>
                     <ul className="pn-feats">
                       {base && <li className="is-base"><Plus size={18} strokeWidth={1.6} aria-hidden="true" /><span>Todo lo de {base.name}</span></li>}
@@ -144,7 +143,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
         {(step === 'review' || step === 'paying') && plan && (
           <>
             <DialogTitle>Publicar · {plan.name}</DialogTitle>
-            <DialogDescription>{`${formatPrice(plan.price)} ${PRICE_UNIT} · publicada ${PUBLICATION_TERM}. Esto es lo que se publica.`}</DialogDescription>
+            <DialogDescription>{`${formatPrice(plan.price)} ${PRICE_UNIT}, sin renovaciones. Al confirmarse el pago, tu página se publica. Esto es lo que se publica.`}</DialogDescription>
             {summary && (
               <div className="pn-publish">
                 {summary.published.length > 0 && (<><p className="pn-group-label">Se publica</p><ul className="pn-plan-items">{summary.published.map(i => <li key={i.feature}><Check size={16} strokeWidth={1.6} aria-hidden="true" /><span><strong>{i.label}</strong> · {i.detail}</span></li>)}</ul></>)}
@@ -160,7 +159,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             <dl className="pn-pay">
               <div><dt>Plan</dt><dd>{plan.name}</dd></div>
               <div><dt>Se publica</dt><dd>{publishedPagesText(plan.id)}</dd></div>
-              <div><dt>Duración</dt><dd>Publicada {PUBLICATION_TERM}, desde hoy</dd></div>
+              <div><dt>Publicación</dt><dd>Al confirmarse el pago, sin vencimiento</dd></div>
               <div className="is-total"><dt>Precio</dt><dd>{formatPrice(amount)} · {PRICE_UNIT}</dd></div>
             </dl>
             {error && <p className="pn-banner" role="alert">No se pudo publicar: {error}</p>}
@@ -169,7 +168,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
               : otherPaid
                 ? <p className="pn-note" role="status">Ya contrataste {planById(paidPlan)?.name}. Por ahora el plan no se puede cambiar después de contratarlo: publicá con {planById(paidPlan)?.name}.</p>
                 : mustPay
-                ? <p className="pn-note" role="status">Vas a pagar en una página segura. Cuando el pago esté confirmado, volvés acá y publicás.</p>
+                ? <p className="pn-note" role="status">Vas a pagar en una página segura. Cuando el pago se confirma, tu página se publica en ese momento.</p>
                 : <p className="pn-note" role="status">Al publicar, cualquiera que tenga el link va a poder abrir tu página.</p>}
             <div className="pn-actions is-end">
               <button type="button" className="pn-btn is-ghost" disabled={step === 'paying'} onClick={() => setStep(pub ? 'manage' : 'choose')}>Volver</button>
@@ -193,7 +192,6 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             <DialogDescription>Ya la puede abrir cualquiera que tenga el link.</DialogDescription>
             <dl className="pn-pay">
               <div><dt>Plan</dt><dd>{plan.name}</dd></div>
-              <div><dt>Publicada hasta</dt><dd>{until}</dd></div>
               <div><dt>Tu link</dt><dd><code>{path}</code></dd></div>
             </dl>
             <div className="pn-actions">
@@ -207,12 +205,11 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
         {step === 'manage' && pub && (
           <>
             <DialogTitle>Tu publicación</DialogTitle>
-            <DialogDescription>{live ? `Tu página está publicada con el plan ${planById(pub.planId)?.name}.` : `Diste de baja tu página. Tu plan ${planById(pub.planId)?.name} sigue vigente hasta el ${until}.`}</DialogDescription>
+            <DialogDescription>{live ? `Tu página está publicada con el plan ${planById(pub.planId)?.name}.` : `Diste de baja tu página. Tu plan ${planById(pub.planId)?.name} sigue contratado: podés volver a publicarla cuando quieras.`}</DialogDescription>
             <dl className="pn-pay">
               <div><dt>Estado</dt><dd>{live ? (pending ? 'Publicada, con cambios sin publicar' : 'Publicada') : 'Dada de baja'}</dd></div>
               <div><dt>Plan</dt><dd>{planById(pub.planId)?.name}</dd></div>
               <div><dt>Publicada desde</dt><dd>{since}</dd></div>
-              <div><dt>Vigente hasta</dt><dd>{until}</dd></div>
               {live && <div><dt>Tu link</dt><dd><code>{path}</code></dd></div>}
             </dl>
             {live && (
@@ -241,7 +238,7 @@ export function PublishDialog({ open, onClose }: { open: boolean; onClose: () =>
             <p className="pn-hint">Por ahora el plan no se puede cambiar después de contratarlo.</p>
             {confirmDown ? (
               <div className="pn-note" role="alertdialog" aria-label="Confirmar bajar la página">
-                <p><strong>¿Bajar tu página?</strong> Deja de estar publicada. Tu plan sigue vigente hasta el {until}: podés volver a publicarla cuando quieras.</p>
+                <p><strong>¿Bajar tu página?</strong> Deja de estar publicada. Tu plan sigue contratado: podés volver a publicarla cuando quieras.</p>
                 <div className="pn-actions is-end">
                   <button type="button" className="pn-btn is-ghost" onClick={() => setConfirmDown(false)}>Cancelar</button>
                   <button type="button" className="pn-btn is-danger" onClick={() => { const apply = () => { update(takeDown); setConfirmDown(false); }; if (online) runRemote(unpublishRemote, apply); else apply(); }}>Sí, bajar la página</button>

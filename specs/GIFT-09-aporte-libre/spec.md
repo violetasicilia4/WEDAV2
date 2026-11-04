@@ -1,5 +1,7 @@
 # GIFT-09 · Aporte de importe libre — spec
 
+> **Nota (2026-11-04):** la migración 8 la usó PAY-07 (`weddings.trial_started_at`). Cuando se construya GIFT-09, su cambio de esquema va en la migración siguiente (9). No cambia nada más de esta spec.
+
 - **Estado:** aprobada (2026-11-01, la dueña, junto con el plan). Todavía no está en construcción.
 - **Tamaño:** mediana. Cambia el esquema de la base (migración 8), que ya fue aprobado en el plan.
 - **Plan:** [plan.md](plan.md)

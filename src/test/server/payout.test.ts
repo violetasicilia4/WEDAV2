@@ -102,7 +102,8 @@ describe('cambiar el destino de cobro', () => {
     const draft = JSON.parse((db.prepare('SELECT draft FROM weddings WHERE id = ?').get(wid) as { draft: string }).draft);
     draft.gifts = { ...draft.gifts, alias: 'viejo.alias.mp', bank: 'Banco Viejo', cbu: CBU };
     db.prepare('UPDATE weddings SET draft = ? WHERE id = ?').run(JSON.stringify(draft), wid);
-    db.exec('DROP TABLE payout_methods; PRAGMA user_version = 6;');
+    // Antes de la migración 7 tampoco existía la columna de la 8 (trial, PAY-07): se quita para volver a migrar desde la 6.
+    db.exec('DROP TABLE payout_methods; ALTER TABLE weddings DROP COLUMN trial_started_at; PRAGMA user_version = 6;');
     migrate(db);
     expect(versions(wid)).toEqual([{ version: 1, alias: 'viejo.alias.mp', source: 'migrated' }]);
     expect(await payoutOf(c)).toMatchObject({ version: 1, alias: 'viejo.alias.mp', bank: 'Banco Viejo', cbu: CBU });

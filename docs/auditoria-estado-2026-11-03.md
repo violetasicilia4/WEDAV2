@@ -1,5 +1,7 @@
 # Weda · Auditoría del estado del repositorio (2026-11-03)
 
+> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+
 > **Aviso (agregado el mismo 2026-11-03, después del informe):** el multiusuario quedó **postergado** por decisión de la dueña (D-03) y los planes se redefinieron (D-01, D-02). Lo vigente está en [`product-blueprint/03`](product-blueprint/03-open-decisions-and-risks.md) §4. El resto del informe no se modificó.
 
 Fotografía de una fecha: no se reescribe. Base: `origin/main` en `0d2fb4d`, después de `git fetch --prune`. Inspección de solo lectura del código, las ramas y los documentos; se ejecutaron `npm test` (28 archivos, **242 pruebas, todas pasan**) y `npm run typecheck` (sin errores). **No** se ejecutaron `lint`, `build` ni las pruebas E2E, ni se recorrió el sitio en el navegador.

@@ -1,5 +1,7 @@
 # Weda · Revisión ejecutiva y congelamiento del diseño del MVP
 
+> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+
 **Fecha:** 2026-10-31 · **Para:** la dueña del producto · **Estado:** propuesta para tu revisión. **No cierra ninguna decisión, no autoriza implementar nada y no inicia ninguna fase.**
 
 Este documento resume el [Product Blueprint](00-product-blueprint.md) para que puedas **aprobar, rechazar o modificar** cada decisión pendiente sin recorrer la documentación técnica. Los detalles están en los anexos: [01 inventario](01-feature-inventory.md) · [02 reglas](02-business-rules-catalog.md) · [03 decisiones y riesgos](03-open-decisions-and-risks.md) · [04 preparación comercial](04-mvp-readiness.md) · [05 roadmap](05-implementation-roadmap.md).

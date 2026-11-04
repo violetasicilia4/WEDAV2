@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { PUBLICATION_TERM } from '@/lib/weda/plans';
 import { pageMeta } from '@/lib/site';
 
 /* Política de privacidad — BORRADOR (2026-10-28). Antes del lanzamiento: completar los datos marcados como «a completar» y hacerla revisar
@@ -37,7 +36,7 @@ function Privacy() {
       <p>Los datos de cada casamiento los ve la pareja que lo creó. Usamos proveedores para alojar el sitio y enviar correos (<Todo>proveedores de hosting y de correo</Todo>), que tratan los datos solo para prestarnos ese servicio. No vendemos tus datos.</p>
 
       <h2>Cuánto tiempo los guardamos</h2>
-      <p>Los datos del casamiento, mientras la cuenta esté activa; la página publicada queda online {PUBLICATION_TERM}. Los datos de novedades, hasta que te des de baja (guardamos la baja como constancia). <Todo>plazo de conservación luego de cerrar la cuenta</Todo>.</p>
+      <p>Los datos del casamiento, mientras la cuenta esté activa: la página publicada no vence, y un proyecto en pausa por no haber contratado se conserva (<Todo>plazo de conservación de proyectos en pausa</Todo>). Los datos de novedades, hasta que te des de baja (guardamos la baja como constancia). <Todo>plazo de conservación luego de cerrar la cuenta</Todo>.</p>
 
       <h2>Tus derechos</h2>
       <p>Podés pedir acceso, rectificación, actualización o supresión de tus datos escribiendo a <a href="mailto:hola@weda.app">hola@weda.app</a>. Respondemos el acceso dentro de los 10 días corridos y la rectificación o supresión dentro de los 5 días hábiles, como indica la Ley 25.326. Para dejar de recibir novedades, usá el enlace «darte de baja» de cualquier correo.</p>

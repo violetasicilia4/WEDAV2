@@ -25,7 +25,8 @@ describe('sin compuerta de pago (desarrollo y pruebas): opera lo publicado', () 
     const d = draftFor('Ana', 'Luis', { planId: 'invitacion' });
     const ok = await put(o, { ...d, site: { ...d.site, message: { ...d.site.message, enabled: true, text: 'Gracias' } } });
     expect(ok.status).toBe(200);
-    expect(ok.body.access).toEqual({ state: 'trial', plan: null, expiresAt: null });
+    expect(ok.body.access).toMatchObject({ state: 'trial', plan: null });                // el trial de 14 días ya empezó (PAY-07, BR-63)
+    expect(typeof ok.body.access.trialEndsAt).toBe('string');
     const g = await put(o, d, { upsert: [guest('inv-1')] });
     expect([g.status, g.body.error, g.body.detail]).toEqual([403, 'feature_requires_plan', 'guests:invitacion']);
     expect((await put(o, d, { remove: ['inv-1'] })).status).toBe(403);
@@ -60,18 +61,20 @@ describe('sin compuerta de pago (desarrollo y pruebas): opera lo publicado', () 
     expect((await env.client().post(`/api/public/${slug}/rsvp`, { people: [{ first: 'Ana', last: 'Paz', attending: true, menu: '' }] })).status).toBe(200);
   });
 
-  it('CA-5 · publicación vencida: las operaciones → 410; el panel se sigue leyendo', async () => {
+  it('CA-5 (reemplazado por PAY-07, BR-65) · lo publicado no vence: con un `expires_at` viejo ya pasado sigue activo y opera', async () => {
     const o = env.client(); await signUp(o, 'vencido@correo.com');
     const d = draftFor('Lara', 'Mateo');
     const slug = (await publishWith(o, d)).slug;
     const c = await env.client().post(`/api/public/${slug}/contributions`, contribution('venc'));
+    // Un vencimiento guardado con la regla vieja (12 meses) ya pasado: queda como historia y no se lee.
     env.svc.db.prepare('UPDATE publications SET expires_at = ? WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)').run(new Date(Date.now() - 1).toISOString(), slug);
     const w = await o.get('/api/wedding');
-    expect([w.status, w.body.access.state]).toEqual([200, 'expired']);
-    expect((await put(o, d, { upsert: [guest('inv-5')] })).body.error).toBe('event_expired');
-    expect((await put(o, withTable(d))).status).toBe(410);
-    expect((await o.patch(`/api/contributions/${c.body.id}`, { status: 'rejected' })).status).toBe(410);
-    expect((await put(o, { ...d, couple: { first: 'Lara', second: 'Mateo F.' } })).status).toBe(200); // editar contenido no es operar (DP-24)
+    expect([w.status, w.body.access.state]).toEqual([200, 'active']);
+    expect((await env.client().get(`/api/public/${slug}`)).status).toBe(200);
+    expect((await put(o, d, { upsert: [guest('inv-5')] })).status).toBe(200);
+    expect((await put(o, withTable(d))).status).toBe(200);
+    expect((await o.patch(`/api/contributions/${c.body.id}`, { status: 'rejected' })).status).toBe(200);
+    expect((await o.post('/api/wedding/publish')).status).toBe(200);
   });
 
   it('F8 · una página publicada no cambia de plan: volver a publicar con otro plan → 409', async () => {
@@ -94,12 +97,12 @@ describe('con compuerta de pago: pagar sin publicar no habilita nada (DP-25)', (
   };
   const counts = () => env.svc.db.prepare('SELECT (SELECT count(*) FROM orders) AS orders, (SELECT count(*) FROM payment_events) AS events').get();
 
-  it('CA-15 · Celebración pagada y sin publicar: invitados y mesas → 403', async () => {
+  it('CA-15 · Celebración pagada y sin publicar (la publicación automática falló): invitados y mesas → 403', async () => {
     const o = env.client(); await signUp(o, 'pagado@correo.com');
     const d = draftFor('Ema', 'Leo');
-    await saveDraft(o, d);
+    await saveDraft(o, { ...d, couple: { first: '', second: '' } });       // sin nombres, la publicación al pagar falla (PAY-07 F4)
     await pay(o, 'invitacion');
-    expect((await o.get('/api/wedding')).body.access).toEqual({ state: 'paid_unpublished', plan: null, expiresAt: null });
+    expect((await o.get('/api/wedding')).body.access).toMatchObject({ state: 'paid_unpublished', plan: null });
     expect((await put(o, d, { upsert: [guest('inv-6')] })).status).toBe(403);
     expect((await put(o, withTable(d))).status).toBe(403);
   });
@@ -132,7 +135,7 @@ describe('con compuerta de pago: pagar sin publicar no habilita nada (DP-25)', (
     expect(planById('invitacion')!.price).toBe(140000);
   });
 
-  it('CA-12 · una orden histórica de Celebración Plus (`completo`) habilita Celebración y conserva monto y vencimiento', async () => {
+  it('CA-12 · una orden histórica de Celebración Plus (`completo`) habilita Celebración y conserva su monto; su `expires_at` queda como historia', async () => {
     const o = env.client(); await signUp(o, 'plus@correo.com');
     const d = draftFor('Nina', 'Raúl');
     await saveDraft(o, d);
@@ -141,7 +144,7 @@ describe('con compuerta de pago: pagar sin publicar no habilita nada (DP-25)', (
     env.svc.db.prepare("INSERT INTO orders (id,wedding_id,plan_id,amount,status,provider,created_at,updated_at,paid_at) VALUES ('ord_plus',?,'completo',150000,'paid','test',?,?,?)").run(wid, t, t, t);
     env.svc.db.prepare("UPDATE weddings SET slug = 'nina-y-raul' WHERE id = ?").run(wid);
     env.svc.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,'live','completo','{}',1,?,?,?)").run(wid, t, t, until);
-    expect((await o.get('/api/wedding')).body.access).toEqual({ state: 'active', plan: 'invitacion', expiresAt: until });
+    expect((await o.get('/api/wedding')).body.access).toMatchObject({ state: 'active', plan: 'invitacion' });
     expect((await put(o, d, { upsert: [guest('inv-8')] })).status).toBe(200);
     expect((await o.post('/api/checkout', { planId: 'invitacion' })).body.error).toBe('already_paid');
     expect((await o.post('/api/wedding/publish')).status).toBe(200);

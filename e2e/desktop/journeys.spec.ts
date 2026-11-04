@@ -476,3 +476,29 @@ test.describe('Persistencia y datos extremos', () => {
     await expect(page).toHaveURL(/\/crear/);
   });
 });
+
+test.describe('Trial de 14 días y pausa (PAY-07)', () => {
+  test('al crear la celebración el panel muestra los días de prueba; en pausa todo queda en solo lectura y se puede elegir un plan (CA-19)', async ({ page }) => {
+    await onboard(page);
+    // El estado lo decide el servidor: recién creada, quedan 14 días.
+    await expect(page.getByText('Te quedan 14 días para crear gratis.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Elegir plan' })).toBeVisible();
+    // Pausa: se simula la respuesta del servidor (el reloj del servidor no se toca desde el navegador; la regla la prueban las pruebas de servidor).
+    await page.route('**/api/wedding', async route => {
+      if (route.request().method() !== 'GET') return route.continue();
+      const res = await route.fetch();
+      const body = await res.json();
+      await route.fulfill({ response: res, json: { ...body, access: { state: 'paused', plan: null, trialEndsAt: '2020-01-15T00:00:00.000Z' } } });
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    await expect(page.getByText('Terminó tu período gratuito.')).toBeVisible();
+    await expect(page.getByText(/Te quedan \d+ días/)).toHaveCount(0);
+    await nav(page, 'Regalos').click();
+    await expect(page.getByRole('button', { name: 'Crear regalo' }).first()).toBeDisabled();
+    await nav(page, 'Tu página').click();
+    await expect(page.locator('fieldset.pn-readonly[disabled]').first()).toBeVisible();
+    // Contratar sigue disponible: abre los planes.
+    await page.getByRole('button', { name: 'Elegir plan' }).click();
+    await expect(page.getByRole('dialog').getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
+  });
+});

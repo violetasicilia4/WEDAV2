@@ -8,7 +8,6 @@ const TEXT: Record<string, string> = {
   network: 'No hay conexión con Weda. Revisá tu internet y probá de nuevo: no se envió nada.',
   too_many_requests: 'Hiciste demasiados envíos seguidos. Esperá unos minutos y probá de nuevo.',
   site_unpublished: 'Esta página dejó de estar publicada.',
-  site_expired: 'Esta invitación ya no está disponible: terminó el tiempo de publicación.',
   site_not_found: 'No encontramos esta página.',
   rsvp_disabled: 'Los novios no habilitaron la confirmación de asistencia.',
   file_too_large: 'El comprobante pesa más de 5 MB. Probá con una captura más liviana.',

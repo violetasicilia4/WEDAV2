@@ -6,7 +6,7 @@ const PAY = process.env['WEDA_PAY_URL'];
 test.skip(!PAY, 'Falta WEDA_PAY_URL: un servidor con WEDA_PAYMENTS_PROVIDER=test (ver docs/auditoria-ux-conversion/test-results.md).');
 test.use({ baseURL: PAY ?? 'http://127.0.0.1:1' });
 
-test('rechazado no publica ni muestra éxito; aprobado (confirmado por el servidor) habilita publicar', async ({ page }) => {
+test('rechazado no publica ni muestra éxito; aprobado (confirmado por el servidor) publica en el mismo momento (BR-01, PAY-07)', async ({ page }) => {
   test.setTimeout(120_000);
   await onboard(page, 'Paula', 'Quino');
   const top = page.locator('.pn-top');
@@ -34,12 +34,11 @@ test('rechazado no publica ni muestra éxito; aprobado (confirmado por el servid
   const second = new URL(page.url()).searchParams.get('orden')!;
   await page.goto(`/panel/pago?orden=${second}`, { waitUntil: 'networkidle' });
   await expect(page.getByRole('heading', { name: 'Esperando la confirmación del pago' })).toBeVisible();
-  // Aprobado: el servidor lo confirma y recién ahí se publica (acción aparte).
+  // Aprobado: el servidor lo confirma y en ese mismo momento publica; no hay un segundo paso.
   await page.goto(`/pago-de-prueba?orden=${second}`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Aprobar (prueba)' }).click();
-  await expect(page.getByRole('heading', { name: /Pago confirmado/ })).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: 'Publicar mi página' }).click();
-  await expect(page.getByRole('heading', { name: '¡Tu página está publicada!' })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('heading', { name: /Tu página está publicada/ })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: 'Publicar mi página' })).toHaveCount(0);
   await page.goto('/panel', { waitUntil: 'networkidle' });
   await expect(top.getByRole('button', { name: 'Publicada', exact: true })).toBeVisible();
 });

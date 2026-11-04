@@ -98,13 +98,13 @@ const isoOf = (v: unknown): string | null => (typeof v === 'string' && !Number.i
 /** Lee la publicación guardada; cualquier dato inválido la descarta (vuelve a «sin publicar»). */
 function publication(v: unknown): AppState['publication'] {
   if (!isObj(v)) return null;
-  const plan = planOf(v['planId'], 2), at = isoOf(v['publishedAt']), until = isoOf(v['expiresAt']);
-  if (!plan || !at || !until) return null;
+  const plan = planOf(v['planId'], 2), at = isoOf(v['publishedAt']);
+  if (!plan || !at) return null;
   const payments = arr(v['payments']).filter(isObj).map(x => {
     const p = planOf(x['planId'], 2), when = isoOf(x['at']);
     return p && when && (x['kind'] === 'publish' || x['kind'] === 'upgrade') && typeof x['amount'] === 'number' && Number.isFinite(x['amount']) && x['amount'] >= 0 ? { kind: x['kind'] as 'publish' | 'upgrade', planId: p, amount: x['amount'], at: when } : null;
   }).filter((x): x is NonNullable<typeof x> => !!x);
-  return { planId: plan, live: bool(v['live'], false), publishedAt: at, expiresAt: until, payments };
+  return { planId: plan, live: bool(v['live'], false), publishedAt: at, payments };
 }
 
 function build(raw: Record<string, unknown>, from: number): AppState {

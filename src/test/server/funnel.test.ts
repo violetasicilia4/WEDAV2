@@ -17,8 +17,10 @@ describe('embudo', () => {
     expect(events('payment_confirmed')).toHaveLength(0);                                   // empezar a pagar no es pago
     await o.post(`/api/test-payments/${ord.id}`, { outcome: 'paid' });
     expect(events('payment_confirmed')).toEqual([{ source: 'server', props: '{"plan_id":"regalos"}' }]);
-    const slug = (await o.post('/api/wedding/publish')).body.slug;
+    // Pagar publica en el mismo momento (BR-01, PAY-07); «Publicar los cambios» después es una republicación.
     expect(events('publication_completed').at(-1)).toEqual({ source: 'server', props: '{"plan_id":"regalos","is_republish":false}' });
+    const slug = (await o.post('/api/wedding/publish')).body.slug;
+    expect(events('publication_completed').at(-1)).toEqual({ source: 'server', props: '{"plan_id":"regalos","is_republish":true}' });
     await env.client().get(`/api/public/${slug}`);
     expect(events('public_invitation_opened').length).toBeGreaterThanOrEqual(1);
   });

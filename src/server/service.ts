@@ -9,14 +9,13 @@ import { ApiError, conflict, forbidden, invalid, notFound, unauthorized } from '
 import { hashPassword, newId, newToken, RateLimiter, sha256, verifyPassword } from './security';
 import type { ServerConfig } from './config';
 import { cleanCbu, emptyState, isEmail, maskAlias, maskCbu, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
-import { planById, isPlanId, normalizePlanId, operates, planForOperation, planRank, type Access, type Operation } from '@/lib/weda/plans';
+import { planById, isPlanId, normalizePlanId, operates, planForOperation, planRank, TRIAL_DAYS, type Access, type Operation } from '@/lib/weda/plans';
 import type { Guest, PlanId } from '@/lib/weda/types';
 import type { SiteData } from '@/lib/weda/site-model';
 import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
 import { formatARS } from '@/lib/demo-wedding';
 import { layout, sendMail, unsubscribeUrl, verifyUnsubscribe } from './mail';
 import { providerFor, signedTestNotification, type Outcome } from './payments';
-import { addTerm } from '@/lib/weda/payments';
 import { externalizeImages } from './media';
 import { ALLOWED_PROPS, CLIENT_EVENTS, type EventProps, type ServerEvent } from '@/lib/analytics-events';
 
@@ -237,7 +236,7 @@ export class Service {
       slug: (w['slug'] as string | null) ?? null,
       draft: this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid),
       guests: this.guestsOf(wid),
-      publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, expiresAt: (pub['expires_at'] as string | null) ?? null, pendingChanges: this.pendingChanges(w) } : null,
+      publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, pendingChanges: this.pendingChanges(w) } : null,
       payout: this.activePayout(wid),
       access: this.access(wid),
     };
@@ -275,6 +274,7 @@ export class Service {
       const w = this.ensureWedding(userId);
       const wid = w['id'] as string;
       if (w['revision'] !== input.baseRevision) throw new ApiError(409, 'revision_conflict', String(w['revision']));
+      this.assertNotPaused(wid);
       // BR-62: el contenido se guarda siempre; las operaciones de gestión (invitados, mesas) solo con el plan publicado y vigente. Todo o nada.
       if (upserts.length > 0 || removes.length > 0) this.assertOperates(wid, 'guests');
       if (JSON.stringify(draft.groups) !== JSON.stringify(sanitizeDraft(JSON.parse(w['draft'] as string)).groups)) this.assertOperates(wid, 'groups');
@@ -282,6 +282,8 @@ export class Service {
       const next = (w['revision'] as number) + 1;
       // El destino de cobro que mande el cliente se descarta: solo cambia por changePayout (con clave).
       this.db.prepare('UPDATE weddings SET draft = ?, revision = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(this.withPayout(draft, wid)), next, t, wid);
+      // BR-63: el trial empieza al crear la celebración (onboarding con los dos nombres), una sola vez. Ni el login, ni otro dispositivo, ni editar lo reinician.
+      if (draft.onboarded && draft.couple.first.trim() && draft.couple.second.trim()) this.db.prepare('UPDATE weddings SET trial_started_at = ? WHERE id = ? AND trial_started_at IS NULL').run(t, wid);
       for (const g of upserts) {
         const owner = this.db.prepare('SELECT wedding_id FROM guests WHERE id = ?').get(g.id) as Row | undefined;
         if (owner && owner['wedding_id'] !== wid) throw conflict('guest_id_in_use'); // nunca se toca un invitado de otro casamiento
@@ -325,6 +327,7 @@ export class Service {
     if (!user || !(await verifyPassword(password, user['password_hash'] as string))) throw invalid('wrong_password');
     const prev = tx(this.db, () => {
       const wid = this.ensureWedding(s.userId)['id'] as string;
+      this.assertNotPaused(wid);
       const cur = this.activePayout(wid);
       if (cur.version !== baseVersion) throw conflict('payout_changed', String(cur.version));
       if (cur.alias === next.alias && cur.bank === next.bank && cur.cbu === next.cbu) throw invalid('payout_unchanged');
@@ -360,27 +363,38 @@ export class Service {
   /* ------------------------------------------------------------------ publicación */
 
   /**
-   * Acceso operativo (PAY-01 F1–F2, BR-62, DP-25). Se calcula, no se guarda. Opera solo un evento PUBLICADO, vigente y (con la compuerta de
-   * pago) con una orden pagada de ese mismo plan: pagar sin publicar no habilita nada. Bajar la página no lo cierra (supuesto S-1 del plan).
-   * Sin compuerta (desarrollo y pruebas, IC-17) alcanza con la publicación. El plan del borrador nunca cuenta.
+   * Estado de la celebración (PAY-07, BR-62 a BR-65, DP-25). Se calcula, no se guarda, y nunca sale del navegador.
+   * - `active`: publicada (con la compuerta de pago, con una orden pagada de ese plan). Sin vencimiento: sigue activa indefinidamente (BR-65).
+   *   Bajar la página no la cierra (PAY-01, supuesto S-1).
+   * - `paid_unpublished`: pago confirmado y publicación pendiente o fallida; se reintenta sin cobrar. No opera.
+   * - `trial`: 14 días desde que se creó la celebración (BR-63); sin `trial_started_at` todavía, el trial no empezó.
+   * - `paused`: venció el trial sin contratar (BR-64). Solo lectura; los datos se conservan.
+   * Sin compuerta (desarrollo y pruebas, IC-17) la publicación alcanza para `active`. El plan del borrador nunca cuenta.
    */
   private access(wid: string): Access {
     const paid = (this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[]).map(r => normalizePlanId(r['plan_id'] as PlanId));
-    const pub = this.db.prepare('SELECT plan_id, published_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
-    if (!pub) return { state: paid.length ? 'paid_unpublished' : 'trial', plan: null, expiresAt: null };
-    const plan = normalizePlanId(pub['plan_id'] as PlanId);
-    const expiresAt = expiresOf(pub);
-    if (Date.parse(expiresAt) <= Date.now()) return { state: 'expired', plan, expiresAt };
+    const pub = this.db.prepare('SELECT plan_id FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+    const w = this.db.prepare('SELECT trial_started_at FROM weddings WHERE id = ?').get(wid) as Row;
+    const started = (w['trial_started_at'] as string | null) ?? null;
+    const trialEndsAt = started ? new Date(Date.parse(started) + TRIAL_DAYS * 86_400_000).toISOString() : null;
+    const plan = pub ? normalizePlanId(pub['plan_id'] as PlanId) : null;
     // Publicado sin una orden pagada de su plan (por ejemplo, antes de encender la compuerta): no opera.
-    if (this.cfg.requirePaidOrder && !paid.includes(plan)) return { state: paid.length ? 'paid_unpublished' : 'trial', plan: null, expiresAt };
-    return { state: 'active', plan, expiresAt };
+    if (plan && (!this.cfg.requirePaidOrder || paid.includes(plan))) return { state: 'active', plan, trialEndsAt };
+    if (paid.length) return { state: 'paid_unpublished', plan: null, trialEndsAt };
+    if (trialEndsAt && Date.parse(trialEndsAt) <= Date.now()) return { state: 'paused', plan: null, trialEndsAt };
+    return { state: 'trial', plan: null, trialEndsAt };
   }
 
-  /** Rechaza la operación si el plan publicado no la incluye (403) o si el evento venció (410). Las lecturas no pasan por acá. */
+  /** Rechaza la operación si el plan publicado no la incluye (403). Las lecturas no pasan por acá. Sin vencimiento posterior a publicar (BR-65). */
   private assertOperates(wid: string, op: Operation) {
     const a = this.access(wid);
-    if (a.state === 'expired') throw new ApiError(410, 'event_expired');
+    if (a.state === 'paused') throw new ApiError(403, 'trial_ended');
     if (!operates(a, op)) throw new ApiError(403, 'feature_requires_plan', `${op}:${planForOperation(op)?.id ?? ''}`);
+  }
+
+  /** BR-64: con el trial vencido y sin contratar, la celebración se lee pero no se edita. Contratar (checkout) sigue disponible. */
+  private assertNotPaused(wid: string) {
+    if (this.access(wid).state === 'paused') throw new ApiError(403, 'trial_ended');
   }
 
   /** Plan con el que se publica: el que el servidor puede respaldar. Con `requirePaidOrder`, el de la orden pagada; si no, el elegido en el borrador. */
@@ -396,11 +410,20 @@ export class Service {
   }
 
   publish(userId: string) {
+    return this.publishWedding(this.ensureWedding(userId)['id'] as string);
+  }
+
+  /**
+   * Publica (o publica los cambios de) una celebración. La usan la pareja y, al confirmarse un pago, el propio servidor (BR-01: contratar y publicar
+   * son un único momento). Todo o nada: si falla, no escribe y se puede reintentar sin volver a cobrar (DP-25).
+   */
+  private publishWedding(wid: string) {
     return tx(this.db, () => {
-      const w = this.ensureWedding(userId);
-      const wid = w['id'] as string;
+      const w = this.db.prepare('SELECT * FROM weddings WHERE id = ?').get(wid) as Row;
       const draft = this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid);
       if (!draft.couple.first.trim() || !draft.couple.second.trim()) throw conflict('incomplete', 'couple_names');
+      // Con el trial vencido solo se publica contratando: con la compuerta, la orden pagada ya saca de la pausa; sin ella, no se publica (BR-64).
+      this.assertNotPaused(wid);
       const planId = this.entitledPlan(wid, draft.planId);
       let slug = w['slug'] as string | null;
       if (!slug) {
@@ -411,14 +434,12 @@ export class Service {
       }
       const snapshot = publicSite(draft, planId, slug);
       const t = now();
-      const prev = this.db.prepare('SELECT plan_id, version, published_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+      const prev = this.db.prepare('SELECT plan_id, version FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
       // F8 (D-05): mientras DP-23 siga pendiente, una página publicada no cambia de plan.
       if (prev && normalizePlanId(prev['plan_id'] as PlanId) !== normalizePlanId(planId)) throw conflict('plan_change_pending');
-      // Vencimiento (PUBLICATION_MONTHS desde la PRIMERA publicación, en UTC): publicar cambios o bajar y volver a publicar no lo extienden.
-      // Una publicación vencida no se reabre sola: renovar es una decisión comercial pendiente (production-readiness.md). El contenido no se borra.
-      if (prev && Date.parse(expiresOf(prev)) <= Date.now()) throw conflict('publication_expired');
-      if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=?, expires_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, expiresOf(prev), wid);
-      else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,?)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t, addTerm(t));
+      // Sin vencimiento (BR-65): publicar cambios, bajar y volver a publicar no tienen fecha límite. `expires_at` queda como historia (migración 8).
+      if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, wid);
+      else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,NULL)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t);
       this.track('publication_completed', { plan_id: planId, is_republish: !!prev });
       return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1, access: this.access(wid) };
     });
@@ -434,11 +455,10 @@ export class Service {
   /* ------------------------------------------------------------------ sitio público (sin sesión) */
 
   private livePublication(slug: string): { wid: string; snapshot: SiteData; status: string } {
-    const row = this.db.prepare('SELECT w.id AS wid, p.snapshot AS snapshot, p.status AS status, p.published_at AS published_at, p.expires_at AS expires_at FROM weddings w JOIN publications p ON p.wedding_id = w.id WHERE w.slug = ?').get(slug) as Row | undefined;
+    const row = this.db.prepare('SELECT w.id AS wid, p.snapshot AS snapshot, p.status AS status FROM weddings w JOIN publications p ON p.wedding_id = w.id WHERE w.slug = ?').get(slug) as Row | undefined;
     if (!row) throw notFound('site_not_found');
     if (row['status'] !== 'live') throw new ApiError(410, 'site_unpublished');
-    // Vencida: el servidor decide (no un temporizador del navegador). Vale para la página, las confirmaciones y los regalos.
-    if (Date.parse(expiresOf(row)) <= Date.now()) throw new ApiError(410, 'site_expired');
+    // Sin vencimiento (BR-65): la página, las confirmaciones y los regalos siguen activos mientras esté publicada.
     return { wid: row['wid'] as string, snapshot: JSON.parse(row['snapshot'] as string) as SiteData, status: 'live' };
   }
 
@@ -773,6 +793,18 @@ export class Service {
     if (!provider || provider.name !== providerName) throw notFound();
     let n;
     try { n = provider.verify(rawBody, headers, this.cfg); } catch { throw new ApiError(401, 'invalid_signature'); }
+    const res = this.settlePaymentEvent(provider.name, n);
+    // BR-01 (PAY-07): con el pago confirmado se publica en el mismo momento. Va DESPUÉS y aparte: el pago queda registrado aunque la publicación falle
+    // (por ejemplo, faltan los nombres); el estado queda en `paid_unpublished` y la pareja reintenta sin volver a pagar (DP-25).
+    if (res.status === 'paid' && !res.duplicate && !res.ignored) {
+      const wid = (this.db.prepare('SELECT wedding_id FROM orders WHERE id = ?').get(n.orderId) as Row)['wedding_id'] as string;
+      try { this.publishWedding(wid); } catch { /* recuperación: «Publicar mi página» en el panel */ }
+    }
+    return res;
+  }
+
+  private settlePaymentEvent(providerName: string, n: { eventId: string; orderId: string; outcome: Outcome; providerRef: string }): { duplicate: boolean; ignored?: boolean; status?: string } {
+    const provider = { name: providerName };
     return tx(this.db, () => {
       const seen = this.db.prepare('SELECT 1 FROM payment_events WHERE provider = ? AND event_id = ?').get(provider.name, n.eventId);
       if (seen) return { duplicate: true };
@@ -853,9 +885,7 @@ function parsePayout(v: Row): { alias: string; bank: string; cbu: string } {
 }
 
 /** Vencimiento de una publicación. Las anteriores a la migración 5 no lo tienen guardado: se calcula desde su primera publicación. */
-function expiresOf(p: Row): string {
-  return (p['expires_at'] as string | null) ?? addTerm(p['published_at'] as string);
-}
+
 
 /** Comprobante que viaja dentro del envío del regalo: `{ data: base64 }`. Valida tamaño y tipo real (por contenido). Sin comprobante → null. */
 function decodeReceipt(v: unknown): { bytes: Buffer; mime: string } | null {

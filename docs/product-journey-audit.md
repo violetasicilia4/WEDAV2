@@ -1,5 +1,7 @@
 # Weda · Auditoría de recorridos de producto (2026-10-23)
 
+> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+
 Documento **histórico y con fecha**. Mapa del embudo real (leído del código y recorrido en un navegador), diagnóstico de fricciones y qué se cambió. Oportunidades y experimentos: [conversion-opportunities.md](conversion-opportunities.md). Escenarios, cobertura y resultados de las pruebas: [e2e-coverage.md](e2e-coverage.md).
 
 **Cómo leer las etiquetas de evidencia** (no se mezclan):

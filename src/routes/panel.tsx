@@ -8,7 +8,7 @@ import { SideMenuIcon } from '@/components/panel/side-menu-icon';
 import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
-import { formatPrice, PLANS, PUBLICATION_TERM } from '@/lib/weda/plans';
+import { formatPrice, PLANS, TRIAL_DAYS } from '@/lib/weda/plans';
 import { ensureRemote, errorText, hasUnsaved, dismissNotice, reloadFromServer, retrySave, useRemote } from '@/lib/weda/remote';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import { isLive } from '@/lib/weda/payments';
@@ -109,13 +109,14 @@ function PublishLabel() {
 function HelpDialog({ onClose }: { onClose: () => void }) {
   const prices = PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ');
   const faq: [string, string][] = [
-    ['¿Cuánto cuesta y cuándo pago?', `Armás todo gratis y pagás una sola vez, al publicar: ${prices}. Es un pago único y la página queda publicada ${PUBLICATION_TERM}.`],
+    ['¿Cuánto cuesta y cuándo pago?', `Tenés ${TRIAL_DAYS} días para armar todo gratis, sin tarjeta. Cuando está lista, elegís un plan y pagás una sola vez: ${prices}. Al confirmarse el pago, tu página se publica.`],
+    ['¿Qué pasa si no contrato en esos días?', 'Tu proyecto queda guardado y en pausa: lo podés ver, pero no editar ni publicar. Elegís un plan cuando quieras y seguís desde donde lo dejaste.'],
     ['¿Puedo cambiar de plan después de publicar?', 'Por ahora no: el plan que elegís al publicar no se puede cambiar después de contratarlo.'],
     ['¿Cómo comparto la invitación?', 'Al publicar se genera el link de tu página. Lo podés mandar a todos tus contactos.'],
     ['¿Cómo recibo los regalos?', 'Cargás el alias de tu cuenta en Regalos → Datos de cobro. Tus invitados eligen un regalo, te transfieren directo a esa cuenta y adjuntan el comprobante. No hay comisión: el dinero va directo a tu banco y podés validar cada regalo con su comprobante.'],
     ['¿Dónde veo los regalos que recibí?', 'En Regalos → Aportes recibidos: quién te hizo el regalo, qué regalos eligió (puede ser más de uno), el monto, la fecha y el comprobante.'],
-    ['¿Puedo editar la invitación después de publicarla?', 'Sí. Mientras la página esté publicada, la podés editar cuando quieras.'],
-    ['¿Cuánto tiempo queda online la página?', `${PUBLICATION_TERM[0]!.toUpperCase()}${PUBLICATION_TERM.slice(1)} desde que la publicás.`],
+    ['¿Puedo editar la invitación después de publicarla?', 'Sí, cuando quieras. Lo que cambies se ve en tu página cuando tocás «Publicar los cambios».'],
+    ['¿Cuánto tiempo queda online la página?', 'No vence: es un pago único, sin renovaciones. Tu página y tu link siguen activos y la podés seguir usando.'],
   ];
   return (
     <Dialog open onOpenChange={o => { if (!o) onClose(); }}>
@@ -149,6 +150,19 @@ function SyncBanner() {
   if (r.notice) return <p className="pn-banner is-info" role="status">{r.notice} <button type="button" className="pn-link" onClick={dismissNotice}>Entendido</button></p>;
   if (r.user) return <p className="pn-sr" role="status" aria-live="polite">{r.save === 'saving' ? 'Guardando…' : r.save === 'saved' ? 'Cambios guardados en tu cuenta' : ''}</p>;
   return null;
+}
+
+/* Trial y pausa (PAY-07, BR-63, BR-64): cuántos días quedan para crear gratis, o que el período terminó y el proyecto quedó guardado. El estado lo
+   calcula el servidor (`access`); acá solo se muestra, sin ventanas que interrumpan. Sin cuenta (borrador local) no hay trial que mostrar. */
+function TrialBanner() {
+  const access = useRemote().access;
+  const plans = usePlans();
+  if (!access?.trialEndsAt || (access.state !== 'trial' && access.state !== 'paused')) return null;
+  if (access.state === 'paused') return (
+    <p className="pn-banner is-info pn-trial-end" role="status"><strong>Terminó tu período gratuito.</strong> Tu proyecto está guardado. Elegí un plan para publicarlo y seguir editando. <button type="button" className="pn-link" onClick={plans.open}>Elegir plan</button></p>
+  );
+  const days = Math.max(1, Math.ceil((Date.parse(access.trialEndsAt) - Date.now()) / 86_400_000));
+  return <p className="pn-trial" role="status">{days === 1 ? 'Te queda 1 día' : `Te quedan ${days} días`} para crear gratis. <button type="button" className="pn-link" onClick={plans.open}>Elegir plan</button></p>;
 }
 
 /** Embudo: avances que se ven en el panel (una vez por navegador). Sin efecto si la analítica está apagada (analytics.ts). */
@@ -238,8 +252,12 @@ function PanelLayout() {
 
         <main id="main" className="pn-main">
           <SyncBanner />
+          <TrialBanner />
           {full && <p className="pn-banner" role="alert">No hay más lugar para guardar fotos en este navegador. Quitá alguna foto: los últimos cambios no se guardaron.</p>}
-          <Outlet />
+          {/* BR-64: en pausa todo el panel queda en solo lectura (se ve, no se edita); contratar sigue disponible desde «Elegir plan» y «Publicar». */}
+          {remote.access?.state === 'paused'
+            ? <fieldset className="pn-readonly" disabled><legend className="pn-sr">Solo lectura: terminó el período gratuito</legend><Outlet /></fieldset>
+            : <Outlet />}
         </main>
       </div>
       {help && <HelpDialog onClose={() => setHelp(false)} />}

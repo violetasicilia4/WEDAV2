@@ -58,7 +58,7 @@ describe('planes', () => {
   it('sin plan elegido (prueba gratuita) todo está disponible', () => {
     PLANS.flatMap(p => p.features).forEach(f => expect(publishes(null, f)).toBe(true));
     // BR-62: operar depende del acceso que calcula el servidor, nunca del plan del borrador.
-    const at = (state: Access['state'], plan: Access['plan']): Access => ({ state, plan, expiresAt: null });
+    const at = (state: Access['state'], plan: Access['plan']): Access => ({ state, plan, trialEndsAt: null });
     expect(operates(null, 'guests')).toBe(false);
     expect(operates(at('trial', null), 'contributions')).toBe(false);
     expect(operates(at('paid_unpublished', null), 'guests')).toBe(false);
@@ -67,7 +67,8 @@ describe('planes', () => {
     expect(operates(at('active', 'regalos'), 'groups')).toBe(false);
     expect(operates(at('active', 'invitacion'), 'guests')).toBe(true);
     expect(operates(at('active', 'completo'), 'groups')).toBe(true);
-    expect(operates(at('expired', 'invitacion'), 'guests')).toBe(false);
+    expect(operates(at('paused', null), 'guests')).toBe(false);
+    expect(operates(at('paused', null), 'contributions')).toBe(false);
     expect(planForOperation('guests')?.id).toBe('invitacion');
     expect(planForOperation('contributions')?.id).toBe('regalos');
     expect([planRank('regalos'), planRank('invitacion'), planRank('completo'), planRank(null)]).toEqual([0, 1, 1, -1]);

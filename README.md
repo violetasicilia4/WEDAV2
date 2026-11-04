@@ -82,7 +82,7 @@ Estado completo y decisiones pendientes en [docs/product-blueprint/](docs/produc
 
 - **Sin hosting de producción** (DP-14): SQLite necesita un único servidor con disco persistente; en hosting sin disco (por ejemplo Vercel) la API responde 503 y las cuentas no funcionan.
 - **Sin cobro real** (DP-15): solo existe un adaptador de pagos de prueba (`WEDA_PAYMENTS_PROVIDER=test`, nunca cobra). Por defecto publicar no exige pago.
-- La vigencia de la publicación en el código es de 6 meses; la decisión de 12 meses con «pagar = activar + publicar» (2026-10-30) todavía no está implementada.
+- Ciclo de vida (PAY-07, 2026-11-04): trial de 14 días desde que se crea la celebración (`weddings.trial_started_at`, migración 8), pausa en solo lectura si no se contrata, pagar publica en el mismo momento y lo publicado no vence.
 - Sin sesión, el borrador vive solo en el navegador (`localStorage`, clave `weda-app`); con sesión se sincroniza con el servidor.
 - El correo sale por Resend solo si hay `RESEND_API_KEY`; sin clave cada intento queda registrado y no se envía. «Ingresar con Google» todavía no está habilitado.
 - Los términos y la privacidad son borradores sin revisión legal.

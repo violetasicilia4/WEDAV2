@@ -1,5 +1,7 @@
 # PAY-01 · Plan: alcance de publicación y de operación — spec
 
+> **Aviso (2026-11-04):** el estado `expired` y el criterio CA-5 (operar con la publicación vencida → `410 event_expired`) quedan **reemplazados** por [PAY-07](../PAY-07-trial-contratacion-permanencia/spec.md): lo publicado no vence (BR-65), y la pausa (`paused`) solo existe antes de contratar. La prueba de CA-5 se reescribió en `plan-access.test.ts`. El resto de esta spec sigue vigente.
+
 - **Estado:** aprobada (2026-11-03, la dueña), con las decisiones F1, F5 y F8 definidas por ella (DP-25, DP-28 y la opción transitoria de DP-23). Construida y verificada el 2026-11-04 en `docs/planes-y-roadmap`, sin commit: espera la revisión de la dueña para cerrarse.
 - **Tamaño:** crítica (dinero y permisos). La spec se aprobó antes que el plan.
 - **Plan:** [plan.md](plan.md) (aprobado 2026-11-03).

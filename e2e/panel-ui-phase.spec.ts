@@ -192,7 +192,8 @@ test.describe('Panel · invitados, mesas y editor (390 px)', () => {
     const dlg = page.getByRole('dialog');
     await expect(dlg.getByRole('heading', { name: '¿Qué querés publicar?' })).toBeVisible();
     await expect(dlg.getByRole('link', { name: /Ver el link de/ })).toHaveCount(2);
-    await expect(dlg.getByText('Publicada 1 año')).toHaveCount(2);
+    await expect(dlg.getByText('Sin renovaciones')).toHaveCount(2);
+    await expect(dlg.getByText('Recomendado')).toHaveCount(1);
     const box = (await dlg.boundingBox())!;
     expect(box.x).toBe(0);
     expect(Math.round(box.y + box.height)).toBe(844);

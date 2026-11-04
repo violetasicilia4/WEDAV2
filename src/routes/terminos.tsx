@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { formatPrice, PLANS, PUBLICATION_TERM } from '@/lib/weda/plans';
+import { formatPrice, PLANS, TRIAL_DAYS } from '@/lib/weda/plans';
 import { pageMeta } from '@/lib/site';
 
 /* Términos de uso — BORRADOR (2026-10-29). No fue revisado por un abogado. Antes del lanzamiento: completar lo marcado «a completar», cerrar las
@@ -29,11 +29,11 @@ function Terms() {
       <p>Para guardar y publicar tu casamiento necesitás una cuenta con correo y clave. Sos responsable de los datos que cargás y de mantener tu clave en reserva. Si la olvidás, podés <Link to="/clave">pedir un enlace para cambiarla</Link>.</p>
 
       <h2>3. Planes, precio y pago</h2>
-      <p>Armar tu casamiento en Weda es gratis. Pagás una sola vez, al publicar, según el plan que elijas: {PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ')}. Los precios incluyen <Decide>impuestos incluidos o no</Decide>. Por ahora el plan no se puede cambiar después de contratarlo.</p>
+      <p>Al crear tu casamiento tenés {TRIAL_DAYS} días para armarlo gratis, sin tarjeta. Si en ese plazo no contratás un plan, tu proyecto queda en pausa: se conserva y lo podés ver, pero no editar ni publicar hasta que contrates. Pagás una sola vez, al contratar, según el plan que elijas: {PLANS.map(p => `${p.name} ${formatPrice(p.price)}`).join(', ')}. Los precios incluyen <Decide>impuestos incluidos o no</Decide>. Por ahora el plan no se puede cambiar después de contratarlo.</p>
       <p>Cancelaciones y reembolsos: <Decide>si se puede pedir la devolución, en qué plazo y en qué casos</Decide>. Bajar la página no genera devolución.</p>
 
-      <h2>4. Publicación y duración</h2>
-      <p>La página queda publicada {PUBLICATION_TERM} desde que la publicás. Después deja de estar disponible para tus invitados. Podés bajarla antes cuando quieras. Lo que cambies en el panel se ve en tu página cuando tocás «Publicar los cambios». Qué pasa con tus datos al vencer: <Decide>plazo de conservación y si se puede extender la publicación</Decide>.</p>
+      <h2>4. Publicación</h2>
+      <p>Al confirmarse el pago, tu página se publica con el plan contratado y su link queda disponible. No tiene vencimiento ni renovaciones: la podés seguir editando y usando con las funciones de tu plan. Podés bajarla cuando quieras y volver a publicarla con el mismo link. Lo que cambies en el panel se ve en tu página cuando tocás «Publicar los cambios». Cuánto se conserva un proyecto en pausa que nunca se contrató: <Decide>plazo de conservación de proyectos en pausa (DP-31)</Decide>.</p>
 
       <h2>5. Tus fotos y textos</h2>
       <p>Lo que subís (fotos, nombres, textos) sigue siendo tuyo. Nos das permiso para guardarlo y mostrarlo en tu página, solo para prestarte el servicio. Tenés que tener derecho a usar las fotos que subís (por ejemplo, el permiso de quien aparece o del fotógrafo). Podemos quitar contenido ilegal o que afecte derechos de terceros.</p>

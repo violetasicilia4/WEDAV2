@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 2 — Modelo de dominio y mapa de datos
 
+> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+
 Fecha: 2026-10-30 · **Revisión con las decisiones definitivas A1–A8 y Q1–Q8.** Base: `01-current-state.md` (aprobado).
 Alcance: **solo diseño conceptual y documentación.** No se creó ninguna tabla, migración, dependencia ni cambio de código de la aplicación, y no se tocó el esquema SQLite.
 

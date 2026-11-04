@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 1 — Auditoría y mapa del producto actual
 
+> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+
 Fecha: 2026-10-29 · Commit base: `eee48dc` (`main`) con cambios locales sin subir (botón de Google, frase de la landing; no tocan datos).
 Alcance: **solo diagnóstico**. No se modificó código de la aplicación, esquema, dependencias ni configuración. No se hicieron commits, pushes ni deploys. No se leyeron ni se muestran valores de variables de entorno.
 

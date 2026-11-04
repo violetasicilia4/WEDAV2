@@ -33,14 +33,19 @@ describe('Planes en la landing', () => {
       expect(card.getByText(plan.product)).toBeTruthy();
     });
     expect(screen.getByText(/Armá tu casamiento gratis/)).toBeTruthy();
+    // PAY-07: 14 días gratis y pago único sin renovaciones; ninguna duración de publicación (BR-65).
+    expect(screen.getByText(/14 días para crear todo gratis, sin tarjeta/)).toBeTruthy();
+    expect(screen.getAllByText(/sin renovaciones/)).toHaveLength(2);
+    expect(screen.queryByText(/Publicada|1 año|vence/i)).toBeNull();
   });
 
-  it('cada plan lleva su «Empezar» al registro, y Celebración lleva el cartel «Más elegido»', async () => {
+  it('cada plan lleva su «Empezar» al registro, y Celebración lleva el cartel «Recomendado»', async () => {
     await renderPlans();
     const ctas = screen.getAllByRole('link', { name: 'Empezar' });
     expect(ctas).toHaveLength(2);
     ctas.forEach(a => { expect(a.getAttribute('href')).toBe('/crear/cuenta'); expect(a.closest('.pl-card')).not.toBeNull(); });
-    const badges = screen.getAllByText('Más elegido');
+    expect(screen.queryByText('Más elegido')).toBeNull();          // no se afirma una popularidad sin medir
+    const badges = screen.getAllByText('Recomendado');
     expect(badges).toHaveLength(1);
     expect(badges[0]!.closest('.pl-card')?.querySelector('h3')?.textContent).toBe('Celebración');
   });
@@ -55,9 +60,9 @@ describe('Planes en la landing', () => {
     for (const t of ['Sitio con tu invitación', 'Confirmación de asistencia', 'Invitados y mesas', 'Música, fotos y mensaje final']) expect(celebracion!.getByText(t)).toBeTruthy();
   });
 
-  it('destaca el pago único y que la página queda publicada un año, sin hablar de suscripción', async () => {
+  it('destaca el pago único sin renovaciones (BR-65), sin hablar de suscripción ni de vencimiento', async () => {
     await renderPlans();
-    expect(screen.getAllByText(/Publicada 1 año/)).toHaveLength(2);
-    expect(document.body.textContent).not.toMatch(/suscripci|por mes|mensual/i);
+    expect(screen.getAllByText(/Pago único/)).toHaveLength(2);
+    expect(document.body.textContent).not.toMatch(/suscripci|por mes|mensual|Publicada \d|vencimiento|vence/i);
   });
 });
