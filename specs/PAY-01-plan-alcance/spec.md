@@ -108,4 +108,20 @@ Aprobadas por la dueña con la spec (2026-11-03). F1, F5 y F8 son decisiones suy
 - `mobile-journeys` › «Flujo 2»: espera el diálogo de cobro **sin** cuenta («Listo»), pero desde GIFT-14 con cuenta se pide la clave.
 - `desktop/journeys` › «a mitad del alta»: venció el tiempo de espera en `page.goto` y pasó al reejecutarla.
 
-Las pruebas exploratorias (`npm run test:explore`, `action-fuzz`) **no** se ejecutaron. Agregan invitados y mesas sin publicar y probablemente necesiten `publishCelebration`.
+**Pruebas exploratorias del 2026-11-04** (`npm run test:explore`, semilla 2026, Chrome local, celular y compu):
+- `state-matrix`: pasa en los dos proyectos (40 estados × 10 pantallas, 0 fallas).
+- `action-fuzz`, **antes de adaptarla**: la corrida falló.
+  - Las acciones de invitados y mesas agotaban el tiempo frente a los botones deshabilitados por PAY-01. Quedaban como errores de la prueba (24 en compu y 32 en celular) y esas acciones dejaban de probarse.
+  - Hubo además 11 fallas de producto, ajenas a PAY-01, todas en «mirar los productos de publicación». La prueba esperaba «Al publicar, cualquiera que tenga el link», pero sin cuenta el diálogo pide crearla (auditoría del 2026-10-28). También elegía un tercer plan, que ya no existe.
+- **Adaptación** (solo la prueba, sin cambios funcionales). Con la semilla, cada recorrido sigue uno de dos caminos:
+  - **Contratado:** cuenta propia; el contenido, después Celebración publicada por la API y recién ahí mesas e invitados, que es el orden que exige el servidor.
+  - **Sin contratar:** solo en el navegador. Agregar, editar, eliminar invitados y crear mesas se verifican como deshabilitados con el aviso de BR-62.
+  - La vista previa compara antes y después invitados, mesas y regalos recibidos, en el navegador y, si hay cuenta, en el servidor.
+  - Se agregó la acción «confirmar asistencia en la vista previa».
+  - El diálogo de publicar acepta los dos planes y el caso sin cuenta.
+- **`action-fuzz`, después de adaptarla:** pasa en los dos proyectos.
+  - Compu: 140 pasos, 122 sin error, 0 fallas de producto.
+  - Celular: 140 pasos, 121 sin error, 0 fallas de producto.
+  - Invitados y mesas se ejercitaron de verdad: 10 altas, 16 y 15 mesas creadas.
+  - La vista previa no escribió en ninguno de los 16 recorridos.
+- **Límite:** «confirmar asistencia en la vista previa» llegó a enviar el formulario una sola vez (compu). En los demás casos el recorrido no tenía la confirmación activada (se saltea) o la prueba no encontró el formulario dentro del iframe a tiempo (3 errores de la prueba en compu, no del producto). Que la vista previa no escribe lo cubre la prueba fija CA-7. «Editar el texto de la portada» se saltea siempre porque la prueba no encuentra el campo; eso ya pasaba antes de este cambio.
