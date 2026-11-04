@@ -10,7 +10,7 @@
 //  - Los invitados viajan como operaciones (altas/cambios/bajas), no como lista completa: así no se pierden respuestas del sitio público.
 import { useSyncExternalStore } from 'react';
 import { hasEvent } from './account';
-import { operates, type Access } from './plans';
+import { normalizePlanId, operates, type Access } from './plans';
 import { getState, replace, reset, subscribeState } from './store';
 import type { AppState, Guest, PlanId, Publication } from './types';
 
@@ -95,6 +95,15 @@ function reconcilePublication(local: Publication | null, server: { status: strin
   return { planId: server.planId as PlanId, live, publishedAt: server.publishedAt, payments: [] };
 }
 
+/**
+ * Con una publicación confirmada por el servidor, su plan es el plan de la celebración (F-P1): lo que el panel y la vista previa muestran como
+ * incluido sale de ahí y no de una elección local. Sin publicación, el plan del borrador sigue siendo solo la vista previa de lo que se publicaría.
+ */
+function adoptPublication(s: AppState, server: { status: string; planId: string; publishedAt: string } | null): AppState {
+  const publication = reconcilePublication(s.publication, server);
+  return server ? { ...s, publication, planId: normalizePlanId(server.planId as PlanId) } : { ...s, publication };
+}
+
 const payoutOf = (s: AppState): PayoutData => ({ alias: s.gifts.alias.trim(), bank: s.gifts.bank.trim(), cbu: s.gifts.cbu.trim() });
 const withPayout = (s: AppState, p: PayoutData): AppState => ({ ...s, gifts: { ...s.gifts, alias: p.alias, bank: p.bank, cbu: p.cbu } });
 
@@ -106,7 +115,7 @@ function adoptPayout(local: AppState, server: Payout): AppState {
 }
 
 function mergeFromServer(local: AppState, w: any, email: string): AppState {
-  return { ...w.draft, guests: w.guests, email, gifts: { ...w.draft.gifts, given: local.gifts.given }, publication: reconcilePublication(local.publication, w.publication), seeded: false, ...(w.slug ? { slug: w.slug } : {}) };
+  return adoptPublication({ ...w.draft, guests: w.guests, email, gifts: { ...w.draft.gifts, given: local.gifts.given }, publication: local.publication, seeded: false, ...(w.slug ? { slug: w.slug } : {}) }, w.publication);
 }
 
 /* Marca local de lo último confirmado por el servidor (revisión y huella del borrador, sin duplicar las fotos). Sirve para distinguir, al volver a abrir la
@@ -174,7 +183,7 @@ async function attach(email: string): Promise<void> {
     writeMeta(email);
     set({ settled: true, user: { email }, error: null, save: 'saved', publication: w.publication });
   } else {
-    replace({ ...local, email, publication: reconcilePublication(local.publication, w.publication), ...(w.slug ? { slug: w.slug } : {}) });
+    replace(adoptPublication({ ...local, email, ...(w.slug ? { slug: w.slug } : {}) }, w.publication));
     markSynced(w);
     baselineRef = getState();
     writeMeta(email);
@@ -288,7 +297,7 @@ export async function refreshPublication(): Promise<{ published: boolean }> {
   try {
     const w = await api('GET', '/api/wedding');
     const local = getState();
-    replace({ ...local, publication: reconcilePublication(local.publication, w.publication), ...(w.slug ? { slug: w.slug } : {}) });
+    replace(adoptPublication({ ...local, ...(w.slug ? { slug: w.slug } : {}) }, w.publication));
     baselineRef = getState();
     set({ access: (w.access as Access | undefined) ?? null, publication: w.publication });
     return { published: !!w.publication && w.publication.status === 'live' };
@@ -358,7 +367,7 @@ export async function publishRemote(): Promise<{ ok: true; slug: string } | { ok
     await flush();
     if (remote.save === 'error' || remote.save === 'conflict') return { ok: false, code: remote.error ?? 'save_failed' };
     const r = await api<{ slug: string; planId: string; version: number; access?: Access }>('POST', '/api/wedding/publish');
-    replace({ ...getState(), slug: r.slug });
+    replace(adoptPublication({ ...getState(), slug: r.slug }, { status: 'live', planId: r.planId, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString() }));
     baselineRef = getState();
     set({ ...(r.access ? { access: r.access } : {}), publication: { status: 'live', planId: r.planId, version: r.version, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString(), pendingChanges: false } });
     scheduleSave(0); // con las operaciones ya habilitadas, sube lo que hubiera quedado solo en este navegador

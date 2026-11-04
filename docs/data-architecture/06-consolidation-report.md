@@ -1,6 +1,6 @@
 # Weda · Arquitectura de datos · Informe final de consolidación (vigencia única de 12 meses)
 
-> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
 
 Fecha: 2026-10-30. Estado: **informe para revisión. Todo es documentación de diseño; no se implementó nada** (sin código, SQLite, migraciones, APIs, dependencias, commits, push ni deploy).
 Esta versión **reemplaza** el informe anterior, que se basaba en cuatro relojes (plan de 6 meses, permanencia pública de 12 meses con recuerdo estático, 90 días de acceso privado y retención posterior).
@@ -43,7 +43,7 @@ Esta versión **reemplaza** el informe anterior, que se basaba en cuatro relojes
 ### 1.2 Decisiones de fases anteriores (siguen vigentes)
 - **A1–A8:** dos dominios financieros independientes; propietario único con membresías y transferencia segura; permisos explícitos verificados en el servidor; entidades extraídas de a poco; libro inmutable con correcciones como movimientos relacionados; la invitación como unidad de acceso con enlaces hasheados; autorización en el servidor; bloques independientes y publicaciones versionadas.
 - **Q1–Q5, Q7, Q8:** regalos repetibles; moneda de recepción elegida (ARS o USD) con importes siempre con su moneda; solo el propietario cambia alias o datos bancarios con reautenticación y auditoría; precios solo desde la administración interna; cupo por invitación; retención en cuatro categorías. **Q6 queda redefinida** por la vigencia única de 12 meses.
-- **Analítica:** capas y plazos (13 y 25 meses), misma base SQLite con separación lógica, eventos del navegador apagados hasta definir política y consentimiento.
+- **Analítica:** capas y plazos (13 y 25 meses), misma base SQLite con separación lógica, eventos del navegador apagados hasta definir política y consentimiento. *Actualización 2026-11-04 (D-07): la base de producción pasa a ser Supabase (PostgreSQL); la analítica sigue en la misma base, ahora Postgres ([OPS-08](../../specs/OPS-08-base-supabase/spec.md)).*
 - **Privacidad:** los datos de invitados no se usan para marketing; los contactos comerciales necesitan fundamento y autorización independientes; eliminar una cuenta resuelve primero la propiedad de bodas activas; sin borrado de lo financiero por cascada.
 
 ### 1.3 Decisiones adoptadas

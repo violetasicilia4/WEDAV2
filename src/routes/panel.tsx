@@ -8,7 +8,7 @@ import { SideMenuIcon } from '@/components/panel/side-menu-icon';
 import { PlansProvider, PreviewFrame, ToastProvider, usePlans } from '@/components/panel/ui';
 import { coupleLabel, publicPages, resolvePhoto, sitePath } from '@/lib/weda/logic';
 import { openPreview, OPEN_PREVIEW, type PreviewRequest } from '@/lib/weda/preview-event';
-import { formatPrice, PLANS, TRIAL_DAYS } from '@/lib/weda/plans';
+import { formatPrice, PLANS, TRIAL_DAYS, trialRemaining } from '@/lib/weda/plans';
 import { ensureRemote, errorText, hasUnsaved, dismissNotice, reloadFromServer, retrySave, useRemote } from '@/lib/weda/remote';
 import { useAppSelector, useAppState, useHydrated, useStorageFull } from '@/lib/weda/store';
 import { isLive } from '@/lib/weda/payments';
@@ -152,7 +152,7 @@ function SyncBanner() {
   return null;
 }
 
-/* Trial y pausa (PAY-07, BR-63, BR-64): cuántos días quedan para crear gratis, o que el período terminó y el proyecto quedó guardado. El estado lo
+/* Trial y pausa (PAY-07, BR-63, BR-64): cuánto tiempo queda para crear gratis (períodos de 24 h y el fin exacto en hora de Argentina), o que el período terminó y el proyecto quedó guardado. El estado lo
    calcula el servidor (`access`); acá solo se muestra, sin ventanas que interrumpan. Sin cuenta (borrador local) no hay trial que mostrar. */
 function TrialBanner() {
   const access = useRemote().access;
@@ -161,8 +161,8 @@ function TrialBanner() {
   if (access.state === 'paused') return (
     <p className="pn-banner is-info pn-trial-end" role="status"><strong>Terminó tu período gratuito.</strong> Tu proyecto está guardado. Elegí un plan para publicarlo y seguir editando. <button type="button" className="pn-link" onClick={plans.open}>Elegir plan</button></p>
   );
-  const days = Math.max(1, Math.ceil((Date.parse(access.trialEndsAt) - Date.now()) / 86_400_000));
-  return <p className="pn-trial" role="status">{days === 1 ? 'Te queda 1 día' : `Te quedan ${days} días`} para crear gratis. <button type="button" className="pn-link" onClick={plans.open}>Elegir plan</button></p>;
+  const { left, ends } = trialRemaining(access.trialEndsAt);
+  return <p className="pn-trial" role="status">Te quedan {left} para crear gratis, hasta el {ends}. <button type="button" className="pn-link" onClick={plans.open}>Elegir plan</button></p>;
 }
 
 /** Embudo: avances que se ven en el panel (una vez por navegador). Sin efecto si la analítica está apagada (analytics.ts). */

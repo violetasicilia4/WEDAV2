@@ -5,7 +5,7 @@ import {
   validateGroupName, validateOnboarding, draftsFor, spotifyEmbed, contributionsFromState, contributionsFromServer, countsAsGift, invitationPath,
 } from '@/lib/weda/logic';
 import { SETS } from '@/lib/weda/catalog';
-import { formatPrice, normalizePlanId, operates, planById, planForOperation, planRank, PLANS, publishes, type Access, type Feature } from '@/lib/weda/plans';
+import { formatPrice, normalizePlanId, operates, planById, planForOperation, planRank, PLANS, publishes, trialRemaining, type Access, type Feature } from '@/lib/weda/plans';
 import { parseStored, sanitize, STORAGE_VERSION } from '@/lib/weda/store';
 import { accountDestination, hasEvent } from '@/lib/weda/account';
 import { seedState } from '@/lib/weda/seed';
@@ -576,5 +576,25 @@ describe('encontrar: el link de la invitación', () => {
     expect(invitationPath('Ana y Leo')).toBeNull();
     expect(invitationPath('https://weda.app/panel')).toBeNull();
     expect(invitationPath('')).toBeNull();
+  });
+});
+
+describe('tiempo restante del trial (BR-63)', () => {
+  const END = '2026-11-18T12:00:00.000Z';            // 09:00 en Argentina (UTC-3)
+  const at = (ms: number) => Date.parse(END) - ms;
+  const H = 3_600_000, D = 24 * H;
+  it('cuenta períodos de 24 h y horas (la hora en curso entera) y muestra el fin exacto en hora de Argentina', () => {
+    expect(trialRemaining(END, at(14 * D))).toEqual({ left: '14 días', ends: '18 de noviembre a las 09:00 (hora de Argentina)' });
+    expect(trialRemaining(END, at(14 * D - 5_000)).left).toBe('14 días');          // recién creada
+    expect(trialRemaining(END, at(13 * D + 22 * H + 30 * 60_000)).left).toBe('13 días y 23 horas');
+    expect(trialRemaining(END, at(D + H)).left).toBe('1 día y 1 hora');
+    expect(trialRemaining(END, at(5 * H + 30 * 60_000)).left).toBe('6 horas');
+    expect(trialRemaining(END, at(H)).left).toBe('1 hora');
+    expect(trialRemaining(END, at(59 * 60_000)).left).toBe('menos de una hora');
+    expect(trialRemaining(END, at(-D)).left).toBe('menos de una hora');
+  });
+  it('el fin no se corre de día aunque en UTC ya sea otra fecha', () => {
+    // 02:30 UTC del 19 = 23:30 del 18 en Argentina.
+    expect(trialRemaining('2026-11-19T02:30:00.000Z', Date.parse('2026-11-10T00:00:00.000Z')).ends).toBe('18 de noviembre a las 23:30 (hora de Argentina)');
   });
 });

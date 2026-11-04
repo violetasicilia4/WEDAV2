@@ -45,6 +45,23 @@ export const PRICE_UNIT = 'pago único';
 export const TRIAL_DAYS = 14;
 export const HIGHLIGHTS = 3;
 
+const HOUR = 3_600_000;
+const TRIAL_END = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * Cuánto queda del trial, para mostrar: el tiempo restante en períodos de 24 h y horas (la hora en curso cuenta entera: recién creada dice «14 días»),
+ * y el momento exacto del fin en hora de Argentina, que es el que manda. No cuenta días de calendario: el vencimiento es `trialEndsAt` (UTC) del servidor.
+ */
+export function trialRemaining(trialEndsAt: string, now = Date.now()): { left: string; ends: string } {
+  const end = Date.parse(trialEndsAt);
+  const ms = Math.max(0, end - now);
+  const total = Math.ceil(ms / HOUR), days = Math.floor(total / 24), hours = total % 24;
+  const left = days > 0 ? (hours > 0 ? `${plural(days, 'día', 'días')} y ${plural(hours, 'hora', 'horas')}` : plural(days, 'día', 'días'))
+    : ms >= HOUR ? plural(hours, 'hora', 'horas') : 'menos de una hora';
+  return { left, ends: `${TRIAL_END.format(end)} (hora de Argentina)` };
+}
+
 export const PLANS: Plan[] = [
   {
     id: 'regalos', name: 'Regalos', tagline: 'Tus invitados regalan desde el celular y la plata va directo a tu cuenta.',

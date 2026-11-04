@@ -512,7 +512,7 @@ Origen: [PAY-07](../specs/PAY-07-trial-contratacion-permanencia/spec.md). **Reem
 
 - **Landing:** «14 días para crear gratis, sin tarjeta». Las tarjetas dicen «Pago único · sin renovaciones», y Celebración lleva «Recomendado».
 - **Registro y creación:** como antes, con correo y clave; la fecha de la boda se puede dejar vacía. El trial empieza al guardar la celebración con los nombres, no al registrarse.
-- **Panel durante el trial:** una línea discreta arriba del contenido: «Te quedan N días para crear gratis. Elegir plan». El primer paso recomendado sigue siendo la lista de regalos.
+- **Panel durante el trial:** una línea discreta arriba del contenido: «Te quedan 13 días y 5 horas para crear gratis, hasta el 18 de noviembre a las 09:00 (hora de Argentina). Elegir plan». Cuenta períodos de 24 h desde que se guardó la celebración en la cuenta (la hora en curso cuenta entera) y muestra el fin exacto en hora de Argentina; no usa días de calendario. El primer paso recomendado sigue siendo la lista de regalos.
 - **Pausa (venció el trial sin contratar):**
   - Aviso: «Terminó tu período gratuito. Tu proyecto está guardado. Elegí un plan para publicarlo y seguir editando.»
   - Todo el panel queda en solo lectura (`fieldset.pn-readonly`), y «Elegir plan» y «Publicar» siguen disponibles.

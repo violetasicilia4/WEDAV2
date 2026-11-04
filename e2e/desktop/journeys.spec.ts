@@ -481,7 +481,7 @@ test.describe('Trial de 14 días y pausa (PAY-07)', () => {
   test('al crear la celebración el panel muestra los días de prueba; en pausa todo queda en solo lectura y se puede elegir un plan (CA-19)', async ({ page }) => {
     await onboard(page);
     // El estado lo decide el servidor: recién creada, quedan 14 días.
-    await expect(page.getByText('Te quedan 14 días para crear gratis.')).toBeVisible();
+    await expect(page.getByText(/^Te quedan 14 días para crear gratis, hasta el \d+ de \p{L}+ a las \d\d:\d\d \(hora de Argentina\)\./u)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Elegir plan' })).toBeVisible();
     // Pausa: se simula la respuesta del servidor (el reloj del servidor no se toca desde el navegador; la regla la prueban las pruebas de servidor).
     await page.route('**/api/wedding', async route => {

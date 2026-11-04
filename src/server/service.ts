@@ -440,6 +440,8 @@ export class Service {
       // Sin vencimiento (BR-65): publicar cambios, bajar y volver a publicar no tienen fecha límite. `expires_at` queda como historia (migración 8).
       if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, wid);
       else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,NULL)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t);
+      // El plan publicado pasa a ser el del borrador (F-P1): una sola fuente para lo que se muestra como incluido. No cambia la revisión.
+      this.db.prepare("UPDATE weddings SET draft = json_set(draft, '$.planId', ?) WHERE id = ?").run(planId, wid);
       this.track('publication_completed', { plan_id: planId, is_republish: !!prev });
       return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1, access: this.access(wid) };
     });
@@ -798,7 +800,13 @@ export class Service {
     // (por ejemplo, faltan los nombres); el estado queda en `paid_unpublished` y la pareja reintenta sin volver a pagar (DP-25).
     if (res.status === 'paid' && !res.duplicate && !res.ignored) {
       const wid = (this.db.prepare('SELECT wedding_id FROM orders WHERE id = ?').get(n.orderId) as Row)['wedding_id'] as string;
-      try { this.publishWedding(wid); } catch { /* recuperación: «Publicar mi página» en el panel */ }
+      try { this.publishWedding(wid); } catch (e) {
+        // F-P2: la falla queda registrada (evento persistente y log del servidor) solo con su código, sin datos de la pareja ni del pago.
+        // Recuperación: «Publicar mi página» en el panel.
+        const reason = e instanceof ApiError ? e.code : 'unexpected';
+        this.track('publication_failed', { reason });
+        console.error(`Publicación automática tras el pago no completada: ${reason}`);
+      }
     }
     return res;
   }
@@ -827,21 +835,6 @@ export class Service {
     this.orderStatus(userId, orderId); // solo la pareja dueña
     const { body, signature } = signedTestNotification(this.cfg, { eventId: newId('evt'), orderId, outcome: outcome as Outcome });
     return this.handlePaymentNotification('test', body, new Headers({ 'x-weda-signature': signature }));
-  }
-
-  /**
-   * SOLO para el proveedor de pagos (webhook verificado) o para pruebas: no está expuesta por HTTP. Idempotente por (provider, providerRef).
-   */
-  settleOrder(orderId: string, outcome: 'paid' | 'failed' | 'cancelled', provider: string, providerRef: string) {
-    return tx(this.db, () => {
-      const o = this.db.prepare('SELECT status FROM orders WHERE id = ?').get(orderId) as Row | undefined;
-      if (!o) throw notFound();
-      if (o['status'] === outcome) return { changed: false };
-      if (o['status'] !== 'pending') throw conflict('order_already_settled');
-      const t = now();
-      this.db.prepare('UPDATE orders SET status=?, provider=?, provider_ref=?, updated_at=?, paid_at=? WHERE id=?').run(outcome, provider, providerRef, t, outcome === 'paid' ? t : null, orderId);
-      return { changed: true };
-    });
   }
 
   requireSession(s: Session | null): Session {

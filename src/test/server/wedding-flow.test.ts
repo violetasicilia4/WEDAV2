@@ -121,7 +121,7 @@ describe('publicación y sitio público', () => {
   });
 
   it('no publica sin nombres ni sin plan; con requirePaidOrder exige una orden pagada', async () => {
-    const e2 = makeEnv({ requirePaidOrder: true });
+    const e2 = makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } });
     try {
       const c = e2.client(); await signUp(c, 'pago@correo.com');
       await saveDraft(c, draftFor('', ''));
@@ -131,7 +131,9 @@ describe('publicación y sitio público', () => {
       const order = (await c.post('/api/orders', { planId: 'invitacion', status: 'paid' })).body;
       expect(order.status).toBe('pending'); // el cliente no puede mandar «paid»
       expect((await c.post('/api/wedding/publish')).status).toBe(402);
-      e2.svc.settleOrder(order.id, 'paid', 'proveedor-de-prueba', 'ref-1');
+      // El pago se confirma solo por la notificación firmada del proveedor (F-P3): no hay otro camino que marque una orden como pagada.
+      expect((await c.post(`/api/test-payments/${order.id}`, { outcome: 'paid' })).status).toBe(200);
+      expect((await c.get('/api/wedding')).body.publication).toMatchObject({ status: 'live', planId: 'invitacion' });  // pagar publica (BR-01)
       const pub = await c.post('/api/wedding/publish');
       expect(pub.status).toBe(200);
       expect(pub.body.planId).toBe('invitacion'); // el plan sale de la orden pagada, no del borrador (completo)

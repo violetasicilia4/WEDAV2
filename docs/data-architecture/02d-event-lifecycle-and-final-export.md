@@ -1,6 +1,6 @@
 # Weda · Arquitectura de datos · Ciclo de vida del evento: vigencia única de 12 meses
 
-> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
 
 Fecha: 2026-10-30. Estado: **documentación de diseño para revisión. No se implementó nada** (sin código, SQLite, migraciones, APIs ni dependencias; sin commits, push ni deploy).
 Esta versión **reemplaza** el modelo anterior de cuatro relojes (plan de 6 meses, permanencia pública de 12 meses con recuerdo estático, 90 días de acceso privado adicional y retención posterior).

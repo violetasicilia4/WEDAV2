@@ -192,7 +192,8 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | OPS-04 | Límites de uso | DOCUMENTADO | **Implementada en memoria** (no compartida entre procesos) | U | La IP sale de `X-Forwarded-For` (falseable si el servidor está expuesto) |
 | OPS-05 | Registro de errores y métricas | PENDIENTE | **Parcial**: `console.error` | — | Sin logging estructurado |
 | OPS-06 | Endpoint de salud | — | **Implementada** (`/api/health`) | — | |
-| OPS-07 | Requisito de Node 22.5 (`node:sqlite`, experimental) | DOCUMENTADO | **Implementada** | U | Aviso experimental en cada proceso |
+| OPS-07 | Requisito de Node 22.5 (`node:sqlite`, experimental) | DOCUMENTADO | **Implementada** | U | Aviso experimental en cada proceso. Deja de aplicar al completar OPS-08 (D-07) |
+| OPS-08 | Todo en Supabase: base PostgreSQL (en reemplazo de SQLite), cuentas con Supabase Auth y archivos en Supabase Storage | **DECIDIDO** (D-07, 2026-11-04); [spec](../../specs/OPS-08-base-supabase/spec.md) aprobada (2026-11-04) | **No implementada** | — | Reescribe `db.ts`, `service.ts` y las cuentas; la autorización de los datos sigue en el servidor |
 
 ---
 

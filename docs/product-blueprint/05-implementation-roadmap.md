@@ -1,6 +1,6 @@
 # Weda · Roadmap de implementación propuesto (anexo 05)
 
-> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](02-business-rules-catalog.md), [D-06 en el anexo 03](03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
 
 Anexo del [Product Blueprint](00-product-blueprint.md). Ver también: [inventario](01-feature-inventory.md) · [reglas](02-business-rules-catalog.md) · [decisiones y riesgos](03-open-decisions-and-risks.md) · [preparación comercial](04-mvp-readiness.md).
 
@@ -24,7 +24,7 @@ flowchart LR
 
 **Tres ideas de orden**
 1. **Nada se cobra antes de R1 y R2.** Sin hosting persistente, respaldos y proveedor verificado, cobrar es el mayor riesgo del producto.
-2. **El reloj del primer vencimiento.** La vigencia dura 12 meses desde la confirmación del pago. Lo que solo importa al cerrar un evento (R5 y R6) debe estar listo **antes** de que el primer evento cumpla 12 meses, pero no necesita estar para la primera venta; el contrato de R2 sí debe explicarlo desde el primer día.
+2. *(Sin objeto desde D-06: no hay vencimiento, BR-65; se conserva como historia.)* **El reloj del primer vencimiento.** La vigencia dura 12 meses desde la confirmación del pago. Lo que solo importa al cerrar un evento (R5 y R6) debe estar listo **antes** de que el primer evento cumpla 12 meses, pero no necesita estar para la primera venta; el contrato de R2 sí debe explicarlo desde el primer día.
 3. **Primero el dinero, después el resto.** El libro y el control del alias (R3) preceden a cualquier función de eliminación o exportación financiera (R5, R6), para no destruir registros que deben conservarse.
 
 R4 y R7 pueden avanzar en paralelo con R3 una vez resueltos R1 y R2, si hay capacidad.
@@ -58,6 +58,8 @@ R4 y R7 pueden avanzar en paralelo con R3 una vez resueltos R1 y R2, si hay capa
 | **Fuera de alcance** | Alta disponibilidad, múltiples instancias, almacenamiento de objetos |
 
 ## R2 · Cobro, activación y vigencia de 12 meses
+
+> **D-06:** la vigencia de 12 meses quedó **sin objeto** (BR-65). «Pagar publica en el mismo momento» ya está construido con el adaptador de prueba (PAY-07, BR-01); sigue pendiente el proveedor real (DP-15).
 
 | | |
 |---|---|
@@ -98,6 +100,8 @@ R4 y R7 pueden avanzar en paralelo con R3 una vez resueltos R1 y R2, si hay capa
 
 ## R5 · Eventos, cierre, avisos y exportaciones
 
+> **D-06:** el cierre a los 12 meses, sus avisos y el estado «finalizado» quedaron **sin objeto** (BR-65). Siguen vigentes varios eventos por usuario y las exportaciones, sin fecha límite.
+
 | | |
 |---|---|
 | **Objetivo** | Cumplir lo prometido en el contrato antes del primer vencimiento |
@@ -110,6 +114,8 @@ R4 y R7 pueden avanzar en paralelo con R3 una vez resueltos R1 y R2, si hay capa
 | **Fuera de alcance** | Roles y membresías (R7), borrado de datos (R6) |
 
 ## R6 · Privacidad, retención y derechos
+
+> **D-06:** la eliminación de borradores por inactividad (P19, BR-45) está **suspendida**; la retención de proyectos pausados es DP-31, pendiente. No hay política posterior a un cierre por tiempo.
 
 | | |
 |---|---|

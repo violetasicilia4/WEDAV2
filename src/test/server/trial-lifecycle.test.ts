@@ -131,6 +131,19 @@ describe('contratar y publicar en un solo momento (con compuerta y pago de prueb
     expect(pub.site.blocks.invitation).toBe(false);
   });
 
+  it('F-P1 · con el borrador en Celebración, pagar Regalos deja Regalos como plan del borrador y de lo publicado: la invitación no queda incluida', async () => {
+    clock();
+    const c = env.client(); await signUp(c, 'regalos-unico@correo.com');
+    await saveDraft(c, draftFor('Noa', 'Fede', { planId: 'invitacion' }));
+    const ord = (await c.post('/api/checkout', { planId: 'regalos' })).body;
+    await c.post(`/api/test-payments/${ord.id}`, { outcome: 'paid' });
+    const w = (await c.get('/api/wedding')).body;
+    expect(w.access).toMatchObject({ state: 'active', plan: 'regalos' });
+    expect([w.publication.planId, w.draft.planId]).toEqual(['regalos', 'regalos']);
+    const pub = (await env.client().get(`/api/public/${w.slug}`)).body;
+    expect([pub.site.blocks.invitation, pub.site.blocks.rsvp]).toEqual([false, false]);
+  });
+
   it('CA-14 · si la publicación automática falla, la orden queda pagada; no opera; el reintento publica sin cobrar de nuevo', async () => {
     clock();
     const c = env.client(); await signUp(c, 'reintento7@correo.com');
@@ -145,6 +158,8 @@ describe('contratar y publicar en un solo momento (con compuerta y pago de prueb
     const w = (await c.get('/api/wedding')).body;
     expect(w.access.state).toBe('paid_unpublished');
     expect(w.publication).toBeNull();
+    // F-P2: la falla queda registrada solo con su código.
+    expect(env.svc.db.prepare("SELECT props FROM funnel_events WHERE name = 'publication_failed' ORDER BY id DESC LIMIT 1").get()).toEqual({ props: JSON.stringify({ reason: 'incomplete' }) });
     const after = counts() as { orders: number; events: number };
     expect(after.orders).toBe((before as { orders: number }).orders);
     await saveDraft(c, d);

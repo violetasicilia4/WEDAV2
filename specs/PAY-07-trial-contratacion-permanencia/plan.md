@@ -70,3 +70,16 @@ Se reutiliza lo de PAY-01: `access()`, `assertOperates()`, `fieldset.pn-readonly
 - **Blueprint `00`:** aviso.
 - **`data-architecture`:** avisos.
 - **Otros:** `ux-flows`, `panel-frontend`, `design-system`, `PRODUCT.md`, la regla del servidor, aviso en la spec de PAY-01 y nota en GIFT-09.
+
+## Correcciones después de la revisión (2026-11-04, sobre `500761c`)
+
+- **Tiempo del trial:** el panel muestra el tiempo restante en períodos de 24 h y horas, y el fin exacto en hora de Argentina (`trialRemaining`). El vencimiento sigue siendo `trialEndsAt` (UTC) del servidor.
+- **F-P1, una sola fuente del plan:** con una publicación, el plan que el panel y la vista previa muestran como incluido es el de la publicación confirmada por el servidor (`adoptPublication` en `remote.ts`). Al publicar, el servidor también lo deja en el borrador.
+- **F-P2:** si la publicación automática después del pago falla, queda registrada como evento `publication_failed` (solo el código de error) y en el log del servidor.
+- **F-P3:** se quitó `settleOrder`. Una orden solo queda pagada por la notificación firmada del proveedor (`settlePaymentEvent`, idempotente).
+- **E2E de pagos:** preview `weda-pagos` (puerto 8091, proveedor de prueba, datos en `.data-e2e-pay`). `payments.spec` cubre:
+  - Celebración: pagar publica, la URL queda disponible y se operan invitados.
+  - Regalos: publica solo la lista, sin la invitación.
+  - Pago rechazado y pago cancelado.
+  - Evento de pago repetido.
+  - Falla de publicación y recuperación sin un segundo cobro.

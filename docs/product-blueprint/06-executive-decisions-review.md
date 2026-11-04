@@ -1,6 +1,6 @@
 # Weda · Revisión ejecutiva y congelamiento del diseño del MVP
 
-> **Actualización 2026-11-04 (D-06, PAY-07):** el modelo comercial vigente es trial de 14 días → pausa sin perder datos → contratar = publicar → **permanencia indefinida, sin vencimiento** ([spec](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); reglas BR-63, BR-64 y BR-65 del [catálogo](../../docs/product-blueprint/02-business-rules-catalog.md)). Lo que este documento dice sobre vigencia de 12 meses, cierre, archivo, avisos de vencimiento, condiciones de vigencia y eliminación ligada al vencimiento queda **reemplazado** y se conserva como historia del diseño. El borrado por inactividad (BR-45) está suspendido (DP-31).
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](02-business-rules-catalog.md), [D-06 en el anexo 03](03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
 
 **Fecha:** 2026-10-31 · **Para:** la dueña del producto · **Estado:** propuesta para tu revisión. **No cierra ninguna decisión, no autoriza implementar nada y no inicia ninguna fase.**
 
@@ -49,6 +49,8 @@ Este documento resume el [Product Blueprint](00-product-blueprint.md) para que p
 Para cada una: qué hay que decidir, cómo está hoy, qué pasa si no se decide, mi recomendación, las alternativas y quién debe intervenir.
 
 ### DP-14 · Hosting y base de datos de producción
+> *Actualización 2026-11-04 (D-07): la dueña eligió **Supabase (PostgreSQL administrado)** como base de producción, en lugar de la recomendación de abajo. Sigue abierto el hosting del servidor de la aplicación. Ver [OPS-08](../../specs/OPS-08-base-supabase/spec.md).*
+
 - **Qué hay que decidir:** dónde vive Weda en producción y cómo se guardan y respaldan los datos.
 - **Hoy:** el servidor y la base (SQLite, un archivo local) funcionan en desarrollo. No hay hosting elegido, ni respaldos, ni evidencia de que un reinicio no borre los datos. La base usa una función de Node todavía marcada como experimental (RK-14).
 - **Si no se resuelve:** no se puede publicar ni cobrar. Es el prerrequisito de todo lo demás.
