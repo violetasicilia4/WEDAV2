@@ -1,6 +1,6 @@
 // Lógica de negocio del frontend de Weda: funciones puras (sin React ni almacenamiento) para poder probarlas
 // y para que, cuando exista una API, se puedan reemplazar por llamadas al servidor sin tocar los componentes.
-import { dressCode as demoDress, menus, type Category } from '@/lib/demo-wedding';
+import { dressCode as demoDress, formatARS, menus, type Category, type Gift } from '@/lib/demo-wedding';
 import { catalogGift, setGifts, type GiftSet } from './catalog';
 import { publishes, planFor, type Feature } from './plans';
 import type {
@@ -113,6 +113,23 @@ export function validateGift(i: { name: string; amount: string; text: string }):
   else if (a > MAX_AMOUNT) e.amount = 'El monto es demasiado alto: el máximo es $ 100.000.000.';
   if (i.text.trim().length > 140) e.text = 'La descripción es demasiado larga: 140 letras como máximo.';
   return e;
+}
+
+/** Nombre del renglón de un aporte libre: en la página pública, la revisión de aportes y la constancia por correo (GIFT-09, D6). */
+export const FREE_AMOUNT_LABEL = 'Aporte libre';
+/** En la página pública el aporte libre viaja en el carrito como un renglón más (uno solo por aporte, D4); al enviarlo, `sendGift` lo separa de los regalos. */
+export const FREE_GIFT_ID = 'aporte-libre';
+export const isFreeGift = (g: Pick<Gift, 'id'>) => g.id === FREE_GIFT_ID;
+export const freeGift = (amount: number): Gift => ({ id: FREE_GIFT_ID, name: FREE_AMOUNT_LABEL, text: '', amount, category: 'Proyectos futuros', icon: 'home' });
+/** Mínimo efectivo del aporte libre: el que fijó la pareja, nunca menos que el mínimo general. */
+export const freeAmountMin = (min: number | null | undefined) => Math.max(min ?? MIN_AMOUNT, MIN_AMOUNT);
+/** Monto que escribe un invitado en el aporte libre (o la pareja como mínimo): pesos enteros entre `min` y el máximo. */
+export function validateFreeAmount(raw: string, min = MIN_AMOUNT): string | null {
+  const a = parseAmount(raw);
+  if (Number.isNaN(a)) return 'Escribí el monto en pesos, solo con números.';
+  if (a < min) return `El monto mínimo es ${formatARS(min)}.`;
+  if (a > MAX_AMOUNT) return 'El monto es demasiado alto: el máximo es $ 100.000.000.';
+  return null;
 }
 
 /** Correo opcional: vacío es válido; si se completa, tiene que tener formato de correo. */
@@ -266,7 +283,7 @@ export const emptyState = (): AppState => ({
   photo: { kind: 'none' },
   preferredPlan: null,
   planId: null,
-  gifts: { cover: null, alias: '', bank: '', cbu: '', acceptCard: false, items: [], given: [] },
+  gifts: { cover: null, alias: '', bank: '', cbu: '', acceptCard: false, items: [], given: [], freeAmount: { enabled: false, min: null } },
   guests: [],
   groups: [defaultGroup()],
   site: defaultSite(),
@@ -531,7 +548,7 @@ export function contributionsFromServer(list: unknown): Contribution[] {
     const status = c['status'] === 'confirmed' || c['status'] === 'pending_review' || c['status'] === 'rejected' ? c['status'] : null;
     return {
       id, giver: String(c['giverName'] ?? '').trim() || 'Un invitado', email: String(c['giverEmail'] ?? ''), message: String(c['message'] ?? ''),
-      gifts: items.map(i => ({ name: String(i['giftName'] ?? 'Regalo'), amount: Number(i['amount']) || 0 })),
+      gifts: items.map(i => ({ name: i['kind'] === 'free' ? FREE_AMOUNT_LABEL : String(i['giftName'] ?? 'Regalo'), amount: Number(i['amount']) || 0 })),
       total: Number(c['total']) || 0, at: Number.isFinite(at) ? at : null, how: c['how'] === 'alias' ? 'alias' : null,
       receipt: c['hasReceipt'] ? `/api/contributions/${encodeURIComponent(id)}/receipt` : 'missing', status,
     };

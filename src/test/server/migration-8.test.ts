@@ -31,7 +31,7 @@ describe('migración 8: inicio del trial', () => {
 
     migrate(db);
 
-    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(8);
+    expect((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(9);
     expect(db.prepare('SELECT id, trial_started_at FROM weddings ORDER BY id').all()).toEqual([
       { id: 'w-a', trial_started_at: '2026-10-01T10:00:00.000Z' },
       { id: 'w-b', trial_started_at: null },          // le falta un nombre: la celebración no estaba creada

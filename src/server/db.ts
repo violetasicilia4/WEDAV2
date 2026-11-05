@@ -223,6 +223,27 @@ const MIGRATIONS: string[] = [
       AND trim(coalesce(json_extract(draft, '$.couple.first'), '')) != ''
       AND trim(coalesce(json_extract(draft, '$.couple.second'), '')) != '';
   `,
+  // 9 (2026-11-05): aporte de importe libre (GIFT-09, BR-20, Q1). Un renglón puede ser un regalo de la lista o un aporte libre (sin regalo).
+  // SQLite no cambia la clave primaria: la tabla se rehace COPIANDO todas las filas, en la misma transacción que sube la versión (si algo falla,
+  // vuelve atrás). Las filas existentes pasan como regalos, con el importe sugerido igual al aportado. No se borra ningún dato.
+  `
+  CREATE TABLE contribution_items_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contribution_id TEXT NOT NULL REFERENCES contributions(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('gift','free')),
+    gift_id TEXT,
+    gift_name TEXT,
+    suggested_amount INTEGER,            -- regalos: el importe publicado; libres: nulo
+    amount INTEGER NOT NULL CHECK (amount > 0),    -- regalos: del snapshot publicado; libres: el que eligió el invitado, validado contra lo publicado
+    CHECK ((kind = 'gift') = (gift_id IS NOT NULL)),
+    CHECK ((kind = 'gift') = (gift_name IS NOT NULL))
+  );
+  INSERT INTO contribution_items_new (contribution_id, kind, gift_id, gift_name, suggested_amount, amount)
+    SELECT contribution_id, 'gift', gift_id, gift_name, amount, amount FROM contribution_items ORDER BY rowid;
+  DROP TABLE contribution_items;
+  ALTER TABLE contribution_items_new RENAME TO contribution_items;
+  CREATE INDEX contribution_items_contribution ON contribution_items(contribution_id);
+  `,
 ];
 
 export function openDb(file: string): Db {

@@ -9,7 +9,7 @@ import {
   type Category, type Gift, type WeddingEvent,
 } from '@/lib/demo-wedding';
 import { publishes } from './plans';
-import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath, spotifyEmbed } from './logic';
+import { DEFAULT_GIFTS_BUTTON, DEFAULT_GIFTS_TEXT, DEFAULT_GIFTS_TITLE, DEFAULT_ORDER, freeAmountMin, MIN_AMOUNT, normalizeOrder, shortAddress, coupleLabel, dateLabel, dateShort, dayMonth, isSamplePhoto, mapsLink, parseDate, photoPosition, resolvePhoto, sitePath, spotifyEmbed } from './logic';
 import type { AppState, BlockId, GivenGift } from './types';
 
 export type SiteData = {
@@ -45,6 +45,8 @@ export type SiteData = {
   playlist: { name: string; tracks: { title: string; artist: string }[]; embed?: string | null | undefined };
   message: { title: string; text: string };
   gifts: Gift[];
+  /** Aporte de importe libre (GIFT-09): si los invitados pueden elegir cuánto regalar, y el mínimo efectivo. */
+  freeAmount: { enabled: boolean; min: number };
   giftCategories: Category[];
   giftsCover: string | null;
   alias: string;
@@ -100,6 +102,7 @@ export const demoSiteData: SiteData = {
   playlist: demoPlaylist,
   message: { title: 'Que vengas ya es un regalo.', text: '' },
   gifts: demoGifts,
+  freeAmount: { enabled: false, min: MIN_AMOUNT }, // /ejemplo no cambia (D7)
   giftCategories: demoCategories,
   giftsCover: null,
   alias: demoAlias,
@@ -172,6 +175,8 @@ export function siteFromState(s: AppState): SiteData {
     playlist: { name: s.site.playlist.name.trim() || `Nuestra fiesta · ${names}`, tracks: s.site.playlist.tracks, embed: spotify },
     message: { title: s.site.message.title.trim() || 'Que vengas ya es un regalo.', text: s.site.message.text.trim() },
     gifts,
+    // Opción dentro de la lista (D5): solo si la lista se publica y tiene al menos un regalo.
+    freeAmount: { enabled: publishes(s.planId, 'gifts') && gifts.length > 0 && s.gifts.freeAmount.enabled, min: freeAmountMin(s.gifts.freeAmount.min) },
     giftCategories: present,
     giftsCover: s.gifts.cover,
     alias: s.gifts.alias.trim(),

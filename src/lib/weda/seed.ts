@@ -32,6 +32,7 @@ export function seedState(): AppState {
     preferredPlan: 'invitacion',
     gifts: {
       cover: null,
+      freeAmount: { enabled: false, min: null },
       alias: 'tomas.martina',
       bank: 'Banco de ejemplo',
       cbu: '0000000000000000000000',

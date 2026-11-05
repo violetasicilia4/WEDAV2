@@ -51,7 +51,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Ver también: [inventari
 | ID | Regla | Aprobación | Documentos | Implementación actual | Pruebas | Inconsistencias o dudas |
 |---|---|---|---|---|---|---|
 | BR-19 | **Los regalos son repetibles**: sin stock, sin bloqueo exclusivo, sin unicidad que lo impida | DECIDIDO (Q1) | `02` §5.1 | **IMPLEMENTADO** (2026-10-31, GIFT-08): sin chequeo de regalo tomado al regalar ni al volver a revisar; solo la idempotencia evita duplicados | U (`wedding-flow`, `gifts-repeatable`) | IC-03. `UX` §11 dice que se puede regalar dos veces: describe otra etapa |
-| BR-20 | Dos modalidades: regalo de importe sugerido y aporte de importe libre | DECIDIDO (Q1) | `02` | **PARCIAL**: solo regalos del catálogo con monto fijo | — | |
+| BR-20 | Dos modalidades: regalo de importe sugerido y aporte de importe libre | DECIDIDO (Q1) | `02` | **Implementada** (2026-11-05, GIFT-09): regalos con el importe publicado y aporte libre opcional, con mínimo; el importe distinto del sugerido en un regalo sigue fuera de alcance | `free-amount` | |
 | BR-21 | Monedas ARS y USD, elegida por la pareja; todo importe lleva su moneda; sin conversión ni sumas entre monedas | DECIDIDO (Q3) | `02`, `05b` | **NO IMPLEMENTADO** (ARS implícito; sin columna de moneda) | — | |
 | BR-22 | **Sin comprobante no hay regalo**: el comprobante viaja en el mismo envío; no se puede confirmar un aporte sin comprobante | DECIDIDO (dueña, 2026-10-28) | `UX`, `DP` | **IMPLEMENTADO** | U (`wedding-flow`) | Puede reducir la conversión (F-13): hipótesis sin medir |
 | BR-23 | El correo del invitado es obligatorio al regalar (constancia); la casilla de novedades es aparte y destildada | DECIDIDO | `UX`, `DP` | **IMPLEMENTADO** | U (`wedding-flow`) | |
