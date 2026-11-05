@@ -156,6 +156,15 @@ test.describe('Landing · escritorio no cambia', () => {
   });
 });
 
+test.describe('Landing · datos estructurados para buscadores', () => {
+  test('la home tiene exactamente un Organization y un WebSite, y los bloques parsean sin error', async ({ page }) => {
+    await goLanding(page);
+    const types = await page.evaluate(() => [...document.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!)['@type'] as string));
+    expect(types.filter(t => t === 'Organization')).toHaveLength(1);
+    expect(types.filter(t => t === 'WebSite')).toHaveLength(1);
+  });
+});
+
 test.describe('Página de la lista de regalos (/lista-de-regalos)', () => {
   test('se llega desde el pie, tiene un solo h1, preguntas que se despliegan y datos estructurados para buscadores', async ({ page }) => {
     await goLanding(page);
@@ -165,6 +174,8 @@ test.describe('Página de la lista de regalos (/lista-de-regalos)', () => {
     await expect(page).toHaveTitle(/Lista de regalos/);
     const types = await page.evaluate(() => [...document.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!)['@type']));
     expect(types).toContain('FAQPage');
+    expect(types).toContain('WebPage');
+    expect(types).not.toContain('Organization'); // los de la home no quedan pegados al navegar del lado del cliente
     const first = page.locator('.lr-faq details').first();
     await first.locator('summary').click();
     await expect(first).toHaveAttribute('open', '');
