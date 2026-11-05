@@ -9,7 +9,7 @@ import { FloatNav } from '@/components/float-nav';
 import { LandingPlans } from '@/components/landing-plans';
 import { SiteFooter } from '@/components/site-footer';
 import { GiftFeatures } from '@/components/gift-features';
-import { pageMeta } from '@/lib/site';
+import { homeJsonLd, pageMeta } from '@/lib/site';
 import { useSmoothScroll } from '@/lib/smooth-scroll';
 import { useReveal } from '@/lib/reveal';
 
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/')({
       ogDescription: 'Creá tu lista de regalos, compartí el sitio de tu casamiento y organizá las confirmaciones de tus invitados, todo en un solo lugar.',
       path: '/',
     });
-    return { meta, links };
+    return { meta, links, scripts: homeJsonLd().map(d => ({ type: 'application/ld+json', children: JSON.stringify(d) })) };
   },
   component: Index,
 });

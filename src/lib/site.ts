@@ -49,3 +49,24 @@ export function buildSitemap(siteUrl: string = SITE_URL): string | null {
 export function buildRobots(siteUrl: string = SITE_URL): string {
   return `User-agent: *\nAllow: /\n${siteUrl ? `\nSitemap: ${siteUrl}/sitemap.xml\n` : ''}`;
 }
+
+/** Idioma del sitio para datos estructurados; coincide con `og:locale` (es_AR) del root. */
+export const SITE_LANGUAGE = 'es-AR';
+/** Logo para buscadores: el único raster cuadrado que hay en public/ (PNG 180×180; Google pide al menos 112 px). */
+export const ORGANIZATION_LOGO = '/apple-touch-icon.png';
+
+/**
+ * JSON-LD de la home: `Organization` y `WebSite`, solo con datos que el sitio ya tiene (nombre, dominio, ícono).
+ * Sin dominio no se emiten `@id`, `url` ni `logo`: una ruta relativa no sirve en datos estructurados y no se inventa un dominio
+ * (la misma regla de `pageMeta` con el canonical). No lleva redes, contacto, precios, reseñas ni `SearchAction`: no existen.
+ */
+export function homeJsonLd(siteUrl: string = SITE_URL): [Record<string, unknown>, Record<string, unknown>] {
+  const orgId = `${siteUrl}/#organization`;
+  const organization = siteUrl
+    ? { '@context': 'https://schema.org', '@type': 'Organization', '@id': orgId, name: SITE_NAME, url: `${siteUrl}/`, logo: `${siteUrl}${ORGANIZATION_LOGO}` }
+    : { '@context': 'https://schema.org', '@type': 'Organization', name: SITE_NAME };
+  const website = siteUrl
+    ? { '@context': 'https://schema.org', '@type': 'WebSite', '@id': `${siteUrl}/#website`, name: SITE_NAME, url: `${siteUrl}/`, inLanguage: SITE_LANGUAGE, publisher: { '@id': orgId } }
+    : { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, inLanguage: SITE_LANGUAGE, publisher: { '@type': 'Organization', name: SITE_NAME } };
+  return [organization, website];
+}

@@ -29,7 +29,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | LAN-02 | Testimonios (4) o «Por qué Weda» si la lista queda vacía | DECIDIDO por la dueña (2026-10-29) | **Implementada** (`src/lib/testimonials.ts`) | U (landing) | La dueña responde por su autenticidad; `PRODUCT.md` los llama ficticios y el hallazgo F-10 sigue «pendiente» (IC-19) |
 | LAN-03 | Sitio de ejemplo `/ejemplo`, `/ejemplo/regalos` | DOCUMENTADO | **Implementada** (datos de muestra) | U (`demo-lib`) | Pareja ficticia; es un ejemplo, no un evento real |
 | LAN-04 | Buscador de invitaciones por enlace `/encontrar` | DOCUMENTADO (F-04) | **Implementada** | E2E | Pide pegar el enlace; no hay directorio público (decisión de privacidad pendiente) |
-| LAN-05 | SEO: canonical, Open Graph, sitemap con `VITE_SITE_URL`; invitaciones `noindex` | DOCUMENTADO | **Implementada** | U (`site-seo`: 4) | Indexar invitaciones: decisión pendiente |
+| LAN-05 | SEO: canonical, Open Graph, sitemap con `VITE_SITE_URL`; datos estructurados (JSON-LD `Organization` y `WebSite`) en la home, con URLs absolutas solo si hay dominio; invitaciones `noindex` | DOCUMENTADO | **Implementada** | U (`site-seo`: 7) | Indexar invitaciones: decisión pendiente |
 | LAN-06 | Analítica del navegador (8 eventos) | DECIDIDO: apagada hasta política y consentimiento (P14) | **Implementada y apagada** por defecto (`VITE_ANALYTICS=on` la enciende) | U parcial (`funnel`) | Coherente con la decisión |
 | LAN-07 | Páginas legales `/terminos`, `/privacidad` | DOCUMENTADO como **borrador sin revisión legal** | **Implementada como borrador** | — | Marcadas «a completar»; dicen «6 meses» y retención «mientras la cuenta esté activa» (IC-14) |
 
