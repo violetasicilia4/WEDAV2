@@ -1,6 +1,7 @@
 // Acciones de un invitado sobre un sitio publicado: confirmar asistencia y avisar un regalo (con su comprobante). Sin sesión.
 // Cada función falla con un Error cuyo mensaje es un texto para la persona; nunca se simula un envío exitoso.
 import { api, ApiFailure } from './remote';
+import { isFreeGift } from './logic';
 import type { GiftSubmission, Giver, GuestContact, RsvpEntry } from './site-model';
 import type { Gift } from '@/lib/demo-wedding';
 
@@ -17,6 +18,9 @@ const TEXT: Record<string, string> = {
   invalid_name: 'Revisá el nombre y el apellido.',
   invalid_giver_email: 'Revisá tu correo electrónico.',
   receipt_required: 'Adjuntá el comprobante de la transferencia para enviar tu regalo.',
+  free_amount_disabled: 'Los novios ya no reciben aportes libres. Quitalo de tu regalo y elegí uno de la lista.',
+  invalid_free_amount: 'Revisá el monto de tu aporte libre.',
+  invalid_gifts: 'Elegí al menos un regalo.',
 };
 const messageFor = (e: unknown) => (e instanceof ApiFailure ? TEXT[e.code] : undefined) ?? 'No pudimos completar el envío. Probá de nuevo en un rato.';
 
@@ -41,7 +45,7 @@ export async function sendGift(slug: string, gifts: Gift[], giver: Giver, extra:
     if (extra.proof.size > 5 * 1024 * 1024) throw new ApiFailure(413, 'file_too_large');
     const receipt = { data: await toBase64(extra.proof) };
     await api('POST', `/api/public/${encodeURIComponent(slug)}/contributions`, {
-      idempotencyKey: extra.attempt.key, manageToken: extra.attempt.token, giftIds: gifts.map(g => g.id), giverName: giver.name, giverEmail: giver.email, marketingOptIn: giver.marketingOptIn, message: giver.message, how: giver.how, receipt,
+      idempotencyKey: extra.attempt.key, manageToken: extra.attempt.token, giftIds: gifts.filter(g => !isFreeGift(g)).map(g => g.id), freeAmount: gifts.find(isFreeGift)?.amount, giverName: giver.name, giverEmail: giver.email, marketingOptIn: giver.marketingOptIn, message: giver.message, how: giver.how, receipt,
     });
   } catch (e) { throw new Error(messageFor(e)); }
 }

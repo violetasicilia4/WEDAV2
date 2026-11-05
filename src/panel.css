@@ -1834,3 +1834,8 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .pn-flow-bg { opacity: 0; transition: opacity .35s ease; }
 .pn-flow-bg.is-ready { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .pn-flow-bg { transition: none; } }
+
+/* Aporte libre (GIFT-09): bloque debajo de «Mis regalos», con el interruptor y el mínimo opcional. */
+.rg-free-cfg { margin-top: 28px; }
+.rg-free-cfg .pn-check { margin-top: 4px; }
+.rg-free-cfg .pn-field { max-width: 320px; }

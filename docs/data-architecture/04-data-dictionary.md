@@ -537,6 +537,7 @@ El dinero de los regalos: de la pareja hacia ella. Weda no pasa por ese dinero.
 - **Qué representa:** Un renglón de un aporte: un regalo de la lista o un aporte libre.
 - **Clase de retención:** `A` — Datos personales y operativos (categoría A)
 - **Contiene (conceptualmente):** aporte, tipo (regalo, aporte libre), regalo (obligatorio solo si el tipo es regalo), nombre del regalo, **importe sugerido en ese momento** y **importe aportado** (pueden diferir), moneda.
+- **Implementado (2026-11-05, GIFT-09, migración 8):** `contribution_items` tiene `id` propio, `kind` (`gift` o `free`), `gift_id` y `gift_name` (nulos solo en los libres) y `suggested_amount` (nulo en los libres). Las filas anteriores pasaron como regalos con el importe sugerido igual al aportado. La moneda sigue implícita (ARS) hasta GIFT-10.
 - **Por qué es una entidad aparte:** Hoy ya admite el mismo regalo en varios aportes. Se agregan el tipo (para el aporte libre, sin regalo) y la moneda explícita. La copia del nombre y de los importes mantiene el historial aunque se edite o archive el regalo. La suma de los renglones es el total del aporte, verificada al crearlo.
 - **Relaciones:**
   - **es referida por** `Contribution` (uno a uno o más; «incluye»)

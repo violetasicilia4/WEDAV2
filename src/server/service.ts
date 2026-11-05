@@ -8,7 +8,7 @@ import { tx, type Db } from './db';
 import { ApiError, conflict, forbidden, invalid, notFound, unauthorized } from './errors';
 import { hashPassword, newId, newToken, RateLimiter, sha256, verifyPassword } from './security';
 import type { ServerConfig } from './config';
-import { cleanCbu, emptyState, isEmail, maskAlias, maskCbu, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
+import { cleanCbu, emptyState, FREE_AMOUNT_LABEL, isEmail, maskAlias, maskCbu, MAX_AMOUNT, MIN_AMOUNT, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
 import { planById, isPlanId, normalizePlanId, operates, planForOperation, planRank, type Access, type Operation } from '@/lib/weda/plans';
 import type { Guest, PlanId } from '@/lib/weda/types';
 import type { SiteData } from '@/lib/weda/site-model';
@@ -500,10 +500,24 @@ export class Service {
     const receipt = decodeReceipt(b['receipt']);
     const message = typeof b['message'] === 'string' ? b['message'].trim().slice(0, 500) : '';
     const ids = Array.isArray(b['giftIds']) ? [...new Set((b['giftIds'] as unknown[]).filter((x): x is string => typeof x === 'string'))] : [];
-    if (ids.length < 1 || ids.length > 30) throw invalid('invalid_gifts');
+    // Aporte libre (GIFT-09): un solo renglón por aporte, solo si lo publicado lo habilita. Es el único importe que viene del cliente.
+    const wantsFree = b['freeAmount'] !== undefined && b['freeAmount'] !== null;
+    if (ids.length > 30 || (ids.length < 1 && !wantsFree)) throw invalid('invalid_gifts');
     if (!p.snapshot.blocks.gifts) throw conflict('gifts_disabled');
     const gifts = ids.map(id => p.snapshot.gifts.find(g => g.id === id));
     if (gifts.some(g => !g)) throw invalid('unknown_gift');
+    let free: number | null = null;
+    if (wantsFree) {
+      const fa = p.snapshot.freeAmount;
+      if (!fa?.enabled) throw conflict('free_amount_disabled');
+      const v = b['freeAmount'];
+      if (typeof v !== 'number' || !Number.isInteger(v) || v < Math.max(fa.min, MIN_AMOUNT) || v > MAX_AMOUNT) throw invalid('invalid_free_amount');
+      free = v;
+    }
+    const lines = [
+      ...gifts.map(g => ({ kind: 'gift' as const, giftId: g!.id, name: g!.name, suggested: Math.round(g!.amount), amount: Math.round(g!.amount) })),
+      ...(free !== null ? [{ kind: 'free' as const, giftId: null, name: null, suggested: null, amount: free }] : []),
+    ];
     let written = '';
     let res: { id: string; status: string; replay: boolean };
     try { res = tx(this.db, () => {
@@ -517,10 +531,10 @@ export class Service {
       // Regalos repetibles (BR-19): el mismo regalo puede estar en cualquier cantidad de aportes. Lo único que evita duplicados es la clave de idempotencia.
       const id = newId('apo');
       const t = now();
-      const total = gifts.reduce((n, g) => n + Math.round(g!.amount), 0);
+      const total = lines.reduce((n, l) => n + l.amount, 0);
       this.db.prepare("INSERT INTO contributions (id,wedding_id,giver_name,giver_email,message,how,status,total,idempotency_key,manage_token_hash,created_at,updated_at) VALUES (?,?,?,?,?,?,'pending_review',?,?,?,?,?)").run(id, p.wid, giver, giverEmail, message, 'alias', total, key, hash, t, t);
       if (b['marketingOptIn'] === true) this.grantConsent(giverEmail, 'gift', p.wid);
-      for (const g of gifts) this.db.prepare('INSERT INTO contribution_items (contribution_id,gift_id,gift_name,amount) VALUES (?,?,?,?)').run(id, g!.id, g!.name, Math.round(g!.amount));
+      for (const l of lines) this.db.prepare('INSERT INTO contribution_items (contribution_id,kind,gift_id,gift_name,suggested_amount,amount) VALUES (?,?,?,?,?,?)').run(id, l.kind, l.giftId, l.name, l.suggested, l.amount);
       this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'created','guest',NULL,'pending_review','',?)").run(id, t);
       const fileKey = this.storeReceiptFile(receipt.bytes);
       written = fileKey;
@@ -533,7 +547,7 @@ export class Service {
     }
     if (!res.replay) this.track('gift_submitted');
     // Constancia para quien regaló (no bloquea: si el correo falla, el regalo ya quedó registrado).
-    if (!res.replay) void this.mailGiftReceipt({ id: res.id, to: giverEmail, giver, couple: p.snapshot.names, gifts: gifts.map(g => ({ name: g!.name, amount: Math.round(g!.amount) })), manage, optedIn: b['marketingOptIn'] === true });
+    if (!res.replay) void this.mailGiftReceipt({ id: res.id, to: giverEmail, giver, couple: p.snapshot.names, gifts: lines.map(l => ({ name: l.name ?? FREE_AMOUNT_LABEL, amount: l.amount })), manage, optedIn: b['marketingOptIn'] === true });
     return res;
   }
 
@@ -658,7 +672,7 @@ export class Service {
     const rows = this.db.prepare('SELECT * FROM contributions WHERE wedding_id = ? ORDER BY created_at DESC, id').all(w['id'] as string) as Row[];
     return rows.map(c => ({
       id: c['id'] as string, giverName: c['giver_name'] as string, giverEmail: (c['giver_email'] as string | undefined) ?? '', message: c['message'] as string, how: c['how'] as string, status: c['status'] as string, total: c['total'] as number, createdAt: c['created_at'] as string,
-      items: (this.db.prepare('SELECT gift_id, gift_name, amount FROM contribution_items WHERE contribution_id = ?').all(c['id'] as string) as Row[]).map(i => ({ giftId: i['gift_id'] as string, giftName: i['gift_name'] as string, amount: i['amount'] as number })),
+      items: (this.db.prepare('SELECT kind, gift_id, gift_name, amount FROM contribution_items WHERE contribution_id = ? ORDER BY id').all(c['id'] as string) as Row[]).map(i => ({ kind: i['kind'] as 'gift' | 'free', giftId: (i['gift_id'] as string | null) ?? '', giftName: (i['gift_name'] as string | null) ?? '', amount: i['amount'] as number })),
       hasReceipt: !!this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(c['id'] as string),
       history: (this.db.prepare('SELECT kind, actor, from_status, to_status, note, at FROM contribution_events WHERE contribution_id = ? ORDER BY id').all(c['id'] as string) as Row[]).map(e => ({ kind: e['kind'] as string, actor: e['actor'] as string, from: (e['from_status'] as string | null) ?? null, to: (e['to_status'] as string | null) ?? null, note: e['note'] as string, at: e['at'] as string })),
     }));

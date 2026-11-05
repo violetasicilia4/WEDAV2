@@ -1,6 +1,6 @@
 # GIFT-09 · Aporte de importe libre — spec
 
-- **Estado:** aprobada (2026-11-01, la dueña, junto con el plan). Todavía no está en construcción.
+- **Estado:** en construcción. Aprobada el 2026-11-01 (la dueña, junto con el plan); construida el 2026-11-05 en la rama `feat/aporte-libre`. Pasa a cerrada cuando se integre a `main`.
 - **Tamaño:** mediana. Cambia el esquema de la base (migración 8), que ya fue aprobado en el plan.
 - **Plan:** [plan.md](plan.md)
 - **Origen:** plan aprobado el 2026-11-01 en la sesión «Plan de GIFT-09». Se separó en esta spec (qué y decisiones) y en el plan (cómo), sin cambiar su contenido.
@@ -73,6 +73,19 @@ Hoy un invitado solo puede regalar ítems de la lista, con el monto que fijó la
 
 ## Verificación al cerrar
 
-| Criterio | Evidencia |
+| Criterio | Evidencia (2026-11-05) |
 |---|---|
-| CA-1 a CA-13 | (al cerrar) |
+| CA-1 | `free-amount-ui.test.tsx` («viene apagado…»); `free-amount.test.ts` (409 con lo publicado apagado) |
+| CA-2 | `free-amount-ui.test.tsx` (saneamiento del mínimo y validación compartida); recorrido en el panel (390 px) |
+| CA-3 | `free-amount.test.ts` («cambiarlo en el borrador no afecta…»); `free-amount-ui.test.tsx` (sin tarjeta si no está habilitado); recorrido |
+| CA-4 | `free-amount.test.ts` («un aporte solo libre se acepta…», incluido el comprobante obligatorio) |
+| CA-5, CA-7 | `free-amount.test.ts` («regalo más aporte libre…»; el cliente manda `amount`/`total` y se ignoran) |
+| CA-6 | `free-amount.test.ts` (409 y los seis montos inválidos; mínimo general $ 1.000) |
+| CA-8 | `free-amount.test.ts` («reenviar con la misma clave no duplica») |
+| CA-9 | `free-amount.test.ts` (la API pública expone `freeAmount` y ningún dato de aportes) |
+| CA-10 | `free-amount.test.ts` (correo «Aporte libre: $»); `free-amount-ui.test.tsx` (revisión); recorrido en «Aportes recibidos» |
+| CA-11 | `free-amount.test.ts` («migración 8…»: filas y totales iguales) y `hardening.test.ts` (versión 8) |
+| CA-12 | `free-amount.test.ts` («los aportes libres de una pareja no aparecen en otra») |
+| CA-13 | `free-amount-ui.test.tsx` y recorrido en `/ejemplo/regalos` (sin tarjeta) |
+
+**Diferencias con el plan:** la prueba de aislamiento (CA-12) quedó en `free-amount.test.ts` en vez de `auth-isolation.test.ts`; no hay prueba de componente del bloque del panel (su validación y su saneamiento sí están probados), y la E2E `backend.spec.ts` no se tocó porque ninguna de sus pruebas cambió de comportamiento.
