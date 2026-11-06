@@ -9,9 +9,9 @@ export type PublicLookup =
   | { status: 'unpublished' }
   | { status: 'missing' };
 
-export function lookupPublicSite(slug: string): PublicLookup {
+export async function lookupPublicSite(slug: string): Promise<PublicLookup> {
   try {
-    const r = getService(loadConfig()).getPublicSite(slug);
+    const r = await (await getService(loadConfig())).getPublicSite(slug);
     return { status: 'live', site: r.site };
   } catch (e) {
     // Lo publicado no vence (BR-65): un 410 solo puede ser una página que la pareja dio de baja.

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { draftFor, makeEnv, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
-beforeEach(() => { env = makeEnv(); });
+beforeEach(async () => { env = await makeEnv(); });
 afterEach(() => env.close());
 
 const pendingOf = async (c: ReturnType<Env['client']>) => (await c.get('/api/wedding')).body.publication?.pendingChanges;

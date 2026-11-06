@@ -1,11 +1,15 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => {
+  // El servidor lee su configuración de process.env (src/server/config.ts). En desarrollo, las variables de Supabase pueden venir de .env.local
+  // (nunca se publican: no llevan el prefijo VITE_). Lo que ya viene del entorno tiene prioridad.
+  for (const [k, v] of Object.entries(loadEnv(mode, process.cwd(), "SUPABASE_"))) process.env[k] ??= v;
+  return {
   plugins: [
     // Solo en desarrollo: otros proyectos usaron el puerto 8080 y el navegador puede mostrar una copia guardada de ellos (también del HTML) en vez de Weda.
     {
@@ -43,7 +47,7 @@ export default defineConfig(({ command }) => ({
                   "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com",
                   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                   "font-src 'self' https://fonts.gstatic.com",
-                  "img-src 'self' data: blob: https://maps.gstatic.com https://maps.googleapis.com https://*.googleusercontent.com https://*.ggpht.com",
+                  "img-src 'self' data: blob: https://*.supabase.co https://maps.gstatic.com https://maps.googleapis.com https://*.googleusercontent.com https://*.ggpht.com",
                   "media-src 'self' blob:",
                   "connect-src 'self' https://maps.googleapis.com https://places.googleapis.com",
                   "frame-src 'self' https://open.spotify.com",
@@ -84,4 +88,5 @@ export default defineConfig(({ command }) => ({
     // Otros proyectos usaron este puerto: sin esto el navegador puede mostrar una copia guardada de ellos en vez de Weda.
     headers: { "Cache-Control": "no-store" },
   },
-}));
+};
+});

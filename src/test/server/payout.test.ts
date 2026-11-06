@@ -2,15 +2,15 @@
 // Destino de cobro protegido (GIFT-14, BR-30): solo con la clave, con versiones, aviso por correo y sin que un guardado del borrador lo cambie.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { migrate } from '@/server/db';
-import { draftFor, makeEnv, saveDraft, setPayout, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, saveDraft, setPayout, signUp, PG, type Env } from './helpers';
 
 let env: Env;
-beforeEach(() => { env = makeEnv(); });
+beforeEach(async () => { env = await makeEnv(); });
 afterEach(() => env.close());
 
 const CBU = '0170099220000067797370';
 const payoutOf = async (c: ReturnType<Env['client']>) => (await c.get('/api/wedding')).body.payout;
-const versions = (wid: string) => env.svc.db.prepare('SELECT version, alias, source FROM payout_methods WHERE wedding_id = ? ORDER BY version').all(wid) as { version: number; alias: string; source: string }[];
+const versions = async (wid: string) => (await env.svc.db.all('SELECT version, alias, source FROM payout_methods WHERE wedding_id = ? ORDER BY version', wid)) as { version: number; alias: string; source: string }[];
 
 async function couple(email = 'pareja@correo.com') {
   const c = env.client(); await signUp(c, email);
@@ -61,7 +61,7 @@ describe('cambiar el destino de cobro', () => {
     await c.post('/api/wedding/publish');
     expect((await site()).alias).toBe('nuevo.alias.mp');
     const wid = (await c.get('/api/wedding')).body.id as string;
-    expect(versions(wid).map(v => [v.version, v.alias, v.source])).toEqual([[1, 'ana.leo.mp', 'owner'], [2, 'nuevo.alias.mp', 'owner']]);
+    expect((await versions(wid)).map(v => [v.version, v.alias, v.source])).toEqual([[1, 'ana.leo.mp', 'owner'], [2, 'nuevo.alias.mp', 'owner']]);
   });
 
   it('un cambio hecho desde otro dispositivo no se pisa (versión vieja → 409) y repetir lo mismo no cuenta', async () => {
@@ -94,18 +94,18 @@ describe('cambiar el destino de cobro', () => {
     for (const m of sent) { expect(m.text).not.toContain('ana.leo.mp'); expect(m.text).not.toContain(CBU); }
   });
 
-  it('la migración copia el alias que ya estaba en los borradores como versión 1', async () => {
+  it.skipIf(PG)('la migración copia el alias que ya estaba en los borradores como versión 1', async () => {
     const c = await couple();
     const db = env.svc.db;
     const wid = (await c.get('/api/wedding')).body.id as string;
     // Simula una base de antes de la migración 7: el alias vive solo en el borrador.
-    const draft = JSON.parse((db.prepare('SELECT draft FROM weddings WHERE id = ?').get(wid) as { draft: string }).draft);
+    const draft = JSON.parse(((await db.get('SELECT draft FROM weddings WHERE id = ?', wid)) as { draft: string }).draft);
     draft.gifts = { ...draft.gifts, alias: 'viejo.alias.mp', bank: 'Banco Viejo', cbu: CBU };
-    db.prepare('UPDATE weddings SET draft = ? WHERE id = ?').run(JSON.stringify(draft), wid);
+    (await db.run('UPDATE weddings SET draft = ? WHERE id = ?', JSON.stringify(draft), wid));
     // Antes de la migración 7 tampoco existía la columna de la 8 (trial, PAY-07): se quita para volver a migrar desde la 6.
-    db.exec('DROP TABLE payout_methods; ALTER TABLE weddings DROP COLUMN trial_started_at; PRAGMA user_version = 6;');
-    migrate(db);
-    expect(versions(wid)).toEqual([{ version: 1, alias: 'viejo.alias.mp', source: 'migrated' }]);
+    await db.exec('DROP TABLE payout_methods; ALTER TABLE weddings DROP COLUMN trial_started_at; PRAGMA user_version = 6;');
+    await migrate(db);
+    expect((await versions(wid))).toEqual([{ version: 1, alias: 'viejo.alias.mp', source: 'migrated' }]);
     expect(await payoutOf(c)).toMatchObject({ version: 1, alias: 'viejo.alias.mp', bank: 'Banco Viejo', cbu: CBU });
   });
 });

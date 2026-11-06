@@ -1,6 +1,6 @@
 # Weda · instrucciones permanentes para Claude Code
 
-Weda crea y gestiona la experiencia digital de un casamiento: página de invitación, lista de regalos simbólicos con aportes por alias, invitados y mesas, confirmación de asistencia y vista previa. Tiene frontend (TanStack Start + React) y un servidor propio (API `/api/*` con SQLite). Todavía **no** tiene hosting de producción ni proveedor de pagos real.
+Weda crea y gestiona la experiencia digital de un casamiento: página de invitación, lista de regalos simbólicos con aportes por alias, invitados y mesas, confirmación de asistencia y vista previa. Tiene frontend (TanStack Start + React) y un servidor propio (API `/api/*`) con base PostgreSQL, cuentas y archivos en Supabase (OPS-08; sin las variables `SUPABASE_*` usa SQLite local). Todavía **no** tiene hosting de producción ni proveedor de pagos real.
 
 Este archivo es un índice. Las reglas por área se cargan solas al trabajar en esos archivos (`.claude/rules/`): interfaz (`frontend-ux.md`), servidor y datos (`backend-data.md`) y documentación (`docs.md`).
 
@@ -18,7 +18,7 @@ Este archivo es un índice. Las reglas por área se cargan solas al trabajar en 
 ## Git y entorno
 - Cada tarea va en su rama y llega a `main` por PR. **No hagas commit, push, merge ni deploy** salvo que se pida explícitamente. Nunca force-push.
 - Los permisos reales están en `.claude/settings.json` (versionado). No subas `.claude/settings.local.json`, `analisis-confites-top50.md`, `luna-de-miel-confites.md`, `capturas/` ni las fotos sin usar de `public/` (`pareja-portada-3…7.webp`, `pareja-portada-10.png`).
-- Node 22.5 o más (el servidor usa `node:sqlite`). Servidor de desarrollo en el puerto 8080 (preview «weda»); crea y migra `.data/weda.db`.
+- Node 22.5 o más (el modo local usa `node:sqlite`). Servidor de desarrollo en el puerto 8080 (preview «weda»). Con `SUPABASE_URL`, `SUPABASE_SECRET_KEY` y `SUPABASE_DB_URL` en `.env.local` usa el proyecto de desarrollo de Supabase y migra su base al arrancar; sin ellas, crea y migra `.data/weda.db`. Las pruebas de servidor siguen la misma regla (`WEDA_TEST_DB=sqlite` fuerza lo local).
 
 ## Verificación
 - Antes de dar algo por terminado: `npm run typecheck`, `npm run lint`, `npm test` y `npm run build`. Para cambios visibles, además el recorrido real en el navegador (celular y compu).

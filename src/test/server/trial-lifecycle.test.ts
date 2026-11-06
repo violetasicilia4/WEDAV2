@@ -17,11 +17,11 @@ const put = async (c: Client, draft: AppState) => {
 };
 const access = async (c: Client) => (await c.get('/api/wedding')).body.access;
 const login = async (c: Client, email: string) => expect((await c.post('/api/auth/login', { email, password: PASSWORD })).status).toBe(200);
-const trialStart = (env: Env, c: Client) => c.get('/api/wedding').then(r => (env.svc.db.prepare('SELECT trial_started_at FROM weddings WHERE id = ?').get(r.body.id) as { trial_started_at: string | null }).trial_started_at);
+const trialStart = async (env: Env, c: Client) => c.get('/api/wedding').then(async r => ((await env.svc.db.get('SELECT trial_started_at FROM weddings WHERE id = ?', r.body.id)) as { trial_started_at: string | null }).trial_started_at);
 
 describe('trial de 14 días (sin compuerta de pago)', () => {
   let env: Env;
-  beforeAll(() => { env = makeEnv(); });
+  beforeAll(async () => { env = await makeEnv(); });
   afterAll(() => env.close());
 
   it('CA-1/CA-2 · registrarse (sin tarjeta) no inicia el trial; crear la celebración sí, y lo guarda el servidor', async () => {
@@ -94,9 +94,9 @@ describe('trial de 14 días (sin compuerta de pago)', () => {
 
 describe('contratar y publicar en un solo momento (con compuerta y pago de prueba)', () => {
   let env: Env;
-  beforeAll(() => { env = makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } }); });
+  beforeAll(async () => { env = await makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } }); });
   afterAll(() => env.close());
-  const counts = () => env.svc.db.prepare('SELECT (SELECT count(*) FROM orders) AS orders, (SELECT count(*) FROM payment_events) AS events').get();
+  const counts = async () => (await env.svc.db.get('SELECT (SELECT count(*) FROM orders) AS orders, (SELECT count(*) FROM payment_events) AS events'));
 
   it('CA-10/CA-12/CA-13 · con el trial vencido se contrata Celebración: el pago publica en el momento, sale de la pausa y la URL queda fija', async () => {
     clock();
@@ -152,20 +152,20 @@ describe('contratar y publicar en un solo momento (con compuerta y pago de prueb
     // Se borran los nombres justo antes de pagar: la publicación automática falla por `incomplete`.
     await saveDraft(c, { ...d, couple: { first: '', second: '' } });
     const ord = (await c.post('/api/checkout', { planId: 'invitacion' })).body;
-    const before = counts();
+    const before = (await counts());
     await c.post(`/api/test-payments/${ord.id}`, { outcome: 'paid' });
     expect((await c.get(`/api/orders/${ord.id}`)).body.status).toBe('paid');
     const w = (await c.get('/api/wedding')).body;
     expect(w.access.state).toBe('paid_unpublished');
     expect(w.publication).toBeNull();
     // F-P2: la falla queda registrada solo con su código.
-    expect(env.svc.db.prepare("SELECT props FROM funnel_events WHERE name = 'publication_failed' ORDER BY id DESC LIMIT 1").get()).toEqual({ props: JSON.stringify({ reason: 'incomplete' }) });
-    const after = counts() as { orders: number; events: number };
+    expect((await env.svc.db.get("SELECT props FROM funnel_events WHERE name = 'publication_failed' ORDER BY id DESC LIMIT 1"))).toEqual({ props: JSON.stringify({ reason: 'incomplete' }) });
+    const after = (await counts()) as { orders: number; events: number };
     expect(after.orders).toBe((before as { orders: number }).orders);
     await saveDraft(c, d);
     const r = await c.post('/api/wedding/publish');
     expect([r.status, r.body.planId]).toEqual([200, 'invitacion']);
-    expect(counts()).toEqual(after);                                    // ni orden nueva ni otro evento de pago
+    expect((await counts())).toEqual(after);                                    // ni orden nueva ni otro evento de pago
     expect((await c.post('/api/checkout', { planId: 'invitacion' })).body.error).toBe('already_paid');
   });
 

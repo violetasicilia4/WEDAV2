@@ -1,11 +1,81 @@
-// Base de datos: SQLite nativo de Node (node:sqlite). Toda la persistencia pasa por acá y por service.ts; cambiar de motor
-// (Postgres) toca solo estos dos archivos. Las migraciones son ordenadas e idempotentes (PRAGMA user_version).
+// Base de datos: toda la persistencia pasa por acá y por service.ts, a través de un adaptador asincrónico (`Db`) con la misma forma para los dos
+// motores: SQLite nativo de Node (node:sqlite) hoy, y PostgreSQL de Supabase (OPS-08, D-07). Las migraciones son ordenadas y corren una sola vez.
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 
-export type Db = DatabaseSync;
+export type Row = Record<string, unknown>;
+
+/**
+ * Acceso a la base. Las consultas usan `?` como marcador. `tx(clave, fn)` corre `fn` en una transacción y la serializa con las demás
+ * transacciones de la misma clave (en Postgres, un candado por casamiento; en SQLite, un solo escritor). Dentro de `fn`, las consultas
+ * hechas con este mismo objeto van a la transacción en curso.
+ */
+export interface Db {
+  readonly dialect: 'sqlite' | 'pg';
+  get<T = Row>(sql: string, ...params: unknown[]): Promise<T | undefined>;
+  all<T = Row>(sql: string, ...params: unknown[]): Promise<T[]>;
+  run(sql: string, ...params: unknown[]): Promise<{ changes: number }>;
+  exec(sql: string): Promise<void>;
+  tx<T>(key: string, fn: () => Promise<T>): Promise<T>;
+  close(): Promise<void>;
+}
+
+type Param = null | number | bigint | string | Uint8Array;
+const sqliteParam = (v: unknown): Param => (v === undefined ? null : typeof v === 'boolean' ? (v ? 1 : 0) : (v as Param));
+
+/** SQLite: una sola conexión. Mientras una transacción está abierta, las consultas de otros pedidos esperan a que termine. */
+class SqliteDb implements Db {
+  readonly dialect = 'sqlite' as const;
+  private lock: Promise<void> = Promise.resolve();
+  private open = 0;
+  private inTx = new AsyncLocalStorage<true>();
+  constructor(public raw: DatabaseSync) {}
+  private async ready() {
+    while (this.open > 0 && !this.inTx.getStore()) await this.lock;
+  }
+  async get<T = Row>(sql: string, ...params: unknown[]) {
+    await this.ready();
+    return this.raw.prepare(sql).get(...params.map(sqliteParam)) as T | undefined;
+  }
+  async all<T = Row>(sql: string, ...params: unknown[]) {
+    await this.ready();
+    return this.raw.prepare(sql).all(...params.map(sqliteParam)) as T[];
+  }
+  async run(sql: string, ...params: unknown[]) {
+    await this.ready();
+    return { changes: Number(this.raw.prepare(sql).run(...params.map(sqliteParam)).changes) };
+  }
+  async exec(sql: string) {
+    await this.ready();
+    this.raw.exec(sql);
+  }
+  async tx<T>(_key: string, fn: () => Promise<T>): Promise<T> {
+    if (this.inTx.getStore()) return fn(); // ya dentro de una transacción: se suma a ella
+    const prev = this.lock;
+    let release!: () => void;
+    this.lock = new Promise(r => { release = r; });
+    this.open++;
+    await prev;
+    try {
+      this.raw.exec('BEGIN IMMEDIATE');
+      try {
+        const r = await this.inTx.run(true, fn);
+        this.raw.exec('COMMIT');
+        return r;
+      } catch (e) {
+        this.raw.exec('ROLLBACK');
+        throw e;
+      }
+    } finally {
+      this.open--;
+      release();
+    }
+  }
+  async close() { this.raw.close(); }
+}
 
 /** Cada migración corre una sola vez, en una transacción. No se editan las ya publicadas: se agrega una nueva. */
 const MIGRATIONS: string[] = [
@@ -246,40 +316,32 @@ const MIGRATIONS: string[] = [
   `,
 ];
 
-export function openDb(file: string): Db {
+export function openDb(file: string): SqliteDb {
   if (file !== ':memory:') mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
   // Se carga recién acá: si el entorno no tiene `node:sqlite` (Node < 22.5), solo falla la API y el resto del sitio sigue funcionando.
   const { DatabaseSync: Database } = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite');
-  const db = new Database(file);
-  db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
-  migrate(db);
-  return db;
+  const raw = new Database(file);
+  raw.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;');
+  migrateSqlite(raw);
+  return new SqliteDb(raw);
 }
 
-export function migrate(db: Db) {
-  const row = db.prepare('PRAGMA user_version').get() as { user_version: number };
+function migrateSqlite(raw: DatabaseSync) {
+  const row = raw.prepare('PRAGMA user_version').get() as { user_version: number };
   for (let v = row.user_version; v < MIGRATIONS.length; v++) {
-    db.exec('BEGIN');
+    raw.exec('BEGIN');
     try {
-      db.exec(MIGRATIONS[v]!);
-      db.exec(`PRAGMA user_version = ${v + 1}`);
-      db.exec('COMMIT');
+      raw.exec(MIGRATIONS[v]!);
+      raw.exec(`PRAGMA user_version = ${v + 1}`);
+      raw.exec('COMMIT');
     } catch (e) {
-      db.exec('ROLLBACK');
+      raw.exec('ROLLBACK');
       throw e;
     }
   }
 }
 
-/** Ejecuta `fn` en una transacción inmediata (toma el candado de escritura desde el inicio: las lecturas-validaciones son atómicas con la escritura). */
-export function tx<T>(db: Db, fn: () => T): T {
-  db.exec('BEGIN IMMEDIATE');
-  try {
-    const r = fn();
-    db.exec('COMMIT');
-    return r;
-  } catch (e) {
-    db.exec('ROLLBACK');
-    throw e;
-  }
+/** Corre las migraciones pendientes (las pruebas la usan para simular una base anterior). */
+export async function migrate(db: Db) {
+  if (db instanceof SqliteDb) migrateSqlite(db.raw);
 }

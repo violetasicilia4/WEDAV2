@@ -7,13 +7,15 @@ Esto es una guía de trabajo, no asesoramiento legal: la política de privacidad
 
 | Dato | De quién | Dónde | Para qué | Lo ve |
 |---|---|---|---|---|
-| Correo y clave | Pareja | `users` | Cuenta | Weda |
+| Correo y clave | Pareja | Supabase Auth (`auth.users`; la clave, con hash) — en local, `users` | Cuenta | Weda |
 | Datos del casamiento, lista, alias | Pareja | `weddings.draft`, `publications` | Servicio | Pareja e invitados (lo publicado) |
 | Nombre, correo (obligatorio), mensaje, regalos, monto | Invitado que regala | `contributions` (+ `contribution_items`) | Informar el regalo, constancia, pedir el comprobante | Pareja |
-| Comprobante | Invitado que regala | `receipts` + archivo privado en `WEDA_DATA_DIR/receipts` | Que la pareja valide la transferencia | Pareja |
+| Comprobante | Invitado que regala | `receipts` + archivo en el bucket privado `receipts` de Supabase Storage (en local, `WEDA_DATA_DIR/receipts`) | Que la pareja valide la transferencia | Pareja |
 | Nombre, correo, asistencia, menú | Invitado que confirma | `guests` (+ `rsvp_events`) | Organización del casamiento | Pareja |
 | Correo + consentimiento | Invitado que tildó «novedades» | `marketing_consents` | Novedades y promociones de Weda | Weda |
 | Registro de correos enviados (tipo, destinatario, resultado; nunca el contenido) | — | `mail_log` | Auditoría y no repetir recordatorios | Weda |
+
+**Dónde se guardan (OPS-08, D-07, 2026-11-05):** la base (PostgreSQL), las cuentas (Supabase Auth) y los archivos (fotos y comprobantes, Supabase Storage) están en **Supabase, región São Paulo (Brasil)**. Los correos salen por **Resend**. El servidor accede con su propia credencial y las tablas tienen seguridad por filas sin políticas: con la clave pública no se lee ni se escribe nada. Guardar datos en Brasil es una **transferencia internacional** (Ley 25.326, art. 12): hay que revisarla con un abogado antes del lanzamiento (ver §4).
 
 **Base de novedades (`marketing_consents`):** solo entra quien tilda la casilla aparte y destildada (texto en `src/lib/weda/consent.ts`, con versión). Guarda correo, origen (regalo o confirmación), casamiento de origen, versión del texto aceptado y fecha. La baja se marca en `revoked_at` (no se borra: queda la prueba). No se borra si la pareja borra su casamiento.
 
@@ -37,7 +39,8 @@ Esto es una guía de trabajo, no asesoramiento legal: la política de privacidad
 
 ## 4. Antes del lanzamiento (checklist)
 
-- [ ] **Política de privacidad definitiva:** completar razón social, CUIT, domicilio, proveedores (hosting y correo), plazos de conservación y fecha; que la revise un abogado; quitar `noindex` de `/privacidad`.
+- [ ] **Política de privacidad definitiva:** completar razón social, CUIT, domicilio, proveedor de hosting, plazos de conservación y fecha; que la revise un abogado; quitar `noindex` de `/privacidad`. Supabase (São Paulo) y Resend ya están nombrados.
+- [ ] **Transferencia internacional a Brasil (Supabase, São Paulo):** que el abogado confirme el encuadre (art. 12 de la Ley 25.326) y cómo se informa (RK-08).
 - [ ] **Términos de uso:** el registro los menciona y todavía no existen.
 - [ ] **Inscripción de las bases en la AAIP** (ver §5) y agregar el número de inscripción al pie de la política.
 - [ ] **Procedimiento para derechos ARCO** (acceso, rectificación, supresión): quién responde los pedidos que lleguen a hola@weda.app y en qué plazos (acceso: 10 días corridos; rectificación/supresión: 5 días hábiles).

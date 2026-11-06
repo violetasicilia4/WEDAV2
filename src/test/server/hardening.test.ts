@@ -2,10 +2,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { handleApi } from '@/server/api';
 import { openDb } from '@/server/db';
-import { draftFor, makeEnv, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, signUp, PG, type Env } from './helpers';
 
 let env: Env;
-beforeAll(() => { env = makeEnv(); });
+beforeAll(async () => { env = await makeEnv(); });
 afterAll(() => env.close());
 
 describe('endurecimiento de la API', () => {
@@ -18,7 +18,8 @@ describe('endurecimiento de la API', () => {
   it('una sesión vencida deja de valer', async () => {
     const c = env.client(); await signUp(c, 'vence@correo.com');
     expect((await c.get('/api/wedding')).status).toBe(200);
-    env.svc.db.prepare("UPDATE sessions SET expires_at = '2000-01-01T00:00:00.000Z'").run();
+    if (PG) await env.svc.db.run("UPDATE auth.sessions SET not_after = now() - interval '1 day' WHERE user_id = ?", await env.svc.accounts.idByEmail('vence@correo.com'));
+    else await env.svc.db.run("UPDATE sessions SET expires_at = '2000-01-01T00:00:00.000Z'");
     expect((await c.get('/api/wedding')).status).toBe(401);
   });
 
@@ -42,17 +43,19 @@ describe('endurecimiento de la API', () => {
     expect((await c.get('/api/wedding')).body.revision).toBe(w.revision);
   });
 
-  it('las migraciones son idempotentes: reabrir la base conserva los datos', async () => {
+  // En Supabase: supabase.test.ts (migración inicial, una sola vez y en orden).
+  it.skipIf(PG)('las migraciones son idempotentes: reabrir la base conserva los datos', async () => {
     const c = env.client(); await signUp(c, 'migra@correo.com');
     const again = openDb(env.cfg.dbPath);
-    const n = again.prepare("SELECT COUNT(*) AS n FROM users WHERE email = 'migra@correo.com'").get() as { n: number };
+    const n = (await again.get("SELECT COUNT(*) AS n FROM users WHERE email = 'migra@correo.com'")) as { n: number };
     expect(n.n).toBe(1);
-    expect((again.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(9);
-    again.close();
+    expect(((await again.get('PRAGMA user_version')) as { user_version: number }).user_version).toBe(9);
+    await again.close();
   });
 
-  it('no deja claves ni tokens legibles en la base', () => {
-    const rows = env.svc.db.prepare('SELECT id FROM sessions').all() as { id: string }[];
+  // En Supabase las sesiones las guarda Supabase Auth, fuera de las tablas de Weda.
+  it.skipIf(PG)('no deja claves ni tokens legibles en la base', async () => {
+    const rows = (await env.svc.db.all('SELECT id FROM sessions')) as { id: string }[];
     expect(rows.every(r => /^[0-9a-f]{64}$/.test(r.id))).toBe(true);
   });
 

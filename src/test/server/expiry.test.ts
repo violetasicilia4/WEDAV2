@@ -5,7 +5,7 @@ import { draftFor, makeEnv, PASSWORD, PNG, saveDraft, signUp, type Client, type 
 /* Permanencia (PAY-07, BR-65): lo publicado no vence. Reemplaza las pruebas del vencimiento a 12 meses (regla anterior a D-06).
    Reloj controlado (`vi.setSystemTime`): nada depende de esperas reales. Las sesiones duran 30 días, así que después de saltar meses se vuelve a ingresar. */
 let env: Env;
-beforeAll(() => { env = makeEnv(); });
+beforeAll(async () => { env = await makeEnv(); });
 afterAll(() => env.close());
 afterEach(() => { vi.useRealTimers(); });
 
@@ -23,7 +23,7 @@ describe('permanencia de lo publicado (sin vencimiento)', () => {
     const d = draftFor('Lara', 'Mateo');
     await saveDraft(o, d);
     const slug = (await o.post('/api/wedding/publish')).body.slug as string;
-    expect((env.svc.db.prepare('SELECT expires_at FROM publications WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)').get(slug) as { expires_at: string | null }).expires_at).toBeNull();
+    expect(((await env.svc.db.get('SELECT expires_at FROM publications WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)', slug)) as { expires_at: string | null }).expires_at).toBeNull();
 
     for (const m of [6, 12, 15]) {
       vi.setSystemTime(months(m));
@@ -50,7 +50,7 @@ describe('permanencia de lo publicado (sin vencimiento)', () => {
     const o = env.client(); await signUp(o, 'historia@correo.com');
     await saveDraft(o, draftFor('Ivo', 'Sol'));
     const slug = (await o.post('/api/wedding/publish')).body.slug as string;
-    env.svc.db.prepare('UPDATE publications SET expires_at = ?, published_at = ? WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)').run('2021-01-01T00:00:00.000Z', '2020-01-01T00:00:00.000Z', slug);
+    (await env.svc.db.run('UPDATE publications SET expires_at = ?, published_at = ? WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)', '2021-01-01T00:00:00.000Z', '2020-01-01T00:00:00.000Z', slug));
     expect((await env.client().get(`/api/public/${slug}`)).status).toBe(200);
     expect((await o.post('/api/wedding/publish')).status).toBe(200);
     expect((await o.get('/api/wedding')).body.access.state).toBe('active');

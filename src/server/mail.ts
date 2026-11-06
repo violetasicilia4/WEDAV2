@@ -2,7 +2,7 @@
 // como «skipped», así el resto del flujo funciona igual en desarrollo y en pruebas. Nunca se registra el contenido, solo el tipo y el destinatario.
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { ServerConfig } from './config';
-import { tx, type Db } from './db';
+import type { Db } from './db';
 import { newId } from './security';
 
 export type MailKind = 'gift_receipt' | 'receipt_reminder' | 'password_reset' | 'marketing' | 'payout_changed';
@@ -42,7 +42,7 @@ export async function sendMail(db: Db, cfg: ServerConfig, kind: MailKind, mail: 
     } catch { status = 'failed'; error = 'network'; }
   }
   try {
-    tx(db, () => db.prepare('INSERT INTO mail_log (id,kind,to_email,ref,status,error,created_at) VALUES (?,?,?,?,?,?,?)').run(newId('mail'), kind, mail.to, ref, status, error, new Date().toISOString()));
+    await db.tx('mail', async () => (await db.run('INSERT INTO mail_log (id,kind,to_email,ref,status,error,created_at) VALUES (?,?,?,?,?,?,?)', newId('mail'), kind, mail.to, ref, status, error, new Date().toISOString())));
   } catch (e) { console.error('No se pudo registrar el correo:', e); }
   if (status === 'failed') console.error(`Correo «${kind}» no enviado (${error}).`);
   return status;

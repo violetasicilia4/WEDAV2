@@ -17,7 +17,7 @@ const contribution = (key: string) => ({ idempotencyKey: `key-${key}-0001`, mana
 
 describe('sin compuerta de pago (desarrollo y pruebas): opera lo publicado', () => {
   let env: Env;
-  beforeAll(() => { env = makeEnv(); });
+  beforeAll(async () => { env = await makeEnv(); });
   afterAll(() => env.close());
 
   it('CA-2 · sin publicar: el contenido se guarda; invitados y mesas → 403; el plan del borrador no cuenta (CA-6)', async () => {
@@ -67,7 +67,7 @@ describe('sin compuerta de pago (desarrollo y pruebas): opera lo publicado', () 
     const slug = (await publishWith(o, d)).slug;
     const c = await env.client().post(`/api/public/${slug}/contributions`, contribution('venc'));
     // Un vencimiento guardado con la regla vieja (12 meses) ya pasado: queda como historia y no se lee.
-    env.svc.db.prepare('UPDATE publications SET expires_at = ? WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)').run(new Date(Date.now() - 1).toISOString(), slug);
+    (await env.svc.db.run('UPDATE publications SET expires_at = ? WHERE wedding_id = (SELECT id FROM weddings WHERE slug = ?)', new Date(Date.now() - 1).toISOString(), slug));
     const w = await o.get('/api/wedding');
     expect([w.status, w.body.access.state]).toEqual([200, 'active']);
     expect((await env.client().get(`/api/public/${slug}`)).status).toBe(200);
@@ -88,14 +88,14 @@ describe('sin compuerta de pago (desarrollo y pruebas): opera lo publicado', () 
 
 describe('con compuerta de pago: pagar sin publicar no habilita nada (DP-25)', () => {
   let env: Env;
-  beforeAll(() => { env = makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } }); });
+  beforeAll(async () => { env = await makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } }); });
   afterAll(() => env.close());
   const pay = async (o: Client, planId: string) => {
     const r = (await o.post('/api/checkout', { planId })).body;
     await o.post(`/api/test-payments/${r.id}`, { outcome: 'paid' });
     return r;
   };
-  const counts = () => env.svc.db.prepare('SELECT (SELECT count(*) FROM orders) AS orders, (SELECT count(*) FROM payment_events) AS events').get();
+  const counts = async () => (await env.svc.db.get('SELECT (SELECT count(*) FROM orders) AS orders, (SELECT count(*) FROM payment_events) AS events'));
 
   it('CA-15 · Celebración pagada y sin publicar (la publicación automática falló): invitados y mesas → 403', async () => {
     const o = env.client(); await signUp(o, 'pagado@correo.com');
@@ -113,13 +113,13 @@ describe('con compuerta de pago: pagar sin publicar no habilita nada (DP-25)', (
     await saveDraft(o, { ...d, couple: { first: '', second: '' } });
     const order = await pay(o, 'invitacion');
     const paidAt = (await o.get(`/api/orders/${order.id}`)).body.paidAt;
-    const before = counts();
+    const before = (await counts());
     expect((await o.post('/api/wedding/publish')).body.error).toBe('incomplete');
     expect((await put(o, d, { upsert: [guest('inv-7')] })).status).toBe(403);
     await saveDraft(o, d);
     const p = await o.post('/api/wedding/publish');
     expect([p.status, p.body.planId]).toEqual([200, 'invitacion']);
-    expect(counts()).toEqual(before);                                                   // ni orden nueva ni otro evento de pago
+    expect((await counts())).toEqual(before);                                                   // ni orden nueva ni otro evento de pago
     expect((await o.get(`/api/orders/${order.id}`)).body).toMatchObject({ status: 'paid', paidAt });
     expect((await o.post('/api/checkout', { planId: 'invitacion' })).body.error).toBe('already_paid');
     expect((await put(o, d, { upsert: [guest('inv-7')] })).status).toBe(200);
@@ -141,14 +141,14 @@ describe('con compuerta de pago: pagar sin publicar no habilita nada (DP-25)', (
     await saveDraft(o, d);
     const wid = (await o.get('/api/wedding')).body.id as string;
     const t = new Date().toISOString(), until = new Date(Date.now() + 86_400_000 * 100).toISOString();
-    env.svc.db.prepare("INSERT INTO orders (id,wedding_id,plan_id,amount,status,provider,created_at,updated_at,paid_at) VALUES ('ord_plus',?,'completo',150000,'paid','test',?,?,?)").run(wid, t, t, t);
-    env.svc.db.prepare("UPDATE weddings SET slug = 'nina-y-raul' WHERE id = ?").run(wid);
-    env.svc.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,'live','completo','{}',1,?,?,?)").run(wid, t, t, until);
+    (await env.svc.db.run("INSERT INTO orders (id,wedding_id,plan_id,amount,status,provider,created_at,updated_at,paid_at) VALUES ('ord_plus',?,'completo',150000,'paid','test',?,?,?)", wid, t, t, t));
+    (await env.svc.db.run("UPDATE weddings SET slug = 'nina-y-raul' WHERE id = ?", wid));
+    (await env.svc.db.run("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,'live','completo','{}',1,?,?,?)", wid, t, t, until));
     expect((await o.get('/api/wedding')).body.access).toMatchObject({ state: 'active', plan: 'invitacion' });
     expect((await put(o, d, { upsert: [guest('inv-8')] })).status).toBe(200);
     expect((await o.post('/api/checkout', { planId: 'invitacion' })).body.error).toBe('already_paid');
     expect((await o.post('/api/wedding/publish')).status).toBe(200);
-    expect(env.svc.db.prepare("SELECT amount FROM orders WHERE id = 'ord_plus'").get()).toEqual({ amount: 150000 });
-    expect((env.svc.db.prepare('SELECT expires_at FROM publications WHERE wedding_id = ?').get(wid) as { expires_at: string }).expires_at).toBe(until);
+    expect((await env.svc.db.get("SELECT amount FROM orders WHERE id = 'ord_plus'"))).toEqual({ amount: 150000 });
+    expect(((await env.svc.db.get('SELECT expires_at FROM publications WHERE wedding_id = ?', wid)) as { expires_at: string }).expires_at).toBe(until);
   });
 });

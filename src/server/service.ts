@@ -1,12 +1,11 @@
 // Dominio de Weda en el servidor. TODA la autorización vive acá: cada función que toca datos privados recibe el `userId`
 // ya autenticado y filtra por él; ninguna confía en un identificador que venga del cliente. No depende de HTTP (ver api.ts).
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { timingSafeEqual } from 'node:crypto';
 import { normalizeName, publicSite, sanitizeDraft, type DraftState } from './draft';
-import { tx, type Db } from './db';
+import type { Db } from './db';
 import { ApiError, conflict, forbidden, invalid, notFound, unauthorized } from './errors';
-import { hashPassword, newId, newToken, RateLimiter, sha256, verifyPassword } from './security';
+import { newId, newToken, RateLimiter, sha256 } from './security';
+import { LocalAccounts, type Accounts, type Authenticated } from './accounts';
 import type { ServerConfig } from './config';
 import { cleanCbu, emptyState, FREE_AMOUNT_LABEL, isEmail, maskAlias, maskCbu, MAX_AMOUNT, MIN_AMOUNT, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
 import { planById, isPlanId, normalizePlanId, operates, planForOperation, planRank, TRIAL_DAYS, type Access, type Operation } from '@/lib/weda/plans';
@@ -17,12 +16,12 @@ import { formatARS } from '@/lib/demo-wedding';
 import { layout, sendMail, unsubscribeUrl, verifyUnsubscribe } from './mail';
 import { providerFor, signedTestNotification, type Outcome } from './payments';
 import { externalizeImages } from './media';
+import { DiskFiles, type Files } from './storage';
 import { ALLOWED_PROPS, CLIENT_EVENTS, type EventProps, type ServerEvent } from '@/lib/analytics-events';
 
 /** Entre un recordatorio de comprobante y el siguiente, para el mismo aporte. */
 const REMINDER_GAP_MS = 24 * 60 * 60 * 1000;
 
-const SESSION_DAYS = 30;
 /** Cuánto vale el enlace para cambiar la clave. */
 const RESET_TTL_MS = 60 * 60 * 1000;
 const MAX_DRAFT_BYTES = 6 * 1024 * 1024;
@@ -54,7 +53,7 @@ export class Service {
 
   /** Intentos de cambiar el destino de cobro con la clave equivocada, por usuario. */
   private payoutLimiter = new RateLimiter(8, 15 * 60_000);
-  constructor(public db: Db, public cfg: ServerConfig) {}
+  constructor(public db: Db, public cfg: ServerConfig, public files: Files = new DiskFiles(cfg.dataDir), public accounts: Accounts = new LocalAccounts(db)) {}
 
   /* ------------------------------------------------------------------ cuentas y sesiones */
 
@@ -62,59 +61,45 @@ export class Service {
     const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
     if (!isEmail(email) || email.length > 200) throw invalid('invalid_email');
     if (typeof password !== 'string' || !strongPassword(password) || password.length > 200) throw invalid('weak_password');
-    const hash = await hashPassword(password);
-    const id = newId('usr');
-    try {
-      this.db.prepare('INSERT INTO users (id,email,password_hash,created_at) VALUES (?,?,?,?)').run(id, email, hash, now());
-    } catch (e) {
-      if (String((e as Error).message).includes('UNIQUE')) throw conflict('email_taken');
-      throw e;
-    }
-    this.track('signup_completed');
-    return { user: { userId: id, email }, token: this.newSession(id) };
+    const r = await this.accounts.create(email, password);
+    await this.track('signup_completed');
+    return { user: { userId: r.userId, email: r.email }, token: r.token };
   }
 
   async login(emailRaw: unknown, password: unknown, ipKey = ''): Promise<{ user: Session; token: string }> {
     const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
     if (!email || typeof password !== 'string') throw invalid('invalid_credentials');
     if (!this.loginLimiter.take(`${email}|${ipKey}`)) throw new ApiError(429, 'too_many_attempts');
-    const row = this.db.prepare('SELECT id, password_hash FROM users WHERE email = ?').get(email) as Row | undefined;
-    // Se calcula el hash aunque el correo no exista, para no distinguirlos por tiempo.
-    const ok = await verifyPassword(password, (row?.['password_hash'] as string | undefined) ?? 'scrypt$16384$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAA');
-    if (!row || !ok) throw new ApiError(401, 'invalid_credentials');
+    const r = await this.accounts.signIn(email, password);
+    if (!r) throw new ApiError(401, 'invalid_credentials');
     this.loginLimiter.reset(`${email}|${ipKey}`);
-    return { user: { userId: row['id'] as string, email }, token: this.newSession(row['id'] as string) };
+    return { user: { userId: r.userId, email: r.email }, token: r.token };
   }
 
-  private newSession(userId: string): string {
-    const token = newToken();
-    const exp = new Date(Date.now() + SESSION_DAYS * 86_400_000).toISOString();
-    this.db.prepare('INSERT INTO sessions (id,user_id,created_at,expires_at) VALUES (?,?,?,?)').run(sha256(token), userId, now(), exp);
-    return token;
+  /** La sesión de la cookie. `token` puede ser uno nuevo (se renovó): el que llama reescribe la cookie si `renewed`. */
+  async authenticate(token: string | undefined): Promise<Authenticated | null> {
+    return token ? this.accounts.session(token) : null;
   }
 
-  sessionFromToken(token: string | undefined): Session | null {
-    if (!token) return null;
-    const row = this.db.prepare('SELECT u.id AS id, u.email AS email, s.expires_at AS exp FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ?').get(sha256(token)) as Row | undefined;
-    if (!row) return null;
-    if ((row['exp'] as string) <= now()) { this.db.prepare('DELETE FROM sessions WHERE id = ?').run(sha256(token)); return null; }
-    return { userId: row['id'] as string, email: row['email'] as string };
+  async sessionFromToken(token: string | undefined): Promise<Session | null> {
+    const a = await this.authenticate(token);
+    return a ? { userId: a.userId, email: a.email } : null;
   }
 
   /* ------------------------------------------------------------------ embudo */
 
   /** Registra un evento del embudo. Nunca falla hacia afuera: medir no puede romper un registro, un pago ni una publicación. */
-  private track(name: ServerEvent | string, props: EventProps = {}, source: 'server' | 'client' = 'server') {
+  private async track(name: ServerEvent | string, props: EventProps = {}, source: 'server' | 'client' = 'server') {
     try {
       const clean = Object.fromEntries(Object.entries(props).filter(([k, v]) => (ALLOWED_PROPS as readonly string[]).includes(k) && ['string', 'number', 'boolean'].includes(typeof v) && String(v).length <= 40));
-      this.db.prepare('INSERT INTO funnel_events (name,source,props,at) VALUES (?,?,?,?)').run(name, source, JSON.stringify(clean), now());
+      (await this.db.run('INSERT INTO funnel_events (name,source,props,at) VALUES (?,?,?,?)', name, source, JSON.stringify(clean), now()));
     } catch (e) { console.error('No se pudo registrar el evento:', e); }
   }
 
   /** Eventos que manda el navegador: solo los de la lista del cliente (nunca «pago confirmado» ni otro que pruebe algo). */
-  recordClientEvent(nameRaw: unknown, propsRaw: unknown) {
+  async recordClientEvent(nameRaw: unknown, propsRaw: unknown) {
     if (typeof nameRaw !== 'string' || !(CLIENT_EVENTS as readonly string[]).includes(nameRaw)) throw invalid('unknown_event');
-    this.track(nameRaw, (propsRaw && typeof propsRaw === 'object' ? propsRaw : {}) as EventProps, 'client');
+    (await this.track(nameRaw, (propsRaw && typeof propsRaw === 'object' ? propsRaw : {}) as EventProps, 'client'));
     return { ok: true };
   }
 
@@ -125,15 +110,16 @@ export class Service {
     const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
     if (!isEmail(email) || email.length > 200) throw invalid('invalid_email');
     if (!this.resetLimiter.take(email) || !this.resetIpLimiter.take(ipKey)) throw new ApiError(429, 'too_many_requests');
-    const user = this.db.prepare('SELECT id FROM users WHERE email = ?').get(email) as Row | undefined;
-    if (!user) return { ok: true };
+    const userId = await this.accounts.idByEmail(email);
+    if (!userId) return { ok: true };
+    const user = { id: userId };
     const token = newToken();
     const created = new Date();
     const expires = new Date(created.getTime() + RESET_TTL_MS);
-    tx(this.db, () => {
+    await this.db.tx('weda', async () => {
       // Un enlace nuevo anula los anteriores sin usar.
-      this.db.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(created.toISOString(), user['id'] as string);
-      this.db.prepare('INSERT INTO password_resets (id,user_id,token_hash,created_at,expires_at,used_at) VALUES (?,?,?,?,?,NULL)').run(newId('rst'), user['id'] as string, sha256(token), created.toISOString(), expires.toISOString());
+      (await this.db.run('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL', created.toISOString(), user['id'] as string));
+      (await this.db.run('INSERT INTO password_resets (id,user_id,token_hash,created_at,expires_at,used_at) VALUES (?,?,?,?,?,NULL)', newId('rst'), user['id'] as string, sha256(token), created.toISOString(), expires.toISOString()));
     });
     const url = `${this.cfg.publicUrl}/clave/nueva?token=${encodeURIComponent(token)}`;
     const body = layout({
@@ -150,17 +136,15 @@ export class Service {
   async resetPassword(tokenRaw: unknown, password: unknown): Promise<{ ok: true }> {
     if (typeof tokenRaw !== 'string' || tokenRaw.length < 20 || tokenRaw.length > 200) throw invalid('invalid_or_expired_token');
     if (typeof password !== 'string' || !strongPassword(password) || password.length > 200) throw invalid('weak_password');
-    const row = this.db.prepare('SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token_hash = ?').get(sha256(tokenRaw)) as Row | undefined;
+    const row = (await this.db.get('SELECT id, user_id, expires_at, used_at FROM password_resets WHERE token_hash = ?', sha256(tokenRaw))) as Row | undefined;
     if (!row || row['used_at'] || Date.parse(row['expires_at'] as string) <= Date.now()) throw invalid('invalid_or_expired_token');
-    const hash = await hashPassword(password);
-    tx(this.db, () => {
+    await this.db.tx(row['user_id'] as string, async () => {
       // Se vuelve a verificar dentro de la transacción: dos envíos simultáneos con el mismo token no pasan los dos.
-      const still = this.db.prepare('SELECT used_at FROM password_resets WHERE id = ?').get(row['id'] as string) as Row | undefined;
+      const still = (await this.db.get('SELECT used_at FROM password_resets WHERE id = ?', row['id'] as string)) as Row | undefined;
       if (!still || still['used_at']) throw invalid('invalid_or_expired_token');
-      const t = now();
-      this.db.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(t, row['user_id'] as string);
-      this.db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, row['user_id'] as string);
-      this.db.prepare('DELETE FROM sessions WHERE user_id = ?').run(row['user_id'] as string);
+      await this.db.run('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL', now(), row['user_id'] as string);
+      // Cambia la clave y cierra todas las sesiones de la cuenta.
+      await this.accounts.setPassword(row['user_id'] as string, password);
     });
     return { ok: true };
   }
@@ -169,76 +153,72 @@ export class Service {
    * Cambia la clave desde el perfil (con sesión). Exige la clave actual: una sesión robada sola no alcanza para quedarse con la cuenta.
    * Cierra las demás sesiones (sigue abierta la de quien la cambió) y anula los enlaces de recuperación pendientes.
    */
-  async changePassword(token: string | undefined, current: unknown, next: unknown): Promise<{ ok: true }> {
-    const s = this.requireSession(this.sessionFromToken(token));
+  async changePassword(token: string | undefined, current: unknown, next: unknown): Promise<{ ok: true; token: string | null }> {
+    const s = this.requireSession(await this.sessionFromToken(token));
     if (typeof current !== 'string' || !current) throw invalid('wrong_password');
     if (typeof next !== 'string' || !strongPassword(next) || next.length > 200) throw invalid('weak_password');
     if (!this.changeLimiter.take(s.userId)) throw new ApiError(429, 'too_many_attempts');
-    const row = this.db.prepare('SELECT password_hash FROM users WHERE id = ?').get(s.userId) as Row | undefined;
-    if (!row || !(await verifyPassword(current, row['password_hash'] as string))) throw invalid('wrong_password');
+    if (!(await this.accounts.checkPassword(s.userId, s.email, current))) throw invalid('wrong_password');
     this.changeLimiter.reset(s.userId);
-    const hash = await hashPassword(next);
-    tx(this.db, () => {
-      const t = now();
-      this.db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, s.userId);
-      this.db.prepare('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(s.userId, sha256(token!));
-      this.db.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(t, s.userId);
+    const kept = await this.db.tx(s.userId, async () => {
+      // Cierra las demás sesiones (sigue abierta la de quien la cambió) y anula los enlaces de recuperación pendientes.
+      const t = await this.accounts.setPassword(s.userId, next, { token: token!, email: s.email });
+      await this.db.run('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL', now(), s.userId);
+      return t;
     });
-    return { ok: true };
+    return { ok: true, token: kept };
   }
 
   /** Cuántas sesiones vigentes tiene la cuenta además de esta. Sin ids ni tokens: solo el número. */
-  otherSessions(token: string | undefined): { others: number } {
-    const s = this.requireSession(this.sessionFromToken(token));
-    const row = this.db.prepare('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND id != ? AND expires_at > ?').get(s.userId, sha256(token!), now()) as Row;
-    return { others: Number(row['n']) };
+  async otherSessions(token: string | undefined): Promise<{ others: number }> {
+    const s = this.requireSession(await this.sessionFromToken(token));
+    return { others: await this.accounts.countOthers(s.userId, token!) };
   }
 
   /** Cierra las demás sesiones de la cuenta (otros dispositivos o navegadores); esta sigue abierta. */
-  closeOtherSessions(token: string | undefined): { closed: number } {
-    const s = this.requireSession(this.sessionFromToken(token));
-    const r = this.db.prepare('DELETE FROM sessions WHERE user_id = ? AND id != ?').run(s.userId, sha256(token!));
-    return { closed: Number(r.changes) };
+  async closeOtherSessions(token: string | undefined): Promise<{ closed: number }> {
+    const s = this.requireSession(await this.sessionFromToken(token));
+    return { closed: await this.accounts.closeOthers(s.userId, token!) };
   }
 
-  logout(token: string | undefined) {
-    if (token) this.db.prepare('DELETE FROM sessions WHERE id = ?').run(sha256(token));
+  async logout(token: string | undefined) {
+    if (token) await this.accounts.signOut(token);
   }
 
   /* ------------------------------------------------------------------ casamiento (privado) */
 
-  private weddingOf(userId: string): Row | undefined {
-    return this.db.prepare('SELECT * FROM weddings WHERE owner_id = ?').get(userId) as Row | undefined;
+  private async weddingOf(userId: string): Promise<Row | undefined> {
+    return (await this.db.get('SELECT * FROM weddings WHERE owner_id = ?', userId)) as Row | undefined;
   }
 
-  private ensureWedding(userId: string): Row {
-    const existing = this.weddingOf(userId);
+  private async ensureWedding(userId: string): Promise<Row> {
+    const existing = (await this.weddingOf(userId));
     if (existing) return existing;
     const t = now();
     const draft = JSON.stringify(sanitizeDraft(emptyState()));
-    this.db.prepare('INSERT INTO weddings (id,owner_id,draft,revision,created_at,updated_at) VALUES (?,?,?,?,?,?)').run(newId('wed'), userId, draft, 1, t, t);
-    return this.weddingOf(userId)!;
+    (await this.db.run('INSERT INTO weddings (id,owner_id,draft,revision,created_at,updated_at) VALUES (?,?,?,?,?,?)', newId('wed'), userId, draft, 1, t, t));
+    return (await this.weddingOf(userId))!;
   }
 
-  private guestsOf(weddingId: string): Guest[] {
-    const rows = this.db.prepare('SELECT * FROM guests WHERE wedding_id = ? ORDER BY created_at, id').all(weddingId) as Row[];
+  private async guestsOf(weddingId: string): Promise<Guest[]> {
+    const rows = (await this.db.all('SELECT * FROM guests WHERE wedding_id = ? ORDER BY created_at, id', weddingId)) as Row[];
     return rows.map(r => ({ id: r['id'] as string, first: r['first'] as string, last: r['last'] as string, status: r['status'] as Guest['status'], menu: r['menu'] as string, groupId: (r['group_id'] as string | null) ?? null, source: r['source'] as Guest['source'] }));
   }
 
   /** Lo que el panel necesita para trabajar: borrador, invitados, estado de publicación y órdenes. Solo del dueño. */
-  getWedding(userId: string) {
-    const w = this.ensureWedding(userId);
+  async getWedding(userId: string) {
+    const w = (await this.ensureWedding(userId));
     const wid = w['id'] as string;
-    const pub = this.db.prepare('SELECT status, plan_id, version, published_at, updated_at, expires_at FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+    const pub = (await this.db.get('SELECT status, plan_id, version, published_at, updated_at, expires_at FROM publications WHERE wedding_id = ?', wid)) as Row | undefined;
     return {
       id: wid,
       revision: w['revision'] as number,
       slug: (w['slug'] as string | null) ?? null,
-      draft: this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid),
-      guests: this.guestsOf(wid),
-      publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, pendingChanges: this.pendingChanges(w) } : null,
-      payout: this.activePayout(wid),
-      access: this.access(wid),
+      draft: (await this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid)),
+      guests: (await this.guestsOf(wid)),
+      publication: pub ? { status: pub['status'] as string, planId: pub['plan_id'] as string, version: pub['version'] as number, publishedAt: pub['published_at'] as string, pendingChanges: (await this.pendingChanges(w)) } : null,
+      payout: (await this.activePayout(wid)),
+      access: (await this.access(wid)),
     };
   }
 
@@ -246,15 +226,15 @@ export class Service {
    * ¿Publicar ahora cambiaría la página pública? Arma el snapshot como lo haría `publish` y lo compara con el publicado.
    * Solo cuenta lo que ve un invitado: invitados, datos de cobro sin mostrar o secciones que el plan no incluye no generan aviso. null sin publicación.
    */
-  private pendingChanges(w: Row): boolean | null {
+  private async pendingChanges(w: Row): Promise<boolean | null> {
     const wid = w['id'] as string;
     const slug = w['slug'] as string | null;
-    const pub = this.db.prepare('SELECT plan_id, snapshot FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+    const pub = (await this.db.get('SELECT plan_id, snapshot FROM publications WHERE wedding_id = ?', wid)) as Row | undefined;
     if (!pub || !slug) return null;
     // Con el destino de cobro vigente, como lo publicaría `publish`: cambiar el alias (con clave) enciende el aviso; un alias que viaje en el borrador no.
-    const draft = this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid);
+    const draft = (await this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid));
     let planId = pub['plan_id'] as PlanId;
-    try { planId = this.entitledPlan(wid, draft.planId); } catch { /* sin plan o sin pago: publicar fallaría; se compara con el plan publicado */ }
+    try { planId = (await this.entitledPlan(wid, draft.planId)); } catch { /* sin plan o sin pago: publicar fallaría; se compara con el plan publicado */ }
     return JSON.stringify(publicSite(draft, planId, slug)) !== (pub['snapshot'] as string);
   }
 
@@ -262,52 +242,53 @@ export class Service {
    * Guarda el borrador. `baseRevision` es la revisión que el cliente vio: si otra pestaña/dispositivo guardó antes, responde 409 y no pisa nada.
    * Los invitados se actualizan por operaciones (no por lista completa) para no borrar respuestas que llegaron desde el sitio público mientras tanto.
    */
-  saveWedding(userId: string, input: { baseRevision: unknown; draft: unknown; guests?: { upsert?: unknown; remove?: unknown } }) {
+  async saveWedding(userId: string, input: { baseRevision: unknown; draft: unknown; guests?: { upsert?: unknown; remove?: unknown } }) {
     if (typeof input.baseRevision !== 'number' || !Number.isInteger(input.baseRevision)) throw invalid('invalid_revision');
     const serialized = JSON.stringify(input.draft ?? null);
     if (serialized.length > MAX_DRAFT_BYTES) throw new ApiError(413, 'draft_too_large');
-    // Fotos embebidas → archivos (media.ts). Va antes de la transacción: escribir archivos no debe retener el candado de la base.
-    const draft = externalizeImages(sanitizeDraft(input.draft), this.cfg.dataDir);
+    // Fotos embebidas → archivos (media.ts, storage.ts). Va antes de la transacción: subir archivos no debe retener el candado de la base.
+    const { value: draft, uploads } = externalizeImages(sanitizeDraft(input.draft));
+    for (const u of uploads) await this.files.putMedia(u.name, u.bytes, u.mime);
     const upserts = parseGuestInputs(input.guests?.upsert);
     const removes = Array.isArray(input.guests?.remove) ? (input.guests!.remove as unknown[]).filter((x): x is string => typeof x === 'string' && x.length <= 80).slice(0, 5000) : [];
-    return tx(this.db, () => {
-      const w = this.ensureWedding(userId);
+    return this.db.tx('weda', async () => {
+      const w = (await this.ensureWedding(userId));
       const wid = w['id'] as string;
       if (w['revision'] !== input.baseRevision) throw new ApiError(409, 'revision_conflict', String(w['revision']));
-      this.assertNotPaused(wid);
+      (await this.assertNotPaused(wid));
       // BR-62: el contenido se guarda siempre; las operaciones de gestión (invitados, mesas) solo con el plan publicado y vigente. Todo o nada.
-      if (upserts.length > 0 || removes.length > 0) this.assertOperates(wid, 'guests');
-      if (JSON.stringify(draft.groups) !== JSON.stringify(sanitizeDraft(JSON.parse(w['draft'] as string)).groups)) this.assertOperates(wid, 'groups');
+      if (upserts.length > 0 || removes.length > 0) (await this.assertOperates(wid, 'guests'));
+      if (JSON.stringify(draft.groups) !== JSON.stringify(sanitizeDraft(JSON.parse(w['draft'] as string)).groups)) (await this.assertOperates(wid, 'groups'));
       const t = now();
       const next = (w['revision'] as number) + 1;
       // El destino de cobro que mande el cliente se descarta: solo cambia por changePayout (con clave).
-      this.db.prepare('UPDATE weddings SET draft = ?, revision = ?, updated_at = ? WHERE id = ?').run(JSON.stringify(this.withPayout(draft, wid)), next, t, wid);
+      (await this.db.run('UPDATE weddings SET draft = ?, revision = ?, updated_at = ? WHERE id = ?', JSON.stringify((await this.withPayout(draft, wid))), next, t, wid));
       // BR-63: el trial empieza al crear la celebración (onboarding con los dos nombres), una sola vez. Ni el login, ni otro dispositivo, ni editar lo reinician.
-      if (draft.onboarded && draft.couple.first.trim() && draft.couple.second.trim()) this.db.prepare('UPDATE weddings SET trial_started_at = ? WHERE id = ? AND trial_started_at IS NULL').run(t, wid);
+      if (draft.onboarded && draft.couple.first.trim() && draft.couple.second.trim()) (await this.db.run('UPDATE weddings SET trial_started_at = ? WHERE id = ? AND trial_started_at IS NULL', t, wid));
       for (const g of upserts) {
-        const owner = this.db.prepare('SELECT wedding_id FROM guests WHERE id = ?').get(g.id) as Row | undefined;
+        const owner = (await this.db.get('SELECT wedding_id FROM guests WHERE id = ?', g.id)) as Row | undefined;
         if (owner && owner['wedding_id'] !== wid) throw conflict('guest_id_in_use'); // nunca se toca un invitado de otro casamiento
-        if (owner) this.db.prepare('UPDATE guests SET first=?,last=?,name_key=?,status=?,menu=?,group_id=?,source=?,updated_at=? WHERE id=? AND wedding_id=?').run(g.first, g.last, normalizeName(g.first, g.last), g.status, g.menu, g.groupId, g.source, t, g.id, wid);
-        else this.db.prepare('INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)').run(g.id, wid, g.first, g.last, normalizeName(g.first, g.last), g.status, g.menu, g.groupId, g.source, t, t);
+        if (owner) (await this.db.run('UPDATE guests SET first=?,last=?,name_key=?,status=?,menu=?,group_id=?,source=?,updated_at=? WHERE id=? AND wedding_id=?', g.first, g.last, normalizeName(g.first, g.last), g.status, g.menu, g.groupId, g.source, t, g.id, wid));
+        else (await this.db.run('INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)', g.id, wid, g.first, g.last, normalizeName(g.first, g.last), g.status, g.menu, g.groupId, g.source, t, t));
       }
-      for (const id of removes) this.db.prepare('DELETE FROM guests WHERE id = ? AND wedding_id = ?').run(id, wid);
-      return { revision: next, guests: this.guestsOf(wid), pendingChanges: this.pendingChanges({ ...w, draft: JSON.stringify(draft) }), access: this.access(wid) };
+      for (const id of removes) (await this.db.run('DELETE FROM guests WHERE id = ? AND wedding_id = ?', id, wid));
+      return { revision: next, guests: (await this.guestsOf(wid)), pendingChanges: (await this.pendingChanges({ ...w, draft: JSON.stringify(draft) })), access: (await this.access(wid)) };
     });
   }
 
   /* ------------------------------------------------------------------ destino de cobro (GIFT-14, BR-30) */
 
   /** Destino vigente: la versión más alta de `payout_methods`. Versión 0 = todavía no se cargó ninguno. */
-  private activePayout(wid: string): Payout {
-    const r = this.db.prepare('SELECT version, alias, bank, cbu, created_at FROM payout_methods WHERE wedding_id = ? ORDER BY version DESC LIMIT 1').get(wid) as Row | undefined;
+  private async activePayout(wid: string): Promise<Payout> {
+    const r = (await this.db.get('SELECT version, alias, bank, cbu, created_at FROM payout_methods WHERE wedding_id = ? ORDER BY version DESC LIMIT 1', wid)) as Row | undefined;
     return r
       ? { version: r['version'] as number, alias: r['alias'] as string, bank: r['bank'] as string, cbu: r['cbu'] as string, changedAt: r['created_at'] as string }
       : { version: 0, alias: '', bank: '', cbu: '', changedAt: null };
   }
 
   /** El borrador siempre lleva el destino vigente: así lo leen el panel, la publicación y el snapshot, y ningún guardado lo reescribe. */
-  private withPayout(draft: DraftState, wid: string): DraftState {
-    const p = this.activePayout(wid);
+  private async withPayout(draft: DraftState, wid: string): Promise<DraftState> {
+    const p = (await this.activePayout(wid));
     return { ...draft, gifts: { ...draft.gifts, alias: p.alias, bank: p.bank, cbu: p.cbu } };
   }
 
@@ -323,25 +304,23 @@ export class Service {
     const baseVersion = input['baseVersion'];
     if (typeof baseVersion !== 'number' || !Number.isInteger(baseVersion)) throw invalid('invalid_version');
     if (!this.payoutLimiter.take(s.userId)) throw new ApiError(429, 'too_many_attempts');
-    const user = this.db.prepare('SELECT password_hash FROM users WHERE id = ?').get(s.userId) as Row | undefined;
-    if (!user || !(await verifyPassword(password, user['password_hash'] as string))) throw invalid('wrong_password');
-    const prev = tx(this.db, () => {
-      const wid = this.ensureWedding(s.userId)['id'] as string;
-      this.assertNotPaused(wid);
-      const cur = this.activePayout(wid);
+    if (!(await this.accounts.checkPassword(s.userId, s.email, password))) throw invalid('wrong_password');
+    const prev = await this.db.tx('weda', async () => {
+      const wid = (await this.ensureWedding(s.userId))['id'] as string;
+      (await this.assertNotPaused(wid));
+      const cur = (await this.activePayout(wid));
       if (cur.version !== baseVersion) throw conflict('payout_changed', String(cur.version));
       if (cur.alias === next.alias && cur.bank === next.bank && cur.cbu === next.cbu) throw invalid('payout_unchanged');
       const since = new Date(Date.now() - PAYOUT_WINDOW_MS).toISOString();
-      const recent = this.db.prepare("SELECT COUNT(*) AS n FROM payout_methods WHERE wedding_id = ? AND source = 'owner' AND created_at > ?").get(wid, since) as Row;
+      const recent = (await this.db.get("SELECT COUNT(*) AS n FROM payout_methods WHERE wedding_id = ? AND source = 'owner' AND created_at > ?", wid, since)) as Row;
       if (Number(recent['n']) >= PAYOUT_MAX_CHANGES) throw new ApiError(429, 'too_many_changes');
-      this.db.prepare("INSERT INTO payout_methods (id,wedding_id,version,alias,bank,cbu,created_by,created_at,source) VALUES (?,?,?,?,?,?,?,?,'owner')")
-        .run(newId('pay'), wid, cur.version + 1, next.alias, next.bank, next.cbu, s.userId, now());
+      (await this.db.run("INSERT INTO payout_methods (id,wedding_id,version,alias,bank,cbu,created_by,created_at,source) VALUES (?,?,?,?,?,?,?,?,'owner')", newId('pay'), wid, cur.version + 1, next.alias, next.bank, next.cbu, s.userId, now()));
       return cur;
     });
     this.payoutLimiter.reset(s.userId);
     void this.mailPayoutChanged(s.email, prev, next);
-    const w = this.ensureWedding(s.userId);
-    return { payout: this.activePayout(w['id'] as string), pendingChanges: this.pendingChanges(w) };
+    const w = (await this.ensureWedding(s.userId));
+    return { payout: (await this.activePayout(w['id'] as string)), pendingChanges: (await this.pendingChanges(w)) };
   }
 
   private mailPayoutChanged(to: string, prev: Payout, next: { alias: string; bank: string; cbu: string }) {
@@ -371,10 +350,10 @@ export class Service {
    * - `paused`: venció el trial sin contratar (BR-64). Solo lectura; los datos se conservan.
    * Sin compuerta (desarrollo y pruebas, IC-17) la publicación alcanza para `active`. El plan del borrador nunca cuenta.
    */
-  private access(wid: string): Access {
-    const paid = (this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[]).map(r => normalizePlanId(r['plan_id'] as PlanId));
-    const pub = this.db.prepare('SELECT plan_id FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
-    const w = this.db.prepare('SELECT trial_started_at FROM weddings WHERE id = ?').get(wid) as Row;
+  private async access(wid: string): Promise<Access> {
+    const paid = ((await this.db.all("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'", wid)) as Row[]).map(r => normalizePlanId(r['plan_id'] as PlanId));
+    const pub = (await this.db.get('SELECT plan_id FROM publications WHERE wedding_id = ?', wid)) as Row | undefined;
+    const w = (await this.db.get('SELECT trial_started_at FROM weddings WHERE id = ?', wid)) as Row;
     const started = (w['trial_started_at'] as string | null) ?? null;
     const trialEndsAt = started ? new Date(Date.parse(started) + TRIAL_DAYS * 86_400_000).toISOString() : null;
     const plan = pub ? normalizePlanId(pub['plan_id'] as PlanId) : null;
@@ -386,21 +365,21 @@ export class Service {
   }
 
   /** Rechaza la operación si el plan publicado no la incluye (403). Las lecturas no pasan por acá. Sin vencimiento posterior a publicar (BR-65). */
-  private assertOperates(wid: string, op: Operation) {
-    const a = this.access(wid);
+  private async assertOperates(wid: string, op: Operation) {
+    const a = (await this.access(wid));
     if (a.state === 'paused') throw new ApiError(403, 'trial_ended');
     if (!operates(a, op)) throw new ApiError(403, 'feature_requires_plan', `${op}:${planForOperation(op)?.id ?? ''}`);
   }
 
   /** BR-64: con el trial vencido y sin contratar, la celebración se lee pero no se edita. Contratar (checkout) sigue disponible. */
-  private assertNotPaused(wid: string) {
-    if (this.access(wid).state === 'paused') throw new ApiError(403, 'trial_ended');
+  private async assertNotPaused(wid: string) {
+    if ((await this.access(wid)).state === 'paused') throw new ApiError(403, 'trial_ended');
   }
 
   /** Plan con el que se publica: el que el servidor puede respaldar. Con `requirePaidOrder`, el de la orden pagada; si no, el elegido en el borrador. */
-  private entitledPlan(wid: string, draftPlan: PlanId | null): PlanId {
+  private async entitledPlan(wid: string, draftPlan: PlanId | null): Promise<PlanId> {
     if (this.cfg.requirePaidOrder) {
-      const paid = this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[];
+      const paid = (await this.db.all("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'", wid)) as Row[];
       const best = paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => planRank(b!.id) - planRank(a!.id))[0];
       if (!best) throw new ApiError(402, 'payment_required');
       return best.id;
@@ -409,55 +388,57 @@ export class Service {
     return draftPlan;
   }
 
-  publish(userId: string) {
-    return this.publishWedding(this.ensureWedding(userId)['id'] as string);
+  async publish(userId: string) {
+    return (await this.publishWedding((await this.ensureWedding(userId))['id'] as string));
   }
 
   /**
    * Publica (o publica los cambios de) una celebración. La usan la pareja y, al confirmarse un pago, el propio servidor (BR-01: contratar y publicar
    * son un único momento). Todo o nada: si falla, no escribe y se puede reintentar sin volver a cobrar (DP-25).
    */
-  private publishWedding(wid: string) {
-    return tx(this.db, () => {
-      const w = this.db.prepare('SELECT * FROM weddings WHERE id = ?').get(wid) as Row;
-      const draft = this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid);
+  private async publishWedding(wid: string) {
+    return this.db.tx('weda', async () => {
+      const w = (await this.db.get('SELECT * FROM weddings WHERE id = ?', wid)) as Row;
+      const draft = (await this.withPayout(JSON.parse(w['draft'] as string) as DraftState, wid));
       if (!draft.couple.first.trim() || !draft.couple.second.trim()) throw conflict('incomplete', 'couple_names');
       // Con el trial vencido solo se publica contratando: con la compuerta, la orden pagada ya saca de la pausa; sin ella, no se publica (BR-64).
-      this.assertNotPaused(wid);
-      const planId = this.entitledPlan(wid, draft.planId);
+      (await this.assertNotPaused(wid));
+      const planId = (await this.entitledPlan(wid, draft.planId));
       let slug = w['slug'] as string | null;
       if (!slug) {
         const base = slugify(draft.couple.first, draft.couple.second) || 'casamiento';
         slug = base;
-        for (let i = 2; this.db.prepare('SELECT 1 FROM weddings WHERE slug = ?').get(slug); i++) slug = `${base}-${i}`;
-        this.db.prepare('UPDATE weddings SET slug = ? WHERE id = ?').run(slug, wid);
+        for (let i = 2; (await this.db.get('SELECT 1 FROM weddings WHERE slug = ?', slug)); i++) slug = `${base}-${i}`;
+        (await this.db.run('UPDATE weddings SET slug = ? WHERE id = ?', slug, wid));
       }
       const snapshot = publicSite(draft, planId, slug);
       const t = now();
-      const prev = this.db.prepare('SELECT plan_id, version FROM publications WHERE wedding_id = ?').get(wid) as Row | undefined;
+      const prev = (await this.db.get('SELECT plan_id, version FROM publications WHERE wedding_id = ?', wid)) as Row | undefined;
       // F8 (D-05): mientras DP-23 siga pendiente, una página publicada no cambia de plan.
       if (prev && normalizePlanId(prev['plan_id'] as PlanId) !== normalizePlanId(planId)) throw conflict('plan_change_pending');
       // Sin vencimiento (BR-65): publicar cambios, bajar y volver a publicar no tienen fecha límite. `expires_at` queda como historia (migración 8).
-      if (prev) this.db.prepare("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=? WHERE wedding_id=?").run(planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, wid);
-      else this.db.prepare("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,NULL)").run(wid, 'live', planId, JSON.stringify(snapshot), 1, t, t);
+      if (prev) (await this.db.run("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=? WHERE wedding_id=?", planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, wid));
+      else (await this.db.run("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,NULL)", wid, 'live', planId, JSON.stringify(snapshot), 1, t, t));
       // El plan publicado pasa a ser el del borrador (F-P1): una sola fuente para lo que se muestra como incluido. No cambia la revisión.
-      this.db.prepare("UPDATE weddings SET draft = json_set(draft, '$.planId', ?) WHERE id = ?").run(planId, wid);
-      this.track('publication_completed', { plan_id: planId, is_republish: !!prev });
-      return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1, access: this.access(wid) };
+      (await this.db.run(this.db.dialect === 'pg'
+        ? "UPDATE weddings SET draft = jsonb_set(draft::jsonb, '{planId}', to_jsonb(?::text))::text WHERE id = ?"
+        : "UPDATE weddings SET draft = json_set(draft, '$.planId', ?) WHERE id = ?", planId, wid));
+      (await this.track('publication_completed', { plan_id: planId, is_republish: !!prev }));
+      return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1, access: (await this.access(wid)) };
     });
   }
 
-  unpublish(userId: string) {
-    const w = this.weddingOf(userId);
+  async unpublish(userId: string) {
+    const w = (await this.weddingOf(userId));
     if (!w) throw notFound();
-    const r = this.db.prepare("UPDATE publications SET status='taken_down', updated_at=? WHERE wedding_id=? AND status='live'").run(now(), w['id'] as string);
+    const r = (await this.db.run("UPDATE publications SET status='taken_down', updated_at=? WHERE wedding_id=? AND status='live'", now(), w['id'] as string));
     if (Number(r.changes) === 0) throw conflict('not_live');
   }
 
   /* ------------------------------------------------------------------ sitio público (sin sesión) */
 
-  private livePublication(slug: string): { wid: string; snapshot: SiteData; status: string } {
-    const row = this.db.prepare('SELECT w.id AS wid, p.snapshot AS snapshot, p.status AS status FROM weddings w JOIN publications p ON p.wedding_id = w.id WHERE w.slug = ?').get(slug) as Row | undefined;
+  private async livePublication(slug: string): Promise<{ wid: string; snapshot: SiteData; status: string; }> {
+    const row = (await this.db.get('SELECT w.id AS wid, p.snapshot AS snapshot, p.status AS status FROM weddings w JOIN publications p ON p.wedding_id = w.id WHERE w.slug = ?', slug)) as Row | undefined;
     if (!row) throw notFound('site_not_found');
     if (row['status'] !== 'live') throw new ApiError(410, 'site_unpublished');
     // Sin vencimiento (BR-65): la página, las confirmaciones y los regalos siguen activos mientras esté publicada.
@@ -465,52 +446,52 @@ export class Service {
   }
 
   /** Solo el snapshot publicado. Ningún dato de aportes: los regalos son repetibles (BR-19) y lo público no muestra cuántos se regalaron (BR-27). */
-  getPublicSite(slug: string) {
-    const p = this.livePublication(slug);
-    this.track('public_invitation_opened');
+  async getPublicSite(slug: string) {
+    const p = (await this.livePublication(slug));
+    (await this.track('public_invitation_opened'));
     return { site: p.snapshot };
   }
 
   /** Confirmación de asistencia. No devuelve datos de invitados: ni existentes ni propios. */
-  submitRsvp(slug: string, peopleRaw: unknown, contactRaw?: unknown) {
-    const p = this.livePublication(slug);
+  async submitRsvp(slug: string, peopleRaw: unknown, contactRaw?: unknown) {
+    const p = (await this.livePublication(slug));
     if (!p.snapshot.blocks.rsvp) throw conflict('rsvp_disabled');
     const people = parseRsvp(peopleRaw, p.snapshot.rsvp.menus !== null);
     // Correo opcional de quien responde (queda en cada persona de este envío). Novedades de Weda: solo con correo y casilla tildada.
     const contact = (contactRaw ?? {}) as Row;
     const email = optEmail(contact['email']);
     const optIn = contact['marketingOptIn'] === true && !!email;
-    return tx(this.db, () => {
+    return this.db.tx('weda', async () => {
       const t = now();
       for (const x of people) {
         const key = normalizeName(x.first, x.last);
-        const found = this.db.prepare('SELECT id FROM guests WHERE wedding_id = ? AND name_key = ? ORDER BY created_at LIMIT 1').get(p.wid, key) as Row | undefined;
+        const found = (await this.db.get('SELECT id FROM guests WHERE wedding_id = ? AND name_key = ? ORDER BY created_at LIMIT 1', p.wid, key)) as Row | undefined;
         const status = x.attending ? 'confirmed' : 'declined';
         const menu = x.attending ? x.menu : '';
         let gid: string;
-        if (found) { gid = found['id'] as string; this.db.prepare("UPDATE guests SET status=?, menu=?, source='rsvp', email=CASE WHEN ? != '' THEN ? ELSE email END, updated_at=? WHERE id=?").run(status, menu, email, email, t, gid); }
-        else { gid = newId('inv'); this.db.prepare("INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,email,created_at,updated_at) VALUES (?,?,?,?,?,?,?,NULL,'rsvp',?,?,?)").run(gid, p.wid, x.first, x.last, key, status, menu, email, t, t); }
-        this.db.prepare('INSERT INTO rsvp_events (wedding_id,guest_id,status,menu,at) VALUES (?,?,?,?,?)').run(p.wid, gid, status, menu, t);
+        if (found) { gid = found['id'] as string; (await this.db.run("UPDATE guests SET status=?, menu=?, source='rsvp', email=CASE WHEN ? != '' THEN ? ELSE email END, updated_at=? WHERE id=?", status, menu, email, email, t, gid)); }
+        else { gid = newId('inv'); (await this.db.run("INSERT INTO guests (id,wedding_id,first,last,name_key,status,menu,group_id,source,email,created_at,updated_at) VALUES (?,?,?,?,?,?,?,NULL,'rsvp',?,?,?)", gid, p.wid, x.first, x.last, key, status, menu, email, t, t)); }
+        (await this.db.run('INSERT INTO rsvp_events (wedding_id,guest_id,status,menu,at) VALUES (?,?,?,?,?)', p.wid, gid, status, menu, t));
       }
-      if (optIn) this.grantConsent(email, 'rsvp', p.wid);
-      this.track('rsvp_submitted', { attending: people.some(x => x.attending) });
+      if (optIn) (await this.grantConsent(email, 'rsvp', p.wid));
+      (await this.track('rsvp_submitted', { attending: people.some(x => x.attending) }));
       return { count: people.length };
     });
   }
 
   /** Alta en la base de novedades de Weda (consentimiento expreso). Si la persona ya tiene un consentimiento vigente, no se duplica. */
-  private grantConsent(email: string, source: 'gift' | 'rsvp', weddingId: string) {
-    const live = this.db.prepare('SELECT 1 FROM marketing_consents WHERE email = ? AND revoked_at IS NULL').get(email);
+  private async grantConsent(email: string, source: 'gift' | 'rsvp', weddingId: string) {
+    const live = (await this.db.get('SELECT 1 FROM marketing_consents WHERE lower(email) = lower(?) AND revoked_at IS NULL', email));
     if (live) return;
-    this.db.prepare('INSERT INTO marketing_consents (id,email,source,wedding_id,text_version,granted_at,revoked_at) VALUES (?,?,?,?,?,?,NULL)').run(newId('cns'), email, source, weddingId, MARKETING_CONSENT_VERSION, now());
+    (await this.db.run('INSERT INTO marketing_consents (id,email,source,wedding_id,text_version,granted_at,revoked_at) VALUES (?,?,?,?,?,?,NULL)', newId('cns'), email, source, weddingId, MARKETING_CONSENT_VERSION, now()));
   }
 
   /* ------------------------------------------------------------------ aportes */
 
   /** El invitado informa que regala/aportó. Los montos salen del snapshot publicado; la clave de idempotencia evita duplicados al reintentar. */
-  submitContribution(slug: string, raw: unknown) {
+  async submitContribution(slug: string, raw: unknown) {
     const b = (raw ?? {}) as Row;
-    const p = this.livePublication(slug);
+    const p = (await this.livePublication(slug));
     if (b['how'] === 'tarjeta') throw new ApiError(501, 'card_not_available');
     if (b['how'] !== 'alias') throw invalid('invalid_how');
     const key = reqStr(b['idempotencyKey'], 8, 100, 'invalid_idempotency_key');
@@ -540,11 +521,13 @@ export class Service {
       ...gifts.map(g => ({ kind: 'gift' as const, giftId: g!.id, name: g!.name, suggested: Math.round(g!.amount), amount: Math.round(g!.amount) })),
       ...(free !== null ? [{ kind: 'free' as const, giftId: null, name: null, suggested: null, amount: free }] : []),
     ];
+    // El comprobante se sube antes de la transacción (subir no retiene el candado de la base); si el aporte no se registra, se borra.
     let written = '';
+    if (receipt) { written = newId('rcp'); await this.files.putReceipt(written, receipt.bytes, receipt.mime); }
     let res: { id: string; status: string; replay: boolean };
-    try { res = tx(this.db, () => {
+    try { res = await this.db.tx('weda', async () => {
       const hash = sha256(manage);
-      const prev = this.db.prepare('SELECT id, status, manage_token_hash FROM contributions WHERE wedding_id = ? AND idempotency_key = ?').get(p.wid, key) as Row | undefined;
+      const prev = (await this.db.get('SELECT id, status, manage_token_hash FROM contributions WHERE wedding_id = ? AND idempotency_key = ?', p.wid, key)) as Row | undefined;
       if (prev) {
         if (prev['manage_token_hash'] !== hash) throw conflict('idempotency_key_reused');
         return { id: prev['id'] as string, status: prev['status'] as string, replay: true };
@@ -554,32 +537,22 @@ export class Service {
       const id = newId('apo');
       const t = now();
       const total = lines.reduce((n, l) => n + l.amount, 0);
-      this.db.prepare("INSERT INTO contributions (id,wedding_id,giver_name,giver_email,message,how,status,total,idempotency_key,manage_token_hash,created_at,updated_at) VALUES (?,?,?,?,?,?,'pending_review',?,?,?,?,?)").run(id, p.wid, giver, giverEmail, message, 'alias', total, key, hash, t, t);
-      if (b['marketingOptIn'] === true) this.grantConsent(giverEmail, 'gift', p.wid);
-      for (const l of lines) this.db.prepare('INSERT INTO contribution_items (contribution_id,kind,gift_id,gift_name,suggested_amount,amount) VALUES (?,?,?,?,?,?)').run(id, l.kind, l.giftId, l.name, l.suggested, l.amount);
-      this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'created','guest',NULL,'pending_review','',?)").run(id, t);
-      const fileKey = this.storeReceiptFile(receipt.bytes);
-      written = fileKey;
-      this.db.prepare('INSERT INTO receipts (id,wedding_id,contribution_id,mime,size,storage_key,created_at) VALUES (?,?,?,?,?,?,?)').run(newId('rec'), p.wid, id, receipt.mime, receipt.bytes.length, fileKey, t);
+      (await this.db.run("INSERT INTO contributions (id,wedding_id,giver_name,giver_email,message,how,status,total,idempotency_key,manage_token_hash,created_at,updated_at) VALUES (?,?,?,?,?,?,'pending_review',?,?,?,?,?)", id, p.wid, giver, giverEmail, message, 'alias', total, key, hash, t, t));
+      if (b['marketingOptIn'] === true) (await this.grantConsent(giverEmail, 'gift', p.wid));
+      for (const l of lines) (await this.db.run('INSERT INTO contribution_items (contribution_id,kind,gift_id,gift_name,suggested_amount,amount) VALUES (?,?,?,?,?,?)', id, l.kind, l.giftId, l.name, l.suggested, l.amount));
+      (await this.db.run("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'created','guest',NULL,'pending_review','',?)", id, t));
+      (await this.db.run('INSERT INTO receipts (id,wedding_id,contribution_id,mime,size,storage_key,created_at) VALUES (?,?,?,?,?,?,?)', newId('rec'), p.wid, id, receipt.mime, receipt.bytes.length, written, t));
       return { id, status: 'pending_review', replay: false };
     });
     } catch (e) {
-      if (written) rmSync(path.join(this.cfg.dataDir, 'receipts', written), { force: true }); // sin registro no queda archivo huérfano
+      if (written) await this.files.removeReceipt(written); // sin registro no queda archivo huérfano
       throw e;
     }
-    if (!res.replay) this.track('gift_submitted');
+    if (res.replay && written) await this.files.removeReceipt(written); // reintento: el aporte ya tenía su comprobante
+    if (!res.replay) (await this.track('gift_submitted'));
     // Constancia para quien regaló (no bloquea: si el correo falla, el regalo ya quedó registrado).
     if (!res.replay) void this.mailGiftReceipt({ id: res.id, to: giverEmail, giver, couple: p.snapshot.names, gifts: lines.map(l => ({ name: l.name ?? FREE_AMOUNT_LABEL, amount: l.amount })), manage, optedIn: b['marketingOptIn'] === true });
     return res;
-  }
-
-  /** Guarda el archivo del comprobante con un nombre al azar (privado) y devuelve ese nombre. */
-  private storeReceiptFile(bytes: Buffer): string {
-    const dir = path.join(this.cfg.dataDir, 'receipts');
-    mkdirSync(dir, { recursive: true });
-    const key = newId('rcp');
-    writeFileSync(path.join(dir, key), bytes, { mode: 0o600 });
-    return key;
   }
 
   private comprobanteUrl(id: string, token: string) {
@@ -609,19 +582,19 @@ export class Service {
 
   /** La pareja pide el comprobante a quien regaló. Genera un enlace nuevo para adjuntarlo (el anterior deja de servir) y respeta un día entre pedidos. */
   async remindReceipt(userId: string, id: string): Promise<{ status: 'sent' | 'skipped' | 'failed' }> {
-    const { to, link, giver, couple } = tx(this.db, () => {
-      const c = this.ownedContribution(userId, id);
-      this.assertOperates(c['wedding_id'] as string, 'contributions');
+    const { to, link, giver, couple } = await this.db.tx('weda', async () => {
+      const c = (await this.ownedContribution(userId, id));
+      (await this.assertOperates(c['wedding_id'] as string, 'contributions'));
       if (c['status'] === 'rejected') throw conflict('contribution_rejected');
-      if (this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_already_attached');
+      if ((await this.db.get('SELECT 1 FROM receipts WHERE contribution_id = ?', id))) throw conflict('receipt_already_attached');
       const to = (c['giver_email'] as string | undefined) ?? '';
       if (!to) throw conflict('no_giver_email');
-      const last = this.db.prepare("SELECT at FROM contribution_events WHERE contribution_id = ? AND kind = 'receipt_reminder' ORDER BY id DESC LIMIT 1").get(id) as Row | undefined;
+      const last = (await this.db.get("SELECT at FROM contribution_events WHERE contribution_id = ? AND kind = 'receipt_reminder' ORDER BY id DESC LIMIT 1", id)) as Row | undefined;
       if (last && Date.now() - Date.parse(last['at'] as string) < REMINDER_GAP_MS) throw conflict('reminder_too_soon');
       const token = newToken();
-      this.db.prepare('UPDATE contributions SET manage_token_hash = ?, updated_at = ? WHERE id = ?').run(sha256(token), now(), id);
-      this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'receipt_reminder','owner',?,?,'',?)").run(id, c['status'] as string, c['status'] as string, now());
-      const site = this.db.prepare("SELECT snapshot FROM publications WHERE wedding_id = ? ORDER BY version DESC LIMIT 1").get(c['wedding_id'] as string) as Row | undefined;
+      (await this.db.run('UPDATE contributions SET manage_token_hash = ?, updated_at = ? WHERE id = ?', sha256(token), now(), id));
+      (await this.db.run("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'receipt_reminder','owner',?,?,'',?)", id, c['status'] as string, c['status'] as string, now()));
+      const site = (await this.db.get("SELECT snapshot FROM publications WHERE wedding_id = ? ORDER BY version DESC LIMIT 1", c['wedding_id'] as string)) as Row | undefined;
       let couple = 'los novios';
       try { couple = (JSON.parse((site?.['snapshot'] as string | undefined) ?? '{}') as { names?: string }).names || couple; } catch { /* sin snapshot legible */ }
       return { to, link: this.comprobanteUrl(id, token), giver: c['giver_name'] as string, couple };
@@ -637,165 +610,165 @@ export class Service {
   }
 
   /** Baja de novedades desde el enlace firmado del correo. Marca la baja (no borra: queda la prueba de cuándo se dio y se retiró). */
-  unsubscribe(token: string): boolean {
+  async unsubscribe(token: string): Promise<boolean> {
     const email = verifyUnsubscribe(this.cfg.secret, token);
     if (!email) return false;
-    this.db.prepare('UPDATE marketing_consents SET revoked_at = ? WHERE email = ? AND revoked_at IS NULL').run(now(), email);
+    (await this.db.run('UPDATE marketing_consents SET revoked_at = ? WHERE lower(email) = lower(?) AND revoked_at IS NULL', now(), email));
     return true;
   }
 
-  private contributionWithToken(id: string, token: string | undefined): Row {
-    const row = this.db.prepare('SELECT * FROM contributions WHERE id = ?').get(id) as Row | undefined;
+  private async contributionWithToken(id: string, token: string | undefined): Promise<Row> {
+    const row = (await this.db.get('SELECT * FROM contributions WHERE id = ?', id)) as Row | undefined;
     // Mismo error si no existe o si el token no coincide: no se revela cuáles ids existen.
     const ok = !!row && !!token && sha256(token).length === (row['manage_token_hash'] as string).length && timingSafeEqual(Buffer.from(sha256(token)), Buffer.from(row['manage_token_hash'] as string));
     if (!ok) throw notFound();
     return row!;
   }
 
-  guestContributionStatus(id: string, token: string | undefined) {
-    const c = this.contributionWithToken(id, token);
-    const rec = this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id);
+  async guestContributionStatus(id: string, token: string | undefined) {
+    const c = (await this.contributionWithToken(id, token));
+    const rec = (await this.db.get('SELECT 1 FROM receipts WHERE contribution_id = ?', id));
     return { id, status: c['status'] as string, total: c['total'] as number, hasReceipt: !!rec };
   }
 
   /** El invitado adjunta su comprobante (privado). Valida tipo real por contenido, tamaño y que el archivo y el registro queden consistentes. */
-  attachReceipt(id: string, token: string | undefined, bytes: Buffer) {
-    const c = this.contributionWithToken(id, token);
+  async attachReceipt(id: string, token: string | undefined, bytes: Buffer) {
+    const c = (await this.contributionWithToken(id, token));
     if (c['status'] === 'rejected') throw conflict('contribution_rejected');
     if (bytes.length === 0) throw invalid('empty_file');
     if (bytes.length > MAX_RECEIPT_BYTES) throw new ApiError(413, 'file_too_large');
     const mime = sniffMime(bytes);
     if (!mime) throw new ApiError(415, 'unsupported_file_type');
-    const dir = path.join(this.cfg.dataDir, 'receipts');
-    mkdirSync(dir, { recursive: true });
+    // El archivo se sube antes de la transacción (subir no retiene el candado de la base) y se borra si el registro no se escribe.
     const key = newId('rcp');
-    const file = path.join(dir, key);
-    writeFileSync(file, bytes, { mode: 0o600 });
+    await this.files.putReceipt(key, bytes, mime);
     try {
-      const old = tx(this.db, () => {
-        const prev = this.db.prepare('SELECT id, storage_key FROM receipts WHERE contribution_id = ?').get(id) as Row | undefined;
-        if (prev) this.db.prepare('DELETE FROM receipts WHERE id = ?').run(prev['id'] as string);
-        this.db.prepare('INSERT INTO receipts (id,wedding_id,contribution_id,mime,size,storage_key,created_at) VALUES (?,?,?,?,?,?,?)').run(newId('rec'), c['wedding_id'] as string, id, mime, bytes.length, key, now());
-        this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'receipt_attached','guest',?,?,'',?)").run(id, c['status'] as string, c['status'] as string, now());
+      const old = await this.db.tx('weda', async () => {
+        const prev = (await this.db.get('SELECT id, storage_key FROM receipts WHERE contribution_id = ?', id)) as Row | undefined;
+        if (prev) (await this.db.run('DELETE FROM receipts WHERE id = ?', prev['id'] as string));
+        (await this.db.run('INSERT INTO receipts (id,wedding_id,contribution_id,mime,size,storage_key,created_at) VALUES (?,?,?,?,?,?,?)', newId('rec'), c['wedding_id'] as string, id, mime, bytes.length, key, now()));
+        (await this.db.run("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'receipt_attached','guest',?,?,'',?)", id, c['status'] as string, c['status'] as string, now()));
         return prev?.['storage_key'] as string | undefined;
       });
-      if (old) rmSync(path.join(dir, old), { force: true });
+      if (old) await this.files.removeReceipt(old);
     } catch (e) {
-      rmSync(file, { force: true }); // sin registro no queda archivo huérfano
+      await this.files.removeReceipt(key); // sin registro no queda archivo huérfano
       throw e;
     }
     return { mime, size: bytes.length };
   }
 
   /** Aportes del casamiento del usuario (nunca de otro). */
-  listContributions(userId: string) {
-    const w = this.weddingOf(userId);
+  async listContributions(userId: string) {
+    const w = (await this.weddingOf(userId));
     if (!w) return [];
-    const rows = this.db.prepare('SELECT * FROM contributions WHERE wedding_id = ? ORDER BY created_at DESC, id').all(w['id'] as string) as Row[];
-    return rows.map(c => ({
+    const rows = (await this.db.all('SELECT * FROM contributions WHERE wedding_id = ? ORDER BY created_at DESC, id', w['id'] as string)) as Row[];
+    return Promise.all(rows.map(async c => ({
       id: c['id'] as string, giverName: c['giver_name'] as string, giverEmail: (c['giver_email'] as string | undefined) ?? '', message: c['message'] as string, how: c['how'] as string, status: c['status'] as string, total: c['total'] as number, createdAt: c['created_at'] as string,
-      items: (this.db.prepare('SELECT kind, gift_id, gift_name, amount FROM contribution_items WHERE contribution_id = ? ORDER BY id').all(c['id'] as string) as Row[]).map(i => ({ kind: i['kind'] as 'gift' | 'free', giftId: (i['gift_id'] as string | null) ?? '', giftName: (i['gift_name'] as string | null) ?? '', amount: i['amount'] as number })),
-      hasReceipt: !!this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(c['id'] as string),
-      history: (this.db.prepare('SELECT kind, actor, from_status, to_status, note, at FROM contribution_events WHERE contribution_id = ? ORDER BY id').all(c['id'] as string) as Row[]).map(e => ({ kind: e['kind'] as string, actor: e['actor'] as string, from: (e['from_status'] as string | null) ?? null, to: (e['to_status'] as string | null) ?? null, note: e['note'] as string, at: e['at'] as string })),
-    }));
+      items: ((await this.db.all('SELECT kind, gift_id, gift_name, amount FROM contribution_items WHERE contribution_id = ? ORDER BY id', c['id'] as string)) as Row[]).map(i => ({ kind: i['kind'] as 'gift' | 'free', giftId: (i['gift_id'] as string | null) ?? '', giftName: (i['gift_name'] as string | null) ?? '', amount: i['amount'] as number })),
+      hasReceipt: !!(await this.db.get('SELECT 1 FROM receipts WHERE contribution_id = ?', c['id'] as string)),
+      history: ((await this.db.all('SELECT kind, actor, from_status, to_status, note, at FROM contribution_events WHERE contribution_id = ? ORDER BY id', c['id'] as string)) as Row[]).map(e => ({ kind: e['kind'] as string, actor: e['actor'] as string, from: (e['from_status'] as string | null) ?? null, to: (e['to_status'] as string | null) ?? null, note: e['note'] as string, at: e['at'] as string })),
+    })));
   }
 
-  private ownedContribution(userId: string, id: string): Row {
-    const row = this.db.prepare('SELECT c.* FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE c.id = ? AND w.owner_id = ?').get(id, userId) as Row | undefined;
+  private async ownedContribution(userId: string, id: string): Promise<Row> {
+    const row = (await this.db.get('SELECT c.* FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE c.id = ? AND w.owner_id = ?', id, userId)) as Row | undefined;
     if (!row) throw notFound(); // existe pero es de otra pareja = mismo 404
     return row;
   }
 
-  setContributionStatus(userId: string, id: string, to: unknown, note: unknown) {
+  async setContributionStatus(userId: string, id: string, to: unknown, note: unknown) {
     if (typeof to !== 'string' || !['pending_review', 'confirmed', 'rejected'].includes(to)) throw invalid('invalid_status');
-    return tx(this.db, () => {
-      const c = this.ownedContribution(userId, id);
-      this.assertOperates(c['wedding_id'] as string, 'contributions');
+    return this.db.tx('weda', async () => {
+      const c = (await this.ownedContribution(userId, id));
+      (await this.assertOperates(c['wedding_id'] as string, 'contributions'));
       const from = c['status'] as string;
       if (!CONTRIBUTION_TRANSITIONS[from]?.includes(to)) throw conflict('invalid_transition');
-      if (to === 'confirmed' && !this.db.prepare('SELECT 1 FROM receipts WHERE contribution_id = ?').get(id)) throw conflict('receipt_required');
+      if (to === 'confirmed' && !(await this.db.get('SELECT 1 FROM receipts WHERE contribution_id = ?', id))) throw conflict('receipt_required');
       const t = now();
-      this.db.prepare('UPDATE contributions SET status=?, updated_at=? WHERE id=?').run(to, t, id);
-      this.db.prepare("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'status_changed','owner',?,?,?,?)").run(id, from, to, typeof note === 'string' ? note.slice(0, 300) : '', t);
+      (await this.db.run('UPDATE contributions SET status=?, updated_at=? WHERE id=?', to, t, id));
+      (await this.db.run("INSERT INTO contribution_events (contribution_id,kind,actor,from_status,to_status,note,at) VALUES (?,'status_changed','owner',?,?,?,?)", id, from, to, typeof note === 'string' ? note.slice(0, 300) : '', t));
       return { id, status: to };
     });
   }
 
   /** Comprobante: solo el dueño del casamiento. */
-  readReceipt(userId: string, id: string): { bytes: Buffer; mime: string } {
-    this.ownedContribution(userId, id);
-    const r = this.db.prepare('SELECT mime, storage_key FROM receipts WHERE contribution_id = ?').get(id) as Row | undefined;
+  async readReceipt(userId: string, id: string): Promise<{ bytes: Buffer; mime: string }> {
+    (await this.ownedContribution(userId, id));
+    const r = (await this.db.get('SELECT mime, storage_key FROM receipts WHERE contribution_id = ?', id)) as Row | undefined;
     if (!r) throw notFound();
-    return { bytes: readFileSync(path.join(this.cfg.dataDir, 'receipts', r['storage_key'] as string)), mime: r['mime'] as string };
+    const bytes = await this.files.receipt(r['storage_key'] as string);
+    if (!bytes) throw notFound();
+    return { bytes, mime: r['mime'] as string };
   }
 
   /* ------------------------------------------------------------------ planes y órdenes */
 
   /** Registra la intención de compra. El monto sale del servidor. No cobra: sin proveedor de pagos configurado la orden queda «pending». */
-  createOrder(userId: string, planIdRaw: unknown) {
+  async createOrder(userId: string, planIdRaw: unknown) {
     if (!isPlanId(planIdRaw)) throw invalid('invalid_plan');
-    const w = this.ensureWedding(userId);
+    const w = (await this.ensureWedding(userId));
     const plan = planById(planIdRaw)!;
-    this.assertNoPlanChange(w['id'] as string, plan.id);
+    (await this.assertNoPlanChange(w['id'] as string, plan.id));
     const id = newId('ord');
     const t = now();
-    this.db.prepare("INSERT INTO orders (id,wedding_id,plan_id,amount,status,created_at,updated_at) VALUES (?,?,?,?,'pending',?,?)").run(id, w['id'] as string, plan.id, plan.price, t, t);
+    (await this.db.run("INSERT INTO orders (id,wedding_id,plan_id,amount,status,created_at,updated_at) VALUES (?,?,?,?,'pending',?,?)", id, w['id'] as string, plan.id, plan.price, t, t));
     return { id, planId: plan.id, amount: plan.price, status: 'pending', checkoutUrl: null as string | null };
   }
 
-  listOrders(userId: string) {
-    const w = this.weddingOf(userId);
+  async listOrders(userId: string) {
+    const w = (await this.weddingOf(userId));
     if (!w) return [];
-    return (this.db.prepare('SELECT id, plan_id, amount, status, created_at, paid_at FROM orders WHERE wedding_id = ? ORDER BY created_at DESC, id').all(w['id'] as string) as Row[]).map(o => ({ id: o['id'] as string, planId: o['plan_id'] as string, amount: o['amount'] as number, status: o['status'] as string, createdAt: o['created_at'] as string, paidAt: (o['paid_at'] as string | null) ?? null }));
+    return ((await this.db.all('SELECT id, plan_id, amount, status, created_at, paid_at FROM orders WHERE wedding_id = ? ORDER BY created_at DESC, id', w['id'] as string)) as Row[]).map(o => ({ id: o['id'] as string, planId: o['plan_id'] as string, amount: o['amount'] as number, status: o['status'] as string, createdAt: o['created_at'] as string, paidAt: (o['paid_at'] as string | null) ?? null }));
   }
 
   /** Plan más alto que esta pareja ya pagó (con confirmación del proveedor), o null. */
-  private paidPlan(wid: string): PlanId | null {
-    const paid = this.db.prepare("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'").all(wid) as Row[];
+  private async paidPlan(wid: string): Promise<PlanId | null> {
+    const paid = (await this.db.all("SELECT plan_id FROM orders WHERE wedding_id = ? AND status = 'paid'", wid)) as Row[];
     return paid.map(r => planById(r['plan_id'] as PlanId)).filter(Boolean).sort((a, b) => planRank(b!.id) - planRank(a!.id))[0]?.id ?? null;
   }
 
   /** Con un plan ya pagado: el mismo → `already_paid`; otro → `plan_change_pending` (F8, D-05: DP-23 pendiente). No crea ninguna orden. */
-  private assertNoPlanChange(wid: string, planId: PlanId) {
-    const current = this.paidPlan(wid);
+  private async assertNoPlanChange(wid: string, planId: PlanId) {
+    const current = (await this.paidPlan(wid));
     if (!current) return;
     throw conflict(normalizePlanId(current) === normalizePlanId(planId) ? 'already_paid' : 'plan_change_pending');
   }
 
   /** Para el panel: hay cobro configurado y qué plan está pagado. Sin proveedor, `payments: false` (publicar no cobra). */
-  paymentInfo(userId: string) {
-    const w = this.weddingOf(userId);
-    return { payments: this.cfg.payments.provider !== 'none', paidPlan: w ? this.paidPlan(w['id'] as string) : null };
+  async paymentInfo(userId: string) {
+    const w = (await this.weddingOf(userId));
+    return { payments: this.cfg.payments.provider !== 'none', paidPlan: w ? (await this.paidPlan(w['id'] as string)) : null };
   }
 
   /**
    * Empieza un pago. El monto lo calcula el servidor: el precio del plan. Con un plan ya pagado no se cobra nada más (F8, D-05). Si ya hay una orden
    * pendiente para el mismo plan y monto (doble clic, recarga, volver atrás), se reusa: no se crean dos cobros para lo mismo.
    */
-  startCheckout(userId: string, planIdRaw: unknown) {
+  async startCheckout(userId: string, planIdRaw: unknown) {
     const provider = providerFor(this.cfg);
     if (!provider) throw new ApiError(501, 'payments_not_configured');
     if (!isPlanId(planIdRaw)) throw invalid('invalid_plan');
-    return tx(this.db, () => {
-      const w = this.ensureWedding(userId);
+    return this.db.tx('weda', async () => {
+      const w = (await this.ensureWedding(userId));
       const wid = w['id'] as string;
       const plan = planById(planIdRaw)!;
-      this.assertNoPlanChange(wid, plan.id);
+      (await this.assertNoPlanChange(wid, plan.id));
       // Sin mejoras ni cobros adicionales (D-05): se cobra el precio completo del plan, una sola vez.
       const amount = plan.price;
-      const open = this.db.prepare("SELECT id FROM orders WHERE wedding_id = ? AND plan_id = ? AND amount = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1").get(wid, plan.id, amount) as Row | undefined;
+      const open = (await this.db.get("SELECT id FROM orders WHERE wedding_id = ? AND plan_id = ? AND amount = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1", wid, plan.id, amount)) as Row | undefined;
       const id = (open?.['id'] as string | undefined) ?? newId('ord');
       if (!open) {
         const t = now();
-        this.db.prepare("INSERT INTO orders (id,wedding_id,plan_id,amount,status,provider,created_at,updated_at) VALUES (?,?,?,?,'pending',?,?,?)").run(id, wid, plan.id, amount, provider.name, t, t);
+        (await this.db.run("INSERT INTO orders (id,wedding_id,plan_id,amount,status,provider,created_at,updated_at) VALUES (?,?,?,?,'pending',?,?,?)", id, wid, plan.id, amount, provider.name, t, t));
       }
       return { id, planId: plan.id, amount, status: 'pending', checkoutUrl: provider.checkoutUrl({ id, amount }, this.cfg) };
     });
   }
 
   /** Estado de una orden propia (para retomar un pago interrumpido o al volver del proveedor). */
-  orderStatus(userId: string, id: string) {
-    const o = this.db.prepare('SELECT o.id, o.plan_id, o.amount, o.status, o.paid_at FROM orders o JOIN weddings w ON w.id = o.wedding_id WHERE o.id = ? AND w.owner_id = ?').get(id, userId) as Row | undefined;
+  async orderStatus(userId: string, id: string) {
+    const o = (await this.db.get('SELECT o.id, o.plan_id, o.amount, o.status, o.paid_at FROM orders o JOIN weddings w ON w.id = o.wedding_id WHERE o.id = ? AND w.owner_id = ?', id, userId)) as Row | undefined;
     if (!o) throw notFound();
     return { id: o['id'] as string, planId: o['plan_id'] as string, amount: o['amount'] as number, status: o['status'] as string, paidAt: (o['paid_at'] as string | null) ?? null };
   }
@@ -804,51 +777,51 @@ export class Service {
    * Notificación del proveedor (webhook). Única vía para marcar una orden como pagada. Se verifica la firma; cada evento se procesa una sola vez
    * (el proveedor puede repetirlo) y una orden ya cerrada no cambia por un evento posterior contradictorio.
    */
-  handlePaymentNotification(providerName: string, rawBody: string, headers: Headers) {
+  async handlePaymentNotification(providerName: string, rawBody: string, headers: Headers) {
     const provider = providerFor(this.cfg);
     if (!provider || provider.name !== providerName) throw notFound();
     let n;
     try { n = provider.verify(rawBody, headers, this.cfg); } catch { throw new ApiError(401, 'invalid_signature'); }
-    const res = this.settlePaymentEvent(provider.name, n);
+    const res = (await this.settlePaymentEvent(provider.name, n));
     // BR-01 (PAY-07): con el pago confirmado se publica en el mismo momento. Va DESPUÉS y aparte: el pago queda registrado aunque la publicación falle
     // (por ejemplo, faltan los nombres); el estado queda en `paid_unpublished` y la pareja reintenta sin volver a pagar (DP-25).
     if (res.status === 'paid' && !res.duplicate && !res.ignored) {
-      const wid = (this.db.prepare('SELECT wedding_id FROM orders WHERE id = ?').get(n.orderId) as Row)['wedding_id'] as string;
-      try { this.publishWedding(wid); } catch (e) {
+      const wid = ((await this.db.get('SELECT wedding_id FROM orders WHERE id = ?', n.orderId)) as Row)['wedding_id'] as string;
+      try { (await this.publishWedding(wid)); } catch (e) {
         // F-P2: la falla queda registrada (evento persistente y log del servidor) solo con su código, sin datos de la pareja ni del pago.
         // Recuperación: «Publicar mi página» en el panel.
         const reason = e instanceof ApiError ? e.code : 'unexpected';
-        this.track('publication_failed', { reason });
+        (await this.track('publication_failed', { reason }));
         console.error(`Publicación automática tras el pago no completada: ${reason}`);
       }
     }
     return res;
   }
 
-  private settlePaymentEvent(providerName: string, n: { eventId: string; orderId: string; outcome: Outcome; providerRef: string }): { duplicate: boolean; ignored?: boolean; status?: string } {
+  private async settlePaymentEvent(providerName: string, n: { eventId: string; orderId: string; outcome: Outcome; providerRef: string }): Promise<{ duplicate: boolean; ignored?: boolean; status?: string; }> {
     const provider = { name: providerName };
-    return tx(this.db, () => {
-      const seen = this.db.prepare('SELECT 1 FROM payment_events WHERE provider = ? AND event_id = ?').get(provider.name, n.eventId);
+    return this.db.tx('weda', async () => {
+      const seen = (await this.db.get('SELECT 1 FROM payment_events WHERE provider = ? AND event_id = ?', provider.name, n.eventId));
       if (seen) return { duplicate: true };
-      this.db.prepare('INSERT INTO payment_events (provider,event_id,order_id,outcome,received_at) VALUES (?,?,?,?,?)').run(provider.name, n.eventId, n.orderId, n.outcome, now());
-      const o = this.db.prepare('SELECT status FROM orders WHERE id = ?').get(n.orderId) as Row | undefined;
+      (await this.db.run('INSERT INTO payment_events (provider,event_id,order_id,outcome,received_at) VALUES (?,?,?,?,?)', provider.name, n.eventId, n.orderId, n.outcome, now()));
+      const o = (await this.db.get('SELECT status FROM orders WHERE id = ?', n.orderId)) as Row | undefined;
       if (!o) throw notFound();
       if (o['status'] !== 'pending') return { duplicate: false, ignored: true, status: o['status'] as string };
       const t = now();
-      this.db.prepare('UPDATE orders SET status=?, provider=?, provider_ref=?, updated_at=?, paid_at=? WHERE id=?').run(n.outcome, provider.name, n.providerRef, t, n.outcome === 'paid' ? t : null, n.orderId);
+      (await this.db.run('UPDATE orders SET status=?, provider=?, provider_ref=?, updated_at=?, paid_at=? WHERE id=?', n.outcome, provider.name, n.providerRef, t, n.outcome === 'paid' ? t : null, n.orderId));
       // Única fuente de «pago confirmado»: la notificación verificada del proveedor.
-      if (n.outcome === 'paid') { const po = this.db.prepare('SELECT plan_id FROM orders WHERE id = ?').get(n.orderId) as Row; this.track('payment_confirmed', { plan_id: po['plan_id'] as string }); }
+      if (n.outcome === 'paid') { const po = (await this.db.get('SELECT plan_id FROM orders WHERE id = ?', n.orderId)) as Row; (await this.track('payment_confirmed', { plan_id: po['plan_id'] as string })); }
       return { duplicate: false, status: n.outcome };
     });
   }
 
   /** SOLO adaptador de prueba: lo que hace el «proveedor» cuando la persona toca Aprobar/Rechazar/Cancelar en /pago-de-prueba. Pasa por la misma verificación. */
-  completeTestPayment(userId: string, orderId: string, outcome: unknown) {
+  async completeTestPayment(userId: string, orderId: string, outcome: unknown) {
     if (this.cfg.payments.provider !== 'test') throw notFound();
     if (outcome !== 'paid' && outcome !== 'failed' && outcome !== 'cancelled') throw invalid('invalid_outcome');
-    this.orderStatus(userId, orderId); // solo la pareja dueña
+    (await this.orderStatus(userId, orderId)); // solo la pareja dueña
     const { body, signature } = signedTestNotification(this.cfg, { eventId: newId('evt'), orderId, outcome: outcome as Outcome });
-    return this.handlePaymentNotification('test', body, new Headers({ 'x-weda-signature': signature }));
+    return (await this.handlePaymentNotification('test', body, new Headers({ 'x-weda-signature': signature })));
   }
 
   requireSession(s: Session | null): Session {

@@ -33,7 +33,7 @@ function Privacy() {
       </ul>
 
       <h2>Con quién se comparten</h2>
-      <p>Los datos de cada casamiento los ve la pareja que lo creó. Usamos proveedores para alojar el sitio y enviar correos (<Todo>proveedores de hosting y de correo</Todo>), que tratan los datos solo para prestarnos ese servicio. No vendemos tus datos.</p>
+      <p>Los datos de cada casamiento los ve la pareja que lo creó. Usamos proveedores que tratan los datos solo para prestarnos su servicio: Supabase guarda la base de datos, las cuentas, las fotos y los comprobantes en servidores de São Paulo, Brasil; Resend envía los correos, y <Todo>proveedor de hosting</Todo> aloja el sitio. <Todo>transferencia internacional de datos (revisión legal)</Todo>. No vendemos tus datos.</p>
 
       <h2>Cuánto tiempo los guardamos</h2>
       <p>Los datos del casamiento, mientras la cuenta esté activa: la página publicada no vence, y un proyecto en pausa por no haber contratado se conserva (<Todo>plazo de conservación de proyectos en pausa</Todo>). Los datos de novedades, hasta que te des de baja (guardamos la baja como constancia). <Todo>plazo de conservación luego de cerrar la cuenta</Todo>.</p>

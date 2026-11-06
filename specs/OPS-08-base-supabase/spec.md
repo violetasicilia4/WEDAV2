@@ -1,6 +1,6 @@
 # OPS-08 · Todo Weda en Supabase: base, cuentas y archivos — spec
 
-- **Estado:** aprobada (2026-11-04, la dueña), junto con el plan. Por construir.
+- **Estado:** en construcción (desde el 2026-11-05, rama `feat/ops-08-supabase`). Funciona contra el proyecto de desarrollo `weda-dev` (São Paulo): 278 pruebas en verde contra Supabase (más 1 que necesita la clave publicable) y 283 en modo local; recorrido real en el servidor de desarrollo (registro, foto en Storage, cobro, publicación, regalo con aporte libre y comprobante, revisión). Falta la limpieza de SQLite (etapa 6), las E2E y la evidencia de cada criterio. Hallazgos al probar: Supabase cierra todas las sesiones al cambiar la clave (se abre una nueva para quien la cambió) y rechaza correos con «ñ» (se responde `invalid_email`).
 - **Ajustes aprobados con el plan:** los comprobantes los entrega el servidor después de verificar a la pareja dueña, en lugar de enlaces firmados (Alcance 3), y las fechas y el JSON siguen como texto en esta migración (Alcance 1).
 - **Tamaño:** crítica (esquema, cuentas, permisos, datos personales, dinero y seguridad).
 - **Plan:** [plan.md](plan.md)
