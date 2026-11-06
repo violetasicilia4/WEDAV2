@@ -34,8 +34,12 @@ export type SiteData = {
   events: WeddingEvent[];
   /** Orden de las secciones reordenables (ver `BlockId`). */
   order: BlockId[];
-  /** `gifts`: hay lista de regalos; `giftsSection`: se muestra el acceso a la lista dentro de la invitación; `note`: se muestra la caja de texto libre. */
-  blocks: { invitation: boolean; save: boolean; countdown: boolean; day: boolean; rsvp: boolean; dress: boolean; photos: boolean; playlist: boolean; message: boolean; gifts: boolean; giftsSection: boolean; note: boolean };
+  /**
+   * `gifts`: hay lista de regalos con al menos un regalo; `giftsPage`: el plan incluye la lista, así que su página existe (aunque esté vacía, con su estado
+   * «Esta lista todavía se está armando») y se llega desde el menú; `giftsSection`: se muestra el acceso a la lista dentro de la invitación; `note`: caja de texto libre.
+   * `giftsPage` es opcional porque las publicaciones anteriores no lo guardaron: para ellas vale `gifts.length > 0` (ver `hasGiftsPage`).
+   */
+  blocks: { invitation: boolean; save: boolean; countdown: boolean; day: boolean; rsvp: boolean; dress: boolean; photos: boolean; playlist: boolean; message: boolean; gifts: boolean; giftsPage?: boolean | undefined; giftsSection: boolean; note: boolean };
   giftsSection: { title: string; text: string; button: string };
   note: { title: string; text: string };
   rsvp: { deadline: string | null; menus: readonly { id: string; name: string }[] | null };
@@ -93,7 +97,7 @@ export const demoSiteData: SiteData = {
   calendarTitle: calendar.title,
   events: demoEvents,
   order: DEFAULT_ORDER,
-  blocks: { invitation: true, save: true, countdown: true, day: true, rsvp: true, dress: true, photos: true, playlist: true, message: true, gifts: false, giftsSection: false, note: false },
+  blocks: { invitation: true, save: true, countdown: true, day: true, rsvp: true, dress: true, photos: true, playlist: true, message: true, gifts: false, giftsPage: true, giftsSection: false, note: false },
   giftsSection: { title: DEFAULT_GIFTS_TITLE, text: DEFAULT_GIFTS_TEXT, button: DEFAULT_GIFTS_BUTTON },
   note: { title: '', text: '' },
   rsvp: { deadline: demoDeadline, menus: demoMenus },
@@ -164,6 +168,7 @@ export function siteFromState(s: AppState): SiteData {
       message: publishes(s.planId, 'message') && s.site.message.enabled,
       // La lista de regalos que incluye el plan se ve también en la invitación (una muestra y el acceso a la lista completa).
       gifts: publishes(s.planId, 'gifts') && gifts.length > 0,
+      giftsPage: publishes(s.planId, 'gifts'),
       giftsSection: publishes(s.planId, 'gifts') && gifts.length > 0 && s.site.giftsSection.enabled,
       note: publishes(s.planId, 'site') && s.site.note.enabled && (s.site.note.title.trim() !== '' || s.site.note.text.trim() !== ''),
     },
@@ -185,6 +190,9 @@ export function siteFromState(s: AppState): SiteData {
     acceptCard: s.gifts.acceptCard,
   };
 }
+
+/** Si el sitio tiene página de regalos (y por eso «Regalá» en el menú): la tiene todo plan que incluye la lista, aunque todavía esté vacía. */
+export const hasGiftsPage = (site: SiteData) => site.blocks.giftsPage ?? site.gifts.length > 0;
 
 const SiteContext = createContext<SiteData>(demoSiteData);
 export const useSite = () => useContext(SiteContext);
