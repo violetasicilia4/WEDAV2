@@ -5,7 +5,7 @@ import { normalizeName, publicSite, sanitizeDraft, type DraftState } from './dra
 import type { Db } from './db';
 import { ApiError, conflict, forbidden, invalid, notFound, unauthorized } from './errors';
 import { newId, newToken, RateLimiter, sha256 } from './security';
-import { LocalAccounts, type Accounts, type Authenticated } from './accounts';
+import type { Accounts, Authenticated } from './accounts';
 import type { ServerConfig } from './config';
 import { cleanCbu, emptyState, FREE_AMOUNT_LABEL, isEmail, maskAlias, maskCbu, MAX_AMOUNT, MIN_AMOUNT, slugify, strongPassword, validateAlias, validateCbu } from '@/lib/weda/logic';
 import { planById, isPlanId, normalizePlanId, operates, planForOperation, planRank, TRIAL_DAYS, type Access, type Operation } from '@/lib/weda/plans';
@@ -16,7 +16,7 @@ import { formatARS } from '@/lib/demo-wedding';
 import { layout, sendMail, unsubscribeUrl, verifyUnsubscribe } from './mail';
 import { providerFor, signedTestNotification, type Outcome } from './payments';
 import { externalizeImages } from './media';
-import { DiskFiles, type Files } from './storage';
+import type { Files } from './storage';
 import { ALLOWED_PROPS, CLIENT_EVENTS, type EventProps, type ServerEvent } from '@/lib/analytics-events';
 
 /** Entre un recordatorio de comprobante y el siguiente, para el mismo aporte. */
@@ -53,7 +53,7 @@ export class Service {
 
   /** Intentos de cambiar el destino de cobro con la clave equivocada, por usuario. */
   private payoutLimiter = new RateLimiter(8, 15 * 60_000);
-  constructor(public db: Db, public cfg: ServerConfig, public files: Files = new DiskFiles(cfg.dataDir), public accounts: Accounts = new LocalAccounts(db)) {}
+  constructor(public db: Db, public cfg: ServerConfig, public files: Files, public accounts: Accounts) {}
 
   /* ------------------------------------------------------------------ cuentas y sesiones */
 
@@ -420,9 +420,7 @@ export class Service {
       if (prev) (await this.db.run("UPDATE publications SET status='live', plan_id=?, snapshot=?, version=?, updated_at=? WHERE wedding_id=?", planId, JSON.stringify(snapshot), (prev['version'] as number) + 1, t, wid));
       else (await this.db.run("INSERT INTO publications (wedding_id,status,plan_id,snapshot,version,published_at,updated_at,expires_at) VALUES (?,?,?,?,?,?,?,NULL)", wid, 'live', planId, JSON.stringify(snapshot), 1, t, t));
       // El plan publicado pasa a ser el del borrador (F-P1): una sola fuente para lo que se muestra como incluido. No cambia la revisión.
-      (await this.db.run(this.db.dialect === 'pg'
-        ? "UPDATE weddings SET draft = jsonb_set(draft::jsonb, '{planId}', to_jsonb(?::text))::text WHERE id = ?"
-        : "UPDATE weddings SET draft = json_set(draft, '$.planId', ?) WHERE id = ?", planId, wid));
+      (await this.db.run("UPDATE weddings SET draft = jsonb_set(draft::jsonb, '{planId}', to_jsonb(?::text))::text WHERE id = ?", planId, wid));
       (await this.track('publication_completed', { plan_id: planId, is_republish: !!prev }));
       return { slug, planId, version: ((prev?.['version'] as number | undefined) ?? 0) + 1, access: (await this.access(wid)) };
     });

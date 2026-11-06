@@ -3,7 +3,7 @@
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, PNG, saveDraft, signUp, storedFiles, PG, type Env } from './helpers';
+import { draftFor, makeEnv, PNG, saveDraft, signUp, storedFiles, type Env } from './helpers';
 
 /* Fotos fuera de la base: al guardar, las fotos embebidas pasan a archivos y el borrador guarda solo su dirección. */
 let env: Env;
@@ -25,14 +25,10 @@ describe('fotos persistentes', () => {
     // Se ve desde cualquier lugar (otro dispositivo, invitados), con el tipo real y caché larga.
     const name = w.draft.photo.src.split('/').pop();
     const f = await env.client().get(`/api/media/${name}`);
-    if (PG) {
-      // En Supabase Storage la foto tiene su dirección pública: /api/media/… redirige ahí, y ahí está la imagen.
-      expect(f.status).toBe(302);
-      const pub = await fetch(f.headers.get('location')!);
-      expect([pub.status, pub.headers.get('content-type')]).toEqual([200, 'image/png']);
-    } else {
-      expect([f.status, f.headers.get('content-type'), f.headers.get('cache-control')]).toEqual([200, 'image/png', 'public, max-age=31536000, immutable']);
-    }
+    // En Supabase Storage la foto tiene su dirección pública: /api/media/… redirige ahí, y ahí está la imagen.
+    expect(f.status).toBe(302);
+    const pub = await fetch(f.headers.get('location')!);
+    expect([pub.status, pub.headers.get('content-type')]).toEqual([200, 'image/png']);
     const slug = (await o.post('/api/wedding/publish')).body.slug;
     expect(JSON.stringify((await env.client().get(`/api/public/${slug}`)).body)).not.toContain('data:image');
   });
@@ -45,7 +41,6 @@ describe('fotos persistentes', () => {
     expect([r.status, r.body.error]).toEqual([415, 'unsupported_image']);
     expect((await env.client().get('/api/media/..%2F..%2Fweda.db')).status).toBe(404);
     const missing = await env.client().get(`/api/media/${'0'.repeat(64)}.png`);
-    if (PG) expect((await fetch(missing.headers.get('location')!)).ok).toBe(false); // redirige a Storage, donde no existe
-    else expect(missing.status).toBe(404);
+    expect((await fetch(missing.headers.get('location')!)).ok).toBe(false); // redirige a Storage, donde no existe
   });
 });

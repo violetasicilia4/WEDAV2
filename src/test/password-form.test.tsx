@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { PasswordForm } from '@/components/panel/password-form';
-import { makeEnv, PASSWORD, signUp, type Client, type Env } from './server/helpers';
+import { makeEnv, PASSWORD, PG, signUp, type Client, type Env } from './server/helpers';
 
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
@@ -87,8 +87,8 @@ describe('formulario para cambiar la clave', () => {
   });
 });
 
-/* Integración: el formulario contra la API real (handleApi + SQLite temporal), con la cookie de sesión de un navegador. */
-describe('formulario + servidor', () => {
+/* Integración: el formulario contra la API real (handleApi + proyecto de desarrollo de Supabase), con la cookie de sesión de un navegador. */
+describe.skipIf(!PG)('formulario + servidor', () => {
   let env: Env;
   let browser: Client;
   beforeAll(async () => { env = await makeEnv(); browser = env.client(); await signUp(browser, 'perfil-ui@correo.com'); });

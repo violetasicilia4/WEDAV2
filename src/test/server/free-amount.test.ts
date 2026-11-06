@@ -2,8 +2,7 @@
 // GIFT-09 · Aporte de importe libre (specs/GIFT-09-aporte-libre): lo habilita lo PUBLICADO, el monto es el único importe que viene del cliente,
 // se valida contra el mínimo publicado y el máximo, un renglón libre por aporte, sin duplicar al reintentar, y la migración 8 conserva los aportes.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { migrate } from '@/server/db';
-import { draftFor, makeEnv, PNG, publishWith, saveDraft, signUp, PG, type Env } from './helpers';
+import { draftFor, makeEnv, PNG, publishWith, saveDraft, signUp, type Env } from './helpers';
 import type { AppState } from '@/lib/weda/types';
 
 let env: Env;
@@ -119,37 +118,3 @@ describe('aporte libre', () => {
   });
 });
 
-// Migración propia de SQLite: en Supabase el esquema nace completo (pg.ts).
-describe.skipIf(PG)('migración 9', () => {
-  // Base propia: solo aportes de la versión anterior (regalos), como los que hay hoy en producción.
-  let main: Env;
-  beforeAll(async () => { main = env; env = await makeEnv(); });
-  afterAll(async () => { await env.close(); env = main; });
-
-  it('rehace los renglones de aportes conservando todas las filas y los totales (CA-11)', async () => {
-    const { o, slug } = await couple('libre-migra@correo.com', draftFor('Vera', 'Simón'));
-    const g = env.client();
-    await g.post(`/api/public/${slug}/contributions`, body({ giftIds: ['g1', 'g2'] }));
-    await g.post(`/api/public/${slug}/contributions`, body({ giftIds: ['g2'] }));
-    const db = env.svc.db;
-    // Se vuelve la tabla al esquema anterior (versión 8) con los mismos datos, y se migra de nuevo.
-    await db.exec(`
-      CREATE TABLE old_items (contribution_id TEXT NOT NULL REFERENCES contributions(id) ON DELETE CASCADE, gift_id TEXT NOT NULL, gift_name TEXT NOT NULL,
-        amount INTEGER NOT NULL CHECK (amount > 0), PRIMARY KEY (contribution_id, gift_id));
-      INSERT INTO old_items SELECT contribution_id, gift_id, gift_name, amount FROM contribution_items;
-      DROP TABLE contribution_items;
-      ALTER TABLE old_items RENAME TO contribution_items;
-      PRAGMA user_version = 8;
-    `);
-    const before = (await db.all('SELECT contribution_id, gift_id, gift_name, amount FROM contribution_items ORDER BY contribution_id, gift_id'));
-    await migrate(db);
-    expect(((await db.get('PRAGMA user_version')) as { user_version: number }).user_version).toBe(9);
-    const after = (await db.all("SELECT contribution_id, gift_id, gift_name, amount FROM contribution_items WHERE kind = 'gift' AND suggested_amount = amount ORDER BY contribution_id, gift_id"));
-    expect(after).toEqual(before);
-    expect(((await db.get('SELECT COUNT(*) AS n FROM contribution_items')) as { n: number }).n).toBe(before.length);
-    const sums = (await db.all('SELECT c.total, SUM(i.amount) AS s FROM contributions c JOIN contribution_items i ON i.contribution_id = c.id GROUP BY c.id')) as { total: number; s: number }[];
-    expect(sums.length).toBeGreaterThan(0);
-    for (const x of sums) expect(x.s).toBe(x.total);
-    expect((await o.get('/api/contributions')).status).toBe(200);
-  });
-});

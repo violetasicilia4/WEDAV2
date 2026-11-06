@@ -1,8 +1,6 @@
-// Archivos de Weda: fotos del casamiento (públicas) y comprobantes de transferencia (privados). Dos implementaciones con la misma forma:
-// en disco (WEDA_DATA_DIR, la de siempre) y en Supabase Storage (OPS-08, D-07): bucket público `media` y bucket privado `receipts`.
+// Archivos de Weda en Supabase Storage (OPS-08, D-07): fotos del casamiento en el bucket público `media` y comprobantes de transferencia en el
+// bucket privado `receipts`. `Files` es la interfaz que usa el servicio.
 // Los comprobantes nunca tienen una dirección pública: el servidor verifica a la pareja dueña y recién ahí los lee y los entrega (ajuste 1 del plan).
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const MEDIA_NAME = /^[0-9a-f]{64}\.(jpg|png|webp)$/;
@@ -11,41 +9,11 @@ export const MEDIA_MIME: Record<string, string> = { jpg: 'image/jpeg', png: 'ima
 export interface Files {
   /** Guarda una foto (nombre = hash del contenido: guardarla dos veces no duplica). */
   putMedia(name: string, bytes: Buffer, mime: string): Promise<void>;
-  /** Una foto guardada: sus bytes (disco) o la dirección pública donde está (Storage). null si no existe. */
-  media(name: string): Promise<{ bytes: Buffer; mime: string } | { redirect: string } | null>;
+  /** La dirección pública de una foto (Storage). null si el nombre no es válido. */
+  media(name: string): Promise<{ redirect: string } | null>;
   putReceipt(key: string, bytes: Buffer, mime: string): Promise<void>;
   receipt(key: string): Promise<Buffer | null>;
   removeReceipt(key: string): Promise<void>;
-}
-
-/** En disco, dentro de WEDA_DATA_DIR (fotos en media/, comprobantes en receipts/ con permisos 600). */
-export class DiskFiles implements Files {
-  constructor(private dataDir: string) {}
-  private dir(kind: 'media' | 'receipts') {
-    const d = path.join(this.dataDir, kind);
-    mkdirSync(d, { recursive: true });
-    return d;
-  }
-  async putMedia(name: string, bytes: Buffer) {
-    const file = path.join(this.dir('media'), name);
-    if (!existsSync(file)) writeFileSync(file, bytes, { mode: 0o644 });
-  }
-  async media(name: string) {
-    if (!MEDIA_NAME.test(name)) return null;
-    const file = path.join(this.dataDir, 'media', name);
-    if (!existsSync(file)) return null;
-    return { bytes: readFileSync(file), mime: MEDIA_MIME[name.split('.').pop()!]! };
-  }
-  async putReceipt(key: string, bytes: Buffer) {
-    writeFileSync(path.join(this.dir('receipts'), key), bytes, { mode: 0o600 });
-  }
-  async receipt(key: string) {
-    const file = path.join(this.dataDir, 'receipts', key);
-    return existsSync(file) ? readFileSync(file) : null;
-  }
-  async removeReceipt(key: string) {
-    rmSync(path.join(this.dataDir, 'receipts', key), { force: true });
-  }
 }
 
 /**

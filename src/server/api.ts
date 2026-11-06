@@ -1,7 +1,6 @@
 // API HTTP de Weda (JSON). Se monta en src/server.ts para toda ruta /api/*. Las rutas son finas: parsean, autentican y delegan en Service.
 // Seguridad: cookie de sesión httpOnly + SameSite=Lax, escrituras solo con Content-Type JSON/binario y Origin propio, errores sin detalles internos.
 import type { ServerConfig } from './config';
-import { openDb } from './db';
 import { ApiError } from './errors';
 import { RateLimiter } from './security';
 import { MAX_RECEIPT_BYTES, Service, type Session } from './service';
@@ -16,12 +15,9 @@ export function getService(cfg: ServerConfig): Promise<Service> {
   return (shared ??= openStore(cfg).catch((e: unknown) => { shared = undefined; throw e; }));
 }
 
-/**
- * Con Supabase configurado (OPS-08): PostgreSQL (con sus migraciones), Supabase Auth y Supabase Storage. Si no, SQLite y el disco
- * (desarrollo y pruebas locales). Las piezas de Supabase se cargan solo si hacen falta.
- */
+/** Supabase (OPS-08): PostgreSQL (con sus migraciones), Supabase Auth y Supabase Storage. Sin configuración, la API responde 503. */
 async function openStore(cfg: ServerConfig): Promise<Service> {
-  if (!cfg.supabase) return new Service(openDb(cfg.dbPath), cfg);
+  if (!cfg.supabase) throw new Error('Supabase no está configurado: faltan SUPABASE_SECRET_KEY y SUPABASE_DB_URL (ver .env.example).');
   const { url, secretKey, dbUrl } = cfg.supabase;
   const [{ connectPg, migratePg, PgDb }, { createClient }, { SupabaseFiles }, { SupabaseAccounts }] = await Promise.all([import('./pg'), import('@supabase/supabase-js'), import('./storage'), import('./accounts')]);
   const sql = connectPg(dbUrl);
@@ -77,7 +73,7 @@ async function readJson(req: Request): Promise<Record<string, unknown>> {
   } catch { throw new ApiError(400, 'invalid_json'); }
 }
 
-/** Abre la base al primer uso. Si no se puede (hosting sin disco persistente o sin `node:sqlite`), la API responde 503 y el resto del sitio sigue andando. */
+/** Abre la base al primer uso. Si no se puede (sin Supabase configurado o sin conexión), la API responde 503 y el resto del sitio sigue andando. */
 async function openService(cfg: ServerConfig): Promise<Service> {
   try { return await getService(cfg); }
   catch (e) { console.error('No se pudo abrir la base de datos:', e); throw new ApiError(503, 'backend_unavailable'); }
@@ -108,9 +104,8 @@ async function route(req: Request, cfg: ServerConfig, injected: Service | undefi
     if (a0(parts) === 'media' && parts[1] && method === 'GET') {
       const m = await (injected ?? (await openService(cfg))).files.media(parts[1]);
       if (!m) throw new ApiError(404, 'not_found');
-      // En Supabase Storage la foto tiene su propia dirección pública: se redirige ahí (la dirección /api/media/… de los borradores no cambia).
-      if ('redirect' in m) return new Response(null, { status: 302, headers: { location: m.redirect, 'cache-control': 'public, max-age=31536000, immutable' } });
-      return new Response(new Uint8Array(m.bytes), { status: 200, headers: { 'content-type': m.mime, 'cache-control': 'public, max-age=31536000, immutable', 'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'" } });
+      // La foto tiene su propia dirección pública en Supabase Storage: se redirige ahí (la dirección /api/media/… de los borradores no cambia).
+      return new Response(null, { status: 302, headers: { location: m.redirect, 'cache-control': 'public, max-age=31536000, immutable' } });
     }
     // Baja de novedades desde el enlace del correo (sin sesión). Responde una página simple, no JSON.
     if (a0(parts) === 'unsubscribe' && method === 'GET') {

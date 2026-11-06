@@ -1,11 +1,9 @@
-// Cuentas y sesiones de Weda: registrarse, entrar, salir, contar y cerrar las otras sesiones, comprobar y cambiar la clave.
-// Dos implementaciones con la misma forma: la propia (tablas `users` y `sessions`, claves con scrypt) y Supabase Auth (OPS-08, D-07, P1).
-// La cookie de Weda (`weda_session`) guarda un token opaco: en la propia, el token de la sesión; en Supabase, el de acceso y el de renovación.
+// Cuentas y sesiones de Weda con Supabase Auth (OPS-08, D-07, P1): registrarse, entrar, salir, contar y cerrar las otras sesiones, comprobar y
+// cambiar la clave. `Accounts` es la interfaz que usa el servicio. La cookie de Weda (`weda_session`) guarda el token de acceso y el de renovación.
 // El enlace para recuperar la clave sigue siendo de Weda (tabla `password_resets` y correo propio): ver service.ts.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Db, Row } from './db';
 import { ApiError, conflict, invalid } from './errors';
-import { hashPassword, newId, newToken, sha256, verifyPassword } from './security';
 
 export type Issued = { userId: string; email: string; token: string };
 /** Sesión válida. `renewed`: el token cambió (se renovó el de acceso) y hay que reescribir la cookie. */
@@ -22,79 +20,12 @@ export interface Accounts {
   closeOthers(userId: string, token: string): Promise<number>;
   checkPassword(userId: string, email: string, password: string): Promise<boolean>;
   /**
-   * Cambia la clave y cierra todas las sesiones de la cuenta, salvo la de `keep` (si viene). Devuelve el token con el que sigue esa sesión:
-   * el mismo (cuentas propias) o uno nuevo (Supabase cierra todas al cambiar la clave, así que se abre otra para quien la cambió).
+   * Cambia la clave y cierra todas las sesiones de la cuenta. Si viene `keep`, quien la cambió sigue adentro: Supabase cierra todas al cambiar la
+   * clave, así que se le abre una sesión nueva y se devuelve su token (la API reescribe la cookie).
    */
   setPassword(userId: string, password: string, keep?: { token: string; email: string }): Promise<string | null>;
   idByEmail(email: string): Promise<string | null>;
 }
-
-const SESSION_DAYS = 30;
-const now = () => new Date().toISOString();
-
-/** Cuentas propias, en la base de Weda (SQLite). */
-export class LocalAccounts implements Accounts {
-  constructor(private db: Db) {}
-  private async open(userId: string): Promise<string> {
-    const token = newToken();
-    const exp = new Date(Date.now() + SESSION_DAYS * 86_400_000).toISOString();
-    await this.db.run('INSERT INTO sessions (id,user_id,created_at,expires_at) VALUES (?,?,?,?)', sha256(token), userId, now(), exp);
-    return token;
-  }
-  async create(email: string, password: string) {
-    const hash = await hashPassword(password);
-    const id = newId('usr');
-    try {
-      await this.db.run('INSERT INTO users (id,email,password_hash,created_at) VALUES (?,?,?,?)', id, email, hash, now());
-    } catch (e) {
-      if (String((e as Error).message).includes('UNIQUE')) throw conflict('email_taken');
-      throw e;
-    }
-    return { userId: id, email, token: await this.open(id) };
-  }
-  async signIn(email: string, password: string) {
-    const row = await this.db.get('SELECT id, password_hash FROM users WHERE email = ?', email);
-    // Se calcula el hash aunque el correo no exista, para no distinguirlos por tiempo.
-    const ok = await verifyPassword(password, (row?.['password_hash'] as string | undefined) ?? 'scrypt$16384$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAA');
-    if (!row || !ok) return null;
-    return { userId: row['id'] as string, email, token: await this.open(row['id'] as string) };
-  }
-  async session(token: string) {
-    const row = await this.db.get('SELECT u.id AS id, u.email AS email, s.expires_at AS exp FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = ?', sha256(token));
-    if (!row) return null;
-    if ((row['exp'] as string) <= now()) { await this.db.run('DELETE FROM sessions WHERE id = ?', sha256(token)); return null; }
-    return { userId: row['id'] as string, email: row['email'] as string, token, renewed: false };
-  }
-  async signOut(token: string) {
-    await this.db.run('DELETE FROM sessions WHERE id = ?', sha256(token));
-  }
-  async countOthers(userId: string, token: string) {
-    const row = (await this.db.get('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND id != ? AND expires_at > ?', userId, sha256(token), now()))!;
-    return Number(row['n']);
-  }
-  async closeOthers(userId: string, token: string) {
-    return (await this.db.run('DELETE FROM sessions WHERE user_id = ? AND id != ?', userId, sha256(token))).changes;
-  }
-  async checkPassword(userId: string, _email: string, password: string) {
-    const row = await this.db.get('SELECT password_hash FROM users WHERE id = ?', userId);
-    return !!row && (await verifyPassword(password, row['password_hash'] as string));
-  }
-  async setPassword(userId: string, password: string, keep?: { token: string; email: string }) {
-    const hash = await hashPassword(password);
-    await this.db.tx(userId, async () => {
-      await this.db.run('UPDATE users SET password_hash = ? WHERE id = ?', hash, userId);
-      if (keep) await this.db.run('DELETE FROM sessions WHERE user_id = ? AND id != ?', userId, sha256(keep.token));
-      else await this.db.run('DELETE FROM sessions WHERE user_id = ?', userId);
-    });
-    return keep?.token ?? null;
-  }
-  async idByEmail(email: string) {
-    const row = await this.db.get('SELECT id FROM users WHERE email = ?', email);
-    return (row?.['id'] as string | undefined) ?? null;
-  }
-}
-
-/* -------------------------------------------------------------------------------------------------------------------------------- Supabase */
 
 type Pair = { access: string; refresh: string };
 const SEP = '~';

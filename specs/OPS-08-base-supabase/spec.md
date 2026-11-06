@@ -1,6 +1,6 @@
 # OPS-08 · Todo Weda en Supabase: base, cuentas y archivos — spec
 
-- **Estado:** en construcción (desde el 2026-11-05, rama `feat/ops-08-supabase`). Funciona contra el proyecto de desarrollo `weda-dev` (São Paulo): 278 pruebas en verde contra Supabase (más 1 que necesita la clave publicable) y 283 en modo local; recorrido real en el servidor de desarrollo (registro, foto en Storage, cobro, publicación, regalo con aporte libre y comprobante, revisión). Falta la limpieza de SQLite (etapa 6), las E2E y la evidencia de cada criterio. Hallazgos al probar: Supabase cierra todas las sesiones al cambiar la clave (se abre una nueva para quien la cambió) y rechaza correos con «ñ» (se responde `invalid_email`).
+- **Estado:** en construcción (rama `feat/ops-08-supabase`, PR #15). Construida y probada contra el proyecto de desarrollo `weda-dev`; la limpieza (etapa 6) está hecha. Faltan CA-8 (clave publicable) y CA-12 (producción). Hallazgos: Supabase cierra todas las sesiones al cambiar la clave y rechaza correos con «ñ» (se responde `invalid_email`).
 - **Ajustes aprobados con el plan:** los comprobantes los entrega el servidor después de verificar a la pareja dueña, en lugar de enlaces firmados (Alcance 3), y las fechas y el JSON siguen como texto en esta migración (Alcance 1).
 - **Tamaño:** crítica (esquema, cuentas, permisos, datos personales, dinero y seguridad).
 - **Plan:** [plan.md](plan.md)
@@ -111,19 +111,21 @@ Lo siguiente sale de las reglas vigentes y no necesita una decisión nueva:
 - [ ] Proyecto de Supabase de desarrollo creado por la dueña, con sus claves cargadas en el `.env` local (Claude no las ve ni las escribe).
 
 ## Verificación al cerrar
+Evidencia del 2026-11-05 contra el proyecto de desarrollo `weda-dev` (São Paulo, plan free). «Pendiente» = no se verificó todavía.
+
 | Criterio | Evidencia |
 |---|---|
-| CA-1 | |
-| CA-2 | |
-| CA-3 | |
-| CA-4 | |
-| CA-5 | |
-| CA-6 | |
-| CA-7 | |
-| CA-8 | |
-| CA-9 | |
-| CA-10 | |
-| CA-11 | |
-| CA-12 | |
-| CA-13 | |
-| CA-14 | |
+| CA-1 | Búsqueda sin rastros en `src/`: `node:sqlite`, `DatabaseSync`, `WEDA_DATA_DIR`, `WEDA_DB_PATH`, `dataDir`, `dbPath` y scrypt. Se borraron el motor SQLite, las cuentas propias (`users`, `sessions`) y los archivos en disco. `npm run build` en verde |
+| CA-2 | `supabase.test.ts`: tablas, RLS en todas, `owner_id` único y `ON DELETE CASCADE` hacia `auth.users` |
+| CA-3 | `supabase.test.ts`: correr las migraciones otra vez no cambia nada; `weda_migrations` en orden |
+| CA-4 | `sessions`, `password-reset` y `password-change` contra Supabase, con las mismas aserciones. Cambio respecto de lo previsto: Supabase cierra todas las sesiones al cambiar la clave, así que se abre una nueva para quien la cambió |
+| CA-5 | `auth-isolation.test.ts` contra Supabase |
+| CA-6 | Pruebas de la API pública (`wedding-flow`, `free-amount`, `auth-isolation`) contra Supabase |
+| CA-7 | `supabase.test.ts`: la pareja dueña abre su comprobante; otra pareja recibe 404 y sin sesión, 401 |
+| CA-8 | Pendiente: la prueba existe (`supabase.test.ts`) y necesita `SUPABASE_PUBLISHABLE_KEY`. Mientras tanto, RLS activada en todas las tablas (CA-2) y «exponer tablas nuevas» desactivado al crear el proyecto |
+| CA-9 | `supabase.test.ts`: dos guardados simultáneos dan 200 y 409; dos aportes con la misma clave crean uno solo |
+| CA-10 | Las claves solo se leen en `src/server/config.ts` (sin `VITE_`); búsqueda de `sb_secret_`, `SUPABASE_SECRET` y la conexión en `.output/public` después del build: nada. `.env.example` las documenta sin valores |
+| CA-11 | Recorrido real con el servidor de desarrollo contra Supabase: registro, foto en Storage, cobro, publicación, regalo con aporte libre y comprobante, revisión y página publicada. E2E contra Supabase (2026-11-06): 146 de celular y compu, más los 5 de pagos de prueba (`WEDA_PAY_URL`). Fallan 3 que **también fallan con `main` y SQLite** (`account-flow` 1 y 4: correo fijo ya registrado; `mobile-journeys` Flujo 2), así que no son de esta migración. `landing-mobile` «lista de regalos» falló una vez con el servidor cargado y pasa sola. Las E2E esperan hasta 15 s cada elemento (`playwright.config.ts`), por la latencia hasta São Paulo |
+| CA-12 | Pendiente: respaldos y restauración en producción (depende de P7: plan de Supabase con respaldos) |
+| CA-13 | `docs/datos-personales.md` y `/privacidad` nombran a Supabase (São Paulo, Brasil) y a Resend; la transferencia internacional queda marcada para revisión legal |
+| CA-14 | `npm run typecheck`, `npm run lint` (los 9 avisos de siempre, 0 errores), `npm test` contra Supabase y `npm run build` |

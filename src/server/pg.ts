@@ -1,8 +1,8 @@
-// PostgreSQL de Supabase (OPS-08, D-07) detrás del mismo adaptador que SQLite (db.ts). Lo usa el servidor cuando hay SUPABASE_DB_URL.
+// PostgreSQL de Supabase (OPS-08, D-07) detrás del adaptador `Db` (db.ts).
 // - Conexión por el pooler de Supabase en modo transacción: sin consultas preparadas (`prepare: false`).
 // - `tx(clave, fn)`: transacción con un candado por clave (`pg_advisory_xact_lock`). Reproduce lo que en SQLite garantizaba un solo
 //   escritor, sin frenar a los demás casamientos (RK-10).
-// - Fechas y JSON siguen como texto, igual que en SQLite (ajuste 2 del plan): las consultas devuelven lo mismo.
+// - Fechas y JSON se guardan como texto ISO y texto JSON (ajuste 2 del plan).
 // - Los enteros grandes (`bigint`, `count(*)`, `sum`) vuelven como número de JavaScript (los importes en pesos entran holgados).
 import { AsyncLocalStorage } from 'node:async_hooks';
 import postgres from 'postgres';
@@ -26,7 +26,6 @@ const param = (v: unknown) => (v === undefined ? null : typeof v === 'boolean' ?
 type Sql = postgres.Sql<Record<string, never>>;
 
 export class PgDb implements Db {
-  readonly dialect = 'pg' as const;
   private inTx = new AsyncLocalStorage<postgres.TransactionSql<Record<string, never>>>();
   constructor(public sql: Sql) {}
   private q() { return this.inTx.getStore() ?? this.sql; }

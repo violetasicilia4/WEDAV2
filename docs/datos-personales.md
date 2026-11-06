@@ -7,10 +7,10 @@ Esto es una guía de trabajo, no asesoramiento legal: la política de privacidad
 
 | Dato | De quién | Dónde | Para qué | Lo ve |
 |---|---|---|---|---|
-| Correo y clave | Pareja | Supabase Auth (`auth.users`; la clave, con hash) — en local, `users` | Cuenta | Weda |
+| Correo y clave | Pareja | Supabase Auth (`auth.users`; la clave, con hash) | Cuenta | Weda |
 | Datos del casamiento, lista, alias | Pareja | `weddings.draft`, `publications` | Servicio | Pareja e invitados (lo publicado) |
 | Nombre, correo (obligatorio), mensaje, regalos, monto | Invitado que regala | `contributions` (+ `contribution_items`) | Informar el regalo, constancia, pedir el comprobante | Pareja |
-| Comprobante | Invitado que regala | `receipts` + archivo en el bucket privado `receipts` de Supabase Storage (en local, `WEDA_DATA_DIR/receipts`) | Que la pareja valide la transferencia | Pareja |
+| Comprobante | Invitado que regala | `receipts` + archivo en el bucket privado `receipts` de Supabase Storage | Que la pareja valide la transferencia | Pareja |
 | Nombre, correo, asistencia, menú | Invitado que confirma | `guests` (+ `rsvp_events`) | Organización del casamiento | Pareja |
 | Correo + consentimiento | Invitado que tildó «novedades» | `marketing_consents` | Novedades y promociones de Weda | Weda |
 | Registro de correos enviados (tipo, destinatario, resultado; nunca el contenido) | — | `mail_log` | Auditoría y no repetir recordatorios | Weda |

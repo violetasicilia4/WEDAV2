@@ -1,5 +1,7 @@
 # Weda · Del frontend a un producto multiusuario (backend-readiness)
 
+> **Aviso (2026-11-05):** documento fechado. Desde OPS-08 la base es PostgreSQL de Supabase, las cuentas son de Supabase Auth y los archivos están en Supabase Storage: ya no hay SQLite, `WEDA_DB_PATH` ni `WEDA_DATA_DIR`. Lo vigente está en [specs/OPS-08-base-supabase](../specs/OPS-08-base-supabase/spec.md) y en `.env.example`.
+
 > **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
 
 > **Documento histórico.** Describe el estado de su fecha y no se actualiza. Parte de lo que dice ya no es cierto (p. ej. aportes del panel, recuperación de clave y vencimiento). Estado vigente: [docs/product-blueprint/](product-blueprint/00-product-blueprint.md) (2026-10-31).

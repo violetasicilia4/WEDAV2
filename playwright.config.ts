@@ -17,6 +17,8 @@ export default defineConfig({
   testDir: './e2e',
   globalSetup: './e2e/global-setup.ts',
   timeout: 60_000,
+  // Con la base en Supabase (São Paulo) las respuestas tardan más que con la base local: más margen para que aparezca cada elemento.
+  expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],

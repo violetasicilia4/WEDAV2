@@ -1,5 +1,5 @@
 // Fotos del casamiento fuera de la base. El navegador las manda embebidas (data URL, ya achicadas por readImage); al guardar, el servidor las
-// guarda como archivos (storage.ts: en disco o en Supabase Storage) y en el borrador queda solo la dirección /api/media/<sha256>.<ext>. Así:
+// guarda como archivos (storage.ts, Supabase Storage) y en el borrador queda solo la dirección /api/media/<sha256>.<ext>. Así:
 //  · la base y el snapshot publicado no cargan cadenas enormes;
 //  · otro dispositivo ve las fotos (vienen por URL);
 //  · la misma foto no se guarda dos veces (nombre = hash del contenido) y el nombre no se puede adivinar sin tener la foto.

@@ -1,8 +1,7 @@
 // @vitest-environment node
 // Destino de cobro protegido (GIFT-14, BR-30): solo con la clave, con versiones, aviso por correo y sin que un guardado del borrador lo cambie.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { migrate } from '@/server/db';
-import { draftFor, makeEnv, saveDraft, setPayout, signUp, PG, type Env } from './helpers';
+import { draftFor, makeEnv, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeEach(async () => { env = await makeEnv(); });
@@ -94,18 +93,4 @@ describe('cambiar el destino de cobro', () => {
     for (const m of sent) { expect(m.text).not.toContain('ana.leo.mp'); expect(m.text).not.toContain(CBU); }
   });
 
-  it.skipIf(PG)('la migración copia el alias que ya estaba en los borradores como versión 1', async () => {
-    const c = await couple();
-    const db = env.svc.db;
-    const wid = (await c.get('/api/wedding')).body.id as string;
-    // Simula una base de antes de la migración 7: el alias vive solo en el borrador.
-    const draft = JSON.parse(((await db.get('SELECT draft FROM weddings WHERE id = ?', wid)) as { draft: string }).draft);
-    draft.gifts = { ...draft.gifts, alias: 'viejo.alias.mp', bank: 'Banco Viejo', cbu: CBU };
-    (await db.run('UPDATE weddings SET draft = ? WHERE id = ?', JSON.stringify(draft), wid));
-    // Antes de la migración 7 tampoco existía la columna de la 8 (trial, PAY-07): se quita para volver a migrar desde la 6.
-    await db.exec('DROP TABLE payout_methods; ALTER TABLE weddings DROP COLUMN trial_started_at; PRAGMA user_version = 6;');
-    await migrate(db);
-    expect((await versions(wid))).toEqual([{ version: 1, alias: 'viejo.alias.mp', source: 'migrated' }]);
-    expect(await payoutOf(c)).toMatchObject({ version: 1, alias: 'viejo.alias.mp', bank: 'Banco Viejo', cbu: CBU });
-  });
 });

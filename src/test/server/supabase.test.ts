@@ -1,8 +1,8 @@
 // OPS-08 · Todo Weda en Supabase (specs/OPS-08-base-supabase): criterios que no cubrían las pruebas existentes.
-// CA-7 y CA-9 corren en los dos modos (SQLite local y Supabase); CA-2, CA-3 y CA-8 solo contra el proyecto de desarrollo de Supabase.
+// Corren contra el proyecto de desarrollo de Supabase, como todas las pruebas de servidor.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { connectPg, migratePg, PG_MIGRATIONS } from '@/server/pg';
-import { draftFor, makeEnv, PG, PNG, publishWith, saveDraft, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, PNG, publishWith, saveDraft, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeAll(async () => { env = await makeEnv(); });
@@ -48,7 +48,7 @@ describe('concurrencia (CA-9)', () => {
   });
 });
 
-describe.skipIf(!PG)('migraciones de Postgres (CA-2, CA-3)', () => {
+describe('migraciones de Postgres (CA-2, CA-3)', () => {
   it('el esquema tiene las tablas de Weda, con RLS, sin tablas propias de usuarios ni sesiones', async () => {
     const tables = (await env.svc.db.all<{ name: string; rls: boolean }>("SELECT c.relname AS name, c.relrowsecurity AS rls FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = current_schema() AND c.relkind = 'r' ORDER BY 1")).map(t => [t.name, t.rls]);
     expect(tables.map(t => t[0])).toEqual(['contribution_events', 'contribution_items', 'contributions', 'funnel_events', 'guests', 'mail_log', 'marketing_consents', 'orders', 'password_resets', 'payment_events', 'payout_methods', 'publications', 'receipts', 'rsvp_events', 'weda_migrations', 'weddings']);
@@ -74,7 +74,7 @@ describe.skipIf(!PG)('migraciones de Postgres (CA-2, CA-3)', () => {
 
 // Mira las tablas del esquema `public` del proyecto (las que crea el servidor al arrancar), que son las únicas que expone la API de datos de
 // Supabase. Necesita SUPABASE_PUBLISHABLE_KEY (la clave anónima/publicable) solo para esta prueba; el servidor no la usa.
-describe.skipIf(!PG || !process.env['SUPABASE_PUBLISHABLE_KEY'])('clave anónima (CA-8)', () => {
+describe.skipIf(!process.env['SUPABASE_PUBLISHABLE_KEY'])('clave anónima (CA-8)', () => {
   it('con la clave anónima no se puede leer ni escribir ninguna tabla de Weda', async () => {
     const base = `${process.env['SUPABASE_URL']}/rest/v1`;
     const key = process.env['SUPABASE_PUBLISHABLE_KEY']!;

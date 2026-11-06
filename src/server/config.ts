@@ -1,16 +1,10 @@
 // Configuración del servidor, leída del entorno. Nada de esto llega al cliente (solo VITE_* se publica). Ver docs/backend-readiness.md.
-import path from 'node:path';
-
 const env = (k: string): string | undefined => {
   const v = process.env[k];
   return v && v.trim() !== '' ? v.trim() : undefined;
 };
 
 export type ServerConfig = {
-  /** Archivo SQLite. «:memory:» sirve para pruebas. */
-  dbPath: string;
-  /** Carpeta de archivos privados (comprobantes). Nunca se sirve como estática. */
-  dataDir: string;
   /** Cookies con atributo Secure (obligatorio en producción con HTTPS). */
   cookieSecure: boolean;
   /** Si es true, publicar exige una orden de compra en estado «paid». Mientras no haya proveedor de pagos queda en false (decisión comercial pendiente). */
@@ -27,8 +21,8 @@ export type ServerConfig = {
    *  (página /pago-de-prueba); jamás en producción real. Un proveedor real (por ejemplo Mercado Pago) todavía no está integrado: ver
    *  docs/auditoria-ux-conversion/payment-integration.md. */
   payments: { provider: 'none' | 'test'; webhookSecret: string };
-  /** Supabase (OPS-08, D-07): base PostgreSQL, cuentas (Auth) y archivos (Storage). Sin estas variables el servidor usa SQLite y el disco
-   *  (desarrollo y pruebas locales). Todas son de servidor: ninguna llega al navegador. */
+  /** Supabase (OPS-08, D-07): base PostgreSQL, cuentas (Auth) y archivos (Storage). Sin estas variables la API responde 503 (el resto del
+   *  sitio sigue andando). Todas son de servidor: ninguna llega al navegador. */
   supabase?: { url: string; secretKey: string; dbUrl: string } | undefined;
 };
 
@@ -38,7 +32,7 @@ export function projectUrlFromDb(dbUrl: string | undefined): string | undefined 
   return ref ? `https://${ref}.supabase.co` : undefined;
 }
 
-/** Las tres juntas o ninguna: una configuración a medias es un error (no se cae en silencio a SQLite). SUPABASE_URL se deduce de la conexión si falta. */
+/** Todas juntas o ninguna: una configuración a medias es un error. SUPABASE_URL se deduce de la conexión si falta. */
 function supabaseConfig(): ServerConfig['supabase'] {
   const dbUrl = env('SUPABASE_DB_URL'), secretKey = env('SUPABASE_SECRET_KEY');
   const url = env('SUPABASE_URL') ?? projectUrlFromDb(dbUrl);
@@ -50,10 +44,7 @@ function supabaseConfig(): ServerConfig['supabase'] {
 const fail = (k: string): never => { throw new Error(`Falta la variable de entorno ${k} (obligatoria en producción).`); };
 
 export function loadConfig(): ServerConfig {
-  const dataDir = path.resolve(env('WEDA_DATA_DIR') ?? '.data');
   return {
-    dbPath: env('WEDA_DB_PATH') ?? path.join(dataDir, 'weda.db'),
-    dataDir,
     cookieSecure: env('WEDA_COOKIE_SECURE') ? env('WEDA_COOKIE_SECURE') === 'true' : process.env['NODE_ENV'] === 'production',
     // Con un proveedor de pagos configurado, publicar SIEMPRE exige un pago confirmado por el servidor.
     requirePaidOrder: env('WEDA_REQUIRE_PAID_ORDER') === 'true' || env('WEDA_PAYMENTS_PROVIDER') === 'test',

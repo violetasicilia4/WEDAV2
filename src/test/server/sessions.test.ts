@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { makeEnv, PASSWORD, signUp, PG, type Env } from './helpers';
+import { makeEnv, PASSWORD, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeAll(async () => { env = await makeEnv(); });
@@ -20,8 +20,7 @@ describe('sesiones abiertas', () => {
     await login('varias@correo.com'); await login('varias@correo.com');
     expect((await here.get('/api/auth/sessions')).body).toEqual({ others: 2 });
     // una sesión vencida no cuenta
-    if (PG) await env.svc.db.run("UPDATE auth.sessions SET not_after = now() - interval '1 day' WHERE id = (SELECT id FROM auth.sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1)", await env.svc.accounts.idByEmail('varias@correo.com'));
-    else await env.svc.db.run("UPDATE sessions SET expires_at = '2000-01-01T00:00:00.000Z' WHERE rowid = (SELECT MAX(rowid) FROM sessions)");
+    await env.svc.db.run("UPDATE auth.sessions SET not_after = now() - interval '1 day' WHERE id = (SELECT id FROM auth.sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1)", await env.svc.accounts.idByEmail('varias@correo.com'));
     expect((await here.get('/api/auth/sessions')).body).toEqual({ others: 1 });
   });
 

@@ -1,7 +1,7 @@
 // @vitest-environment node
 /* eslint-disable @typescript-eslint/no-explicit-any -- respuestas JSON de la API, sin esquema compartido todavía */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, setPayout, signUp, PG, type Env } from './helpers';
+import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
 beforeAll(async () => { env = await makeEnv(); });
@@ -50,12 +50,6 @@ describe('cuentas y sesiones', () => {
     expect((await replay.get('/api/wedding')).status).toBe(401);
   });
 
-  // Con Supabase Auth la clave la guarda Supabase (bcrypt), fuera de las tablas de Weda.
-  it.skipIf(PG)('la clave se guarda con scrypt, nunca en claro', async () => {
-    const row = (await env.svc.db.get("SELECT password_hash FROM users WHERE email = 'ana@correo.com'")) as { password_hash: string };
-    expect(row.password_hash.startsWith('scrypt$')).toBe(true);
-    expect(row.password_hash).not.toContain(PASSWORD);
-  });
 
   it('rutas privadas sin sesión → 401', async () => {
     const c = env.client();
