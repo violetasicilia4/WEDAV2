@@ -1,5 +1,7 @@
 # Weda · Auditoría de recorridos de producto (2026-10-23)
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Documento **histórico y con fecha**. Mapa del embudo real (leído del código y recorrido en un navegador), diagnóstico de fricciones y qué se cambió. Oportunidades y experimentos: [conversion-opportunities.md](conversion-opportunities.md). Escenarios, cobertura y resultados de las pruebas: [e2e-coverage.md](e2e-coverage.md).
 
 **Cómo leer las etiquetas de evidencia** (no se mezclan):

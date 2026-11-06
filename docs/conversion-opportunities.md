@@ -1,5 +1,7 @@
 # Weda · Oportunidades de conversión, hipótesis y experimentos (2026-10-23)
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Complementa [product-journey-audit.md](product-journey-audit.md). Todo lo que sigue son **hipótesis**: ninguna se midió con personas reales, y no hay analytics. No se asignan porcentajes de mejora ni probabilidades de abandono porque no hay datos que los sustenten.
 
 ## 1. Hito de activación: qué evento representa mejor el primer valor

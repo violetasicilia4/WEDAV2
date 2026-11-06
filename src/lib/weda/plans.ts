@@ -5,8 +5,9 @@
 //                 y grupos, música de la fiesta, galería de fotos y mensaje final
 // «Celebración Plus» (id `completo`) dejó de ofrecerse: sus funciones pasaron a Celebración. El id sigue siendo válido para no romper datos
 // guardados (borradores, órdenes, publicaciones) y se trata como Celebración (`normalizePlanId`).
-// Precios de referencia en pesos argentinos, de PAGO ÚNICO y con la página publicada durante UN AÑO (definiciones comerciales de la
-// autora: pago único 2026-10-21; un año, 2026-11-03). Se cobra al publicar, y la publicación todavía no está conectada: hoy nada se publica ni vence.
+// Precios en pesos argentinos, de PAGO ÚNICO y sin renovaciones (D-01). Modelo comercial vigente (D-06, 2026-11-04, PAY-07): 14 días gratis desde que se
+// crea la celebración (BR-63); al vencer sin contratar, pausa en solo lectura con los datos guardados (BR-64); pagar publica en el momento (BR-01) y
+// lo publicado queda activo y editable indefinidamente, sin vencimiento (BR-65).
 // El plan define QUÉ SE PUBLICA (BR-14, `publishes`) y QUÉ SE OPERA (BR-62, `operates`); ver y editar contenido no dependen del plan
 // (D-02, 2026-11-03). El plan se elige al publicar; lo que no publica se conserva como borrador. Las operaciones (invitados, mesas, revisión
 // de aportes) las habilita el SERVIDOR con el plan publicado y vigente (`Access`, PAY-01); el plan del borrador nunca cuenta.
@@ -40,11 +41,26 @@ export type Plan = {
 
 export const CURRENCY = 'ARS';
 export const PRICE_UNIT = 'pago único';
-/** Cuánto tiempo queda publicada la página con cualquiera de los planes (definición comercial de la autora: 1 año, 2026-11-03; antes 6 meses). */
-export const PUBLICATION_TERM = '1 año';
-/** La misma duración, en meses (para calcular el vencimiento). */
-export const PUBLICATION_MONTHS = 12;
+/** Días de prueba gratis desde que se crea la celebración (BR-63). El servidor calcula el vencimiento; el navegador solo lo muestra. */
+export const TRIAL_DAYS = 14;
 export const HIGHLIGHTS = 3;
+
+const HOUR = 3_600_000;
+const TRIAL_END = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * Cuánto queda del trial, para mostrar: el tiempo restante en períodos de 24 h y horas (la hora en curso cuenta entera: recién creada dice «14 días»),
+ * y el momento exacto del fin en hora de Argentina, que es el que manda. No cuenta días de calendario: el vencimiento es `trialEndsAt` (UTC) del servidor.
+ */
+export function trialRemaining(trialEndsAt: string, now = Date.now()): { left: string; ends: string } {
+  const end = Date.parse(trialEndsAt);
+  const ms = Math.max(0, end - now);
+  const total = Math.ceil(ms / HOUR), days = Math.floor(total / 24), hours = total % 24;
+  const left = days > 0 ? (hours > 0 ? `${plural(days, 'día', 'días')} y ${plural(hours, 'hora', 'horas')}` : plural(days, 'día', 'días'))
+    : ms >= HOUR ? plural(hours, 'hora', 'horas') : 'menos de una hora';
+  return { left, ends: `${TRIAL_END.format(end)} (hora de Argentina)` };
+}
 
 export const PLANS: Plan[] = [
   {
@@ -116,11 +132,12 @@ export type Operation = 'guests' | 'groups' | 'contributions';
 const OPERATION_FEATURE: Record<Operation, Feature> = { guests: 'guests', groups: 'groups', contributions: 'gifts' };
 
 /**
- * Acceso operativo que calcula el servidor (PAY-01, F1–F2): `trial` sin publicar; `paid_unpublished` con pago confirmado y sin publicación
- * (no opera, DP-25); `active` publicado con su plan pagado y vigente; `expired` con la publicación vencida.
+ * Estado de la celebración que calcula el servidor (PAY-07): `trial` (14 días para armar gratis), `paused` (venció el trial sin contratar: solo lectura),
+ * `paid_unpublished` (pago confirmado y publicación pendiente: no opera, DP-25) y `active` (publicada, sin vencimiento). `trialEndsAt` es null mientras
+ * la celebración no se creó.
  */
-export type AccessState = 'trial' | 'paid_unpublished' | 'active' | 'expired';
-export type Access = { state: AccessState; plan: PlanId | null; expiresAt: string | null };
+export type AccessState = 'trial' | 'paused' | 'paid_unpublished' | 'active';
+export type Access = { state: AccessState; plan: PlanId | null; trialEndsAt: string | null };
 
 /** ¿Se puede ejecutar la operación? Solo con el evento activo y un plan que la incluya. Sin acceso conocido (sin cuenta), no. */
 export const operates = (access: Access | null | undefined, op: Operation): boolean =>

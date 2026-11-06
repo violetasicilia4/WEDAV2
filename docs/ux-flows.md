@@ -505,3 +505,26 @@ Origen: [PAY-01](../specs/PAY-01-plan-alcance/spec.md), aprobada por la dueña. 
 - **Publicar:** sin «Mejorar tu plan». Con un plan ya contratado, elegir el otro muestra «Ya contrataste … Por ahora el plan no se puede cambiar después de contratarlo» y ofrece publicar el contratado. Preguntas frecuentes y términos: «Por ahora el plan no se puede cambiar después de contratarlo».
 - **Vista previa:** confirmar asistencia o regalar muestra el agradecimiento sin guardar nada.
 - **Supuesto (S-1):** con la página dada de baja y vigente se sigue operando.
+
+## Trial de 14 días, pausa, contratar y publicar en un paso, permanencia (2026-11-04, decisión de la dueña D-06, PAY-07)
+
+Origen: [PAY-07](../specs/PAY-07-trial-contratacion-permanencia/spec.md). **Reemplaza** todo lo anterior de este documento sobre duración de la publicación («Publicada 1 año», «Publicación: 6 meses», «Vigente hasta», vencimiento a los 6 o 12 meses, «vencida no se reabre»), sobre pagar y después publicar como dos acciones, y el cartel «Más elegido».
+
+- **Landing:** «14 días para crear gratis, sin tarjeta». Las tarjetas dicen «Pago único · sin renovaciones», y Celebración lleva «Recomendado».
+- **Registro y creación:** como antes, con correo y clave; la fecha de la boda se puede dejar vacía. El trial empieza al guardar la celebración con los nombres, no al registrarse.
+- **Panel durante el trial:** una línea discreta arriba del contenido: «Te quedan 13 días y 5 horas para crear gratis, hasta el 18 de noviembre a las 09:00 (hora de Argentina). Elegir plan». Cuenta períodos de 24 h desde que se guardó la celebración en la cuenta (la hora en curso cuenta entera) y muestra el fin exacto en hora de Argentina; no usa días de calendario. El primer paso recomendado sigue siendo la lista de regalos.
+- **Pausa (venció el trial sin contratar):**
+  - Aviso: «Terminó tu período gratuito. Tu proyecto está guardado. Elegí un plan para publicarlo y seguir editando.»
+  - Todo el panel queda en solo lectura (`fieldset.pn-readonly`), y «Elegir plan» y «Publicar» siguen disponibles.
+  - Si otra pestaña intenta guardar, se avisa una vez y no se reintenta.
+- **Contratar = publicar:** al volver del pago confirmado, «Tu pago» muestra «¡Tu página está publicada!» con el link. Si la publicación falló, explica que el pago está confirmado y ofrece «Publicar mi página» sin volver a cobrar.
+- **Publicado:** sin fechas de vencimiento. «Tu publicación» dice desde cuándo está publicada, y al bajarla dice que el plan sigue contratado.
+- **Textos:** las preguntas frecuentes («¿Qué pasa si no contrato en esos días?», «No vence») y los borradores de términos y privacidad cuentan lo mismo.
+
+## Aporte libre (2026-11-05, GIFT-09 / BR-20; spec y plan aprobados por la dueña el 2026-11-01)
+- **Panel:** en Regalos → Mis regalos, debajo de la lista, el bloque «Aporte libre» con «Dejar que tus invitados elijan cuánto regalar» (apagado por defecto) y «Monto mínimo · opcional» (si queda vacío, el mínimo es $ 1.000). Se guarda solo y llega a los invitados al publicar; si la página ya está publicada, se enciende «Publicar cambios».
+- **Página pública:** si está habilitado en lo publicado y la lista tiene regalos, la primera tarjeta es «Aporte libre»: «Elegí cuánto querés regalar», el campo de monto y, si la pareja fijó uno, «Mínimo $ …». «Agregar» (o Enter) lo suma al carrito; un monto inválido se explica debajo del campo. La tarjeta no aparece mientras se busca o se filtra por categoría.
+- **Carrito:** un solo renglón «Aporte libre» con «Cambiar» (vuelve a la tarjeta con el monto para editarlo) y «Quitar»; se combina con regalos y el total los suma. El resto del flujo no cambia: alias, comprobante obligatorio y aporte pendiente de revisión.
+- **Revisión y correo:** el renglón se ve como «Aporte libre» con su monto, en «Aportes recibidos» y en la constancia que recibe el invitado.
+- **`/ejemplo`:** sin cambios.
+

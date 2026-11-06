@@ -111,25 +111,25 @@ export function ConfirmDialog({ open, title, text, confirmLabel, onConfirm, onCa
 
 /**
  * Aviso de una operación bloqueada (BR-62): la sección se sigue viendo y los botones de gestión quedan deshabilitados; esto explica qué los
- * desbloquea. `id` va en el `aria-describedby` de esos botones. Con el evento vencido explica eso en lugar del plan.
+ * desbloquea. `id` va en el `aria-describedby` de esos botones. Con el trial vencido (BR-64) explica cómo seguir.
  */
 export function OperationNotice({ id, op }: { id: string; op: Operation }) {
   const plans = usePlans();
   const access = useRemote().access;
   const plan = planForOperation(op);
-  const expired = access?.state === 'expired';
+  const paused = access?.state === 'paused';
   const paidWaiting = access?.state === 'paid_unpublished';
   return (
     <div className="pn-opnotice" id={id} role="note">
       <Lock size={16} strokeWidth={1.6} aria-hidden="true" />
       <p>
-        {expired
-          ? 'Tu publicación venció: ya no se pueden hacer cambios de gestión.'
+        {paused
+          ? `Terminó tu período gratuito. Se habilita al contratar y publicar con ${plan?.name ?? 'Celebración'}.`
           : paidWaiting
             ? `Tu pago está confirmado: se habilita cuando publiques tu página.`
             : `Se habilita al publicar con ${plan?.name ?? 'Celebración'}. Mientras tanto podés ver cómo funciona.`}
       </p>
-      {!expired && <button type="button" className="pn-link" onClick={plans.open}>{paidWaiting ? 'Publicar' : 'Ver qué incluye'}</button>}
+      <button type="button" className="pn-link" onClick={plans.open}>{paidWaiting ? 'Publicar' : paused ? 'Elegir plan' : 'Ver qué incluye'}</button>
     </div>
   );
 }

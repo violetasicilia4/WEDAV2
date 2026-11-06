@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { GiftDemo, SiteDemo, RsvpDemo } from '@/components/feature-demos';
 import { FloatNav } from '@/components/float-nav';
 import { LandingPlans } from '@/components/landing-plans';
+import { TRIAL_DAYS } from '@/lib/weda/plans';
 import { SiteFooter } from '@/components/site-footer';
 import { GiftFeatures } from '@/components/gift-features';
 import { pageMeta } from '@/lib/site';
@@ -149,7 +150,7 @@ function Index() {
     <main id="main">
     <section className="seed-hero" id="top">
       <video className="hero-image" poster="/hero-poster.jpg?v=5" muted loop playsInline preload="none" aria-hidden="true" ref={heroVideo}/>
-      <div className="hero-inner"><div className="hero-copy"><h1>Tu casamiento empieza antes del gran día.</h1><p>Creá el sitio de tu casamiento, armá tu lista de regalos y organizá tus invitados.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
+      <div className="hero-inner"><div className="hero-copy"><h1>Tu casamiento empieza antes del gran día.</h1><p>Creá el sitio de tu casamiento, armá tu lista de regalos y organizá tus invitados, todo en un solo lugar. {TRIAL_DAYS} días para crear gratis, sin tarjeta.</p><div className="hero-actions"><SeedLink pill to="/crear/cuenta">Crear mi evento</SeedLink><Button variant="seedLink" asChild><Link to="/ejemplo"><span>Ver ejemplo</span><ArrowRight size={15}/></Link></Button></div></div></div>
     </section>
     <section className="products-section" id="products"><div className="section-inner">
       <div className="feat-head"><h2>Todo para compartir su casamiento.</h2><div className="feat-head-side"><p>Una forma simple de reunir los regalos, la información del evento y las confirmaciones de sus invitados.</p><div className="feat-cta"><SeedLink to="/crear/cuenta">Crear mi evento</SeedLink></div></div></div>

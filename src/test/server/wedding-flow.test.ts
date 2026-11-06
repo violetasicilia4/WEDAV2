@@ -3,17 +3,17 @@
 import { readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, signUp, type Env } from './helpers';
+import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, signUp, storedFiles, eventually, type Env } from './helpers';
 import { MARKETING_CONSENT_VERSION } from '@/lib/weda/consent';
 import { unsubscribeToken } from '@/server/mail';
 
 let env: Env;
-beforeAll(() => { env = makeEnv(); });
+beforeAll(async () => { env = await makeEnv(); });
 /** Simula un aporte anterior a la regla «sin comprobante no hay regalo»: borra su comprobante (registro y archivo). */
-const dropReceipt = (id: string) => {
-  const r = env.svc.db.prepare('SELECT storage_key FROM receipts WHERE contribution_id = ?').get(id) as { storage_key: string } | undefined;
-  if (r) rmSync(path.join(env.dir, 'receipts', r.storage_key), { force: true });
-  env.svc.db.prepare('DELETE FROM receipts WHERE contribution_id = ?').run(id);
+const dropReceipt = async (id: string) => {
+  const r = (await env.svc.db.get('SELECT storage_key FROM receipts WHERE contribution_id = ?', id)) as { storage_key: string } | undefined;
+  if (r) await env.svc.files.removeReceipt(r.storage_key);
+  (await env.svc.db.run('DELETE FROM receipts WHERE contribution_id = ?', id));
 };
 afterAll(() => env.close());
 
@@ -121,7 +121,7 @@ describe('publicación y sitio público', () => {
   });
 
   it('no publica sin nombres ni sin plan; con requirePaidOrder exige una orden pagada', async () => {
-    const e2 = makeEnv({ requirePaidOrder: true });
+    const e2 = await makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } });
     try {
       const c = e2.client(); await signUp(c, 'pago@correo.com');
       await saveDraft(c, draftFor('', ''));
@@ -131,11 +131,13 @@ describe('publicación y sitio público', () => {
       const order = (await c.post('/api/orders', { planId: 'invitacion', status: 'paid' })).body;
       expect(order.status).toBe('pending'); // el cliente no puede mandar «paid»
       expect((await c.post('/api/wedding/publish')).status).toBe(402);
-      e2.svc.settleOrder(order.id, 'paid', 'proveedor-de-prueba', 'ref-1');
+      // El pago se confirma solo por la notificación firmada del proveedor (F-P3): no hay otro camino que marque una orden como pagada.
+      expect((await c.post(`/api/test-payments/${order.id}`, { outcome: 'paid' })).status).toBe(200);
+      expect((await c.get('/api/wedding')).body.publication).toMatchObject({ status: 'live', planId: 'invitacion' });  // pagar publica (BR-01)
       const pub = await c.post('/api/wedding/publish');
       expect(pub.status).toBe(200);
       expect(pub.body.planId).toBe('invitacion'); // el plan sale de la orden pagada, no del borrador (completo)
-    } finally { e2.close(); }
+    } finally { await e2.close(); }
   });
 });
 
@@ -162,7 +164,7 @@ describe('invitados y confirmaciones', () => {
     const list = (await o.get('/api/wedding')).body.guests.filter((x: any) => x.first.toLowerCase() === 'marta');
     expect(list).toHaveLength(1);
     expect(list[0].status).toBe('declined');
-    const hist = env.svc.db.prepare('SELECT COUNT(*) AS n FROM rsvp_events WHERE guest_id = ?').get(list[0].id) as { n: number };
+    const hist = (await env.svc.db.get('SELECT COUNT(*) AS n FROM rsvp_events WHERE guest_id = ?', list[0].id)) as { n: number };
     expect(hist.n).toBe(2);
   });
 
@@ -173,9 +175,9 @@ describe('invitados y confirmaciones', () => {
     expect((await rsvp('Conmail', { email: 'lu@correo.com' })).status).toBe(200);
     expect((await rsvp('Optin', { email: 'Sol@Correo.com', marketingOptIn: true })).status).toBe(200);
     expect((await rsvp('Sinmailoptin', { email: '', marketingOptIn: true })).status).toBe(200);
-    const mail = (first: string) => (env.svc.db.prepare('SELECT email FROM guests WHERE first = ?').get(first) as { email: string }).email;
-    expect([mail('Sinmail'), mail('Conmail'), mail('Optin')]).toEqual(['', 'lu@correo.com', 'sol@correo.com']);
-    const c = env.svc.db.prepare("SELECT email, source FROM marketing_consents WHERE source = 'rsvp'").all();
+    const mail = async (first: string) => ((await env.svc.db.get('SELECT email FROM guests WHERE first = ?', first)) as { email: string }).email;
+    expect([(await mail('Sinmail')), (await mail('Conmail')), (await mail('Optin'))]).toEqual(['', 'lu@correo.com', 'sol@correo.com']);
+    const c = (await env.svc.db.all("SELECT email, source FROM marketing_consents WHERE source = 'rsvp'"));
     expect(c).toEqual([{ email: 'sol@correo.com', source: 'rsvp' }]);
   });
 
@@ -227,15 +229,15 @@ describe('aportes, comprobantes y órdenes', () => {
     const send = (over: Record<string, unknown>) => g.post(`/api/public/${own}/contributions`, body(over));
     expect((await send({ idempotencyKey: 'key-mail-0001', giverEmail: '' })).status).toBe(400);
     expect((await send({ idempotencyKey: 'key-mail-0002', giverEmail: 'no-es-un-correo' })).status).toBe(400);
-    const consents = () => env.svc.db.prepare("SELECT email, source, text_version, revoked_at FROM marketing_consents WHERE email = 'ana@correo.com'").all();
+    const consents = async () => (await env.svc.db.all("SELECT email, source, text_version, revoked_at FROM marketing_consents WHERE email = 'ana@correo.com'"));
     const ok = await send({ idempotencyKey: 'key-mail-0003', manageToken: 'token-del-invitado-mail3', giverEmail: ' Ana@Correo.com ', giftIds: ['g1'] });
     expect(ok.status).toBe(201);
-    expect(consents()).toEqual([]); // sin casilla tildada, no entra a la base de novedades
+    expect((await consents())).toEqual([]); // sin casilla tildada, no entra a la base de novedades
     const mine = (await o.get('/api/contributions')).body.contributions.find((c: any) => c.id === ok.body.id);
     expect(mine.giverEmail).toBe('ana@correo.com');
     const opt = await send({ idempotencyKey: 'key-mail-0004', manageToken: 'token-del-invitado-mail4', giverEmail: 'ana@correo.com', giftIds: ['g2'], marketingOptIn: true });
     expect(opt.status).toBe(201);
-    expect(consents()).toEqual([{ email: 'ana@correo.com', source: 'gift', text_version: MARKETING_CONSENT_VERSION, revoked_at: null }]);
+    expect((await consents())).toEqual([{ email: 'ana@correo.com', source: 'gift', text_version: MARKETING_CONSENT_VERSION, revoked_at: null }]);
   });
 
   it('constancia al regalar, recordatorio de comprobante (uno por día, con enlace nuevo) y baja de novedades', async () => {
@@ -245,25 +247,26 @@ describe('aportes, comprobantes y órdenes', () => {
     const g = env.client();
     const r = await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-mails-0001', manageToken: 'token-del-invitado-mails1', giverEmail: 'juan@correo.com', marketingOptIn: true }));
     expect(r.status).toBe(201);
-    const log = (kind: string) => env.svc.db.prepare('SELECT to_email, status FROM mail_log WHERE ref = ? AND kind = ?').all(r.body.id, kind);
-    expect(log('gift_receipt')).toEqual([{ to_email: 'juan@correo.com', status: 'skipped' }]); // sin proveedor configurado: queda registrado, no se envía
+    const log = async (kind: string) => (await env.svc.db.all('SELECT to_email, status FROM mail_log WHERE ref = ? AND kind = ?', r.body.id, kind));
+    // El correo sale sin esperar a la respuesta: se espera a que quede registrado.
+    expect(await eventually(() => log('gift_receipt'), x => x.length > 0)).toEqual([{ to_email: 'juan@correo.com', status: 'skipped' }]); // sin proveedor configurado: queda registrado, no se envía
     // Recordatorio: lo pide la pareja dueña; otra pareja recibe 404.
     // Desde ahora no hay regalos sin comprobante: se simula uno viejo (anterior a esta regla) para probar el recordatorio.
     expect((await o.post(`/api/contributions/${r.body.id}/remind`)).body.error).toBe('receipt_already_attached');
-    dropReceipt(r.body.id);
+    (await dropReceipt(r.body.id));
     const other = env.client(); await signUp(other, 'ajena@correo.com');
     expect((await other.post(`/api/contributions/${r.body.id}/remind`)).status).toBe(404);
     expect((await o.post(`/api/contributions/${r.body.id}/remind`)).status).toBe(200);
-    expect(log('receipt_reminder')).toHaveLength(1);
+    expect((await log('receipt_reminder'))).toHaveLength(1);
     expect((await o.post(`/api/contributions/${r.body.id}/remind`)).body.error).toBe('reminder_too_soon');
     // El enlace viejo del invitado deja de servir (el recordatorio manda uno nuevo).
     expect((await g.get(`/api/public/contributions/${r.body.id}`, { 'x-manage-token': 'token-del-invitado-mails1' })).status).toBe(404);
     // Baja: el enlace firmado marca la baja; uno inventado no.
-    const live = () => env.svc.db.prepare("SELECT COUNT(*) AS n FROM marketing_consents WHERE email = 'juan@correo.com' AND revoked_at IS NULL").get() as { n: number };
-    expect(live().n).toBe(1);
+    const live = async () => (await env.svc.db.get("SELECT COUNT(*) AS n FROM marketing_consents WHERE email = 'juan@correo.com' AND revoked_at IS NULL")) as { n: number };
+    expect((await live()).n).toBe(1);
     expect((await g.get('/api/unsubscribe?t=bad.token')).status).toBe(400);
     expect((await g.get(`/api/unsubscribe?t=${unsubscribeToken('secreto-de-prueba', 'juan@correo.com')}`)).status).toBe(200);
-    expect(live().n).toBe(0);
+    expect((await live()).n).toBe(0);
   });
 
   it('sin comprobante no se registra el regalo, y no se puede confirmar uno que no lo tenga', async () => {
@@ -274,11 +277,11 @@ describe('aportes, comprobantes y órdenes', () => {
     const r = await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-sinc-0001', manageToken: 'token-del-invitado-sinc1', receipt: undefined }));
     expect([r.status, r.body.error]).toEqual([400, 'receipt_required']);
     expect((await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-sinc-0002', manageToken: 'token-del-invitado-sinc2', receipt: { data: Buffer.from('<script>').toString('base64') } }))).status).toBe(415);
-    const n = env.svc.db.prepare('SELECT COUNT(*) AS n FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ?').get(own) as { n: number };
+    const n = (await env.svc.db.get('SELECT COUNT(*) AS n FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ?', own)) as { n: number };
     expect(n.n).toBe(0);
     // Un aporte viejo sin comprobante (anterior a esta regla) no se puede confirmar.
     const ok = await g.post(`/api/public/${own}/contributions`, body({ idempotencyKey: 'key-sinc-0003', manageToken: 'token-del-invitado-sinc3' }));
-    dropReceipt(ok.body.id);
+    (await dropReceipt(ok.body.id));
     const c = await o.patch(`/api/contributions/${ok.body.id}`, { status: 'confirmed' });
     expect([c.status, c.body.error]).toEqual([409, 'receipt_required']);
   });
@@ -300,7 +303,7 @@ describe('aportes, comprobantes y órdenes', () => {
     const again = await g.post(`/api/public/${slug}/contributions`, body());
     expect([again.status, again.body.replay]).toEqual([200, true]);
     expect((await g.post(`/api/public/${slug}/contributions`, body({ manageToken: 'otro-token-distinto-0002' }))).status).toBe(409);
-    const n = env.svc.db.prepare('SELECT COUNT(*) AS n FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ?').get(slug) as { n: number };
+    const n = (await env.svc.db.get('SELECT COUNT(*) AS n FROM contributions c JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ?', slug)) as { n: number };
     expect(n.n).toBe(1);
   });
 
@@ -313,7 +316,7 @@ describe('aportes, comprobantes y órdenes', () => {
       env.client().post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0004', manageToken: 'token-del-invitado-0004', giftIds: ['g2'] })),
     ]);
     expect([x.status, y.status]).toEqual([201, 201]);
-    const items = env.svc.db.prepare("SELECT i.gift_id AS id, COUNT(*) AS n FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ? GROUP BY i.gift_id ORDER BY i.gift_id").all(slug);
+    const items = (await env.svc.db.all("SELECT i.gift_id AS id, COUNT(*) AS n FROM contribution_items i JOIN contributions c ON c.id = i.contribution_id JOIN weddings w ON w.id = c.wedding_id WHERE w.slug = ? GROUP BY i.gift_id ORDER BY i.gift_id", slug));
     expect(items.map(r => ({ ...r }))).toEqual([{ id: 'g1', n: 2 }, { id: 'g2', n: 2 }]);
     const pub = (await env.client().get(`/api/public/${slug}`)).body;
     expect(Object.keys(pub)).toEqual(['site']); // ni ids elegidos ni cantidades (BR-27)
@@ -328,18 +331,18 @@ describe('aportes, comprobantes y órdenes', () => {
 
   it('comprobante: tipo real validado por contenido, tamaño limitado y archivo privado', async () => {
     const g = env.client();
-    const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
+    const row = (await env.svc.db.get("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'")) as { id: string };
     const tok = { 'x-manage-token': 'token-del-invitado-0001' };
     expect((await g.put(`/api/public/contributions/${row.id}/receipt`, new TextEncoder().encode('<script>alert(1)</script>'), tok)).status).toBe(415);
     expect((await g.put(`/api/public/contributions/${row.id}/receipt`, PNG, { 'x-manage-token': 'token-equivocado-0000' })).status).toBe(404);
     expect((await g.put(`/api/public/contributions/${row.id}/receipt`, new Uint8Array(5 * 1024 * 1024 + 1).fill(1), tok)).status).toBe(413);
     const ok = await g.put(`/api/public/contributions/${row.id}/receipt`, PNG, tok);
     expect([ok.status, ok.body.mime]).toEqual([200, 'image/png']);
-    const files = readdirSync(path.join(env.dir, 'receipts'));
+    const files = await storedFiles(env, 'receipts');
     // Reemplazar el comprobante no deja archivos sueltos: un archivo por cada comprobante registrado.
-    const rows = env.svc.db.prepare('SELECT storage_key FROM receipts').all() as { storage_key: string }[];
+    const rows = (await env.svc.db.all('SELECT storage_key FROM receipts')) as { storage_key: string }[];
     expect(files.sort()).toEqual(rows.map(r => r.storage_key).sort());
-    const mine = (env.svc.db.prepare('SELECT storage_key FROM receipts WHERE contribution_id = ?').get(row.id) as { storage_key: string }).storage_key;
+    const mine = ((await env.svc.db.get('SELECT storage_key FROM receipts WHERE contribution_id = ?', row.id)) as { storage_key: string }).storage_key;
     files.splice(0, files.length, mine);
     // el comprobante no está en ninguna ruta pública ni estática
     expect(JSON.stringify((await g.get(`/api/public/${slug}`)).body)).not.toContain(files[0]!);
@@ -347,7 +350,7 @@ describe('aportes, comprobantes y órdenes', () => {
   });
 
   it('solo la pareja dueña ve el comprobante y cambia el estado; otra pareja recibe 404', async () => {
-    const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
+    const row = (await env.svc.db.get("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'")) as { id: string };
     const owner = env.client(); await owner.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
     const file = await owner.get(`/api/contributions/${row.id}/receipt`);
     expect([file.status, file.headers.get('content-type'), file.headers.get('cache-control')]).toEqual([200, 'image/png', 'private, no-store']);
@@ -359,7 +362,7 @@ describe('aportes, comprobantes y órdenes', () => {
   });
 
   it('transiciones de estado válidas, con historial; el invitado no puede confirmar su propio aporte', async () => {
-    const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
+    const row = (await env.svc.db.get("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'")) as { id: string };
     const owner = env.client(); await owner.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
     expect((await env.client().patch(`/api/contributions/${row.id}`, { status: 'confirmed' }, )).status).toBe(401);
     expect((await owner.patch(`/api/contributions/${row.id}`, { status: 'inexistente' })).status).toBe(400);
@@ -373,7 +376,7 @@ describe('aportes, comprobantes y órdenes', () => {
 
   it('rechazar y volver a revisar un aporte no depende de los demás aportes del mismo regalo', async () => {
     const owner = env.client(); await owner.post('/api/auth/login', { email: 'regalos@correo.com', password: PASSWORD });
-    const row = env.svc.db.prepare("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'").get() as { id: string };
+    const row = (await env.svc.db.get("SELECT id FROM contributions WHERE idempotency_key = 'key-0000-0001'")) as { id: string };
     expect((await owner.patch(`/api/contributions/${row.id}`, { status: 'rejected' })).status).toBe(200);
     // Mientras estaba rechazado, otro invitado regaló lo mismo: no lo impide nada.
     const other = await env.client().post(`/api/public/${slug}/contributions`, body({ idempotencyKey: 'key-0000-0007', manageToken: 'token-del-invitado-0007' }));
@@ -393,10 +396,10 @@ describe('aportes, comprobantes y órdenes', () => {
   });
 
   it('errores internos no filtran detalles ni dejan comprobantes huérfanos', async () => {
-    const before = readdirSync(path.join(env.dir, 'receipts')).length;
-    const row = env.svc.db.prepare("SELECT id FROM contributions LIMIT 1").get() as { id: string };
+    const before = (await storedFiles(env, 'receipts')).length;
+    const row = (await env.svc.db.get("SELECT id FROM contributions LIMIT 1")) as { id: string };
     const bad = await env.client().put(`/api/public/contributions/${row.id}/receipt`, new Uint8Array(0), { 'x-manage-token': 'token-del-invitado-0001' });
     expect([400, 404, 409]).toContain(bad.status);
-    expect(readdirSync(path.join(env.dir, 'receipts')).length).toBe(before);
+    expect((await storedFiles(env, 'receipts')).length).toBe(before);
   });
 });

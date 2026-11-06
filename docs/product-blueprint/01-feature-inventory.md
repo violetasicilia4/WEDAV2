@@ -53,6 +53,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | ONB-02 | Prueba gratuita: se ve y se arma todo sin plan; el plan se elige al publicar | DECIDIDO (D-01, D-02, 2026-11-03) | **Implementada** (2026-11-04, PAY-01): se ve y se edita todo; operar invitados y mesas exige Celebración publicada | U (planes) | PAY-01 | Dos planes acumulativos de pago único: **Regalos ARS 95.000** · **Celebración ARS 140.000** (BR-13) | DECIDIDO (dueña, 2026-11-03, D-01) | **Implementada** (`plans.ts`; `completo` se lee como Celebración) | U (`weda-logic` planes, `landing-plans`, `payments`) | Impuestos sin decidir (DP-17). *Antes: tres planes con Celebración Plus 150.000* |
 | ONB-03 | Banner «Primeros pasos» y progreso por etapas | DOCUMENTADO | **Implementada** (`journey.ts`) | U (`weda-logic` journey) | |
 | ONB-04 | Panel sin cuenta (borrador local) | DOCUMENTADO | **Implementada**: sin cuenta se guarda en `localStorage`; publicar exige cuenta | U (`store-performance`, `app-routing`) | Alineado con lo auditado (F-02) |
+| ONB-05 | **Trial de 14 días** desde que se crea la celebración y **pausa** en solo lectura al vencer sin contratar (BR-63, BR-64) | **DECIDIDO** (D-06, 2026-11-04) | **Implementada** (2026-11-04, PAY-07): `weddings.trial_started_at`; banner con los días y aviso de pausa en el panel | U (`trial-lifecycle`, `migration-8`) · E2E (`desktop/journeys`) | Correos del trial: DP-30. Conservación de pausados: DP-31 |
 
 ## 4. Contratación, planes y pago (PAY)
 
@@ -64,8 +65,8 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | PAY-04 | Orden de compra con monto calculado por el servidor, reusada ante doble clic | DOCUMENTADO | **Implementada** (`startCheckout`) | U (`payments-flow`) | |
 | PAY-05 | Notificaciones del proveedor firmadas e idempotentes | DOCUMENTADO | **Implementada solo con el adaptador de PRUEBA** | U | **No existe un proveedor real**; el webhook general responde 501 |
 | PAY-06 | Cobro real (Mercado Pago u otro) | PENDIENTE (proveedor, impuestos, facturación) | **No implementada** | — | Sin esto, publicar es gratis salvo que se active `WEDA_REQUIRE_PAID_ORDER` (IC-17) |
-| PAY-07 | **Pagar = activar + publicar automáticamente** | **DECIDIDO** (2026-10-31) | **No implementada**: el pago solo habilita el botón «Publicar mi página» | U demuestra el flujo actual separado (`payments-flow`) | IC-01 |
-| PAY-08 | Aceptación expresa de las 6 condiciones de vigencia antes de contratar (P33) | **DECIDIDO** como requisito; redacción de las cláusulas 1 y 2 pendiente de aprobación | **No implementada** | — | El alta solo menciona «Términos de uso» en general |
+| PAY-07 | **Contratar y publicar en un solo momento**: al confirmarse el pago el servidor publica con el plan pagado (BR-01) | **DECIDIDO** (2026-10-31; D-06, 2026-11-04) | **Implementada** (2026-11-04, [PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md)): `handlePaymentNotification` publica; si falla, `paid_unpublished` y «Publicar mi página» reintenta sin cobrar | U (`trial-lifecycle`, `payments-flow`, `funnel`) · E2E (`payments`) | IC-01 resuelta |
+| PAY-08 | ~~Aceptación expresa de las 6 condiciones de vigencia antes de contratar (P33)~~ | **SIN OBJETO** (D-06, 2026-11-04): no hay vigencia (BR-65) | — | — | La aceptación de los términos sigue pendiente de redacción legal |
 | PAY-09 | Cancelación y reembolso de un plan | **PENDIENTE** (P26) | **No implementada** (la orden tiene estado `cancelled`, que es abandono del pago, no un reembolso) | — | No hay política |
 | PAY-10 | Facturación / comprobante de compra de Weda | **PENDIENTE** (P6) | **No implementada** | — | `Invoice` está solo en el modelo conceptual |
 | PAY-11 | Planes en USD | PENDIENTE (P4) | **No implementada** | — | `CURRENCY = 'ARS'` fijo |
@@ -75,7 +76,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | ID | Funcionalidad | Estado documental | Estado en código | Tests | Observaciones |
 |---|---|---|---|---|---|
 | DASH-01 | Inicio con etapas, siguiente paso y estado de publicación | DOCUMENTADO | **Implementada** | U (journey) · E2E | |
-| DASH-02 | Ayuda con preguntas frecuentes y contacto | DOCUMENTADO (respuestas de la dueña) | **Implementada** (`panel.tsx`) | — | *Actualizado 2026-11-03:* la vigencia sale de `PUBLICATION_TERM` (1 año); la respuesta sobre cambiar de plan promete «pagás la diferencia» (IC-27) |
+| DASH-02 | Ayuda con preguntas frecuentes y contacto | DOCUMENTADO (respuestas de la dueña) | **Implementada** (`panel.tsx`) | — | *Actualizado 2026-11-04 (PAY-07):* trial de 14 días, pausa y «no vence»; la respuesta sobre cambiar de plan promete «pagás la diferencia» (IC-27) |
 | DASH-03 | Vista previa privada de la invitación (celular/compu) | DOCUMENTADO | **Implementada**; desde el 2026-11-04 no escribe nada (PAY-01, F6) | E2E | PAY-01 |
 | DASH-04 | Aviso «hay cambios sin publicar» | DOCUMENTADO como pendiente (NE-03) | **Implementada y probada** (2026-10-31): el servidor compara lo que publicaría con la página pública (`pendingChanges` en `GET`/`PUT /api/wedding`); el botón de arriba pasa a «Publicar cambios» y «Tu publicación» lo explica | U (`pending-changes`: 4, `publish-pending`: 3) · E2E (`audit` T-02, actualizada, no ejecutada) | Solo cuenta lo que ve un invitado (invitados no). Sin cambios de esquema |
 | DASH-05 | Fecha exacta de vencimiento y avisos 30/7/1 días | **DECIDIDO** (P23) | **No implementada** | — | Hoy el panel muestra una vigencia calculada en el cliente (6 meses) |
@@ -94,7 +95,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | GIFT-06 | Aportes recibidos en el panel (quién, regalos, monto, mensaje, estado, ver comprobante, pedir comprobante) | DOCUMENTADO | **Implementada** (lee `GET /api/contributions`) | U (API) | Los textos dicen «Aportes recibidos» (IC-07) |
 | GIFT-07 | **Confirmar o rechazar un aporte (revisión manual)** | DOCUMENTADO («reglas propuestas, pendientes de confirmación comercial») | **Implementada** (2026-10-31): «Confirmar» (solo con comprobante), «Rechazar» (pide confirmación) y «Volver a revisar» en «Aportes» del panel; los rechazados se ven pero no suman; desde GIFT-08 volver a revisar no depende de otros aportes | U (`wedding-flow`, `contribution-review`: 4) | Resuelve IC-08 |
 | GIFT-08 | **Regalos repetibles, sin stock ni bloqueo** | **DECIDIDO** (Q1) | **Implementada y probada** (2026-10-31): el mismo regalo se puede regalar las veces que sea (también en envíos simultáneos); sin «Ya elegido»; la API pública ya no devuelve `takenGiftIds`. Sin cambios de esquema | U (`wedding-flow`, `gifts-repeatable`: 2, `contribution-review`) | IC-03 resuelta. Tampoco en `/ejemplo`: ni «Ya elegido» ni «Elegido por vos» |
-| GIFT-09 | Aporte de importe libre | **DECIDIDO** (Q1) | **No implementada** (cada aporte son regalos del catálogo con monto fijo) | — | |
+| GIFT-09 | Aporte de importe libre | **DECIDIDO** (Q1) | **Implementada y probada** (2026-11-05, spec y plan aprobados el 2026-11-01): la pareja lo habilita en Regalos → Mis regalos, con mínimo opcional (desde $ 1.000); se publica con la página; el invitado elige el monto en la primera tarjeta de la lista y lo combina con regalos (un renglón libre por aporte); el servidor valida contra lo publicado. Migración 9 (`contribution_items` con `kind`) | U (`free-amount-ui`), I (`free-amount`) | Moneda en GIFT-10 |
 | GIFT-10 | Moneda de recepción ARS o USD, importes con moneda | **DECIDIDO** (Q3) | **No implementada** (importes enteros en pesos, sin columna de moneda) | — | |
 | GIFT-11 | Tarjeta como medio para regalar | PENDIENTE | **No disponible**: 501 `card_not_available`; el plan «Regalos» igual dice «Alias y tarjeta» | U | IC-07 |
 | GIFT-12 | Libro inmutable de transacciones | **DECIDIDO** (A5) | **No implementada** (el estado del aporte es mutable) | — | |
@@ -136,11 +137,11 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | PUB-02 | Dirección estable `/sitio/{slug}` con sufijo si hay repetidos | DOCUMENTADO | **Implementada y probada** | U | El slug no se puede cambiar |
 | PUB-03 | Sitio público renderizado en el servidor (nombres y metadatos de la pareja) | DOCUMENTADO | **Implementada y probada** | U + E2E | Si la base no abre: cae a «no disponible» (503) |
 | PUB-04 | Lo publicado es una copia (snapshot): editar no cambia lo público hasta publicar | DOCUMENTADO | **Implementada y probada** | U | No hay versiones anteriores |
-| PUB-05 | Vencimiento aplicado por el servidor a los **6 meses** desde la primera publicación | DOCUMENTADO (decisión de 2026-10-28, **reemplazada**) | **Implementada y probada** | U (`expiry`: 5) | Reemplazada por la vigencia de 12 meses (IC-02) |
-| PUB-06 | **Vigencia única de 12 meses desde que Weda confirma el pago y activa la publicación** | **DECIDIDO** | **No implementada** | — | |
-| PUB-07 | **Cierre al vencer: sin edición, publicación, gestión, descargas ni acceso al panel, para todos los roles** | **DECIDIDO** | **No implementada**: al vencer solo se bloquea publicar y la página responde 410; se puede seguir editando | U (`expiry`) prueba el comportamiento actual | IC-05 |
+| PUB-05 | ~~Vencimiento aplicado por el servidor~~ | **REEMPLAZADA** (D-06, 2026-11-04) por BR-65 | **Retirado** (2026-11-04, PAY-07): sin `410 site_expired` ni `publication_expired` | U (`expiry` reescrita: sin vencimiento a 6, 12 y 15 meses) | |
+| PUB-06 | **Permanencia indefinida**: lo publicado queda activo, público y editable sin vencimiento (BR-65) | **DECIDIDO** (D-06, 2026-11-04); *antes: vigencia única de 12 meses* | **Implementada** (2026-11-04, PAY-07) | U (`expiry`, `trial-lifecycle`) | |
+| PUB-07 | ~~Cierre al vencer~~ | **SIN OBJETO** (D-06, 2026-11-04): no hay cierre por tiempo (BR-65) | — | — | |
 | PUB-08 | Publicación sin contenido completo; mínimos de seguridad (P35) | DECIDIDO el principio; mínimos **PENDIENTES** | **Parcial**: el servidor exige nombres de la pareja y plan; lo demás son avisos que no bloquean | U (`publish-todo`, `weda-logic`) | |
-| PUB-09 | Dirección de un evento vencido no se reutiliza; «evento no disponible» | **DECIDIDO** (P24, P31) | **No implementada** | — | |
+| PUB-09 | ~~Dirección de un evento vencido no se reutiliza~~ | **SIN OBJETO** (D-06, 2026-11-04) | — | — | La URL es estable para siempre (PUB-02) |
 | PUB-10 | Publicación versionada y restaurable | **DECIDIDO** (A8) | **No implementada** | — | |
 
 ## 10. Correo, privacidad y datos personales (PRIV)
@@ -170,7 +171,7 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | ACC-01 | Un solo usuario por casamiento | Es el estado actual | **Implementada** (`weddings.owner_id UNIQUE`) | U (aislamiento) | |
 | ACC-02 | Propietario único + administradores y colaboradores; transferencia segura | **DECIDIDO** (A2/D3) | **No implementada** | — | |
 | ACC-03 | Varios eventos por usuario; evento nuevo independiente tras el cierre | **DECIDIDO** | **No implementada** (`owner_id UNIQUE`) | — | |
-| ACC-04 | Evento finalizado visible en la cuenta con solo información comercial (P34) | **PROPUESTA ADOPTADA** | **No implementada** | — | |
+| ACC-04 | ~~Evento finalizado visible en la cuenta con solo información comercial (P34)~~ | **SIN OBJETO** mientras no haya cierre (D-06, 2026-11-04) | — | — | |
 | ACC-05 | Aislamiento entre eventos (autorización en el servidor, sin ids de casamiento desde el cliente) | DECIDIDO (A7) | **Implementada y probada** para el modelo de un dueño | U (`auth-isolation`, `wedding-flow`, `payments-flow`) | Se debe reprobar al agregar membresías |
 
 ## 13. Analítica (ANL)
@@ -191,7 +192,8 @@ Anexo del [Product Blueprint](00-product-blueprint.md). Fecha de la auditoría: 
 | OPS-04 | Límites de uso | DOCUMENTADO | **Implementada en memoria** (no compartida entre procesos) | U | La IP sale de `X-Forwarded-For` (falseable si el servidor está expuesto) |
 | OPS-05 | Registro de errores y métricas | PENDIENTE | **Parcial**: `console.error` | — | Sin logging estructurado |
 | OPS-06 | Endpoint de salud | — | **Implementada** (`/api/health`) | — | |
-| OPS-07 | Requisito de Node 22.5 (`node:sqlite`, experimental) | DOCUMENTADO | **Implementada** | U | Aviso experimental en cada proceso |
+| OPS-07 | Requisito de Node 22.5 (`node:sqlite`, experimental) | DOCUMENTADO | **Sin objeto** (2026-11-05, OPS-08: ya no se usa SQLite) | — | |
+| OPS-08 | Todo en Supabase: base PostgreSQL (en reemplazo de SQLite), cuentas con Supabase Auth y archivos en Supabase Storage | **DECIDIDO** (D-07, 2026-11-04); [spec](../../specs/OPS-08-base-supabase/spec.md) aprobada (2026-11-04) | **Implementada en la rama `feat/ops-08-supabase` (PR #15)**, probada contra el proyecto de desarrollo `weda-dev` (2026-11-05); pendientes CA-8, E2E y CA-12 (producción) | — | Reescribe `db.ts`, `service.ts` y las cuentas; la autorización de los datos sigue en el servidor |
 
 ---
 
@@ -233,10 +235,13 @@ Cada una de las 102 funcionalidades de este inventario recibe **una** clasificac
 - **Implementada y probada** (44): LAN-03, LAN-05, AUTH-01, AUTH-02, ONB-01, ONB-02, ONB-03, ONB-04, PAY-01, PAY-02, PAY-03, PAY-04, PAY-05, DASH-01, GIFT-01, GIFT-02, GIFT-03, GIFT-04, GIFT-05, GIFT-06, SITE-01, SITE-02, SITE-04, SITE-05, GST-01, GST-02, GST-03, GST-04, GST-05, GST-08, PUB-01, PUB-02, PUB-03, PUB-04, PUB-05, PRIV-02, PRIV-03, PRIV-04, ACC-01, ACC-05, ANL-01, OPS-03, OPS-04, OPS-07
 - **Implementada sin pruebas suficientes** (9): LAN-01, LAN-02, LAN-04, LAN-06, LAN-07, DASH-02, DASH-03, SITE-07, OPS-06
 - **Implementada parcialmente** (7): AUTH-05, AUTH-06, DASH-06, GIFT-07, GST-09, PUB-08, OPS-05
-- **Diseñada, no implementada** (39): AUTH-03, AUTH-04, AUTH-07, PAY-06, PAY-07, PAY-08, PAY-09, PAY-10, PAY-11, DASH-04, DASH-05, DASH-07, GIFT-08, GIFT-09, GIFT-10, GIFT-11, GIFT-12, GIFT-13, GIFT-14, SITE-06, GST-06, GST-07, PUB-06, PUB-07, PUB-09, PUB-10, PRIV-05, PRIV-06, PRIV-07, PRIV-08, ADM-01, ADM-02, ACC-02, ACC-03, ACC-04, ANL-02, ANL-03, OPS-01, OPS-02
+- **Diseñada, no implementada** (39): AUTH-03, AUTH-04, AUTH-07, PAY-06, PAY-07, PAY-08, PAY-09, PAY-10, PAY-11, DASH-04, DASH-05, DASH-07, GIFT-08, GIFT-10, GIFT-11, GIFT-12, GIFT-13, GIFT-14, SITE-06, GST-06, GST-07, PUB-06, PUB-07, PUB-09, PUB-10, PRIV-05, PRIV-06, PRIV-07, PRIV-08, ADM-01, ADM-02, ACC-02, ACC-03, ACC-04, ANL-02, ANL-03, OPS-01, OPS-02
 - **No diseñada** (1): GST-10
 - **No verificada** (2): SITE-03, PRIV-01
 
 **Lectura:** lo construido hoy es una plataforma de armado, publicación manual, confirmación de asistencia y regalos con comprobante, bien probada en el servidor. **Lo decidido en las últimas rondas de diseño** (pagar = activar + publicar, vigencia de 12 meses y cierre, libro, invitaciones con cupo, roles, retención, administración, analítica en capas) **está casi todo sin construir**.
 
 > **Actualización 2026-11-03 (D-01, D-02).** Los conteos de arriba son del 2026-10-31 y no se recalcularon. Desde entonces: PAY-01 describe dos planes; ONB-02, PAY-02 y DASH-03 pasan a **parcial** (IC-25, IC-26); PAY-03 queda **construida sin regla aprobada** (DP-23). GIFT-08 y las demás entregas de los PR #6 a #9 están en [`auditoria-estado-2026-11-03.md`](../auditoria-estado-2026-11-03.md) §4.1.
+
+
+> **Actualización 2026-11-04 (D-06, PAY-07).** ONB-05 es nueva; PAY-07 y PUB-06 están implementadas; PAY-08, PUB-05, PUB-07, PUB-09 y ACC-04 quedan sin objeto o reemplazadas. Los conteos de arriba siguen sin recalcularse.

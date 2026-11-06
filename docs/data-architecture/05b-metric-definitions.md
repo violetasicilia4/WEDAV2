@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 3 — Definiciones de métricas
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Fecha: 2026-10-30. Estado: **definiciones para revisión; no hay nada implementado.** Complementa `05-analytics-architecture.md` (§6).
 Cada métrica define **numerador, denominador, período, fuente y reglas de exclusión**. Cuando una métrica no tiene denominador (es un conteo o una suma) se dice.
 

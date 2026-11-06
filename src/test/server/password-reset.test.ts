@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeEnv, PASSWORD, signUp, type Env } from './helpers';
 
 let env: Env;
-beforeAll(() => { env = makeEnv(); });
+beforeAll(async () => { env = await makeEnv(); });
 afterAll(() => env.close());
 const outbox = () => env.cfg.mail.testOutbox!;
 const tokenOf = (to: string) => {
@@ -24,9 +24,9 @@ describe('recuperar la clave', () => {
     expect((await env.client().post('/api/auth/forgot', { email: 'no-es-correo' })).status).toBe(400);
   });
 
-  it('el token no se guarda en texto plano', () => {
+  it('el token no se guarda en texto plano', async () => {
     const t = tokenOf('olvido@correo.com')!;
-    const rows = env.svc.db.prepare('SELECT token_hash FROM password_resets').all() as { token_hash: string }[];
+    const rows = (await env.svc.db.all('SELECT token_hash FROM password_resets')) as { token_hash: string }[];
     expect(rows.some(r => r.token_hash === t)).toBe(false);
     expect(rows.every(r => /^[0-9a-f]{64}$/.test(r.token_hash))).toBe(true);
   });
@@ -52,7 +52,7 @@ describe('recuperar la clave', () => {
     const second = tokenOf('vence@correo.com')!;
     expect(second).not.toBe(first);
     expect((await env.client().post('/api/auth/reset', { token: first, password: 'Nueva-clave-2026' })).body.error).toBe('invalid_or_expired_token');
-    env.svc.db.prepare("UPDATE password_resets SET expires_at = '2000-01-01T00:00:00.000Z' WHERE used_at IS NULL").run();
+    (await env.svc.db.run("UPDATE password_resets SET expires_at = '2000-01-01T00:00:00.000Z' WHERE used_at IS NULL"));
     expect((await env.client().post('/api/auth/reset', { token: second, password: 'Nueva-clave-2026' })).body.error).toBe('invalid_or_expired_token');
     expect((await env.client().post('/api/auth/reset', { token: 'inventado-de-mas-de-veinte-caracteres', password: 'Nueva-clave-2026' })).body.error).toBe('invalid_or_expired_token');
   });

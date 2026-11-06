@@ -1,24 +1,4 @@
-import { createHash, randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
-
-const scrypt = (pw: string, salt: Buffer, keylen: number, N: number) =>
-  new Promise<Buffer>((res, rej) => scryptCb(pw, salt, keylen, { N, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }, (e, k) => (e ? rej(e) : res(k))));
-
-const N = 16384;
-
-/** scrypt con sal aleatoria. Formato: scrypt$N$sal$hash (base64url). */
-export async function hashPassword(pw: string): Promise<string> {
-  const salt = randomBytes(16);
-  const key = await scrypt(pw, salt, 64, N);
-  return `scrypt$${N}$${salt.toString('base64url')}$${key.toString('base64url')}`;
-}
-
-export async function verifyPassword(pw: string, stored: string): Promise<boolean> {
-  const [alg, n, salt, hash] = stored.split('$');
-  if (alg !== 'scrypt' || !n || !salt || !hash) return false;
-  const expected = Buffer.from(hash, 'base64url');
-  const key = await scrypt(pw, Buffer.from(salt, 'base64url'), expected.length, Number(n));
-  return key.length === expected.length && timingSafeEqual(key, expected);
-}
+import { createHash, randomBytes } from 'node:crypto';
 
 export const newToken = () => randomBytes(32).toString('base64url');
 export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');

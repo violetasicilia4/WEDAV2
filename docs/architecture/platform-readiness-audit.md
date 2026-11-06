@@ -1,5 +1,7 @@
 # Weda · Auditoría de arquitectura: preparación para escalar como plataforma
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Fecha: 2026-11-01 · Base: `main` en `f1c37a1` (incluye #4–#9) y el diseño decidido en [`docs/data-architecture/`](../data-architecture/06-consolidation-report.md) · Inspección de solo lectura: este documento no cambia código, base de datos ni documentos anteriores.
 
 **Estado del documento:** borrador para aprobación (revisión 11, 2026-11-01). Incorpora las decisiones DA-1 a DA-4 y el modelo multiusuario que definió la dueña. **Solo lo de §1 está decidido** (DA-1 a DA-6, DA-10, DA-13, DA-14, DA-19 y DA-MU). Todo lo marcado «propuesta», «recomendada» o «pendiente» (DA-8, DA-9, DA-11, DA-12 y DA-15 a DA-18 en §13, y los detalles abiertos de DA-13a en §9.5) **espera aprobación**. Las contradicciones con lo ya documentado están en §11.

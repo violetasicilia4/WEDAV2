@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 3 — Arquitectura de analítica de producto
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Fecha: 2026-10-30 (consolidada). Estado: **diseño aprobado en sus tres capas; no se implementó nada** (sin esquema, sin código, sin dependencias, sin commits).
 Parte de la Fase 2 aprobada (`02-domain-model.md`, `02b-retention-privacy-deletion.md`, `02c-validation-report.md`) y de las condiciones que fijaste para la Fase 3.
 

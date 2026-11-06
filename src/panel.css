@@ -151,9 +151,11 @@
 .pn-page code, .pn-dialog code { padding: 2px 8px; border-radius: 8px; background: rgb(59 60 58 / .07); font-size: 13px; }
 
 /* ---------- módulo bloqueado ---------- */
-/* Operación bloqueada por plan o vigencia (BR-62): no tapa la sección, explica qué la desbloquea. */
+/* Operación bloqueada por plan o por la pausa del trial (BR-62, BR-64): no tapa la sección, explica qué la desbloquea. */
 .pn-opnotice { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; padding: 12px 14px; border: 1px solid var(--pn-line); border-radius: 12px; background: var(--pn-surface); color: var(--pn-slate-d); }
 .pn-opnotice p { flex: 1 1 220px; margin: 0; }
+/* Días de prueba (PAY-07): una línea discreta arriba del contenido, sin fondo ni borde. */
+.pn-trial { margin: 0 0 12px; font-size: var(--pn-fs-help, 14px); color: var(--pn-muted); }
 /* Solo lectura: `fieldset disabled` deshabilita de una vez todos los controles de la sección, sin cambiar su diseño. */
 .pn-readonly { min-width: 0; margin: 0; padding: 0; border: 0; }
 
@@ -1185,6 +1187,8 @@ body:has([role='dialog']) .pn-toast-region { bottom: auto; top: 12px; }
 .pn-prod h3 { font-size: 22px; font-weight: var(--w-semibold); line-height: 1.15; }
 .pn-prod-what { margin: 2px 0 0; font-size: 14px; color: var(--pn-muted); line-height: 1.3; }
 .pn-prod-tag { align-self: flex-start; padding: 2px 10px; border-radius: 999px; background: #fff; font-size: 12px; color: var(--pn-slate-d); }
+/* Celebración es el plan recomendado (PAY-07): mismo cartel, en el gris oscuro del panel para que se distinga sin color nuevo. */
+.pn-prod-tag.is-recommended { background: var(--pn-slate-d); color: #fff; }
 .pn-prod-price { margin: 0; }
 .pn-prod-price strong { font-size: 28px; font-weight: var(--w-semibold); font-variant-numeric: tabular-nums; letter-spacing: var(--ls-title, -.02em); }
 .pn-prod-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; color: var(--pn-slate-d); }
@@ -1834,3 +1838,8 @@ html body:has(.pn-root)[data-scroll-locked] .right-scroll-bar-position, html bod
 .pn-flow-bg { opacity: 0; transition: opacity .35s ease; }
 .pn-flow-bg.is-ready { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .pn-flow-bg { transition: none; } }
+
+/* Aporte libre (GIFT-09): bloque debajo de «Mis regalos», con el interruptor y el mínimo opcional. */
+.rg-free-cfg { margin-top: 28px; }
+.rg-free-cfg .pn-check { margin-top: 4px; }
+.rg-free-cfg .pn-field { max-width: 320px; }

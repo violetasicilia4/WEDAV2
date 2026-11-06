@@ -7,7 +7,7 @@ import { planById } from '@/lib/weda/plans';
 /* Pagos con el adaptador de PRUEBA (nunca cobra). Lo que se verifica no depende del proveedor: monto del servidor, idempotencia,
    firma, que la vuelta del navegador no cuente como pago y que publicar exija un pago confirmado. */
 let env: Env;
-beforeAll(() => { env = makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } }); });
+beforeAll(async () => { env = await makeEnv({ requirePaidOrder: true, payments: { provider: 'test', webhookSecret: 'secreto-webhook-de-prueba' } }); });
 afterAll(() => env.close());
 
 const notify = (c: ReturnType<Env['client']>, n: { eventId: string; orderId: string; outcome: 'paid' | 'failed' | 'cancelled' }, signature?: string) => {
@@ -91,7 +91,7 @@ describe('pagos y publicación', () => {
 
 describe('sin proveedor de pagos', () => {
   let plain: Env;
-  beforeAll(() => { plain = makeEnv(); });
+  beforeAll(async () => { plain = await makeEnv(); });
   afterAll(() => plain.close());
   it('el checkout responde «no configurado» y la página de prueba no existe', async () => {
     const o = plain.client(); await signUp(o, 'sinpagos@correo.com');

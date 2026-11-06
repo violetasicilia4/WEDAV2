@@ -3,9 +3,9 @@
 // - Se sincroniza entre pestañas y iframes (evento "storage"): así la vista previa del editor se actualiza sola.
 // - Tolera datos ausentes, corruptos o de una versión anterior: en ese caso arranca vacío, sin errores.
 import { useRef, useSyncExternalStore } from 'react';
-import { defaultColors, defaultGroup, EVENT_ICON_IDS, defaultSite, emptyState, isHexColor, normalizeOrder } from './logic';
+import { defaultColors, defaultGroup, EVENT_ICON_IDS, defaultSite, emptyState, isHexColor, MAX_AMOUNT, MIN_AMOUNT, normalizeOrder } from './logic';
 import { isPlanId, normalizePlanId } from './plans';
-import type { AppState, EventIconId, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
+import type { AppState, EventIconId, FreeAmount, Guest, GuestStatus, ListGift, PhotoChoice, PlanId, SiteConfig } from './types';
 
 export const STORAGE_KEY = 'weda-app';
 export const STORAGE_VERSION = 2;
@@ -98,13 +98,20 @@ const isoOf = (v: unknown): string | null => (typeof v === 'string' && !Number.i
 /** Lee la publicación guardada; cualquier dato inválido la descarta (vuelve a «sin publicar»). */
 function publication(v: unknown): AppState['publication'] {
   if (!isObj(v)) return null;
-  const plan = planOf(v['planId'], 2), at = isoOf(v['publishedAt']), until = isoOf(v['expiresAt']);
-  if (!plan || !at || !until) return null;
+  const plan = planOf(v['planId'], 2), at = isoOf(v['publishedAt']);
+  if (!plan || !at) return null;
   const payments = arr(v['payments']).filter(isObj).map(x => {
     const p = planOf(x['planId'], 2), when = isoOf(x['at']);
     return p && when && (x['kind'] === 'publish' || x['kind'] === 'upgrade') && typeof x['amount'] === 'number' && Number.isFinite(x['amount']) && x['amount'] >= 0 ? { kind: x['kind'] as 'publish' | 'upgrade', planId: p, amount: x['amount'], at: when } : null;
   }).filter((x): x is NonNullable<typeof x> => !!x);
-  return { planId: plan, live: bool(v['live'], false), publishedAt: at, expiresAt: until, payments };
+  return { planId: plan, live: bool(v['live'], false), publishedAt: at, payments };
+}
+
+/** Aporte libre (GIFT-09): apagado si no viene; el mínimo, entero entre el mínimo y el máximo generales, o nulo. */
+function freeAmount(v: unknown): FreeAmount {
+  if (!isObj(v)) return { enabled: false, min: null };
+  const m = v['min'];
+  return { enabled: bool(v['enabled'], false), min: typeof m === 'number' && Number.isInteger(m) && m >= MIN_AMOUNT && m <= MAX_AMOUNT ? m : null };
 }
 
 function build(raw: Record<string, unknown>, from: number): AppState {
@@ -119,6 +126,7 @@ function build(raw: Record<string, unknown>, from: number): AppState {
     gifts: {
       cover: typeof g['cover'] === 'string' ? g['cover'] : null, alias: str(g['alias']), bank: str(g['bank']), cbu: str(g['cbu']), acceptCard: bool(g['acceptCard'], false),
       items: arr(g['items']).map(listGift).filter((x): x is ListGift => !!x),
+      freeAmount: freeAmount(g['freeAmount']),
       given: arr(g['given']).filter(isObj).filter(x => typeof x['id'] === 'string').map(x => ({
         id: str(x['id']), name: str(x['name']), message: str(x['message']),
         giftName: typeof x['giftName'] === 'string' ? x['giftName'] : undefined,

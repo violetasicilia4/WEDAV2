@@ -1,11 +1,10 @@
 // @vitest-environment node
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { handleApi } from '@/server/api';
-import { openDb } from '@/server/db';
 import { draftFor, makeEnv, signUp, type Env } from './helpers';
 
 let env: Env;
-beforeAll(() => { env = makeEnv(); });
+beforeAll(async () => { env = await makeEnv(); });
 afterAll(() => env.close());
 
 describe('endurecimiento de la API', () => {
@@ -18,7 +17,7 @@ describe('endurecimiento de la API', () => {
   it('una sesión vencida deja de valer', async () => {
     const c = env.client(); await signUp(c, 'vence@correo.com');
     expect((await c.get('/api/wedding')).status).toBe(200);
-    env.svc.db.prepare("UPDATE sessions SET expires_at = '2000-01-01T00:00:00.000Z'").run();
+    await env.svc.db.run("UPDATE auth.sessions SET not_after = now() - interval '1 day' WHERE user_id = ?", await env.svc.accounts.idByEmail('vence@correo.com'));
     expect((await c.get('/api/wedding')).status).toBe(401);
   });
 
@@ -42,23 +41,11 @@ describe('endurecimiento de la API', () => {
     expect((await c.get('/api/wedding')).body.revision).toBe(w.revision);
   });
 
-  it('las migraciones son idempotentes: reabrir la base conserva los datos', async () => {
-    const c = env.client(); await signUp(c, 'migra@correo.com');
-    const again = openDb(env.cfg.dbPath);
-    const n = again.prepare("SELECT COUNT(*) AS n FROM users WHERE email = 'migra@correo.com'").get() as { n: number };
-    expect(n.n).toBe(1);
-    expect((again.prepare('PRAGMA user_version').get() as { user_version: number }).user_version).toBe(7);
-    again.close();
-  });
 
-  it('no deja claves ni tokens legibles en la base', () => {
-    const rows = env.svc.db.prepare('SELECT id FROM sessions').all() as { id: string }[];
-    expect(rows.every(r => /^[0-9a-f]{64}$/.test(r.id))).toBe(true);
-  });
 
   it('sin base de datos disponible solo falla la API (503); el resto del sitio ni la toca', async () => {
-    const broken = { ...env.cfg, dbPath: '/etc/hostname/no-se-puede/weda.db', dataDir: '/etc/hostname/no-se-puede' };
-    // Rutas que no son de la API: no abre la base (regresión: antes se abría en cada pedido y el sitio entero fallaba en un hosting sin disco).
+    const broken = { ...env.cfg, supabase: undefined };
+    // Rutas que no son de la API: no abre la base (regresión: antes se abría en cada pedido y el sitio entero fallaba sin base).
     expect(await handleApi(new Request('http://weda.test/'), broken)).toBeNull();
     expect(await handleApi(new Request('http://weda.test/ejemplo'), broken)).toBeNull();
     const r = await handleApi(new Request('http://weda.test/api/me'), broken);

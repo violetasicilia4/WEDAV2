@@ -1051,7 +1051,7 @@ html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 /* Regalos: el bloque ocupa un poco más de alto al scrollear (solo escritorio y tablet ancha; en celular la foto va arriba sin aire). */
 @media (min-width: 901px) { .duo-split { padding-block: clamp(96px, 16svh, 176px); } }
 
-/* Alineación: en escritorio las tarjetas comparten filas (cabecera, precio, frase, vigencia, funciones, detalle y botón quedan a la misma altura). */
+/* Alineación: en escritorio las tarjetas comparten filas (cabecera, precio, frase, condiciones, funciones, detalle y botón quedan a la misma altura). */
 
 /* ---------- Testimonios: una cita grande a la vez (etiqueta con línea, comilla, cita, regla con progreso, pareja y flechas) sobre la foto de fondo ---------- */
 .tq { display: grid; grid-template-columns: clamp(64px, 11vw, 150px) minmax(0, 1fr); column-gap: clamp(8px, 2vw, 24px); width: 100%; }
@@ -1473,7 +1473,7 @@ main:has(.closing-section) + .seed-footer { margin-top: 0; }
 .viacap-section::before, .fd-stage::before { background: none; }
 
 /* Planes (2026-11-03): dos tarjetas lado a lado (una debajo de la otra en celular, con Celebración primero). Regalos en blanco;
-   Celebración en el verde de Weda con texto blanco y el cartel «Más elegido». Precio y botón al pie de cada una. */
+   Celebración en el verde de Weda con texto blanco y el cartel «Recomendado» (PAY-07). Precio y botón al pie de cada una. */
 .pl-intro { margin: 12px 0 0; max-width: 34em; font-size: var(--fs-16); line-height: 1.5; color: var(--muted-foreground, #6f7070); }
 .pl-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 40px; align-items: stretch; }
 .pl-card { position: relative; display: flex; flex-direction: column; gap: 28px; padding: 36px; border-radius: var(--r-2xl); background: #fff; color: var(--foreground); }

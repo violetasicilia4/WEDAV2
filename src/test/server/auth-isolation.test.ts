@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { draftFor, makeEnv, PASSWORD, PNG, publishWith, saveDraft, setPayout, signUp, type Env } from './helpers';
 
 let env: Env;
-beforeAll(() => { env = makeEnv(); });
+beforeAll(async () => { env = await makeEnv(); });
 afterAll(() => env.close());
 
 describe('cuentas y sesiones', () => {
@@ -50,11 +50,6 @@ describe('cuentas y sesiones', () => {
     expect((await replay.get('/api/wedding')).status).toBe(401);
   });
 
-  it('la clave se guarda con scrypt, nunca en claro', () => {
-    const row = env.svc.db.prepare("SELECT password_hash FROM users WHERE email = 'ana@correo.com'").get() as { password_hash: string };
-    expect(row.password_hash.startsWith('scrypt$')).toBe(true);
-    expect(row.password_hash).not.toContain(PASSWORD);
-  });
 
   it('rutas privadas sin sesión → 401', async () => {
     const c = env.client();
@@ -101,7 +96,7 @@ describe('aislamiento entre parejas', () => {
 
   it('el id del casamiento no se acepta desde el cliente: no hay ruta /api/wedding/:id', async () => {
     const a = env.client(); await a.post('/api/auth/login', { email: 'a1@correo.com', password: PASSWORD });
-    const wb = env.svc.db.prepare("SELECT id FROM weddings WHERE draft LIKE '%Bea%'").get() as { id: string };
+    const wb = (await env.svc.db.get("SELECT id FROM weddings WHERE draft LIKE '%Bea%'")) as { id: string };
     expect((await a.get(`/api/wedding/${wb.id}`)).status).toBe(404);
   });
 

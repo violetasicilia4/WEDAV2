@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { PasswordForm } from '@/components/panel/password-form';
-import { makeEnv, PASSWORD, signUp, type Client, type Env } from './server/helpers';
+import { makeEnv, PASSWORD, PG, signUp, type Client, type Env } from './server/helpers';
 
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
@@ -87,19 +87,22 @@ describe('formulario para cambiar la clave', () => {
   });
 });
 
-/* Integración: el formulario contra la API real (handleApi + SQLite temporal), con la cookie de sesión de un navegador. */
-describe('formulario + servidor', () => {
+/* Integración: el formulario contra la API real (handleApi + proyecto de desarrollo de Supabase), con la cookie de sesión de un navegador. */
+describe.skipIf(!PG)('formulario + servidor', () => {
   let env: Env;
   let browser: Client;
-  beforeAll(async () => { env = makeEnv(); browser = env.client(); await signUp(browser, 'perfil-ui@correo.com'); });
+  beforeAll(async () => { env = await makeEnv(); browser = env.client(); await signUp(browser, 'perfil-ui@correo.com'); });
   afterAll(() => env.close());
-  const bridge = (c: Client) => vi.fn(async (url: string, init: RequestInit) => (await c.call(init.method ?? 'GET', url, JSON.parse(init.body as string))).raw);
+  // Solo las rutas de Weda van al servidor de prueba; el resto (por ejemplo, Supabase en modo remoto) sigue por la red.
+  const realFetch = globalThis.fetch;
+  const bridge = (c: Client) => vi.fn(async (url: string | URL | Request, init?: RequestInit) =>
+    typeof url === 'string' && url.startsWith('/api/') ? (await c.call(init?.method ?? 'GET', url, JSON.parse(init?.body as string))).raw : realFetch(url, init));
 
   it('con sesión cambia la clave de verdad: la vieja deja de servir y la nueva entra', async () => {
     vi.stubGlobal('fetch', bridge(browser));
     const { fill, submit, onDone } = setup();
     fill(PASSWORD, 'Nueva-clave-2026'); submit();
-    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    await waitFor(() => expect(onDone).toHaveBeenCalled(), { timeout: 20_000 }); // contra Supabase, por red, tarda más
     expect((await browser.get('/api/me')).body.user).toEqual({ email: 'perfil-ui@correo.com' });
     expect((await env.client().post('/api/auth/login', { email: 'perfil-ui@correo.com', password: PASSWORD })).status).toBe(401);
     expect((await env.client().post('/api/auth/login', { email: 'perfil-ui@correo.com', password: 'Nueva-clave-2026' })).status).toBe(200);
@@ -109,7 +112,7 @@ describe('formulario + servidor', () => {
     vi.stubGlobal('fetch', bridge(env.client()));
     const { fill, submit, onDone } = setup();
     fill('Nueva-clave-2026', 'Otra-clave-2027'); submit();
-    expect((await screen.findByRole('alert')).textContent).toMatch(/Tu sesión venció/);
+    expect((await screen.findByRole('alert', {}, { timeout: 20_000 })).textContent).toMatch(/Tu sesión venció/);
     expect(onDone).not.toHaveBeenCalled();
     expect((await env.client().post('/api/auth/login', { email: 'perfil-ui@correo.com', password: 'Nueva-clave-2026' })).status).toBe(200);
   });

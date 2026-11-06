@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 2 — Diccionario de datos conceptual
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Fecha: 2026-10-30 (revisión con las decisiones definitivas A1–A8 y Q1–Q8). Documento generado a partir de un único catálogo de entidades y relaciones (las mismas que dibujan `03-entity-relationship.*` y `03b-entity-relationship-detail.*`), así que los tres no pueden contradecirse.
 
 **Es conceptual.** No define tablas, tipos, índices ni migraciones: eso es la Fase 5. «Contiene» enumera la información que la entidad debe poder representar, no columnas.
@@ -537,6 +539,7 @@ El dinero de los regalos: de la pareja hacia ella. Weda no pasa por ese dinero.
 - **Qué representa:** Un renglón de un aporte: un regalo de la lista o un aporte libre.
 - **Clase de retención:** `A` — Datos personales y operativos (categoría A)
 - **Contiene (conceptualmente):** aporte, tipo (regalo, aporte libre), regalo (obligatorio solo si el tipo es regalo), nombre del regalo, **importe sugerido en ese momento** y **importe aportado** (pueden diferir), moneda.
+- **Implementado (2026-11-05, GIFT-09, migración 9):** `contribution_items` tiene `id` propio, `kind` (`gift` o `free`), `gift_id` y `gift_name` (nulos solo en los libres) y `suggested_amount` (nulo en los libres). Las filas anteriores pasaron como regalos con el importe sugerido igual al aportado. La moneda sigue implícita (ARS) hasta GIFT-10.
 - **Por qué es una entidad aparte:** Hoy ya admite el mismo regalo en varios aportes. Se agregan el tipo (para el aporte libre, sin regalo) y la moneda explícita. La copia del nombre y de los importes mantiene el historial aunque se edite o archive el regalo. La suma de los renglones es el total del aporte, verificada al crearlo.
 - **Relaciones:**
   - **es referida por** `Contribution` (uno a uno o más; «incluye»)

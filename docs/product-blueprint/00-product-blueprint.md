@@ -2,6 +2,8 @@
 
 **Auditoría integral y documento maestro del producto** · Fecha de la auditoría: 2026-10-31
 
+> **Actualización 2026-11-04 (D-06, [PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md)): modelo comercial vigente.** Trial de 14 días desde que se crea la celebración (BR-63) → pausa en solo lectura si no se contrata, sin perder datos (BR-64) → contratar = pagar y publicar en un solo momento (BR-01) → **permanencia indefinida, sin vencimiento ni renovación** (BR-65). Todo lo que este documento diga sobre vigencia de 6 o 12 meses, cierre del evento, archivo, avisos de vencimiento o condiciones de vigencia queda **reemplazado**; se conserva como historia.
+>
 > **Actualización 2026-11-03 (decisiones de la dueña, [anexo 03 §4](03-open-decisions-and-risks.md)).** Lo que sigue se escribió el 2026-10-31; donde contradiga esto, manda esto:
 > - **D-01 · Dos planes** de pago único: Regalos ARS 95.000 y Celebración ARS 140.000 (BR-13). «Celebración Plus» ya no existe. El cambio de Regalos a Celebración queda **pendiente** (DP-23).
 > - **D-02 · El plan define qué se publica y qué se opera**; ver y editar contenido no dependen del plan (BR-14, BR-62). Se construye en [PAY-01](../../specs/PAY-01-plan-alcance/spec.md).

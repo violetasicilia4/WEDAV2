@@ -5,12 +5,13 @@ import { usePlans } from '@/components/panel/ui';
 import { formatPrice, planById } from '@/lib/weda/plans';
 import { publishPaid } from '@/lib/weda/payments';
 import { sitePath } from '@/lib/weda/logic';
-import { errorText, getOrder, publishRemote, refreshPayments, useRemote, type OrderStatus } from '@/lib/weda/remote';
+import { errorText, getOrder, publishRemote, refreshPayments, refreshPublication, useRemote, type OrderStatus } from '@/lib/weda/remote';
 import { update, useAppState } from '@/lib/weda/store';
 import type { PlanId } from '@/lib/weda/types';
 
 /* Vuelta del checkout. La URL trae el id de la orden, pero llegar acá NO prueba nada: se pregunta al servidor, que solo marca «pagada» con una
-   notificación verificada del proveedor. Mientras está pendiente, se vuelve a preguntar unas veces; pagada, se puede publicar (acción aparte). */
+   notificación verificada del proveedor. Mientras está pendiente, se vuelve a preguntar unas veces. Pagada, el servidor ya publicó en el mismo momento
+   (BR-01, PAY-07): se muestra la página. Si la publicación falló, «Publicar mi página» la reintenta con el mismo pago (DP-25). */
 export const Route = createFileRoute('/panel/pago')({
   validateSearch: (q: Record<string, unknown>): { orden?: string } => (typeof q['orden'] === 'string' ? { orden: q['orden'] } : {}),
   component: PaymentReturn,
@@ -26,7 +27,7 @@ function PaymentReturn() {
   const [order, setOrder] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [polls, setPolls] = useState(0);
-  const [pub, setPub] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [pub, setPub] = useState<'checking' | 'idle' | 'busy' | 'done'>('checking');
   const timer = useRef<number | undefined>(undefined);
 
   const check = useCallback(async () => {
@@ -34,7 +35,10 @@ function PaymentReturn() {
     const r = await getOrder(orden);
     if (!r.ok) { setError(errorText(r.code)); return; }
     setError(null); setOrder(r.order);
-    if (r.order.status === 'paid') void refreshPayments();
+    if (r.order.status === 'paid') {
+      void refreshPayments();
+      void refreshPublication().then(x => setPub(p => (p === 'busy' ? p : x.published ? 'done' : 'idle')));
+    }
     if (r.order.status === 'pending') setPolls(n => n + 1);
   }, [orden]);
 
@@ -75,10 +79,11 @@ function PaymentReturn() {
             <button type="button" className="pn-btn is-ghost" onClick={() => { setPolls(0); void check(); }}>Revisar de nuevo</button>
           </>
         )}
-        {order?.status === 'paid' && pub !== 'done' && (
+        {order?.status === 'paid' && pub === 'checking' && <p className="pn-muted" role="status"><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Publicando tu página…</p>}
+        {order?.status === 'paid' && (pub === 'idle' || pub === 'busy') && (
           <>
             <h2><Check size={20} aria-hidden="true" /> Pago confirmado</h2>
-            <p className="pn-muted">Ya podés publicar tu página. El link no cambia después.</p>
+            <p className="pn-muted">Tu pago está confirmado, pero todavía no pudimos publicar tu página. Probá de nuevo: no se vuelve a cobrar y el link no cambia.</p>
             <button type="button" className="pn-btn" disabled={pub === 'busy'} aria-busy={pub === 'busy'} onClick={publish}>
               {pub === 'busy' ? <><Loader2 size={16} className="pn-spin" aria-hidden="true" /> Publicando…</> : 'Publicar mi página'}
             </button>
@@ -86,8 +91,8 @@ function PaymentReturn() {
         )}
         {pub === 'done' && (
           <>
-            <h2>¡Tu página está publicada!</h2>
-            <p className="pn-muted">Ya la puede abrir cualquiera que tenga el link.</p>
+            <h2><Check size={20} aria-hidden="true" /> ¡Tu página está publicada!</h2>
+            <p className="pn-muted">Pago confirmado. Ya la puede abrir cualquiera que tenga el link, y podés seguir editándola cuando quieras.</p>
             <a className="pn-btn" href={sitePath(s)} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} aria-hidden="true" /> Ver mi página<span className="pn-sr"> (se abre en otra pestaña)</span></a>
           </>
         )}

@@ -11,7 +11,7 @@ import { formatARS, type Gift } from '@/lib/demo-wedding';
 import { readImage } from '@/lib/weda/images';
 import {
   addCatalogGift, addCustomGift, addSet, contributionsFromServer, contributionsFromState, countsAsGift, hasCatalogGift, moveGiftTo, parseAmount, removeGift, removeSetGifts, sitePath, updateGift, type Contribution,
-  cleanCbu, validateAlias, validateCbu, validateGift,
+  cleanCbu, MIN_AMOUNT, validateAlias, validateCbu, validateFreeAmount, validateGift,
 } from '@/lib/weda/logic';
 import { operates } from '@/lib/weda/plans';
 import { openPreview } from '@/lib/weda/preview-event';
@@ -147,6 +147,29 @@ function BankFields({ bank, cbu, alias }: { bank: string; cbu: string; alias: st
         {a => <input id={a.id} type="text" value={al} placeholder="tomas.martina" autoComplete="off" onChange={e => { setAl(e.target.value); if (e.target.value.trim() === '' || !validateAlias(e.target.value)) save({ alias: e.target.value.trim() }); }} onBlur={() => setTouched(t => ({ ...t, alias: true }))} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
       </Field>
     </div>
+  );
+}
+
+/* Aporte libre (GIFT-09, D6): la pareja deja que sus invitados elijan cuánto regalar, con un mínimo opcional. Se guarda solo, como el
+   resto del borrador, y llega a los invitados al publicar. El mínimo inválido no se guarda (queda el último válido). */
+function FreeAmountBlock({ enabled, min }: { enabled: boolean; min: number | null }) {
+  const [raw, setRaw] = useState(min ? String(min) : '');
+  const [touched, setTouched] = useState(false);
+  const err = raw.trim() === '' ? undefined : validateFreeAmount(raw, MIN_AMOUNT) ?? undefined;
+  const save = (patch: Partial<{ enabled: boolean; min: number | null }>) => update(x => ({ ...x, gifts: { ...x.gifts, freeAmount: { ...x.gifts.freeAmount, ...patch } } }));
+  return (
+    <section className="pn-cfg-block rg-free-cfg" aria-labelledby="cfg-free">
+      <div className="pn-cfg-head"><h2 id="cfg-free">Aporte libre</h2><span className={`pn-chip${enabled ? ' is-ok' : ''}`}>{enabled ? 'Activado' : 'Desactivado'}</span></div>
+      <p className="pn-muted">Además de los regalos de tu lista, tus invitados pueden regalar el monto que quieran. Te llega igual que un regalo: con su comprobante, para que lo revises.</p>
+      <label className="pn-check"><input type="checkbox" checked={enabled} onChange={e => save({ enabled: e.target.checked })} /><span>Dejar que tus invitados elijan cuánto regalar</span></label>
+      {enabled && (
+        <Field label="Monto mínimo" optional error={touched ? err : undefined} hint="Si lo dejás vacío, el mínimo es $ 1.000.">
+          {a => <input id={a.id} type="text" inputMode="numeric" value={raw} placeholder="Por ejemplo, 20.000" autoComplete="off"
+            onChange={e => { const v = e.target.value; setRaw(v); if (v.trim() === '') save({ min: null }); else if (!validateFreeAmount(v, MIN_AMOUNT)) save({ min: parseAmount(v) }); }}
+            onBlur={() => setTouched(true)} aria-invalid={a.invalid} aria-describedby={a.describedBy} />}
+        </Field>
+      )}
+    </section>
   );
 }
 
@@ -421,6 +444,7 @@ function GiftsModule() {
                   </div>
                 </>
               )} />
+              <FreeAmountBlock enabled={s.gifts.freeAmount.enabled} min={s.gifts.freeAmount.min} />
             </>
           )}
           <details className="rg-help">

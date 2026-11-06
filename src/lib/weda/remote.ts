@@ -10,8 +10,7 @@
 //  - Los invitados viajan como operaciones (altas/cambios/bajas), no como lista completa: así no se pierden respuestas del sitio público.
 import { useSyncExternalStore } from 'react';
 import { hasEvent } from './account';
-import { addTerm } from './payments';
-import { operates, type Access } from './plans';
+import { normalizePlanId, operates, type Access } from './plans';
 import { getState, replace, reset, subscribeState } from './store';
 import type { AppState, Guest, PlanId, Publication } from './types';
 
@@ -93,7 +92,16 @@ function reconcilePublication(local: Publication | null, server: { status: strin
   if (!server) return local;
   const live = server.status === 'live';
   if (local) return { ...local, live, planId: server.planId as PlanId };
-  return { planId: server.planId as PlanId, live, publishedAt: server.publishedAt, expiresAt: addTerm(server.publishedAt), payments: [] };
+  return { planId: server.planId as PlanId, live, publishedAt: server.publishedAt, payments: [] };
+}
+
+/**
+ * Con una publicación confirmada por el servidor, su plan es el plan de la celebración (F-P1): lo que el panel y la vista previa muestran como
+ * incluido sale de ahí y no de una elección local. Sin publicación, el plan del borrador sigue siendo solo la vista previa de lo que se publicaría.
+ */
+function adoptPublication(s: AppState, server: { status: string; planId: string; publishedAt: string } | null): AppState {
+  const publication = reconcilePublication(s.publication, server);
+  return server ? { ...s, publication, planId: normalizePlanId(server.planId as PlanId) } : { ...s, publication };
 }
 
 const payoutOf = (s: AppState): PayoutData => ({ alias: s.gifts.alias.trim(), bank: s.gifts.bank.trim(), cbu: s.gifts.cbu.trim() });
@@ -107,7 +115,7 @@ function adoptPayout(local: AppState, server: Payout): AppState {
 }
 
 function mergeFromServer(local: AppState, w: any, email: string): AppState {
-  return { ...w.draft, guests: w.guests, email, gifts: { ...w.draft.gifts, given: local.gifts.given }, publication: reconcilePublication(local.publication, w.publication), seeded: false, ...(w.slug ? { slug: w.slug } : {}) };
+  return adoptPublication({ ...w.draft, guests: w.guests, email, gifts: { ...w.draft.gifts, given: local.gifts.given }, publication: local.publication, seeded: false, ...(w.slug ? { slug: w.slug } : {}) }, w.publication);
 }
 
 /* Marca local de lo último confirmado por el servidor (revisión y huella del borrador, sin duplicar las fotos). Sirve para distinguir, al volver a abrir la
@@ -175,7 +183,7 @@ async function attach(email: string): Promise<void> {
     writeMeta(email);
     set({ settled: true, user: { email }, error: null, save: 'saved', publication: w.publication });
   } else {
-    replace({ ...local, email, publication: reconcilePublication(local.publication, w.publication), ...(w.slug ? { slug: w.slug } : {}) });
+    replace(adoptPublication({ ...local, email, ...(w.slug ? { slug: w.slug } : {}) }, w.publication));
     markSynced(w);
     baselineRef = getState();
     writeMeta(email);
@@ -211,6 +219,11 @@ async function flush(): Promise<void> {
   if (frozen || !remote.user) return;
   if (inFlight) { rerun = true; return; }
   const local = getState();
+  // BR-64 (PAY-07): con el trial vencido y sin contratar, el servidor rechaza los guardados. No se envía nada ni se pierde lo local; se avisa una vez.
+  if (remote.access?.state === 'paused') {
+    if (!remote.notice) set({ notice: 'Terminó tu período gratuito: tu proyecto está guardado. Elegí un plan para publicarlo y seguir editando.' });
+    baselineRef = local; return;
+  }
   // BR-62: sin el plan publicado y vigente, el servidor rechaza invitados y mesas. Lo que haya local (de antes de la cuenta) no se pierde:
   // queda en este navegador y se sube cuando se habilite; el resto del borrador se guarda igual (PAY-01, riesgo R-2).
   const guestsOk = operates(remote.access, 'guests'), groupsOk = operates(remote.access, 'groups');
@@ -246,6 +259,9 @@ async function flush(): Promise<void> {
     if (e instanceof ApiFailure && e.status === 409 && e.code === 'revision_conflict') {
       frozen = true;
       set({ save: 'conflict', error: 'revision_conflict' });
+    } else if (e instanceof ApiFailure && e.status === 403 && e.code === 'trial_ended') {
+      // Venció el trial mientras el panel estaba abierto: se toma el estado del servidor y no se reintenta.
+      set({ save: 'error', error: 'trial_ended', access: remote.access ? { ...remote.access, state: 'paused', plan: null } : remote.access });
     } else if (e instanceof ApiFailure && e.status === 401) {
       frozen = true;
       set({ save: 'error', error: 'session_expired', user: null });
@@ -274,6 +290,18 @@ export async function reloadFromServer(): Promise<void> {
   set({ save: 'idle', error: null, settled: false });
   await attach(remote.user?.email ?? local.email);
   set({ notice: 'Recargamos lo último guardado en tu cuenta. Tus cambios sin guardar quedaron en una copia aparte.' });
+}
+
+/** Después de un pago: el servidor ya publicó (BR-01, PAY-07). Trae publicación, acceso y URL sin tocar el borrador. */
+export async function refreshPublication(): Promise<{ published: boolean }> {
+  try {
+    const w = await api('GET', '/api/wedding');
+    const local = getState();
+    replace(adoptPublication({ ...local, ...(w.slug ? { slug: w.slug } : {}) }, w.publication));
+    baselineRef = getState();
+    set({ access: (w.access as Access | undefined) ?? null, publication: w.publication });
+    return { published: !!w.publication && w.publication.status === 'live' };
+  } catch { return { published: false }; }
 }
 
 export const dismissNotice = () => set({ notice: null });
@@ -339,7 +367,7 @@ export async function publishRemote(): Promise<{ ok: true; slug: string } | { ok
     await flush();
     if (remote.save === 'error' || remote.save === 'conflict') return { ok: false, code: remote.error ?? 'save_failed' };
     const r = await api<{ slug: string; planId: string; version: number; access?: Access }>('POST', '/api/wedding/publish');
-    replace({ ...getState(), slug: r.slug });
+    replace(adoptPublication({ ...getState(), slug: r.slug }, { status: 'live', planId: r.planId, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString() }));
     baselineRef = getState();
     set({ ...(r.access ? { access: r.access } : {}), publication: { status: 'live', planId: r.planId, version: r.version, publishedAt: remote.publication?.publishedAt ?? new Date().toISOString(), pendingChanges: false } });
     scheduleSave(0); // con las operaciones ya habilitadas, sube lo que hubiera quedado solo en este navegador
@@ -388,7 +416,6 @@ export const ERROR_TEXT: Record<string, string> = {
   payment_required: 'Falta el pago del plan para publicar.',
   payments_not_configured: 'El cobro todavía no está disponible.',
   already_paid: 'Ese plan ya está pagado.',
-  publication_expired: 'Tu publicación venció. Escribinos a hola@weda.app para volver a publicarla.',
   incomplete: 'Completá los nombres de la pareja para publicar.',
   no_plan: 'Elegí un plan para publicar.',
   invalid_or_expired_token: 'El enlace venció o ya se usó. Pedí uno nuevo.',
@@ -400,8 +427,8 @@ export const ERROR_TEXT: Record<string, string> = {
   payout_unchanged: 'Son los mismos datos que ya tenías.',
   too_many_changes: 'Ya cambiaste tus datos de cobro 3 veces hoy. Por seguridad, probá de nuevo mañana.',
   feature_requires_plan: 'Esto se habilita al publicar con Celebración.',
-  event_expired: 'Tu publicación venció: ya no se pueden hacer cambios de gestión. Escribinos a hola@weda.app.',
   plan_change_pending: 'Por ahora el plan no se puede cambiar después de contratarlo.',
+  trial_ended: 'Terminó tu período gratuito. Tu proyecto está guardado: elegí un plan para publicarlo y seguir editando.',
 };
 export const errorText = (code: string | null) => (code && ERROR_TEXT[code]) || 'Algo salió mal de nuestro lado. Probá de nuevo en un rato.';
 

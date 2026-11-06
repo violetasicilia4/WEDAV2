@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 1 — Auditoría y mapa del producto actual
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Fecha: 2026-10-29 · Commit base: `eee48dc` (`main`) con cambios locales sin subir (botón de Google, frase de la landing; no tocan datos).
 Alcance: **solo diagnóstico**. No se modificó código de la aplicación, esquema, dependencias ni configuración. No se hicieron commits, pushes ni deploys. No se leyeron ni se muestran valores de variables de entorno.
 

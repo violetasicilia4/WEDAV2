@@ -1,5 +1,7 @@
 # Weda · Auditoría del estado del repositorio (2026-11-03)
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 > **Aviso (agregado el mismo 2026-11-03, después del informe):** el multiusuario quedó **postergado** por decisión de la dueña (D-03) y los planes se redefinieron (D-01, D-02). Lo vigente está en [`product-blueprint/03`](product-blueprint/03-open-decisions-and-risks.md) §4. El resto del informe no se modificó.
 
 Fotografía de una fecha: no se reescribe. Base: `origin/main` en `0d2fb4d`, después de `git fetch --prune`. Inspección de solo lectura del código, las ramas y los documentos; se ejecutaron `npm test` (28 archivos, **242 pruebas, todas pasan**) y `npm run typecheck` (sin errores). **No** se ejecutaron `lint`, `build` ni las pruebas E2E, ni se recorrió el sitio en el navegador.

@@ -1,9 +1,9 @@
 // Lista de regalos pública. Es la MISMA página para /ejemplo/regalos y para la lista de cada pareja: todo viene de useSite().
-import { isEmail } from '@/lib/weda/logic';
+import { FREE_GIFT_ID, freeGift, isEmail, isFreeGift, parseAmount, validateFreeAmount } from '@/lib/weda/logic';
 import { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
-  ArrowRight, BedDouble, BedSingle, Check, ChefHat, Coffee, Compass, Copy, Dog, House, Lamp,
+  ArrowRight, Banknote, BedDouble, BedSingle, Check, ChefHat, Coffee, Compass, Copy, Dog, House, Lamp,
   Palette, Plane, Sofa, Sprout, Ticket, Trees, Upload, Utensils, Wine, X, type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,34 @@ function GiftCard({ gift, inCart, onPick }: { gift: Gift; inCart: boolean; onPic
   );
 }
 
+/* Aporte libre (GIFT-09): primera tarjeta de la grilla, con la misma forma que las demás. El invitado escribe cuánto quiere regalar
+   (con el mínimo que fijó la pareja) y lo suma a su regalo. Si ya está en el carrito, el monto se puede cambiar desde acá. */
+function FreeCard({ min, current, onAdd }: { min: number; current: number | null; onAdd: (amount: number) => void }) {
+  const [raw, setRaw] = useState(current ? String(current) : '');
+  const [error, setError] = useState<string | null>(null);
+  const add = () => {
+    const err = validateFreeAmount(raw, min);
+    setError(err);
+    if (!err) onAdd(parseAmount(raw));
+  };
+  return (
+    <article className={`rg-card rg-free${current ? ' in-cart' : ''}`}>
+      <div className="rg-photo rg-free-box">
+        <span className="rg-icon" aria-hidden="true"><Banknote size={30} strokeWidth={1.2} /></span>
+        <label htmlFor={FREE_GIFT_ID}>Elegí cuánto querés regalar</label>
+        <span className="rg-free-input"><span aria-hidden="true">$</span><input id={FREE_GIFT_ID} type="text" inputMode="numeric" autoComplete="off" placeholder="Monto" value={raw} onChange={e => { setRaw(e.target.value); setError(null); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} aria-invalid={!!error} aria-describedby={error ? 'rg-free-error' : min > 1000 ? 'rg-free-min' : undefined} /></span>
+        {error ? <p className="rg-free-error" id="rg-free-error" role="alert">{error}</p> : min > 1000 && <p className="rg-free-min" id="rg-free-min">Mínimo {formatARS(min)}</p>}
+      </div>
+      <h3>Aporte libre</h3>
+      <button type="button" className="rg-btn" onClick={add}>
+        {current ? <><Check size={14} aria-hidden="true" />Cambiar monto</> : 'Agregar'}
+      </button>
+    </article>
+  );
+}
+
 function Thumb({ gift }: { gift: Gift }) {
+  if (isFreeGift(gift)) return <span className="rg-thumb" aria-hidden="true"><Banknote size={22} strokeWidth={1.3} /></span>;
   const Icon = icons[gift.icon];
   return <span className="rg-thumb" aria-hidden="true">{gift.image ? <img src={gift.image} alt="" style={gift.pos ? { objectPosition: gift.pos } : undefined} /> : <Icon size={22} strokeWidth={1.3} />}</span>;
 }
@@ -48,7 +75,7 @@ function Thumb({ gift }: { gift: Gift }) {
 /* Pop-up de varios regalos: tu regalo (lista, quitar, total) → cómo pagar → alias → nombre, apellido y comprobante → Enviar → agradecimiento.
    «Agregar otro regalo» vuelve a la lista sin perder lo elegido. */
 type DialogView = 'cart' | 'pay';
-function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onSent: (gs: Gift[], giver: Giver, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
+function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onChangeFree: () => void; onSent: (gs: Gift[], giver: Giver, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
   const [view, setView] = useState<DialogView>('cart');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
@@ -129,6 +156,7 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onSent, returnFocus
                     <strong>{g.name}</strong>
                     <span>{formatARS(g.amount)}</span>
                   </div>
+                  {isFreeGift(g) && <button type="button" className="rg-remove" onClick={onChangeFree} aria-label="Cambiar el monto del aporte libre">Cambiar</button>}
                   <button type="button" className="rg-remove" onClick={() => remove(g)} aria-label={`Quitar ${g.name}`}><X size={14} aria-hidden="true" />Quitar</button>
                 </li>
               ))}
@@ -247,6 +275,9 @@ export function GiftsPage() {
   if (range === 'asc') visible.sort((a, b) => a.amount - b.amount);
   if (range === 'desc') visible.sort((a, b) => b.amount - a.amount);
   const options: (Category | 'Todos')[] = ['Todos', ...categories];
+  // El aporte libre va primero en la grilla, salvo que la persona esté buscando o filtrando por categoría.
+  const showFree = site.freeAmount.enabled && filter === 'Todos' && !query.trim();
+  const freeInCart = cart.find(isFreeGift);
   // Lista todavía vacía: un estado pensado para eso, sin buscador ni filtros ni «0 regalos».
   if (gifts.length === 0) return <>
     <SiteCover variant="gifts" next="#regalos" />
@@ -311,6 +342,7 @@ export function GiftsPage() {
       {visible.length === 0 && <p className="rg-empty">No encontramos regalos con esos filtros. Probá con otra búsqueda o limpiá los filtros.</p>}
       <h2 className="dm-sr">Regalos</h2>
       <div className="rg-grid">
+        {showFree && <FreeCard key={freeInCart?.amount ?? 0} min={site.freeAmount.min} current={freeInCart?.amount ?? null} onAdd={amount => { returnFocus.current = document.getElementById(FREE_GIFT_ID); setCart(c => [...c.filter(x => !isFreeGift(x)), freeGift(amount)]); setCartOpen(true); }} />}
         {visible.map(g => <GiftCard key={g.id} gift={g} inCart={cart.some(c => c.id === g.id)} onPick={g => { returnFocus.current = document.activeElement as HTMLElement | null; setCart(c => c.some(x => x.id === g.id) ? c : [...c, g]); setCartOpen(true); }} />)}
       </div>
       <p className="rg-live" aria-live="polite">{visible.length} {visible.length === 1 ? 'regalo' : 'regalos'}{filter === 'Todos' ? '' : ` en ${filter}`}{range === 'all' || range === 'asc' || range === 'desc' ? '' : ' en ese rango de monto'}</p>
@@ -333,6 +365,7 @@ export function GiftsPage() {
       gifts={cart}
       onClose={() => setCartOpen(false)}
       onRemove={g => setCart(c => c.filter(x => x.id !== g.id))}
+      onChangeFree={() => { setCartOpen(false); setFilter('Todos'); setQuery(''); window.setTimeout(() => { const el = document.getElementById(FREE_GIFT_ID) as HTMLInputElement | null; el?.scrollIntoView({ block: 'center' }); el?.focus(); el?.select(); }, 250); }}
       onSent={async (gs, who, extra) => { await recordGift(gs, who, extra); setCart([]); }}
       returnFocus={returnFocus}
     />

@@ -77,6 +77,8 @@ V = ver · E = editar contenido · O = operar · P = se publica
 
 Las operaciones también dependen de la vigencia (DP-24) y el servidor las rechaza aunque se llame directo a la API. Cambiar de Regalos a Celebración: **pendiente** (DP-23).
 
+**Estados desde PAY-07 (2026-11-04):** `access.state` es `trial` (14 días desde que se crea la celebración), `paused` (venció el trial sin contratar: todo el panel en `fieldset.pn-readonly disabled` y aviso arriba), `paid_unpublished` (pago confirmado, publicación pendiente) o `active` (publicada, sin vencimiento). El estado `expired` de PAY-01 ya no existe. `access.trialEndsAt` alimenta la línea «Te quedan N días» del panel.
+
 **Cómo lo hace el código (2026-11-04, [PAY-01](../specs/PAY-01-plan-alcance/spec.md)):**
 - `plans.ts`: `publishes(plan, feature)` decide lo publicado (y la vista previa); `operates(access, op)` decide las operaciones (`guests`, `groups`, `contributions`).
 - El servidor calcula `access` (`trial`, `paid_unpublished`, `active`, `expired`) con el plan **publicado** y vigente (y, con compuerta de pago, una orden pagada de ese plan) y lo devuelve en `GET /api/wedding`, al guardar y al publicar. `remote.ts` lo guarda en `useRemote().access`.

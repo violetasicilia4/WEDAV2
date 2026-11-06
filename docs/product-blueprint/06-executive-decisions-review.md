@@ -1,5 +1,7 @@
 # Weda · Revisión ejecutiva y congelamiento del diseño del MVP
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](02-business-rules-catalog.md), [D-06 en el anexo 03](03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 **Fecha:** 2026-10-31 · **Para:** la dueña del producto · **Estado:** propuesta para tu revisión. **No cierra ninguna decisión, no autoriza implementar nada y no inicia ninguna fase.**
 
 Este documento resume el [Product Blueprint](00-product-blueprint.md) para que puedas **aprobar, rechazar o modificar** cada decisión pendiente sin recorrer la documentación técnica. Los detalles están en los anexos: [01 inventario](01-feature-inventory.md) · [02 reglas](02-business-rules-catalog.md) · [03 decisiones y riesgos](03-open-decisions-and-risks.md) · [04 preparación comercial](04-mvp-readiness.md) · [05 roadmap](05-implementation-roadmap.md).
@@ -47,6 +49,8 @@ Este documento resume el [Product Blueprint](00-product-blueprint.md) para que p
 Para cada una: qué hay que decidir, cómo está hoy, qué pasa si no se decide, mi recomendación, las alternativas y quién debe intervenir.
 
 ### DP-14 · Hosting y base de datos de producción
+> *Actualización 2026-11-04 (D-07): la dueña eligió **Supabase (PostgreSQL administrado)** como base de producción, en lugar de la recomendación de abajo. Sigue abierto el hosting del servidor de la aplicación. Ver [OPS-08](../../specs/OPS-08-base-supabase/spec.md).*
+
 - **Qué hay que decidir:** dónde vive Weda en producción y cómo se guardan y respaldan los datos.
 - **Hoy:** el servidor y la base (SQLite, un archivo local) funcionan en desarrollo. No hay hosting elegido, ni respaldos, ni evidencia de que un reinicio no borre los datos. La base usa una función de Node todavía marcada como experimental (RK-14).
 - **Si no se resuelve:** no se puede publicar ni cobrar. Es el prerrequisito de todo lo demás.

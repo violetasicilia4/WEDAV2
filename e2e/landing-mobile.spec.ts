@@ -84,7 +84,7 @@ test.describe('Landing · celular 390 px', () => {
     expect(tops[0]! < tops[1]! && tops[1]! < tops[2]!).toBe(true);                       // uno debajo del otro
   });
 
-  test('planes: dos tarjetas (Regalos y Celebración) con todo lo que incluyen a la vista, «Empezar» al pie y «Más elegido» en Celebración', async ({ page }) => {
+  test('planes: dos tarjetas (Regalos y Celebración) con todo lo que incluyen a la vista, «Empezar» al pie y «Recomendado» en Celebración', async ({ page }) => {
     await goLanding(page);
     const cards = page.locator('.pl-card');
     await expect(cards).toHaveCount(2);
@@ -102,11 +102,12 @@ test.describe('Landing · celular 390 px', () => {
       expect(m.btnH).toBeGreaterThanOrEqual(44); expect(m.btnW).toBeGreaterThan(m.cardW * 0.8);   // a todo el ancho en celular
     }
     await expect(cards.locator('.pl-badge')).toHaveCount(1);
-    await expect(cards.nth(1).locator('.pl-badge')).toHaveText('Más elegido');
+    await expect(cards.nth(1).locator('.pl-badge')).toHaveText('Recomendado');
     await expect(page.getByRole('button', { name: 'Ver lo que incluye' })).toHaveCount(0);   // nada que abrir: todo a la vista
     await expect(cards.nth(1).locator('.pl-inherit')).toContainText('Todo lo de Regalos');
     const all = await cards.allInnerTexts();
-    for (const t of ['Lista de regalos', 'Sitio con tu invitación', 'Confirmación de asistencia', 'Invitados y mesas', 'Música, fotos y mensaje final', 'Pago único', 'Publicada 1 año']) expect(all.join('\n')).toContain(t);
+    for (const t of ['Lista de regalos', 'Sitio con tu invitación', 'Confirmación de asistencia', 'Invitados y mesas', 'Música, fotos y mensaje final', 'Pago único', 'sin renovaciones']) expect(all.join('\n')).toContain(t);
+    expect(all.join('\n')).not.toMatch(/Publicada \d|vence/);
   });
 
   test('Testimonios: una cita a la vez sobre blanco, con la foto y el contador de la pareja y flechas a la derecha', async ({ page }) => {

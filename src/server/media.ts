@@ -1,19 +1,15 @@
 // Fotos del casamiento fuera de la base. El navegador las manda embebidas (data URL, ya achicadas por readImage); al guardar, el servidor las
-// escribe como archivos en WEDA_DATA_DIR/media y en el borrador queda solo la dirección /api/media/<sha256>.<ext>. Así:
+// guarda como archivos (storage.ts, Supabase Storage) y en el borrador queda solo la dirección /api/media/<sha256>.<ext>. Así:
 //  · la base y el snapshot publicado no cargan cadenas enormes;
 //  · otro dispositivo ve las fotos (vienen por URL);
 //  · la misma foto no se guarda dos veces (nombre = hash del contenido) y el nombre no se puede adivinar sin tener la foto.
-// Pendiente (production-readiness.md): almacenamiento de objetos (S3/R2) y subida directa desde el navegador para no reenviar las fotos en cada guardado.
+// Pendiente: subida directa desde el navegador, para no reenviar las fotos en cada guardado.
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { ApiError } from './errors';
 
 export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
-const MIME: Record<string, string> = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const DATA_URL = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/;
-const NAME = /^[0-9a-f]{64}\.(jpg|png|webp)$/;
 
 /** Tipo real por los primeros bytes (no el que declara el data URL). */
 function sniff(b: Buffer): string | null {
@@ -23,8 +19,10 @@ function sniff(b: Buffer): string | null {
   return null;
 }
 
-/** Guarda una foto embebida y devuelve su dirección. Lanza si no es una imagen válida o es demasiado grande. */
-function store(dataDir: string, dataUrl: string): string {
+export type MediaUpload = { name: string; bytes: Buffer; mime: string };
+
+/** Valida una foto embebida y devuelve su nombre y contenido. Lanza si no es una imagen válida o es demasiado grande. */
+function parse(dataUrl: string): MediaUpload {
   const m = DATA_URL.exec(dataUrl);
   if (!m) throw new ApiError(415, 'unsupported_image');
   const bytes = Buffer.from(m[2]!, 'base64');
@@ -32,29 +30,22 @@ function store(dataDir: string, dataUrl: string): string {
   if (bytes.length > MAX_PHOTO_BYTES) throw new ApiError(413, 'image_too_large');
   const mime = sniff(bytes);
   if (!mime) throw new ApiError(415, 'unsupported_image');
-  const name = `${createHash('sha256').update(bytes).digest('hex')}.${EXT[mime]}`;
-  const dir = path.join(dataDir, 'media');
-  mkdirSync(dir, { recursive: true });
-  const file = path.join(dir, name);
-  if (!existsSync(file)) writeFileSync(file, bytes, { mode: 0o644 });
-  return `/api/media/${name}`;
+  return { name: `${createHash('sha256').update(bytes).digest('hex')}.${EXT[mime]}`, bytes, mime };
 }
 
-/** Recorre el borrador y reemplaza cada foto embebida (data:image/…) por su dirección. Devuelve un objeto nuevo; no toca el original. */
-export function externalizeImages<T>(value: T, dataDir: string): T {
+/** Recorre el borrador y reemplaza cada foto embebida (data:image/…) por su dirección. Devuelve un objeto nuevo y las fotos a guardar; no toca el original. */
+export function externalizeImages<T>(value: T): { value: T; uploads: MediaUpload[] } {
+  const uploads = new Map<string, MediaUpload>();
   const walk = (v: unknown): unknown => {
-    if (typeof v === 'string') return v.startsWith('data:image/') ? store(dataDir, v) : v;
+    if (typeof v === 'string') {
+      if (!v.startsWith('data:image/')) return v;
+      const u = parse(v);
+      uploads.set(u.name, u);
+      return `/api/media/${u.name}`;
+    }
     if (Array.isArray(v)) return v.map(walk);
     if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]));
     return v;
   };
-  return walk(value) as T;
-}
-
-/** Lee una foto guardada (pública: la usan las invitaciones publicadas). null si el nombre no es válido o no existe. */
-export function readMedia(dataDir: string, name: string): { bytes: Buffer; mime: string } | null {
-  if (!NAME.test(name)) return null;
-  const file = path.join(dataDir, 'media', name);
-  if (!existsSync(file)) return null;
-  return { bytes: readFileSync(file), mime: MIME[name.split('.').pop()!]! };
+  return { value: walk(value) as T, uploads: [...uploads.values()] };
 }

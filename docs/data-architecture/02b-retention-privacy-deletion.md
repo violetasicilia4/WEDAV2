@@ -1,5 +1,7 @@
 # Weda · Arquitectura de datos · Fase 2 — Retención, privacidad y eliminación de datos
 
+> **Desde 2026-11-04 (D-06):** lo que este documento dice sobre vigencia, vencimiento, cierre o archivo quedó reemplazado. Mandan [BR-63 a BR-65](../product-blueprint/02-business-rules-catalog.md), [D-06 en el anexo 03](../product-blueprint/03-open-decisions-and-risks.md) y la [spec PAY-07](../../specs/PAY-07-trial-contratacion-permanencia/spec.md); el resto se conserva como historia.
+
 Fecha: 2026-10-30. Decisión Q8 (retención y eliminación) y criterios legales del pedido.
 Alcance: diseño conceptual. No implementa nada.
 

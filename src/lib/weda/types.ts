@@ -34,6 +34,8 @@ export type ListGift = {
 
 /** Regalo recibido: `name` es quien regala. El resto se guarda al enviarlo para que el panel lo muestre aunque después se quite de la lista. */
 /** `email`: correo de quien regala (obligatorio desde 2026-10-28). `ref`: identifica el envío, para agrupar los regalos que una persona hizo juntos. */
+/** Aporte de importe libre (GIFT-09): lo habilita la pareja, con un mínimo opcional (nulo = el mínimo general, $ 1.000). Se publica con la página. */
+export type FreeAmount = { enabled: boolean; min: number | null };
 export type GivenGift = { id: string; name: string; message: string; giftName?: string | undefined; amount?: number | undefined; how?: 'alias' | 'tarjeta' | undefined; at?: number | undefined; email?: string | undefined; ref?: string | undefined };
 
 export type GuestStatus = 'confirmed' | 'declined' | 'pending';
@@ -105,7 +107,7 @@ export type SiteConfig = {
 /** Un pago SIMULADO (no hay cobro real): publicar un plan, o pagar la diferencia al mejorar de plan. */
 export type Payment = { kind: 'publish' | 'upgrade'; planId: PlanId; amount: number; /** ISO 8601 */ at: string };
 /** Publicación simulada: el sitio se «publica» solo en este navegador. Se puede dar de baja (`live: false`) sin perder el pago. */
-export type Publication = { planId: PlanId; live: boolean; /** ISO 8601 */ publishedAt: string; /** ISO 8601: un año después de publicar (`PUBLICATION_MONTHS`). */ expiresAt: string; payments: Payment[] };
+export type Publication = { planId: PlanId; live: boolean; /** ISO 8601 */ publishedAt: string; /** Solo en datos guardados antes de PAY-07: lo publicado ya no vence (BR-65) y no se lee. */ expiresAt?: string; payments: Payment[] };
 
 export type AppState = {
   version: 2;
@@ -121,7 +123,7 @@ export type AppState = {
   preferredPlan: PlanId | null;
   planId: PlanId | null;
   /** `acceptCard`: preferencia de la pareja; en esta etapa no hay cobro real con tarjeta. */
-  gifts: { cover: string | null; alias: string; bank: string; cbu: string; acceptCard: boolean; items: ListGift[]; given: GivenGift[] };
+  gifts: { cover: string | null; alias: string; bank: string; cbu: string; acceptCard: boolean; items: ListGift[]; given: GivenGift[]; freeAmount: FreeAmount };
   guests: Guest[];
   groups: Group[];
   site: SiteConfig;

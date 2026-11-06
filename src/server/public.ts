@@ -7,17 +7,17 @@ import { ApiError } from './errors';
 export type PublicLookup =
   | { status: 'live'; site: SiteData }
   | { status: 'unpublished' }
-  | { status: 'expired' }
   | { status: 'missing' };
 
-export function lookupPublicSite(slug: string): PublicLookup {
+export async function lookupPublicSite(slug: string): Promise<PublicLookup> {
   try {
-    const r = getService(loadConfig()).getPublicSite(slug);
+    const r = await (await getService(loadConfig())).getPublicSite(slug);
     return { status: 'live', site: r.site };
   } catch (e) {
-    if (e instanceof ApiError && e.status === 410) return { status: e.code === 'site_expired' ? 'expired' : 'unpublished' };
+    // Lo publicado no vence (BR-65): un 410 solo puede ser una página que la pareja dio de baja.
+    if (e instanceof ApiError && e.status === 410) return { status: 'unpublished' };
     if (e instanceof ApiError && e.status === 404) return { status: 'missing' };
-    // Sin base de datos (hosting sin disco persistente) no hay sitios publicados: la página sigue con su comportamiento local.
+    // Sin base de datos (Supabase sin configurar o sin conexión) no hay sitios publicados: la página sigue con su comportamiento local.
     console.error('No se pudo leer el sitio publicado:', e);
     return { status: 'missing' };
   }
