@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type
 import { ArrowLeft, CalendarCheck, Gift, Mail, Menu, X } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { RsvpProvider, useRsvp } from '@/components/rsvp-dialog';
-import { useSite } from '@/lib/weda/site-model';
+import { hasGiftsPage, useSite } from '@/lib/weda/site-model';
 import '@/demo.css';
 import '@/ejemplo.css';
 import '@/invitacion.css';
@@ -51,7 +51,7 @@ function SiteNav() {
   }, []);
   const showInvitation = site.blocks.invitation;
   const showRsvp = site.blocks.rsvp;
-  const showGifts = site.gifts.length > 0;
+  const showGifts = hasGiftsPage(site);
   return (
     <header className={`ej-bar${embedded ? ' is-embedded' : ''}`} ref={ref}>
       <nav className="ej-bar-inner" aria-label="Secciones del sitio">

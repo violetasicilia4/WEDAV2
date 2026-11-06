@@ -13,7 +13,7 @@ import { DEFAULT_EVENT_ICON, DEFAULT_ORDER } from '@/lib/weda/logic';
 import type { BlockId } from '@/lib/weda/types';
 import { useSessionState } from '@/lib/demo-session';
 import { monthName, slugify } from '@/lib/weda/logic';
-import { useSite } from '@/lib/weda/site-model';
+import { hasGiftsPage, useSite } from '@/lib/weda/site-model';
 
 /* Cuenta regresiva: solo en el cliente (evita desajustes de hidratación) y nunca muestra valores negativos. */
 function CountdownRow({ start }: { start: string }) {
@@ -274,7 +274,7 @@ function Closing() {
         <p>{site.message.text || `Con todo cariño, ${site.names}.`}</p>
         <div className="iv-closing-actions">
           {site.blocks.rsvp && <button type="button" className="iv-btn is-paper" onClick={rsvp.open}>Confirmar asistencia</button>}
-          {site.gifts.length > 0 && <Link to={site.giftsPath as never} className="iv-closing-link"><span>Ver lista de regalos</span></Link>}
+          {hasGiftsPage(site) && <Link to={site.giftsPath as never} className="iv-closing-link"><span>Ver lista de regalos</span></Link>}
         </div>
       </div>
     </section>
