@@ -1,15 +1,25 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /* «Save the date» (la fecha con su cuenta regresiva) es una sección más del orden de la invitación: la pareja la sube y la baja en «Tu invitación».
-   La portada queda siempre primera. Estas pruebas parten de un estado local (sin cuenta) cargado antes de abrir la página. */
+   La portada queda siempre primera. Cada prueba crea su cuenta y guarda el casamiento en ella antes de abrir la página (sin cuenta no se arma nada). */
 
 const initial = (date: string | null) => JSON.stringify({
   version: 2, onboarded: true, couple: { first: 'Ana', second: 'Beto' }, date, planId: null,
   site: { events: [{ key: 'ceremonia', enabled: true, title: 'Ceremonia', name: 'Jardín de los Olivos', address: 'Calle 1', time: '18:00', note: '', mapsUrl: '' }] },
   gifts: { items: [{ id: 'g1', name: 'Cena frente al mar', text: '', amount: 30000, category: 'Hogar', icon: 'chef', custom: true }] },
 });
-/** Solo si todavía no hay nada guardado: así una recarga no pisa lo que hizo la pareja. */
-const seed = (page: Page, date: string | null) => page.addInitScript(s => { if (!localStorage.getItem('weda-app')) localStorage.setItem('weda-app', s); }, initial(date));
+/** Crea una cuenta nueva (con la cookie en el navegador de la prueba) y guarda en ella el casamiento de partida. */
+async function seed(page: Page, date: string | null) {
+  const api = page.request;
+  const email = `std-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}@example.com`;
+  expect((await api.post('/api/auth/register', { data: { email, password: 'Clave1234' } })).status()).toBe(201);
+  const w = await (await api.get('/api/wedding')).json();
+  const init = JSON.parse(initial(date));
+  delete init.version;
+  const events = (w.draft.site.events as { key: string }[]).map(e => { const mine = init.site.events.find((x: { key: string }) => x.key === e.key); return mine ? { ...e, ...mine } : e; });
+  const draft = { ...w.draft, ...init, site: { ...w.draft.site, events }, gifts: { ...w.draft.gifts, items: init.gifts.items } };
+  expect((await api.put('/api/wedding', { data: { baseRevision: w.revision, draft } })).status()).toBe(200);
+}
 const rows = (page: Page) => page.locator('li.ed-row[data-section]').evaluateAll(els => els.map(e => e.getAttribute('data-section')));
 const publicOrder = (page: Page) => page.evaluate(() => [...document.querySelectorAll('main > section')].map(s => s.id || s.className.split(' ')[0]));
 const fecha = (page: Page, name: string) => page.getByRole('button', { name: `${name} Save the date` });

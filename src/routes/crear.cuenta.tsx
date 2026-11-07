@@ -27,8 +27,8 @@ const GoogleMark = () => (
 
 
 
-/* Paso 1: cuenta. Con correo y clave se crea la cuenta o se ingresa de verdad (sesión en el servidor, src/lib/weda/remote.ts). El borrador de este navegador nunca se
-   borra: si la cuenta no tenía casamiento se sube; si ya tenía uno, se abre ese y el borrador local queda guardado aparte. «Apple» se descartó (decisión de la dueña, 2026-10-29). «Registrarme / Ingresar con Google» se ve como el flujo real (G de colores, sin etiquetas),
+/* Paso 1: cuenta. Con correo y clave se crea la cuenta o se ingresa de verdad (sesión en el servidor, src/lib/weda/remote.ts). Sin cuenta no se arma nada:
+   al entrar se abre solo el casamiento guardado en la cuenta, sin mezclar borradores del navegador (decisión de la dueña, 2026-11-06). «Apple» se descartó (decisión de la dueña, 2026-10-29). «Registrarme / Ingresar con Google» se ve como el flujo real (G de colores, sin etiquetas),
    pero todavía no hay OAuth: al tocarlo NO simula una cuenta (antes avanzaba sin registrar a nadie; auditoría 2026-10-28) y avisa con honestidad que todavía
    no está habilitado y que se use el correo. Cuando exista el OAuth, este botón lo inicia.
    Sin avisos: la pantalla no menciona el evento guardado. */

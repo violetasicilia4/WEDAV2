@@ -134,16 +134,23 @@ function markSynced(w: { revision: number; guests: Guest[]; draft: AppState }) {
 
 /* ------------------------------------------------------------------ inicio y mezcla con lo que hay en este navegador */
 
+/** Copia aparte que se guardaba antes al entrar con otro borrador en el navegador. Ya no se crea: solo se borra la que haya quedado. */
 const BACKUP_KEY = 'weda-app-local-backup';
 
 async function load(): Promise<void> {
   let me: { user: { email: string } | null };
   try { me = await api('GET', '/api/me'); } catch (e) { set({ settled: true, user: null, ...(e instanceof ApiFailure && e.code === 'backend_unavailable' ? {} : { error: 'network' }) }); return; }
-  if (!me.user) { set({ settled: true, user: null }); return; }
+  if (!me.user) {
+    // Sin cuenta no se arma nada (decisión de la dueña, 2026-11-06): un borrador que no es de ninguna cuenta no se conserva en este navegador.
+    // Si el navegador era de una cuenta (la sesión venció), lo suyo se deja para recuperarlo al volver a entrar con esa misma cuenta.
+    if (!readMeta()) { reset(); try { window.localStorage.removeItem(BACKUP_KEY); } catch { /* nada que borrar */ } }
+    set({ settled: true, user: null });
+    return;
+  }
   await attach(me.user.email);
 }
 
-/** Con sesión confirmada: trae el casamiento del servidor y lo combina con el borrador de este navegador sin perder ninguno de los dos. */
+/** Con sesión confirmada: trae el casamiento del servidor. Solo se combina con lo de este navegador si era de esta misma cuenta (cambios sin guardar). */
 async function attach(email: string): Promise<void> {
   void refreshPayments();
   let w: any;
@@ -152,11 +159,17 @@ async function attach(email: string): Promise<void> {
     return;
   }
   set({ access: (w.access as Access | undefined) ?? null });
-  // El destino de cobro manda el del servidor. Si este navegador tenía otro (cargado antes de tener cuenta), queda aparte para confirmarlo con la clave.
+  // Lo que haya en este navegador solo cuenta si ya era de esta misma cuenta (cambios propios sin guardar). Un borrador sin cuenta o de otra cuenta se
+  // descarta: al entrar se ve únicamente el casamiento guardado en la cuenta, sin mezclas ni copias aparte (decisión de la dueña, 2026-11-06).
+  if (readMeta()?.email !== email) {
+    reset();
+    try { window.localStorage.removeItem(META_KEY); window.localStorage.removeItem(BACKUP_KEY); } catch { /* nada que borrar */ }
+  }
+  // El destino de cobro manda el del servidor.
   const local = adoptPayout(getState(), w.payout as Payout);
   const serverHasData = !!w.draft.onboarded || !!w.draft.couple.first || !!w.draft.couple.second;
   if (!serverHasData && hasEvent(local)) {
-    // Primer ingreso con un borrador local: se sube a la cuenta (el local no se borra).
+    // La cuenta no tiene casamiento pero este navegador tiene uno de esta misma cuenta sin guardar (por ejemplo, se cortó la red al empezar): se sube.
     revision = w.revision; syncedDraft = ''; syncedGuests = new Map();
     replace({ ...local, email });
     baselineRef = null;
@@ -173,10 +186,6 @@ async function attach(email: string): Promise<void> {
     set({ settled: true, user: { email }, error: null, publication: w.publication });
     scheduleSave(0);
   } else if (serverHasData) {
-    if (hasEvent(local) && JSON.stringify(draftOf(local)) !== JSON.stringify(draftOf(w.draft))) {
-      try { window.localStorage.setItem(BACKUP_KEY, JSON.stringify(local)); } catch { /* sin lugar: el servidor igual conserva el casamiento de la cuenta */ }
-      set({ notice: 'Abrimos el casamiento guardado en tu cuenta. El borrador que tenías en este navegador quedó guardado aparte.' });
-    }
     replace(mergeFromServer(local, w, email));
     markSynced(w);
     baselineRef = getState();

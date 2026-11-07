@@ -1,8 +1,8 @@
 import { expect, fillNamesAndContinue, onboard, stored, test } from './helpers';
 import type { Page } from '@playwright/test';
 
-// Cuenta real (servidor): estos tests verifican que registrarse o ingresar NUNCA borra el evento guardado en este navegador
-// y que «empezar de cero» es una decisión explícita. La autenticación y el aislamiento entre cuentas se prueban en e2e/backend.spec.ts.
+// Cuenta real (servidor). Sin cuenta no se arma nada y lo de una cuenta no pasa a otra (decisión de la dueña, 2026-11-06): al entrar se ve solo lo
+// guardado en esa cuenta. La autenticación y el aislamiento entre cuentas se prueban en e2e/backend.spec.ts.
 
 const signupByEmail = async (page: Page, mail = 'nueva@example.com') => {
   await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
@@ -13,14 +13,13 @@ const signupByEmail = async (page: Page, mail = 'nueva@example.com') => {
 const couple = async (page: Page) => (await stored(page)).couple;
 
 test.describe('Cuenta · el evento guardado se conserva', () => {
-  test('1. evento completo → registrarse con correo: se conserva y se sigue al panel (también al recargar)', async ({ page }) => {
+  test('1. con un casamiento abierto, registrarse con otra cuenta empieza de cero: no hereda nada ni muestra copias aparte', async ({ page }) => {
     await onboard(page);
     await signupByEmail(page);
-    await page.waitForURL(/\/panel/);
-    expect(await couple(page)).toEqual({ first: 'Lucía', second: 'Violeta' });
-    await page.reload({ waitUntil: 'networkidle' });
-    expect(await couple(page)).toEqual({ first: 'Lucía', second: 'Violeta' });
-    await expect(page).toHaveURL(/\/panel/);
+    await page.waitForURL(/\/crear$/);
+    await expect(page.locator('#on-first')).toHaveValue('');
+    await expect(page.getByText('guardado aparte')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('weda-app-local-backup'))).toBeNull();
   });
 
   test('2. «Registrarme / Ingresar con Google» está en el flujo, pero sin OAuth no simula una cuenta: avisa y se sigue con el correo; Apple no existe', async ({ page }) => {
@@ -33,18 +32,12 @@ test.describe('Cuenta · el evento guardado se conserva', () => {
     await expect(page.getByRole('button', { name: 'Ingresar con Google' })).toBeVisible();
   });
 
-  test('4. onboarding empezado (nombres cargados, falta fecha y foto) → registro simulado: se conserva el progreso', async ({ page }) => {
-    await page.goto('/crear/cuenta', { waitUntil: 'networkidle' });
-    await page.fill('#ac-email', 'a@example.com');
-    await page.fill('#ac-pass', 'Clave1234');
-    await page.getByRole('button', { name: 'Registrarme', exact: true }).click();
-    await page.waitForURL(/\/crear$/);
-    await fillNamesAndContinue(page, 'Ana', 'Beto');
-    await signupByEmail(page, 'b@example.com');
-    await page.waitForURL(/\/panel/);
-    expect(await couple(page)).toEqual({ first: 'Ana', second: 'Beto' });
-    await page.reload({ waitUntil: 'networkidle' });
-    expect(await couple(page)).toEqual({ first: 'Ana', second: 'Beto' });
+  test('4. sin cuenta, el panel y el armado del casamiento llevan a crear la cuenta', async ({ page }) => {
+    for (const path of ['/panel', '/panel/regalos', '/crear', '/crear/fecha', '/crear/foto']) {
+      await page.goto(path, { waitUntil: 'networkidle' });
+      await page.waitForURL(/\/crear\/cuenta/);
+    }
+    await expect(page.locator('#ac-email')).toBeVisible();
   });
 
   test('5. evento completo → ingresar: va al panel, sin repetir el onboarding', async ({ page }) => {

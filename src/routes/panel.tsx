@@ -201,9 +201,12 @@ function PanelLayout() {
   // Primero se sabe si hay sesión (y se trae el casamiento de la cuenta): recién ahí se decide si falta crearlo.
   const remote = useRemote();
   useEffect(() => { void ensureRemote(); }, []);
+  // Sin cuenta no hay panel (decisión de la dueña, 2026-11-06): se va a crear la cuenta o ingresar.
   useEffect(() => {
-    if (hydrated && remote.settled && !onboarded) void navigate({ to: '/crear', replace: true });
-  }, [hydrated, remote.settled, onboarded, navigate]);
+    if (!remote.settled) return;
+    if (!remote.user) void navigate({ to: '/crear/cuenta', replace: true });
+    else if (hydrated && !onboarded) void navigate({ to: '/crear', replace: true });
+  }, [hydrated, remote.settled, remote.user, onboarded, navigate]);
   // Cambios sin confirmar por el servidor: avisa antes de cerrar la pestaña.
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => { if (hasUnsaved()) { e.preventDefault(); e.returnValue = ''; } };
@@ -211,7 +214,7 @@ function PanelLayout() {
     return () => window.removeEventListener('beforeunload', warn);
   }, []);
 
-  if (!hydrated || !remote.settled || !onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
+  if (!hydrated || !remote.settled || !remote.user || !onboarded) return <div className="pn-root"><p className="pn-loading" role="status">Cargando tu evento…</p></div>;
 
   return (
     <ToastProvider>
