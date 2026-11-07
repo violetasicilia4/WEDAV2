@@ -1,5 +1,6 @@
-// Cambiar adónde transfieren los invitados (GIFT-14, BR-30). Dos pasos: los datos nuevos y una confirmación con lo anterior enmascarado y la clave
-// actual. Las reglas las aplica el servidor (clave, versión vigente, límite por día, aviso por correo); acá se valida el formato antes de pedir la clave.
+// Cambiar adónde transfieren los invitados (GIFT-14, BR-30). Dos pasos: los datos nuevos y una confirmación. Al CAMBIAR datos ya cargados, la confirmación
+// muestra lo anterior enmascarado y pide la clave actual; la primera carga solo pide revisar los datos, sin clave (decisión de la dueña, 2026-11-06).
+// Las reglas las aplica el servidor (clave, versión vigente, límite por día, aviso por correo); acá se valida el formato antes.
 import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Field } from './ui';
@@ -23,7 +24,7 @@ export function PayoutForm({ current, initial, onDone, onCancel }: { current: Pa
   const next = normalize(data);
   const first = !current.alias && !current.bank && !current.cbu;
 
-  useEffect(() => { if (step === 'confirm') passRef.current?.focus(); }, [step]);
+  useEffect(() => { if (step === 'confirm' && !first) passRef.current?.focus(); }, [step, first]);
 
   const edit = (k: keyof PayoutData, v: string) => { setData(d => ({ ...d, [k]: v })); setErrors(e => ({ ...e, [k]: undefined })); setBanner(null); };
 
@@ -42,9 +43,9 @@ export function PayoutForm({ current, initial, onDone, onCancel }: { current: Pa
 
   const confirm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password) { setErrors({ password: 'Escribí tu clave actual.' }); return; }
+    if (!first && !password) { setErrors({ password: 'Escribí tu clave actual.' }); return; }
     setBusy(true); setBanner(null);
-    const r = await changePayout(next, password);
+    const r = await changePayout(next, first ? '' : password);
     setBusy(false);
     if (r.ok) { onDone(); return; }
     if (r.code === 'wrong_password') { setPassword(''); setErrors({ password: errorText(r.code) }); passRef.current?.focus(); return; }
@@ -79,7 +80,7 @@ export function PayoutForm({ current, initial, onDone, onCancel }: { current: Pa
         {next.bank && <div><dt>Banco</dt><dd>{next.bank}</dd></div>}
         {next.cbu && <div><dt>CBU</dt><dd><code>{next.cbu}</code></dd></div>}
       </dl>
-      <Field label="Tu clave actual" error={errors.password} hint="La pedimos para proteger adónde van los regalos.">
+      {!first && <Field label="Tu clave actual" error={errors.password} hint="La pedimos para proteger adónde van los regalos.">
         {a => (
           <div className="pn-pass">
             <input id={a.id} ref={passRef} type={show ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e => { setPassword(e.target.value); setErrors({}); }} aria-invalid={a.invalid} aria-describedby={a.describedBy} />
@@ -88,7 +89,7 @@ export function PayoutForm({ current, initial, onDone, onCancel }: { current: Pa
             </button>
           </div>
         )}
-      </Field>
+      </Field>}
       <p className="pn-hint">Te avisamos por correo. Tus invitados lo ven cuando publiques los cambios de tu página.</p>
       {banner && <p className="pn-banner" role="alert">{banner}</p>}
       <div className="pn-actions is-end">

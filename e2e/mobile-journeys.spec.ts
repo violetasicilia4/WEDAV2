@@ -281,27 +281,13 @@ test.describe('Recorridos del panel en celular (390 px)', () => {
     await expect(page.getByText('Pasaje luna de miel')).toBeVisible();
   });
 
-  test('Flujo 7: sin cuenta, publicar pide crear la cuenta: no hay «Pagar», nada queda publicado ni «Publicada» (auditoría 2026-10-28)', async ({ page }) => {
-    // El beforeEach crea una cuenta: se borra la sesión para quedar con el casamiento solo en este navegador (sin cuenta).
+  test('Flujo 7: si la sesión se cierra, el panel lleva a ingresar y no queda nada publicado (cuenta obligatoria, 2026-11-06)', async ({ page }) => {
+    // El beforeEach crea una cuenta: se borra la sesión.
     await page.context().clearCookies();
     await page.goto('/panel/vista-previa');
-    await expect(page.getByText('Todavía no está publicada')).toBeVisible();
-    await page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true }).click();
-    await expect(page.getByRole('link', { name: /Ver el link de/ })).toHaveCount(2);
-    await page.getByRole('button', { name: 'Publicar Celebración', exact: true }).click();
-    const dlg = page.getByRole('dialog');
-    await expect(dlg.getByText('Para publicar necesitás una cuenta')).toBeVisible();
-    await expect(dlg.getByRole('button', { name: /Pagar/ })).toHaveCount(0);
-    await expect(dlg.getByText(/Pagaste|Total pagado/)).toHaveCount(0);
-    await expect(dlg.getByText('Precio')).toBeVisible();
-    const cta = dlg.getByRole('link', { name: 'Crear cuenta para publicar' });
-    await expect(cta).toHaveAttribute('href', '/crear/cuenta');
-    expect((await stored(page)).publication).toBeNull();
-    await cta.click();
-    await expect(page).toHaveURL(/\/crear\/cuenta$/);
-    expect((await stored(page)).publication).toBeNull();
-    await page.goto('/panel');
-    await expect(page.locator('.pn-top').getByRole('button', { name: 'Publicar', exact: true })).toBeVisible();
+    await page.waitForURL(/\/crear\/cuenta/);
+    await expect(page.locator('#ac-email')).toBeVisible();
+    await expect(page.getByText('Publicada')).toHaveCount(0);
   });
 });
 

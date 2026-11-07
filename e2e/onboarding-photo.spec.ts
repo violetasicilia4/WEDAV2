@@ -90,6 +90,9 @@ test.describe('Onboarding: foto de la pareja', () => {
   });
 
   test('sin los nombres cargados se vuelve al paso anterior', async ({ page }) => {
+    // Con cuenta (sin cuenta, /crear lleva a crearla): la cuenta recién creada todavía no tiene nombres.
+    const email = `foto-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}@example.com`;
+    expect((await page.request.post('/api/auth/register', { data: { email, password: 'Clave1234' } })).status()).toBe(201);
     await page.goto('/crear/foto', { waitUntil: 'networkidle' });
     await page.waitForURL(/\/crear$/);
   });

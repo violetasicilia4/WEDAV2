@@ -62,12 +62,15 @@ describe('cambiar los datos de cobro', () => {
     expect(onDone).not.toHaveBeenCalled();
   });
 
-  it('el primer alias (o uno cargado antes de tener cuenta) también se confirma con la clave', () => {
-    setup({ current: { alias: '', bank: '', cbu: '' }, initial: { alias: 'lucia.vio.mp', bank: '', cbu: '' } });
+  it('el primer alias se revisa y se confirma sin pedir la clave (no hay nada que desviar)', async () => {
+    change.mockResolvedValue({ ok: true });
+    const onDone = setup({ current: { alias: '', bank: '', cbu: '' }, initial: { alias: 'lucia.vio.mp', bank: '', cbu: '' } });
     expect(screen.getByLabelText('Alias')).toHaveValue('lucia.vio.mp');
     click('Revisar');
     expect(screen.queryByText('Antes')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Confirmar' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Tu clave actual')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Tu clave actual')).toBeNull();
+    await act(async () => { click('Confirmar'); });
+    expect(change).toHaveBeenCalledWith({ alias: 'lucia.vio.mp', bank: '', cbu: '' }, '');
+    expect(onDone).toHaveBeenCalled();
   });
 });
