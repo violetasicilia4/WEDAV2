@@ -14,6 +14,7 @@ Este archivo es un índice. Las reglas por área se cargan solas al trabajar en 
 ## Autonomía y decisiones
 - Resolvé por tu cuenta lo habitual de implementación y de UX/UI.
 - Pedí aprobación antes de: tocar una decisión pendiente (DP-xx), cambiar el esquema de la base, agregar dependencias, o cualquier cosa difícil de revertir o que afecte dinero, datos personales o seguridad.
+- `/fabrica` lleva un pedido de punta a punta (spec, construcción, revisiones en paralelo, aprobación) con los subagentes `fabrica-*` y deja una rama para que la dueña decida. Detalle en `.claude/skills/fabrica/SKILL.md`; el estado vive en `.fabrica/` (no se versiona).
 
 ## Git y entorno
 - Cada tarea va en su rama y llega a `main` por PR. **No hagas commit, push, merge ni deploy** salvo que se pida explícitamente. Nunca force-push.
