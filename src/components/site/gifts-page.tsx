@@ -66,6 +66,24 @@ function FreeCard({ min, current, onAdd }: { min: number; current: number | null
   );
 }
 
+/** Un dato para transferir (alias o CBU), destacado y con su botón de copiar. */
+function CopyRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(value); } catch { /* sin portapapeles: el dato igual queda a la vista */ }
+    setCopied(true); window.setTimeout(() => setCopied(false), 2200);
+  };
+  return (
+    <div className="rg-copy">
+      <dt>{label}</dt>
+      <dd><code>{value}</code></dd>
+      <button type="button" onClick={() => void copy()} aria-label={copied ? `${label} copiado` : `Copiar ${label.toLowerCase() === 'cbu' ? 'el CBU' : 'el alias'}`}>
+        {copied ? <><Check size={14} aria-hidden="true" /><span>Copiado</span></> : <><Copy size={14} aria-hidden="true" /><span>Copiar</span></>}
+      </button>
+    </div>
+  );
+}
+
 function Thumb({ gift }: { gift: Gift }) {
   if (isFreeGift(gift)) return <span className="rg-thumb" aria-hidden="true"><Banknote size={22} strokeWidth={1.3} /></span>;
   const Icon = icons[gift.icon];
@@ -75,7 +93,7 @@ function Thumb({ gift }: { gift: Gift }) {
 /* Pop-up de varios regalos: tu regalo (lista, quitar, total) → cómo pagar → alias → nombre, apellido y comprobante → Enviar → agradecimiento.
    «Agregar otro regalo» vuelve a la lista sin perder lo elegido. */
 type DialogView = 'cart' | 'pay';
-function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onRemove: (g: Gift) => void; onChangeFree: () => void; onSent: (gs: Gift[], giver: Giver, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
+function GiftDialog({ open, gifts: items, onClose, onFinished, onRemove, onChangeFree, onSent, returnFocus }: { open: boolean; gifts: Gift[]; onClose: () => void; onFinished: () => void; onRemove: (g: Gift) => void; onChangeFree: () => void; onSent: (gs: Gift[], giver: Giver, extra: GiftSubmission) => void | Promise<void>; returnFocus: { current: HTMLElement | null } }) {
   const [view, setView] = useState<DialogView>('cart');
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
@@ -85,13 +103,12 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSen
   const { remote } = useSiteActions();
   const [proof, setProof] = useState<File | null>(null);
   const [how, setHow] = useState<'alias' | 'tarjeta'>('alias');
-  const [copied, setCopied] = useState(false);
   const site = useSite();
   const alias = site.alias;
   // Lo enviado se guarda aparte: al enviar, el carrito se vacía pero el agradecimiento sigue mostrando esos regalos.
-  const [sent, setSent] = useState<{ first: string; gifts: Gift[] } | null>(null);
+  const [sent, setSent] = useState<{ first: string; gifts: Gift[]; total: number } | null>(null);
   const total = items.reduce((n, g) => n + g.amount, 0);
-  const reset = () => { attempt.current = null; setSendError(null); setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setOptIn(false); setProof(null); setHow('alias'); setCopied(false); setSent(null); };
+  const reset = () => { attempt.current = null; setSendError(null); setView('cart'); setName(''); setSurname(''); setEmail(''); setMessage(''); setOptIn(false); setProof(null); setHow('alias'); setSent(null); };
   // Para poder enviar: nombre, apellido, correo (obligatorio: constancia del regalo y contacto de la pareja) y, si transfiere por alias, el comprobante.
   const cardSelected = site.acceptCard && how === 'tarjeta';
   const noAlias = !cardSelected && !alias;
@@ -102,12 +119,9 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSen
     !isEmail(email) && 'tu correo',
     how === 'alias' && !proof && 'comprobante',
   ].filter(Boolean) as string[];
-  const close = () => { onClose(); window.setTimeout(reset, 200); };
+  // Al cerrar el agradecimiento, la página puede invitar a confirmar la asistencia (ver GiftsPage).
+  const close = () => { const finished = !!sent; onClose(); window.setTimeout(() => { reset(); if (finished) onFinished(); }, 200); };
   const keepShopping = () => { onClose(); window.setTimeout(() => setView('cart'), 200); };
-  const copy = async () => {
-    try { if (alias) await navigator.clipboard.writeText(alias); } catch { /* sin portapapeles: el alias igual queda a la vista */ }
-    setCopied(true); window.setTimeout(() => setCopied(false), 2200);
-  };
   // La clave de reintento se crea una vez por envío y se reutiliza si falla la red: el servidor no duplica el aporte.
   const attempt = useRef<{ key: string; token: string } | null>(null);
   const [sending, setSending] = useState(false);
@@ -126,19 +140,19 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSen
     }
     setSending(false);
     attempt.current = null;
-    setSent({ first: name.trim().split(/\s+/)[0] ?? name.trim(), gifts: items });
+    setSent({ first: name.trim().split(/\s+/)[0] ?? name.trim(), gifts: items, total });
   };
   const remove = (g: Gift) => { onRemove(g); if (items.length <= 1) { onClose(); window.setTimeout(() => setView('cart'), 200); } };
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) close(); }}>
-      <DialogContent className="rg-dialog" onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }} onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
+      <DialogContent className={`rg-dialog${!sent && view === 'pay' ? ' is-wide' : ''}`} onOpenAutoFocus={e => { e.preventDefault(); (e.currentTarget as HTMLElement).focus(); }} onCloseAutoFocus={e => { e.preventDefault(); returnFocus.current?.focus(); }}>
         {sent ? (
           <div className="rg-thanks">
             <span className="rg-check" aria-hidden="true"><Check size={22} strokeWidth={1.8} /></span>
             <DialogTitle>¡Gracias, {sent.first}!</DialogTitle>
-            <DialogDescription>{remote ? <>Registramos {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}. Los novios van a revisar tu comprobante: figura como pendiente hasta que ellos lo confirmen.</> : <>Gracias por {sent.gifts.length === 1 ? 'tu regalo' : `tus ${sent.gifts.length} regalos`}.</>}</DialogDescription>
-            <ul className="rg-sent">{sent.gifts.map(g => <li key={g.id}>{g.name}<span>{formatARS(g.amount)}</span></li>)}</ul>
-            <button type="button" className="dm-solid" onClick={close}>Volver a la lista</button>
+            <DialogDescription>Le regalaste <strong>{formatARS(sent.total)}</strong> a {site.names.replace(/\s*&\s*/, ' y ')}.</DialogDescription>
+            {sent.gifts.length > 1 && <ul className="rg-sent">{sent.gifts.map(g => <li key={g.id}>{g.name}<span>{formatARS(g.amount)}</span></li>)}</ul>}
+            <button type="button" className="dm-solid" onClick={close}>Listo</button>
           </div>
         ) : view === 'cart' ? (
           <div className="rg-form rg-cart">
@@ -168,12 +182,11 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSen
             </div>
           </div>
         ) : (
-          <form onSubmit={e => { void submit(e); }} noValidate className="rg-form">
+          <form onSubmit={e => { void submit(e); }} noValidate className="rg-form rg-pay">
             <header className="rg-head">
               <div>
                 <p className="rg-kicker">Regalo para {site.names}</p>
                 <DialogTitle>Tu regalo</DialogTitle>
-                <DialogDescription>Total {formatARS(total)}</DialogDescription>
               </div>
             </header>
 
@@ -189,66 +202,68 @@ function GiftDialog({ open, gifts: items, onClose, onRemove, onChangeFree, onSen
               </div>
             </fieldset>}
 
-            {how === 'alias' || !site.acceptCard ? (
-              <>
-                <div className="rg-alias">
-                  <code>{alias || 'Alias a definir'}</code>
-                  {alias && (
-                    <button type="button" onClick={copy} aria-label={copied ? 'Alias copiado' : 'Copiar alias'}>
-                      {copied ? <><Check size={14} aria-hidden="true" />Copiado</> : <Copy size={15} aria-hidden="true" />}
-                    </button>
-                  )}
+            <div className="rg-pay-grid">
+              {/* Lo importante primero: cuánto y adónde transferir, con alias y CBU para copiar. */}
+              <section className="rg-transfer" aria-label="Datos para transferir">
+                <p className="rg-amount"><span>Transferí</span><strong>{formatARS(total)}</strong></p>
+                {how === 'alias' || !site.acceptCard ? (
+                  alias ? (
+                    <dl className="rg-bankcard">
+                      <CopyRow label="Alias" value={alias} />
+                      {site.cbu && <CopyRow label="CBU" value={site.cbu} />}
+                      {site.bank && <div className="rg-copy"><dt>Banco</dt><dd>{site.bank}</dd></div>}
+                    </dl>
+                  ) : <p className="rg-note">Los novios todavía no cargaron su alias. Cuando lo hagan, vas a verlo acá.</p>
+                ) : <p className="rg-note">El pago con tarjeta todavía no está disponible. Elegí «Alias» para continuar.</p>}
+                <DialogDescription className="rg-help">{alias ? 'Hacé la transferencia desde tu banco y subí el comprobante.' : ''}</DialogDescription>
+              </section>
+
+              <div className="rg-fields">
+                {!blocked && (
+                  <div className="rg-up">
+                    <input id="rg-proof" className="dm-sr" type="file" accept="image/*,application/pdf" onChange={e => setProof(e.target.files?.[0] ?? null)} />
+                    <label htmlFor="rg-proof" className={`rg-file${proof ? ' has' : ''}`}>
+                      {proof ? <Check size={16} aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
+                      <span>{proof ? proof.name : 'Subir comprobante (captura o PDF)'}</span>
+                      {proof && <em>Cambiar</em>}
+                    </label>
+                  </div>
+                )}
+
+                <div className="rg-two">
+                  <div className="rg-field">
+                    <label htmlFor="rg-name">Nombre</label>
+                    <input id="rg-name" type="text" autoComplete="given-name" value={name} onChange={e => setName(e.target.value)} />
+                  </div>
+                  <div className="rg-field">
+                    <label htmlFor="rg-surname">Apellido</label>
+                    <input id="rg-surname" type="text" autoComplete="family-name" value={surname} onChange={e => setSurname(e.target.value)} />
+                  </div>
                 </div>
-                {(site.bank || site.cbu) && <dl className="rg-bank">{site.bank && <div><dt>Banco</dt><dd>{site.bank}</dd></div>}{site.cbu && <div><dt>CBU</dt><dd>{site.cbu}</dd></div>}</dl>}
-                <p className="rg-help">{alias ? `Transferí ${formatARS(total)} a este alias y después cargá el comprobante.` : 'Los novios todavía no cargaron su alias. Cuando lo hagan, vas a verlo acá.'}</p>
-              </>
-            ) : (
-              <p className="rg-note">El pago con tarjeta todavía no está disponible. Elegí «Alias» para continuar.</p>
-            )}
 
-            {!blocked && (
-              <div className="rg-up">
-                <p className="rg-up-label">Comprobante de transferencia</p>
-                <input id="rg-proof" className="dm-sr" type="file" accept="image/*,application/pdf" onChange={e => setProof(e.target.files?.[0] ?? null)} />
-                <label htmlFor="rg-proof" className={`rg-file${proof ? ' has' : ''}`}>
-                  {proof ? <Check size={16} aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
-                  <span>{proof ? proof.name : 'Subir captura o PDF'}</span>
-                  {proof && <em>Cambiar</em>}
-                </label>
-              </div>
-            )}
+                <div className="rg-field">
+                  <label htmlFor="rg-email">Correo electrónico</label>
+                  <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} aria-describedby="rg-email-help" />
+                  <p className="rg-hint" id="rg-email-help">Para mandarte la constancia. Los novios también lo ven.</p>
+                </div>
 
-            <div className="rg-two">
-              <div className="rg-field">
-                <label htmlFor="rg-name">Nombre</label>
-                <input id="rg-name" type="text" autoComplete="given-name" value={name} onChange={e => setName(e.target.value)} />
-              </div>
-              <div className="rg-field">
-                <label htmlFor="rg-surname">Apellido</label>
-                <input id="rg-surname" type="text" autoComplete="family-name" value={surname} onChange={e => setSurname(e.target.value)} />
+                <div className="rg-field">
+                  <label htmlFor="rg-message">Mensaje (opcional)</label>
+                  <textarea id="rg-message" rows={2} value={message} onChange={e => setMessage(e.target.value)} />
+                </div>
+
+                {/* Novedades de Weda: casilla aparte y destildada (consentimiento expreso; no es necesaria para regalar). */}
+                <label className="rg-optin"><input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} /><span>{MARKETING_CONSENT_TEXT} <a href="/privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad</a></span></label>
+
+                {sendError && <p className="dm-error" role="alert">{sendError}</p>}
+                <div className="rg-pay-actions">
+                  <button type="button" className="dm-ghost" onClick={() => setView('cart')}>Volver</button>
+                  <button type="submit" className="dm-solid rg-send" disabled={blocked || missing.length > 0 || sending} aria-busy={sending}>{sending ? 'Enviando…' : sendError ? 'Reintentar' : 'Enviar'}</button>
+                </div>
+                {noAlias && <p className="rg-missing" aria-live="polite">Todavía no se puede enviar: los novios no cargaron su alias.</p>}
+                {missing.length > 0 && <p className="rg-missing" aria-live="polite">Para enviar falta: {missing.join(', ')}.</p>}
               </div>
             </div>
-
-            <div className="rg-field">
-              <label htmlFor="rg-email">Correo electrónico</label>
-              <input id="rg-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} aria-describedby="rg-email-help" />
-              <p className="rg-hint" id="rg-email-help">Para enviarte la constancia de tu regalo. Los novios también lo ven.</p>
-            </div>
-
-            <div className="rg-field">
-              <label htmlFor="rg-message">Mensaje (opcional)</label>
-              <textarea id="rg-message" rows={2} value={message} onChange={e => setMessage(e.target.value)} />
-            </div>
-
-            {/* Novedades de Weda: casilla aparte y destildada (consentimiento expreso; no es necesaria para regalar). */}
-            <label className="rg-optin"><input type="checkbox" checked={optIn} onChange={e => setOptIn(e.target.checked)} /><span>{MARKETING_CONSENT_TEXT} <a href="/privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad</a></span></label>
-
-            {!blocked && remote && <p className="rg-help">Tu regalo queda informado a los novios; ellos revisan tu comprobante para confirmarlo. Weda no cobra ni mueve dinero.</p>}
-            {sendError && <p className="dm-error" role="alert">{sendError}</p>}
-            <button type="submit" className="dm-solid rg-send" disabled={blocked || missing.length > 0 || sending} aria-busy={sending}>{sending ? 'Enviando…' : sendError ? 'Reintentar' : 'Enviar'}</button>
-            <button type="button" className="dm-ghost" onClick={() => setView('cart')}>Volver a mis regalos</button>
-            {noAlias && <p className="rg-missing" aria-live="polite">Todavía no se puede enviar: los novios no cargaron su alias.</p>}
-            {missing.length > 0 && <p className="rg-missing" aria-live="polite">Para enviar falta: {missing.join(', ')}.</p>}
           </form>
         )}
       </DialogContent>
@@ -265,6 +280,8 @@ export function GiftsPage() {
   const [filter, setFilter] = useState<Category | 'Todos'>('Todos');
   const [cart, setCart] = useState<Gift[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  // Después de regalar, si el sitio tiene confirmación de asistencia y esta persona todavía no confirmó, se la invita a hacerlo.
+  const [nudge, setNudge] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(null);
   const [range, setRange] = useState<'all' | 'asc' | 'desc' | 'low' | 'mid' | 'high'>('all');
   const [query, setQuery] = useState('');
@@ -364,10 +381,22 @@ export function GiftsPage() {
       open={cartOpen}
       gifts={cart}
       onClose={() => setCartOpen(false)}
+      onFinished={() => { if (site.blocks.rsvp && rsvp.sentCount === 0) setNudge(true); }}
       onRemove={g => setCart(c => c.filter(x => x.id !== g.id))}
       onChangeFree={() => { setCartOpen(false); setFilter('Todos'); setQuery(''); window.setTimeout(() => { const el = document.getElementById(FREE_GIFT_ID) as HTMLInputElement | null; el?.scrollIntoView({ block: 'center' }); el?.focus(); el?.select(); }, 250); }}
       onSent={async (gs, who, extra) => { await recordGift(gs, who, extra); setCart([]); }}
       returnFocus={returnFocus}
     />
+
+    <Dialog open={nudge} onOpenChange={setNudge}>
+      <DialogContent className="rg-dialog rg-nudge">
+        <DialogTitle>¿Ya confirmaste tu asistencia?</DialogTitle>
+        <DialogDescription>{site.names.replace(/\s*&\s*/, ' y ')} necesitan saber si vas a estar{site.rsvp.deadline ? `, antes del ${site.rsvp.deadline}` : ''}.</DialogDescription>
+        <div className="rg-pay-actions">
+          <button type="button" className="dm-ghost" onClick={() => setNudge(false)}>Ahora no</button>
+          <button type="button" className="dm-solid" onClick={() => { setNudge(false); window.setTimeout(rsvp.open, 200); }}>Confirmar asistencia</button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </>;
 }

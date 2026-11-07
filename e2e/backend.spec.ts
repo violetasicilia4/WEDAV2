@@ -196,7 +196,9 @@ test.describe('sitio publicado, confirmaciones y regalos', () => {
     await page.unroute('**/api/public/*/contributions');
     await dlg.getByRole('button', { name: 'Reintentar' }).click();
     await expect(dlg.getByRole('heading', { name: /¡Gracias, Nora!/ })).toBeVisible();
-    await expect(dlg).toContainText('pendiente');
+    // El agradecimiento habla de quien regala: cuánto regaló, sin detalles internos de la revisión (2026-11-06).
+    await expect(dlg).toContainText(/Le regalaste \$\s?180\.000/);
+    await expect(dlg).not.toContainText('pendiente');
 
     const list = (await (await api.get('/api/contributions')).json()).contributions;
     expect(list).toHaveLength(1);
