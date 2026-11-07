@@ -293,18 +293,21 @@ export class Service {
   }
 
   /**
-   * Cambia adónde transfieren los invitados. Solo el dueño, con su clave en la misma operación, sobre la versión que vio (`baseVersion`) y con un
-   * límite de cambios por día. Nunca edita una versión: agrega la siguiente. Avisa por correo al dueño (con los datos enmascarados).
+   * Cambia adónde transfieren los invitados. Solo el dueño, sobre la versión que vio (`baseVersion`) y con un límite de cambios por día.
+   * La clave se pide para CAMBIAR datos ya cargados (`baseVersion` > 0); la primera carga no la pide (decisión de la dueña, 2026-11-06: era fricción sin
+   * protección real, porque no hay nada que desviar). Si alguien manda `baseVersion` 0 cuando ya había datos, la verificación de versión lo rechaza.
+   * Nunca edita una versión: agrega la siguiente. Avisa por correo al dueño (con los datos enmascarados), también en la primera carga.
    * Los invitados lo ven recién al publicar los cambios (la página pública es una copia).
    */
   async changePayout(s: Session, input: Row): Promise<{ payout: Payout; pendingChanges: boolean | null }> {
     const next = parsePayout(input);
     const password = typeof input['currentPassword'] === 'string' ? input['currentPassword'] : '';
-    if (!password) throw invalid('wrong_password');
     const baseVersion = input['baseVersion'];
     if (typeof baseVersion !== 'number' || !Number.isInteger(baseVersion)) throw invalid('invalid_version');
+    const isChange = baseVersion > 0;
+    if (isChange && !password) throw invalid('wrong_password');
     if (!this.payoutLimiter.take(s.userId)) throw new ApiError(429, 'too_many_attempts');
-    if (!(await this.accounts.checkPassword(s.userId, s.email, password))) throw invalid('wrong_password');
+    if (isChange && !(await this.accounts.checkPassword(s.userId, s.email, password))) throw invalid('wrong_password');
     const prev = await this.db.tx('weda', async () => {
       const wid = (await this.ensureWedding(s.userId))['id'] as string;
       (await this.assertNotPaused(wid));

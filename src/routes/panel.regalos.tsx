@@ -608,7 +608,7 @@ function GiftsModule() {
             <DialogTitle>Transferencia bancaria</DialogTitle>
             {payout ? (
               <>
-                <DialogDescription>El alias alcanza para cobrar; el banco y el CBU son opcionales. Para cambiarlos te pedimos tu clave.</DialogDescription>
+                <DialogDescription>El alias alcanza para cobrar; el banco y el CBU son opcionales.{payout.alias || payout.bank || payout.cbu ? ' Para cambiarlos te pedimos tu clave.' : ''}</DialogDescription>
                 <PayoutForm current={payout} initial={remote.pendingPayout} onCancel={() => setCfg(null)}
                   onDone={() => { setCfg(null); toast('Listo: guardamos tus datos de cobro. Tus invitados los ven cuando publiques los cambios.'); }} />
               </>

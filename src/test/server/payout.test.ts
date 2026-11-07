@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Destino de cobro protegido (GIFT-14, BR-30): solo con la clave, con versiones, aviso por correo y sin que un guardado del borrador lo cambie.
+// Destino de cobro protegido (GIFT-14, BR-30): cambiar datos ya cargados pide la clave (la primera carga no), con versiones, aviso por correo y sin que un guardado del borrador lo cambie.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { draftFor, makeEnv, saveDraft, setPayout, signUp, type Env } from './helpers';
 
@@ -35,10 +35,19 @@ describe('cambiar el destino de cobro', () => {
     expect(after.draft.gifts.cbu).toBe('');
   });
 
-  it('pide la clave y valida los datos sin tocar el destino vigente', async () => {
+  it('la primera carga no pide la clave; cambiar datos ya cargados sí', async () => {
     const c = await couple();
-    expect((await setPayout(c, { alias: 'ana.leo.mp' }, 'Otra-clave-1')).body.error).toBe('wrong_password');
-    expect((await setPayout(c, { alias: 'ana.leo.mp' }, '')).body.error).toBe('wrong_password');
+    expect((await setPayout(c, { alias: 'ana.leo.mp' }, '')).status).toBe(200);
+    expect((await setPayout(c, { alias: 'otro.alias.mp' }, 'Otra-clave-1')).body.error).toBe('wrong_password');
+    expect((await setPayout(c, { alias: 'otro.alias.mp' }, '')).body.error).toBe('wrong_password');
+    // Simular una primera carga (baseVersion 0) cuando ya hay datos no saltea la clave: la versión no coincide y se rechaza.
+    const sneaky = await c.post('/api/wedding/payout', { currentPassword: '', baseVersion: 0, alias: 'otro.alias.mp' });
+    expect([sneaky.status, sneaky.body.error]).toEqual([409, 'payout_changed']);
+    expect((await payoutOf(c))).toMatchObject({ version: 1, alias: 'ana.leo.mp' });
+  });
+
+  it('valida los datos sin tocar el destino vigente', async () => {
+    const c = await couple();
     expect((await setPayout(c, { alias: 'no' })).body.error).toBe('invalid_alias');
     expect((await setPayout(c, { alias: 'ana leo mp' })).body.error).toBe('invalid_alias');
     expect((await setPayout(c, { alias: 'ana.leo.mp', cbu: '123' })).body.error).toBe('invalid_cbu');
